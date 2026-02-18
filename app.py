@@ -5,7 +5,7 @@ from functools import wraps
 from pathlib import Path
 from typing import Optional
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, send_from_directory, current_app,
+from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, send_from_directory, current_app
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -1283,6 +1283,7 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
