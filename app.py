@@ -120,27 +120,31 @@ def create_app() -> Flask:
                 return url_for("uploads", filename=f"pfps/{base}{ext}")
         return None
 
-    def poster_url_for_show(corps: str, year: int) -> Optional[str]:
-        key = slugify(corps)
-        base_year = f"{key}{int(year)}"
-        for ext in (".png", ".jpg", ".jpeg", ".webp"):
-            fpath = POSTER_DIR / (base_year + ext)
-            if fpath.is_file():
-                return url_for("uploads", filename=f"posters/{base_year}{ext}")
+    def poster_url_for_show(corps: str, year: int) -> str | None:
+    key = slugify(corps)
 
-        base_default = f"{key}default"
-        for ext in (".png", ".jpg", ".jpeg", ".webp"):
-            fpath = POSTER_DIR / (base_default + ext)
-            if fpath.is_file():
-                return url_for("uploads", filename=f"posters/{base_default}{ext}")
+    # 1) year-specific poster: uploads/posters/<corpsslug><year>.<ext>
+    base_year = f"{key}{int(year)}"
+    for ext in (".png", ".jpg", ".jpeg", ".webp"):
+        abs_path = POSTER_DIR / (base_year + ext)
+        if abs_path.is_file():
+            return url_for("uploads", filename=f"posters/{base_year}{ext}")
 
-        for ext in (".png", ".jpg", ".jpeg", ".webp"):
-            fpath = POSTER_DIR / ("default" + ext)
-            if fpath.is_file():
-                return url_for("uploads", filename=f"posters/default{ext}")
+    # 2) corps default: uploads/posters/<corpsslug>default.<ext>
+    base_default = f"{key}default"
+    for ext in (".png", ".jpg", ".jpeg", ".webp"):
+        abs_path = POSTER_DIR / (base_default + ext)
+        if abs_path.is_file():
+            return url_for("uploads", filename=f"posters/{base_default}{ext}")
 
-        return None
+    # 3) global default: uploads/posters/default.<ext>
+    base_global = "default"
+    for ext in (".png", ".jpg", ".jpeg", ".webp"):
+        abs_path = POSTER_DIR / (base_global + ext)
+        if abs_path.is_file():
+            return url_for("uploads", filename=f"posters/{base_global}{ext}")
 
+    return None
     # -----------------------------
     # Global template injection
     # -----------------------------
@@ -1195,4 +1199,5 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
