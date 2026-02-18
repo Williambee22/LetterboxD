@@ -125,7 +125,7 @@ def create_app() -> Flask:
     dbx.init_db(DB_PATH)
 
     # Template globals (used by your base.html + shows.html)
-    app.jinja_env.globals["POSTER_PLACEHOLDER"] = url_for("static", filename="posters/placeholder.png")
+    app.jinja_env.globals["POSTER_PLACEHOLDER"] = "/static/posters/placeholder.png"
 
     # IMPORTANT: expose a function name that matches your templates: poster_url_for_show(corps, year)
     # This version prefers:
@@ -1322,3 +1322,4 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
