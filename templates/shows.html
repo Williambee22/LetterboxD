@@ -1,11 +1,15 @@
 {# =========================================================
    templates/shows.html  (FULL FILE)
    Home page grid of shows with filters + rating overlays
-   Uses poster_url_for_show() macro from base.html
+   Uses poster_url_for_show() function registered in app.py
 ========================================================= #}
 
 {% extends "base.html" %}
 {% block content %}
+
+{# hard fallback if an image fails to load #}
+{% set POSTER_FALLBACK = url_for('static', filename='posters/placeholder.png') %}
+
 <style>
   /* Theme-aware surfaces using the user’s --accent from base.html */
   .accentBorder { border: 1px solid color-mix(in srgb, var(--accent) 28%, rgba(255,255,255,0.10)); }
@@ -22,14 +26,10 @@
     border: 1px solid color-mix(in srgb, var(--accent) 16%, rgba(255,255,255,0.10));
   }
 
-  .accentLink {
-    color: var(--accent);
-  }
+  .accentLink { color: var(--accent); }
   .accentLink:hover { text-decoration: underline; }
 
-  .accentMutedLink {
-    color: color-mix(in srgb, var(--accent) 55%, rgba(255,255,255,0.65));
-  }
+  .accentMutedLink { color: color-mix(in srgb, var(--accent) 55%, rgba(255,255,255,0.65)); }
   .accentMutedLink:hover { color: var(--accent); }
 </style>
 
@@ -78,7 +78,7 @@
             {% set yearv  = a["year"] if "year" in ak else "" %}
             {% set ts   = a["ts"] if "ts" in ak else "" %}
 
-            {# ✅ build poster url from corps+year using base.html macro #}
+            {# ✅ build poster url from corps+year #}
             {% set poster_thumb = poster_url_for_show(corpsv, yearv) %}
 
             <div style="width:340px; flex:0 0 auto; padding:10px; border-radius:12px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);">
@@ -92,7 +92,7 @@
                         alt="poster"
                         style="width:100%; height:100%; object-fit:contain; display:block;"
                         loading="lazy"
-                        onerror="this.onerror=null;this.src='{{ POSTER_PLACEHOLDER }}';"
+                        onerror="this.onerror=null;this.src='{{ POSTER_FALLBACK }}';"
                       >
                     </a>
                   {% else %}
@@ -101,7 +101,7 @@
                       alt="poster"
                       style="width:100%; height:100%; object-fit:contain; display:block;"
                       loading="lazy"
-                      onerror="this.onerror=null;this.src='{{ POSTER_PLACEHOLDER }}';"
+                      onerror="this.onerror=null;this.src='{{ POSTER_FALLBACK }}';"
                     >
                   {% endif %}
                 </div>
@@ -184,6 +184,7 @@
       {% set corpsv = row["corps"] if "corps" in keys else "" %}
       {% set titlev = row["title"] if "title" in keys else "Untitled" %}
       {% set cnt = row["cnt"] if "cnt" in keys and row["cnt"] is not none else 0 %}
+
       {% if "avg_rating" in keys and row["avg_rating"] is not none %}
         {% set avg = row["avg_rating"] %}
       {% elif "avg" in keys and row["avg"] is not none %}
@@ -192,7 +193,7 @@
         {% set avg = 0 %}
       {% endif %}
 
-      {# ✅ build poster url from corps+year using base.html macro #}
+      {# ✅ build poster url from corps+year #}
       {% set poster = poster_url_for_show(corpsv, yearv) %}
 
       <a class="poster" href="{{ url_for('show_detail', show_id=row['id']) }}">
@@ -202,7 +203,7 @@
             src="{{ poster }}"
             alt="{{ titlev }} poster"
             loading="lazy"
-            onerror="this.onerror=null;this.src='{{ POSTER_PLACEHOLDER }}';"
+            onerror="this.onerror=null;this.src='{{ POSTER_FALLBACK }}';"
           >
 
           {% if yearv %}
