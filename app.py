@@ -7,7 +7,7 @@ from flask import request, redirect, url_for, session, flash, abort
 from werkzeug.utils import secure_filename
 from flask import request
 from flask import app, url_for
-
+from flask import send_from_directory
 from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -17,12 +17,16 @@ from pathlib import Path
 
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,20}$")
 
+# ---- Persistent storage root (Railway Volume mount) ----
+DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
 
-BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "static"
+# DB lives on the volume
+DB_PATH = os.getenv("DB_PATH", str(DATA_DIR / "site.db"))
 
-POSTER_DIR = STATIC_DIR / "posters"
-PFP_DIR = STATIC_DIR / "pfps"
+# Uploads live on the volume
+UPLOADS_DIR = Path(os.getenv("UPLOADS_DIR", str(DATA_DIR / "uploads")))
+POSTER_DIR  = UPLOADS_DIR / "posters"
+PFP_DIR     = UPLOADS_DIR / "pfps"
 
 POSTER_DIR.mkdir(parents=True, exist_ok=True)
 PFP_DIR.mkdir(parents=True, exist_ok=True)
@@ -31,7 +35,6 @@ ALLOWED_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
 MAX_UPLOAD_MB = 5
 
 APP_SECRET = os.getenv("APP_SECRET", "dev-secret-change-me")
-DB_PATH = os.getenv("DB_PATH", os.path.join(os.getcwd(), "site.db"))
 
 def get_conn():
     # timeout helps with brief lock contention
@@ -964,6 +967,12 @@ def create_app() -> Flask:
         flash("Deleted your review.", "ok")
         return redirect(url_for("show_detail", show_id=show_id))
 
+    @app.get("/uploads/<path:filename>")
+    def uploads(filename):
+    # Serves files from /data/uploads
+    return send_from_directory(str(UPLOADS_DIR), filename)
+
+    
     @app.get("/admin/roles")
     @admin_required
     def admin_roles():
