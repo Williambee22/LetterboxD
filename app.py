@@ -17,25 +17,6 @@ from pathlib import Path
 
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,20}$")
 
-# ---- Persistent storage root (Railway Volume mount) ----
-DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
-
-# DB lives on the volume
-DB_PATH = os.getenv("DB_PATH", str(DATA_DIR / "site.db"))
-
-# Uploads live on the volume
-UPLOADS_DIR = Path(os.getenv("UPLOADS_DIR", str(DATA_DIR / "uploads")))
-POSTER_DIR  = UPLOADS_DIR / "posters"
-PFP_DIR     = UPLOADS_DIR / "pfps"
-
-POSTER_DIR.mkdir(parents=True, exist_ok=True)
-PFP_DIR.mkdir(parents=True, exist_ok=True)
-
-ALLOWED_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
-MAX_UPLOAD_MB = 5
-
-APP_SECRET = os.getenv("APP_SECRET", "dev-secret-change-me")
-
 def get_conn():
     # timeout helps with brief lock contention
     conn = sqlite3.connect(DB_PATH, timeout=30)
@@ -88,6 +69,26 @@ BAD_WORDS = {
     "dogshit", "cuntface", "cuntfaces", "pisshead", "pissheads", "twatface", "twatfaces", "twink", "twinks",
     # add more...
 }
+
+# ---- Persistent storage root (Railway Volume mount) ----
+DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
+
+# DB lives on the volume
+DB_PATH = os.getenv("DB_PATH", str(DATA_DIR / "site.db"))
+
+# Uploads live on the volume
+UPLOADS_DIR = Path(os.getenv("UPLOADS_DIR", str(DATA_DIR / "uploads")))
+POSTER_DIR  = UPLOADS_DIR / "posters"
+PFP_DIR     = UPLOADS_DIR / "pfps"
+
+POSTER_DIR.mkdir(parents=True, exist_ok=True)
+PFP_DIR.mkdir(parents=True, exist_ok=True)
+
+ALLOWED_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
+MAX_UPLOAD_MB = 5
+
+APP_SECRET = os.getenv("APP_SECRET", "dev-secret-change-me")
+
 
 def _compile_bad_regex(words: set[str]) -> re.Pattern:
     # Whole-word match. If you want partial matches, remove \b boundaries.
@@ -967,10 +968,14 @@ def create_app() -> Flask:
         flash("Deleted your review.", "ok")
         return redirect(url_for("show_detail", show_id=show_id))
 
+    from flask import send_from_directory  # make sure this import exists at top
+
+    UPLOADS_DIR = BASE_DIR / "uploads"
+    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    
     @app.get("/uploads/<path:filename>")
     def uploads(filename):
-    # Serves files from /data/uploads
-    return send_from_directory(str(UPLOADS_DIR), filename)
+        return send_from_directory(str(UPLOADS_DIR), filename)
 
     
     @app.get("/admin/roles")
@@ -1782,3 +1787,4 @@ if __name__ == "__main__":
     # Local dev only
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)
+
