@@ -167,6 +167,19 @@ def init_db(db_path: str) -> None:
             CREATE INDEX IF NOT EXISTS idx_review_comments_commenter ON review_comments(commenter_user_id, created_at);
             """
         )
+                # --- MIGRATIONS (upgrade old DBs safely) ---
+        # users columns used by templates/pages
+        _ensure_column(conn, "users", "avatar_url", "TEXT")
+        _ensure_column(conn, "users", "banner_url", "TEXT")
+        _ensure_column(conn, "users", "theme_color", "TEXT")
+
+        # shows poster column used all over UI
+        _ensure_column(conn, "shows", "poster_url", "TEXT")
+
+        # optional: if you ever added these later
+        _ensure_column(conn, "users", "is_admin", "INTEGER NOT NULL DEFAULT 0")
+        _ensure_column(conn, "users", "created_ts", "INTEGER NOT NULL DEFAULT 0")
+
         conn.commit()
     finally:
         conn.close()
@@ -219,6 +232,17 @@ def user_by_username(conn: sqlite3.Connection, username: str):
 
 def user_by_id(conn: sqlite3.Connection, user_id: int):
     return conn.execute("SELECT * FROM users WHERE id = ?", (int(user_id),)).fetchone()
+
+
+
+def _table_columns(conn: sqlite3.Connection, table: str) -> set[str]:
+    rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
+    return {r["name"] for r in rows}
+
+def _ensure_column(conn: sqlite3.Connection, table: str, col: str, coltype: str) -> None:
+    cols = _table_columns(conn, table)
+    if col not in cols:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {coltype}")
 
 
 def create_user(conn: sqlite3.Connection, username: str, pass_hash: str, make_admin: bool = False) -> int:
@@ -1171,3 +1195,4 @@ def list_top_users_by_review_upvotes(conn, limit: int = 25):
     LIMIT ?;
     """
     return conn.execute(sql, (int(limit),)).fetchall()
+
