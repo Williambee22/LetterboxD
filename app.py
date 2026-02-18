@@ -748,6 +748,53 @@ def create_app() -> Flask:
         flash("Show updated.", "ok")
         return redirect(url_for("show_detail", show_id=show_id))
 
+    @app.post("/me/change_username", endpoint="change_username")
+    @login_required
+    def change_username():
+        uid = int(session["uid"])
+        new_username = (request.form.get("new_username") or "").strip()
+        current_password = (request.form.get("current_password") or "").strip()
+    
+        if not USERNAME_RE.match(new_username):
+            flash("Username must be 3–20 chars and only letters, numbers, underscore.", "error")
+            return redirect(url_for("me_profile"))
+    
+        if not current_password:
+            flash("Enter your current password to change your username.", "error")
+            return redirect(url_for("me_profile"))
+    
+        conn = None
+        try:
+            conn = get_conn()
+            me = dbx.user_by_id(conn, uid)
+            if not me:
+                abort(404)
+            me = dict(me)
+    
+            pass_col = dbx.users_password_col(conn)
+            stored_hash = me.get(pass_col)
+            if not stored_hash or not check_password_hash(stored_hash, current_password):
+                flash("Current password is incorrect.", "error")
+                return redirect(url_for("me_profile"))
+    
+            if me.get("username", "").lower() == new_username.lower():
+                flash("That is already your username.", "warn")
+                return redirect(url_for("me_profile"))
+    
+            if dbx.user_by_username(conn, new_username):
+                flash("That username is already taken.", "error")
+                return redirect(url_for("me_profile"))
+    
+            dbx.update_user_username(conn, uid, new_username)
+            conn.commit()
+            flash("Username updated.", "ok")
+            return redirect(url_for("me_profile"))
+        finally:
+            if conn is not None:
+                conn.close()
+
+
+    
     @app.post("/admin/show/<int:show_id>/upload_poster")
     @admin_required
     def admin_upload_show_poster(show_id: int):
@@ -1148,3 +1195,4 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
