@@ -19,13 +19,25 @@ def poster_basename(corps: str, year: int) -> str:
     s = re.sub(r"_+", "_", s).strip("_")
     return f"{s}{int(year)}"
 
-def poster_url_for_show(corps: str, year: int) -> str:
-    base = poster_basename(corps, year)
-    # try these extensions in order
-    for ext in (".png", ".jpg", ".jpeg", ".webp"):
-        # IMPORTANT: Flask static URLs are /static/...
-        return url_for("static", filename=f"posters/{base}{ext}")
-    # fallback (shouldn't hit)
+def slugify(s: str) -> str:
+    s = (s or "").strip().lower()
+    s = re.sub(r"\s+", "_", s)           # spaces -> underscore
+    s = re.sub(r"[^a-z0-9_]+", "", s)    # keep a-z 0-9 _
+    return s.strip("_") or "corps"
+
+def poster_url_for_show(corps: str, year: int | str) -> str:
+    # expects: static/posters/<slug><year>.png
+    y = str(year or "").strip()
+    key = slugify(corps)
+    fname = f"posters/{key}{y}.png"
+
+    base_dir = Path(__file__).resolve().parent
+    abs_path = base_dir / "static" / fname  # /app/static/posters/...
+
+    if abs_path.is_file():
+        return url_for("static", filename=fname)
+
+    # fallback (make sure this file exists)
     return url_for("static", filename="posters/placeholder.png")
     
 # -----------------------------
@@ -84,6 +96,7 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.secret_key = APP_SECRET
     app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
+    app.jinja_env.globals["poster_url_for_show"] = poster_url_for_show
 
     # Make sure DB has required tables/columns on boot
     dbx.init_db(DB_PATH)
@@ -1263,6 +1276,7 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
