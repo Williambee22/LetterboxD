@@ -107,7 +107,7 @@ def pfp_filename_for_username(username: str, ext: str) -> str:
 
 
 def create_app() -> Flask:
-    app = Flask(__name__, static_folder="static", template_folder="templates")
+    app = Flask(__name__, static_folder="static", static_url_path="/static")
     app.secret_key = APP_SECRET
     app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
     app.jinja_env.globals["poster_url_for_show"] = _poster_url_for_show
@@ -1293,6 +1293,7 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
