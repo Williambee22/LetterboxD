@@ -110,12 +110,9 @@
 
         {% if profile_user is not none and "username" in profile_user %}
           <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
-            {# only you see Customize #}
             {% if is_me %}
               <a class="btn ghost" href="{{ url_for('customize_profile') }}">Customize</a>
             {% endif %}
-
-            {# everyone sees All Ratings #}
             <a class="btn ghost" href="{{ url_for('user_all_ratings', username=profile_user['username']) }}">All Ratings</a>
           </div>
         {% endif %}
@@ -232,6 +229,7 @@
 
     {# ============================
        PFP upload (only for self)
+       FIXED: IDs now match the JS
        ============================ #}
     {% if is_me %}
       <div class="panel">
@@ -247,17 +245,18 @@
             </div>
           </div>
 
-          <form id="pfpUploadForm" 
+          <form id="pfpUploadForm"
             method="post"
-              action="{{ url_for('upload_my_pfp') }}"
-              enctype="multipart/form-data">
-          <input type="file"
-                name="pfp_file"
-                accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
-                required>
+            action="{{ url_for('upload_my_pfp') }}"
+            enctype="multipart/form-data">
 
-          <button class="btn green" type="submit">Upload</button>
-        </form>
+            <input id="pfpFileReal" type="file"
+              name="pfp_file"
+              accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+              required>
+
+            <button id="pfpUploadBtn" class="btn green" type="submit">Upload</button>
+          </form>
 
           {% if profile_user is not none and "avatar_url" in profile_user and profile_user["avatar_url"] %}
             <div style="margin-top:10px;">
@@ -386,6 +385,4 @@
   </section>
 </div>
 
-
 {% endblock %}
-
