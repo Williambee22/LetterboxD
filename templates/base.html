@@ -1,4 +1,24 @@
 <!doctype html>
+{# =========================================================
+   Poster helper (TEMPLATE-SIDE)
+   Builds: /static/posters/<slug><year>.png
+   Example: "Blue devils", 2017 -> posters/blue_devils2017.png
+   ========================================================= #}
+
+{% set POSTER_PLACEHOLDER = url_for('static', filename='posters/placeholder.png') %}
+
+{% macro poster_url_for_show(corps, year) -%}
+  {%- set c = (corps or '')|lower -%}
+  {%- set c = c|replace('&','and') -%}
+  {%- set c = c|replace('’','')|replace("'","") -%}
+  {%- set c = c|replace('.','')|replace(',','') -%}
+  {%- set c = c|replace('/','_')|replace('\\','_') -%}
+  {%- set c = c|replace(' ','_')|replace('-','_') -%}
+  {%- set c = c|replace('__','_')|replace('__','_') -%}
+  {%- set y = (year|string) -%}
+  {{ url_for('static', filename='posters/' ~ c ~ y ~ '.png') }}
+{%- endmacro %}
+
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
