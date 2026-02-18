@@ -16,13 +16,26 @@ def connect(db_path: str) -> sqlite3.Connection:
     conn.execute("PRAGMA journal_mode=WAL;")
     return conn
 
-def init_db(db_path: str, schema_path: str = "schema.sql") -> None:
-    with open(schema_path, "r", encoding="utf-8") as f:
-        schema = f.read()
-    conn = connect(db_path)
+def init_db(db_path, schema_path):
+    import sqlite3
+    from pathlib import Path
+
+    schema = Path(schema_path).read_text(encoding="utf-8")
+
+    conn = sqlite3.connect(db_path)
     try:
         conn.executescript(schema)
-        conn.commit()
+    except sqlite3.Error as e:
+        # Print a helpful excerpt around the error for logs
+        print("=== SCHEMA APPLY FAILED ===")
+        print("ERROR:", e)
+        # print last ~80 lines (common place to fail)
+        lines = schema.splitlines()
+        tail = "\n".join(lines[-120:])
+        print("=== SCHEMA TAIL (last 120 lines) ===")
+        print(tail)
+        print("=== END SCHEMA TAIL ===")
+        raise
     finally:
         conn.close()
 
@@ -1658,6 +1671,7 @@ def user_avg_rating(conn, user_id: int):
     avg = float(row["avg_rating"] or 0.0) if row else 0.0
 
     return avg, cnt
+
 
 
 
