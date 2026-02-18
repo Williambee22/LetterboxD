@@ -176,7 +176,15 @@ def create_app() -> Flask:
     dbx.init_db(DB_PATH)
 
     def get_conn():
-        return dbx.connect(DB_PATH)
+        conn = dbx.connect(DB_PATH)
+        dbx.ensure_reviews_table(conn)
+        dbx.ensure_profile_columns(conn)
+        dbx.ensure_roles_tables(conn)
+        dbx.ensure_review_votes_table(conn)
+        dbx.ensure_review_comments_table(conn)
+        dbx.ensure_social_tables(conn)
+        dbx.ensure_notifications_table(conn)
+        return conn
 
     def current_user():
         uid = session.get("uid")
@@ -1177,4 +1185,5 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
