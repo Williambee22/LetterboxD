@@ -113,10 +113,8 @@
     .notifTime { font-size: 12px; opacity: 0.7; margin-top: 4px; }
     .notifEmpty { padding: 12px; opacity: 0.8; }
 
-    /* Make the bell sit nicely to the left of the avatar */
     .authBellSlot { display:inline-flex; align-items:center; }
 
-    /* ✅ CLICK FIX: Force clicks to work inside dropdown even if global CSS disables pointer events */
     .notifDropdown,
     .notifDropdown * {
       pointer-events: auto !important;
@@ -124,9 +122,12 @@
   </style>
 </head>
 
+{# ✅ SAFE key handling for sqlite3.Row or dict #}
+{% set me_keys = (me.keys() if me is not none and me.keys is defined else []) %}
+
 <body class="app"
-  {% if me and ("theme_color" in me) and me["theme_color"] %}
-    style="--accent: {{ me['theme_color'] }};"
+  {% if me is not none and ("theme_color" in me_keys) and me["theme_color"] %}
+    style="--accent: {{ me["theme_color"] }};"
   {% endif %}
 >
   <header class="topbar">
@@ -140,7 +141,7 @@
         <a href="{{ url_for('shows') }}">Shows</a>
         <a href="{{ url_for('top_shows') }}">Top Shows</a>
         <a href="{{ url_for('top_users') }}">Top Users</a>
-        {% if me and ("is_admin" in me) and me["is_admin"] == 1 %}
+        {% if me and ("is_admin" in me_keys) and me["is_admin"] == 1 %}
           <a href="{{ url_for('bulk_add') }}">Mass Add</a>
           <a href="{{ url_for('admin_roles') }}">Roles</a>
           <a href="{{ url_for('admin_users') }}">Users</a>
@@ -150,19 +151,15 @@
       <div class="auth row">
         {% if me %}
 
-          {# =========================
-             BELL ICON (left of avatar)
-             ========================= #}
           <div class="authBellSlot">
             <div class="notifWrap">
               <button class="bellBtn" id="bellBtn" aria-label="Notifications" title="Notifications">
-                <!-- bell svg -->
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/>
                   <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
                 </svg>
 
-                {% if notif_count and notif_count > 0 %}
+                {% if notif_count is defined and notif_count and notif_count > 0 %}
                   <span class="badgeDot">{{ notif_count }}</span>
                 {% endif %}
               </button>
@@ -175,10 +172,9 @@
                   </form>
                 </div>
 
-                {% if notif_items and notif_items|length > 0 %}
+                {% if notif_items is defined and notif_items and notif_items|length > 0 %}
                   <div class="notifList">
                     {% for n in notif_items %}
-                      {# safe reads #}
                       {% set nk = n.keys() %}
                       {% set kind = n["kind"] if "kind" in nk else "" %}
                       {% set actor = n["actor_username"] if "actor_username" in nk and n["actor_username"] else "Someone" %}
@@ -189,10 +185,8 @@
                       <div class="notifItem {% if unread %}unread{% endif %}">
                         {% if kind == "friend_request" %}
                           <div><b>{{ actor }}</b> sent you a friend request.</div>
-
                         {% elif kind == "follow" %}
                           <div><b>{{ actor }}</b> followed you.</div>
-
                         {% elif kind == "review_upvote" %}
                           <div>
                             <b>{{ actor }}</b> upvoted your review
@@ -200,7 +194,6 @@
                               — <a href="{{ url_for('show_detail', show_id=sid) }}">View show</a>
                             {% endif %}
                           </div>
-
                         {% else %}
                           <div>New activity.</div>
                         {% endif %}
@@ -220,16 +213,20 @@
 
           <a class="nav_user" href="{{ url_for('me_profile') }}">
             <span class="avatar_sm">
-              {% if me and ("avatar_url" in me) and me["avatar_url"] %}
-                <img src="{{ me['avatar_url'] }}" alt="avatar">
+              {% if ("avatar_url" in me_keys) and me["avatar_url"] %}
+                <img src="{{ me["avatar_url"] }}" alt="avatar">
               {% else %}
                 <span class="avatar_fallback"></span>
               {% endif %}
             </span>
-            <span class="muted small">{{ me["username"] }}</span>
+
+            <span class="muted small">
+              {{ me["username"] if ("username" in me_keys) else "me" }}
+            </span>
           </a>
 
           <a href="{{ url_for('logout') }}">Logout</a>
+
         {% else %}
           <a href="{{ url_for('login') }}">Login</a>
           <a class="btn" href="{{ url_for('register') }}">Register</a>
@@ -256,14 +253,12 @@
     <div class="small">Rate drum corps shows.</div>
   </footer>
 
-  {# --- Notifications dropdown JS (UPDATED to allow clicking links) --- #}
   <script>
     (() => {
       const btn = document.getElementById("bellBtn");
       const dd  = document.getElementById("notifDropdown");
       if (!btn || !dd) return;
 
-      // ✅ clicks inside dropdown should not bubble up (prevents "outside click" close)
       dd.addEventListener("click", (e) => e.stopPropagation());
 
       btn.addEventListener("click", (e) => {
@@ -283,4 +278,3 @@
   </script>
 </body>
 </html>
-
