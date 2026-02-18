@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS shows (
   corps TEXT NOT NULL,
   year INTEGER NOT NULL,
   norm_key TEXT NOT NULL UNIQUE,
-  created_ts INTEGER NOT NULL
+  created_ts INTEGER NOT NULL,
   poster_url TEXT,
 );
 
@@ -96,4 +96,5 @@ CREATE INDEX IF NOT EXISTS idx_review_comments_target
 ON review_comments(show_id, review_user_id, created_at);
 
 CREATE INDEX IF NOT EXISTS idx_review_comments_commenter
+
 ON review_comments(commenter_user_id, created_at);
