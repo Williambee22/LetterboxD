@@ -3,6 +3,7 @@ import re
 import sqlite3
 from functools import wraps
 from pathlib import Path
+from typing import Optional
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
@@ -14,21 +15,21 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import db as dbx
 
 
-# -------------------------
-# Globals / Config
-# -------------------------
-
+# -----------------------------
+# Basics / Config
+# -----------------------------
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,20}$")
 
-BASE_DIR = Path(__file__).resolve().parent
+APP_SECRET = os.getenv("APP_SECRET", "dev-secret-change-me")
+MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "5"))
 
-# Railway volume mount (default /data). You can override in Railway variables.
+# Persistent storage root (Railway Volume mount)
 DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 DB_PATH = os.getenv("DB_PATH", str(DATA_DIR / "site.db"))
 
-# Uploads on the volume (NOT inside /app, so redeploys don't erase them)
+# Uploads live on the volume
 UPLOADS_DIR = Path(os.getenv("UPLOADS_DIR", str(DATA_DIR / "uploads")))
 POSTER_DIR = UPLOADS_DIR / "posters"
 PFP_DIR = UPLOADS_DIR / "pfps"
@@ -36,62 +37,11 @@ POSTER_DIR.mkdir(parents=True, exist_ok=True)
 PFP_DIR.mkdir(parents=True, exist_ok=True)
 
 ALLOWED_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
-MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "5"))
-APP_SECRET = os.getenv("APP_SECRET", "dev-secret-change-me")
 
 
-# -------------------------
-# Profanity filter
-# -------------------------
-
-BAD_WORDS = {
-    "fuck", "shit", "bitch", "asshole", "bastard", "cunt", "dick", "pussy",
-    "faggot", "nigger", "slut", "whore", "douchebag", "motherfucker", "twat",
-    "cock", "piss", "fucker", "shitter", "bitchass", "asshat", "bullshit",
-    "chink", "niggers", "faggots", "sluts", "whores", "motherfuckers",
-    "nigga", "niggas", "niglet", "nigglets", "fag", "fags",
-    "jiggaboo", "jiggaboos", "spic", "spics", "gook", "gooks", "beaner", "beaners",
-    "asswipe", "asswipes", "shithead", "shitheads", "dickhead", "dickheads",
-    "dogshit", "cuntface", "cuntfaces",
-}
-
-def _compile_bad_regex(words: set[str]) -> re.Pattern:
-    parts = sorted((re.escape(w) for w in words if w), key=len, reverse=True)
-    if not parts:
-        return re.compile(r"^\b$")
-    return re.compile(r"\b(" + "|".join(parts) + r")\b", re.IGNORECASE)
-
-_BAD_RE = _compile_bad_regex(BAD_WORDS)
-
-def contains_profanity(text: str) -> bool:
-    if not text:
-        return False
-    return _BAD_RE.search(text) is not None
-
-def find_profanity_in_json(obj):
-    def _walk(x, path="$"):
-        if isinstance(x, dict):
-            for k, v in x.items():
-                p, bad = _walk(v, f"{path}.{k}")
-                if p:
-                    return p, bad
-        elif isinstance(x, list):
-            for i, v in enumerate(x):
-                p, bad = _walk(v, f"{path}[{i}]")
-                if p:
-                    return p, bad
-        elif isinstance(x, str):
-            m = _BAD_RE.search(x)
-            if m:
-                return path, m.group(0)
-        return None, None
-    return _walk(obj, "$")
-
-
-# -------------------------
-# Filename helpers
-# -------------------------
-
+# -----------------------------
+# Helpers
+# -----------------------------
 def slugify(s: str) -> str:
     s = (s or "").strip().lower()
     s = re.sub(r"&", "and", s)
@@ -99,12 +49,6 @@ def slugify(s: str) -> str:
     s = re.sub(r"_+", "_", s).strip("_")
     return s
 
-def pfp_filename_for_username(username: str, ext: str) -> str:
-    ext = ext.lower()
-    if ext == ".jpeg":
-        ext = ".jpg"
-    key = slugify(username)
-    return f"pfp_{key}{ext}"
 
 def poster_filename_for_show(corps: str, year: int, ext: str) -> str:
     ext = ext.lower()
@@ -114,77 +58,27 @@ def poster_filename_for_show(corps: str, year: int, ext: str) -> str:
     return f"{key}{int(year)}{ext}"
 
 
-def pfp_url_for_username(app: Flask, username: str) -> str | None:
+def pfp_filename_for_username(username: str, ext: str) -> str:
+    ext = ext.lower()
+    if ext == ".jpeg":
+        ext = ".jpg"
     key = slugify(username)
-    base = f"pfp_{key}"
-    for ext in (".png", ".jpg", ".jpeg", ".webp"):
-        p = PFP_DIR / (base + ext)
-        if p.is_file():
-            return url_for("uploads", filename=f"pfps/{base}{ext}")
-    # fallback: static
-    for ext in (".png", ".jpg", ".jpeg", ".webp"):
-        rel = f"pfps/{base}{ext}"
-        abs_path = Path(app.root_path) / "static" / rel
-        if abs_path.is_file():
-            return url_for("static", filename=rel)
-    return None
+    return f"pfp_{key}{ext}"
 
-
-def poster_url_for_show(app: Flask, corps: str, year: int) -> str | None:
-    key = slugify(corps)
-
-    # volume year-specific
-    base_year = f"{key}{int(year)}"
-    for ext in (".png", ".jpg", ".jpeg", ".webp"):
-        p = POSTER_DIR / (base_year + ext)
-        if p.is_file():
-            return url_for("uploads", filename=f"posters/{base_year}{ext}")
-
-    # volume default per corps
-    base_default = f"{key}default"
-    for ext in (".png", ".jpg", ".jpeg", ".webp"):
-        p = POSTER_DIR / (base_default + ext)
-        if p.is_file():
-            return url_for("uploads", filename=f"posters/{base_default}{ext}")
-
-    # static fallback year-specific
-    base_year_static = f"posters/{key}{int(year)}"
-    for ext in (".png", ".jpg", ".jpeg", ".webp"):
-        abs_path = Path(app.root_path) / "static" / (base_year_static + ext)
-        if abs_path.is_file():
-            return url_for("static", filename=(base_year_static + ext))
-
-    # static fallback global default
-    for ext in (".png", ".jpg", ".jpeg", ".webp"):
-        abs_path = Path(app.root_path) / "static" / ("posters/default" + ext)
-        if abs_path.is_file():
-            return url_for("static", filename=("posters/default" + ext))
-
-    return None
-
-
-# -------------------------
-# App factory
-# -------------------------
 
 def create_app() -> Flask:
     app = Flask(__name__)
-    app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
     app.secret_key = APP_SECRET
+    app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
 
-    # ✅ bootstrap DB without schema.sql
+    # Make sure DB has required tables/columns on boot
     dbx.init_db(DB_PATH)
 
-    def get_conn():
-        conn = dbx.connect(DB_PATH)
-        dbx.ensure_reviews_table(conn)
-        dbx.ensure_profile_columns(conn)
-        dbx.ensure_roles_tables(conn)
-        dbx.ensure_review_votes_table(conn)
-        dbx.ensure_review_comments_table(conn)
-        dbx.ensure_social_tables(conn)
-        dbx.ensure_notifications_table(conn)
-        return conn
+    # -----------------------------
+    # DB access
+    # -----------------------------
+    def get_conn() -> sqlite3.Connection:
+        return dbx.connect(DB_PATH)
 
     def current_user():
         uid = session.get("uid")
@@ -192,8 +86,7 @@ def create_app() -> Flask:
             return None
         conn = get_conn()
         try:
-            row = dbx.user_by_id(conn, int(uid))
-            return dict(row) if row else None
+            return dbx.user_by_id(conn, int(uid))
         finally:
             conn.close()
 
@@ -210,76 +103,78 @@ def create_app() -> Flask:
         @wraps(fn)
         def wrapper(*args, **kwargs):
             u = current_user()
-            if not u or int(u.get("is_admin", 0)) != 1:
+            if not u or int(u["is_admin"]) != 1:
                 abort(403)
             return fn(*args, **kwargs)
         return wrapper
 
-    @app.before_request
-    def profanity_guard():
-        if request.method not in ("POST", "PUT", "PATCH"):
-            return None
+    # -----------------------------
+    # URL helpers (need app context)
+    # -----------------------------
+    def pfp_url_for_username(username: str) -> Optional[str]:
+        key = slugify(username)
+        base = f"pfp_{key}"
+        for ext in (".png", ".jpg", ".jpeg", ".webp"):
+            fpath = PFP_DIR / (base + ext)
+            if fpath.is_file():
+                return url_for("uploads", filename=f"pfps/{base}{ext}")
+        return None
 
-        def _block(where: str):
-            wants_json = (
-                request.path.startswith("/api/")
-                or request.accept_mimetypes.best == "application/json"
-                or request.headers.get("X-Requested-With") == "XMLHttpRequest"
-            )
-            if wants_json:
-                abort(400, description=f"Profanity not allowed in {where}.")
-            flash("Profanity is not allowed. Please remove it and try again.", "error")
-            return redirect(request.referrer or url_for("shows"))
+    def poster_url_for_show(corps: str, year: int) -> Optional[str]:
+        key = slugify(corps)
+        base_year = f"{key}{int(year)}"
+        for ext in (".png", ".jpg", ".jpeg", ".webp"):
+            fpath = POSTER_DIR / (base_year + ext)
+            if fpath.is_file():
+                return url_for("uploads", filename=f"posters/{base_year}{ext}")
 
-        for k, v in request.args.items():
-            if isinstance(v, str) and contains_profanity(v):
-                return _block(f"query param '{k}'")
+        base_default = f"{key}default"
+        for ext in (".png", ".jpg", ".jpeg", ".webp"):
+            fpath = POSTER_DIR / (base_default + ext)
+            if fpath.is_file():
+                return url_for("uploads", filename=f"posters/{base_default}{ext}")
 
-        for k, v in request.form.items():
-            if isinstance(v, str) and contains_profanity(v):
-                return _block(f"form field '{k}'")
-
-        if request.is_json:
-            payload = request.get_json(silent=True)
-            if payload is not None:
-                path, bad = find_profanity_in_json(payload)
-                if path:
-                    return _block(f"json field {path}")
+        for ext in (".png", ".jpg", ".jpeg", ".webp"):
+            fpath = POSTER_DIR / ("default" + ext)
+            if fpath.is_file():
+                return url_for("uploads", filename=f"posters/default{ext}")
 
         return None
 
+    # -----------------------------
+    # Global template injection
+    # -----------------------------
     @app.context_processor
     def inject_globals():
         u = current_user()
+
         notif_items = []
         notif_count = 0
-
         if u:
             conn = get_conn()
             try:
                 notif_count = dbx.unread_notifications_count(conn, int(u["id"]))
-                notif_items = [dict(x) for x in (dbx.list_unread_notifications(conn, int(u["id"]), limit=20) or [])]
+                notif_items = [dict(x) for x in dbx.list_unread_notifications(conn, int(u["id"]), limit=20)]
             finally:
                 conn.close()
 
         return {"me": u, "notif_count": notif_count, "notif_items": notif_items}
 
-    # -------------------------
-    # Static serving for uploads (volume)
-    # -------------------------
-
-    @app.get("/uploads/<path:filename>")
-    def uploads(filename):
-        return send_from_directory(str(UPLOADS_DIR), filename)
-
-    # -------------------------
-    # Home / Shows
-    # -------------------------
-
+    # -----------------------------
+    # Routes
+    # -----------------------------
     @app.get("/")
     def home():
         return redirect(url_for("shows"))
 
+    @app.get("/uploads/<path:filename>")
+    def uploads(filename):
+        # serves /data/uploads/*
+        return send_from_directory(str(UPLOADS_DIR), filename)
+
+    # -----------------------------
+    # Shows
+    # -----------------------------
     @app.get("/shows")
     def shows():
         sort = (request.args.get("sort") or "year_desc").strip()
@@ -293,16 +188,16 @@ def create_app() -> Flask:
             for r in rows:
                 d = dict(r)
                 if not d.get("poster_url"):
-                    d["poster_url"] = poster_url_for_show(app, d.get("corps", ""), d.get("year") or 0)
+                    d["poster_url"] = poster_url_for_show(d.get("corps", ""), d.get("year") or 0)
                 rows2.append(d)
 
             friend_activity = []
             if session.get("uid"):
-                fa = dbx.list_friend_activity(conn, int(session["uid"]), limit=5) or []
-                friend_activity = [dict(x) for x in fa]
+                friend_activity = dbx.list_friend_activity(conn, int(session["uid"]), limit=5)
                 for a in friend_activity:
                     if not a.get("poster_url"):
-                        a["poster_url"] = poster_url_for_show(app, a.get("corps", ""), a.get("year") or 0)
+                        a["poster_url"] = poster_url_for_show(a.get("corps", ""), a.get("year") or 0)
+
         finally:
             conn.close()
 
@@ -318,60 +213,50 @@ def create_app() -> Flask:
     @app.get("/show/<int:show_id>")
     def show_detail(show_id: int):
         viewer_uid = session.get("uid")
-
         conn = get_conn()
         try:
             row = dbx.get_show_by_id(conn, show_id)
             if not row:
                 abort(404)
             row = dict(row)
-
             if not row.get("poster_url"):
-                row["poster_url"] = poster_url_for_show(app, row.get("corps", ""), row.get("year") or 0)
+                row["poster_url"] = poster_url_for_show(row.get("corps", ""), row.get("year") or 0)
 
             me = dbx.user_by_id(conn, int(viewer_uid)) if viewer_uid else None
-            me = dict(me) if me else None
+            if me:
+                me = dict(me)
+                if not me.get("avatar_url"):
+                    me["avatar_url"] = pfp_url_for_username(me.get("username", ""))
 
             my_rating = dbx.user_rating_for_show(conn, show_id, int(viewer_uid)) if viewer_uid else None
 
-            reviews = dbx.list_reviews_for_show(conn, show_id, viewer_user_id=viewer_uid, limit=30) or []
+            reviews = dbx.list_reviews_for_show(conn, show_id, viewer_user_id=int(viewer_uid) if viewer_uid else None, limit=30)
             reviews2 = []
             for rv in reviews:
                 d = dict(rv)
                 if not d.get("avatar_url"):
-                    d["avatar_url"] = pfp_url_for_username(app, d.get("username", ""))
+                    d["avatar_url"] = pfp_url_for_username(d.get("username", ""))
                 reviews2.append(d)
 
-            if me and not me.get("avatar_url"):
-                me["avatar_url"] = pfp_url_for_username(app, me.get("username", ""))
-
-            comments = dbx.list_review_comments_for_show(conn, show_id, limit_total=500) or []
+            comments = dbx.list_review_comments_for_show(conn, show_id, limit_total=500)
             comments_map = {}
             for c in comments:
                 cd = dict(c)
                 if not cd.get("commenter_avatar_url"):
-                    cd["commenter_avatar_url"] = pfp_url_for_username(app, cd.get("commenter_username", ""))
+                    cd["commenter_avatar_url"] = pfp_url_for_username(cd.get("commenter_username", ""))
                 comments_map.setdefault(int(cd["review_user_id"]), []).append(cd)
 
+            reviews3 = []
             for rv in reviews2:
                 review_uid = int(rv.get("user_id", 0))
                 rv["comments"] = comments_map.get(review_uid, [])
                 rv["comment_count"] = len(rv["comments"])
+                reviews3.append(rv)
 
         finally:
             conn.close()
 
-        return render_template(
-            "show_detail.html",
-            row=row,
-            me=me,
-            my_rating=my_rating,
-            reviews=reviews2,
-        )
-
-    # -------------------------
-    # Ratings / Reviews / Votes / Comments
-    # -------------------------
+        return render_template("show_detail.html", row=row, me=me, my_rating=my_rating, reviews=reviews3)
 
     @app.post("/show/<int:show_id>/rate")
     @login_required
@@ -414,13 +299,12 @@ def create_app() -> Flask:
         text = (request.form.get("review_text") or "").strip()
         conn = get_conn()
         try:
-            if not dbx.show_detail(conn, show_id):
+            if not dbx.get_show_by_id(conn, show_id):
                 abort(404)
             dbx.upsert_review(conn, show_id, int(session["uid"]), text)
-        except ValueError as e:
-            flash(str(e), "error")
         finally:
             conn.close()
+        flash("Saved your review.", "ok")
         return redirect(url_for("show_detail", show_id=show_id))
 
     @app.post("/show/<int:show_id>/review/delete")
@@ -434,6 +318,48 @@ def create_app() -> Flask:
         flash("Deleted your review.", "ok")
         return redirect(url_for("show_detail", show_id=show_id))
 
+    # Comments
+    @app.post("/show/<int:show_id>/review/<int:review_user_id>/comment")
+    @login_required
+    def add_review_comment(show_id: int, review_user_id: int):
+        text = (request.form.get("comment_text") or "").strip()
+        commenter_id = int(session["uid"])
+
+        conn = get_conn()
+        try:
+            if not dbx.get_show_by_id(conn, show_id):
+                abort(404)
+            dbx.add_review_comment(conn, show_id, review_user_id, commenter_id, text)
+
+            if commenter_id != int(review_user_id):
+                dbx.add_notification(
+                    conn,
+                    user_id=int(review_user_id),
+                    kind="review_comment",
+                    actor_user_id=commenter_id,
+                    show_id=int(show_id),
+                    review_user_id=int(review_user_id),
+                )
+
+            conn.commit()
+        finally:
+            conn.close()
+
+        return redirect(url_for("show_detail", show_id=show_id))
+
+    @app.post("/show/<int:show_id>/comment/<int:comment_id>/delete")
+    @login_required
+    def delete_my_comment(show_id: int, comment_id: int):
+        conn = get_conn()
+        try:
+            dbx.soft_delete_review_comment(conn, comment_id, requester_user_id=int(session["uid"]))
+            conn.commit()
+        finally:
+            conn.close()
+        flash("Comment deleted.", "ok")
+        return redirect(url_for("show_detail", show_id=show_id))
+
+    # Voting
     @app.post("/show/<int:show_id>/review/<int:review_user_id>/vote")
     @login_required
     def vote_review(show_id: int, review_user_id: int):
@@ -457,7 +383,7 @@ def create_app() -> Flask:
                     actor_user_id=voter_user_id,
                     show_id=int(show_id),
                     review_user_id=int(review_user_id),
-                    vote=1,
+                    vote=1
                 )
             conn.commit()
         finally:
@@ -465,83 +391,9 @@ def create_app() -> Flask:
 
         return redirect(url_for("show_detail", show_id=show_id))
 
-    @app.post("/show/<int:show_id>/review/<int:review_user_id>/comment")
-    @login_required
-    def add_review_comment(show_id: int, review_user_id: int):
-        text = (request.form.get("comment_text") or "").strip()
-        commenter_id = int(session["uid"])
-
-        conn = get_conn()
-        try:
-            if not dbx.get_show_by_id(conn, show_id):
-                abort(404)
-
-            dbx.add_review_comment(conn, show_id, review_user_id, commenter_id, text)
-
-            if commenter_id != int(review_user_id):
-                dbx.add_notification(
-                    conn,
-                    user_id=int(review_user_id),
-                    kind="review_comment",
-                    actor_user_id=commenter_id,
-                    show_id=int(show_id),
-                    review_user_id=int(review_user_id),
-                )
-
-            conn.commit()
-        except ValueError as e:
-            flash(str(e), "error")
-        finally:
-            conn.close()
-
-        return redirect(url_for("show_detail", show_id=show_id))
-
-    @app.post("/show/<int:show_id>/comment/<int:comment_id>/delete")
-    @login_required
-    def delete_my_comment(show_id: int, comment_id: int):
-        conn = get_conn()
-        try:
-            if not dbx.get_show_by_id(conn, show_id):
-                abort(404)
-
-            dbx.soft_delete_review_comment(conn, comment_id, requester_user_id=int(session["uid"]))
-            conn.commit()
-            flash("Comment deleted.", "ok")
-        except ValueError as e:
-            flash(str(e), "error")
-        finally:
-            conn.close()
-
-        return redirect(url_for("show_detail", show_id=show_id))
-
-    @app.post("/admin/show/<int:show_id>/review/<int:review_user_id>/delete")
-    @admin_required
-    def admin_delete_review(show_id: int, review_user_id: int):
-        conn = get_conn()
-        try:
-            dbx.admin_delete_review(conn, show_id, review_user_id)
-            conn.commit()
-            flash("Review deleted.", "ok")
-        finally:
-            conn.close()
-        return redirect(url_for("show_detail", show_id=show_id))
-
-    @app.post("/admin/show/<int:show_id>/comment/<int:comment_id>/delete")
-    @admin_required
-    def admin_delete_comment(show_id: int, comment_id: int):
-        conn = get_conn()
-        try:
-            dbx.admin_hard_delete_review_comment(conn, comment_id)
-            conn.commit()
-            flash("Comment deleted.", "ok")
-        finally:
-            conn.close()
-        return redirect(url_for("show_detail", show_id=show_id))
-
-    # -------------------------
+    # -----------------------------
     # Auth
-    # -------------------------
-
+    # -----------------------------
     @app.get("/register")
     def register():
         return render_template("auth_register.html")
@@ -551,8 +403,8 @@ def create_app() -> Flask:
         username = (request.form.get("username") or "").strip()
         password = (request.form.get("password") or "").strip()
 
-        if len(username) < 3:
-            flash("Username must be at least 3 characters.", "error")
+        if not USERNAME_RE.match(username):
+            flash("Username must be 3–20 chars and only letters, numbers, underscore.", "error")
             return redirect(url_for("register"))
         if len(password) < 6:
             flash("Password must be at least 6 characters.", "error")
@@ -588,17 +440,10 @@ def create_app() -> Flask:
         conn = get_conn()
         try:
             u = dbx.user_by_username(conn, username)
-            u = dict(u) if u else None
         finally:
             conn.close()
 
-        if not u:
-            flash("Invalid username/password.", "error")
-            return redirect(url_for("login"))
-
-        pass_col = dbx.users_password_col(dbx.connect(DB_PATH))  # safe: reads columns
-        stored_hash = u.get(pass_col) or u.get("pass_hash")
-        if not stored_hash or not check_password_hash(stored_hash, password):
+        if not u or not check_password_hash(u["pass_hash"], password):
             flash("Invalid username/password.", "error")
             return redirect(url_for("login"))
 
@@ -612,26 +457,9 @@ def create_app() -> Flask:
         flash("Logged out.", "ok")
         return redirect(url_for("shows"))
 
-    # -------------------------
-    # Profile
-    # -------------------------
-    from flask import render_template, redirect, url_for, request, flash
-    # make sure you already import dbx and have get_conn() style helper
-    
-    @app.route("/admin/roles")
-    def admin_roles():
-        # OPTIONAL: enforce admin
-        # if not g.user or not g.user["is_admin"]: abort(403)
-
-    conn = dbx.connect(DB_PATH)
-    try:
-        dbx.ensure_roles_tables(conn)
-        roles = dbx.list_roles(conn)
-        return render_template("admin_roles.html", roles=roles)
-    finally:
-        conn.close()
-
-    
+    # -----------------------------
+    # Profiles
+    # -----------------------------
     @app.get("/me")
     @login_required
     def me_profile():
@@ -647,25 +475,23 @@ def create_app() -> Flask:
             u["avg_rating"] = avg
             u["avg_rating_cnt"] = cnt
 
-            u["followers_count"] = dbx.follower_count(conn, int(u["id"]))
-            u["following_count"] = dbx.following_count(conn, int(u["id"]))
-            u["viewer_is_following"] = False
-            u["viewer_friend_status"] = "none"
+            u["followers_count"] = dbx.follower_count(conn, uid)
+            u["following_count"] = dbx.following_count(conn, uid)
 
-            roles_for_me = [dict(x) for x in (dbx.roles_for_user(conn, uid) or [])]
-            recent_ratings = [dict(x) for x in (dbx.list_recent_ratings_for_user(conn, uid, limit=8) or [])]
-            recent_reviews = [dict(x) for x in (dbx.list_recent_reviews_for_user(conn, uid, limit=8) or [])]
+            roles_for_me = [dict(x) for x in dbx.roles_for_user(conn, uid)]
+            recent_ratings = [dict(x) for x in dbx.list_recent_ratings_for_user(conn, uid, limit=8)]
+            recent_reviews = [dict(x) for x in dbx.list_recent_reviews_for_user(conn, uid, limit=8)]
 
             for rr in recent_ratings:
                 if not rr.get("poster_url"):
-                    rr["poster_url"] = poster_url_for_show(app, rr.get("corps", ""), rr.get("year") or 0)
-
+                    rr["poster_url"] = poster_url_for_show(rr.get("corps", ""), rr.get("year") or 0)
             for rv in recent_reviews:
                 if not rv.get("poster_url"):
-                    rv["poster_url"] = poster_url_for_show(app, rv.get("corps", ""), rv.get("year") or 0)
+                    rv["poster_url"] = poster_url_for_show(rv.get("corps", ""), rv.get("year") or 0)
 
             if not u.get("avatar_url"):
-                u["avatar_url"] = pfp_url_for_username(app, u.get("username", ""))
+                u["avatar_url"] = pfp_url_for_username(u.get("username", ""))
+
         finally:
             conn.close()
 
@@ -693,10 +519,8 @@ def create_app() -> Flask:
             profile["avg_rating_cnt"] = cnt
 
             viewer_id = int(session["uid"]) if session.get("uid") else None
-
             profile["followers_count"] = dbx.follower_count(conn, int(profile["id"]))
             profile["following_count"] = dbx.following_count(conn, int(profile["id"]))
-
             if viewer_id:
                 profile["viewer_is_following"] = dbx.is_following(conn, viewer_id, int(profile["id"]))
                 profile["viewer_friend_status"] = dbx.friends_status(conn, viewer_id, int(profile["id"]))
@@ -704,19 +528,19 @@ def create_app() -> Flask:
                 profile["viewer_is_following"] = False
                 profile["viewer_friend_status"] = "none"
 
-            roles_for_user = [dict(x) for x in (dbx.roles_for_user(conn, int(profile["id"])) or [])]
-            recent_ratings = [dict(x) for x in (dbx.list_recent_ratings_for_user(conn, int(profile["id"]), limit=7) or [])]
-            recent_reviews = [dict(x) for x in (dbx.list_recent_reviews_for_user(conn, int(profile["id"]), limit=8) or [])]
+            roles_for_user = [dict(x) for x in dbx.roles_for_user(conn, int(profile["id"]))]
+            recent_ratings = [dict(x) for x in dbx.list_recent_ratings_for_user(conn, int(profile["id"]), limit=7)]
+            recent_reviews = [dict(x) for x in dbx.list_recent_reviews_for_user(conn, int(profile["id"]), limit=8)]
 
             for rr in recent_ratings:
                 if not rr.get("poster_url"):
-                    rr["poster_url"] = poster_url_for_show(app, rr.get("corps", ""), rr.get("year") or 0)
+                    rr["poster_url"] = poster_url_for_show(rr.get("corps", ""), rr.get("year") or 0)
             for rv in recent_reviews:
                 if not rv.get("poster_url"):
-                    rv["poster_url"] = poster_url_for_show(app, rv.get("corps", ""), rv.get("year") or 0)
+                    rv["poster_url"] = poster_url_for_show(rv.get("corps", ""), rv.get("year") or 0)
 
             if not profile.get("avatar_url"):
-                profile["avatar_url"] = pfp_url_for_username(app, profile.get("username", ""))
+                profile["avatar_url"] = pfp_url_for_username(profile.get("username", ""))
 
             me = None
             if viewer_id:
@@ -736,6 +560,32 @@ def create_app() -> Flask:
             me=me,
             is_me=is_me,
         )
+
+    @app.get("/u/<username>/ratings")
+    def user_all_ratings(username: str):
+        sort = (request.args.get("sort") or "high").strip().lower()
+        q = (request.args.get("q") or "").strip()
+
+        conn = get_conn()
+        try:
+            me = current_user()
+            profile_user = dbx.user_by_username(conn, username)
+            if not profile_user:
+                abort(404)
+
+            rows = dbx.list_all_ratings_for_user(conn, int(profile_user["id"]), sort=sort, corps_q=q)
+            rows = [dict(r) for r in rows]
+            profile_user = dict(profile_user)
+            if me is not None:
+                me = dict(me)
+
+            for r in rows:
+                if not r.get("poster_url"):
+                    r["poster_url"] = poster_url_for_show(r.get("corps", ""), r.get("year") or 0)
+        finally:
+            conn.close()
+
+        return render_template("user_all_ratings.html", me=me, profile_user=profile_user, sort=sort, q=q, rows=rows)
 
     @app.get("/me/customize")
     @login_required
@@ -771,7 +621,7 @@ def create_app() -> Flask:
         uid = int(session["uid"])
 
         if "pfp_file" not in request.files:
-            flash("Upload failed: form did not send a file.", "error")
+            flash("Upload failed: no file field.", "error")
             return redirect(url_for("me_profile"))
 
         file = request.files.get("pfp_file")
@@ -781,9 +631,8 @@ def create_app() -> Flask:
 
         filename = secure_filename(file.filename)
         ext = os.path.splitext(filename)[1].lower()
-
         if ext not in ALLOWED_IMAGE_EXTS:
-            flash("Profile picture must be PNG, JPG, JPEG, or WEBP.", "error")
+            flash("Profile picture must be PNG/JPG/JPEG/WEBP.", "error")
             return redirect(url_for("me_profile"))
 
         conn = get_conn()
@@ -800,27 +649,22 @@ def create_app() -> Flask:
             avatar_url = url_for("uploads", filename=f"pfps/{out_name}")
             dbx.update_user_avatar_url(conn, uid, avatar_url)
             conn.commit()
-
-            flash("Profile picture updated.", "ok")
-        except Exception as e:
-            flash(f"Upload failed: {e}", "error")
         finally:
             conn.close()
 
+        flash("Profile picture updated.", "ok")
         return redirect(url_for("me_profile"))
 
-    # -------------------------
-    # Admin: bulk add / edit / upload poster / delete show
-    # -------------------------
-
+    # -----------------------------
+    # Admin: bulk add, edit shows, posters
+    # -----------------------------
     @app.get("/admin/bulk_add")
     @admin_required
     def bulk_add():
         return render_template("bulk_add.html")
 
     def parse_bulk_lines(text: str):
-        items = []
-        errors = []
+        items, errors = [], []
         for i, raw in enumerate((text or "").splitlines(), start=1):
             line = raw.strip()
             if not line or line.startswith("#"):
@@ -845,8 +689,6 @@ def create_app() -> Flask:
         if errors:
             for e in errors[:10]:
                 flash(e, "error")
-            if len(errors) > 10:
-                flash(f"...and {len(errors)-10} more errors.", "error")
             return redirect(url_for("bulk_add"))
 
         conn = get_conn()
@@ -864,7 +706,7 @@ def create_app() -> Flask:
         finally:
             conn.close()
 
-        flash(f"Bulk add done. Inserted: {inserted}. Duplicates skipped: {dupes}. Other issues: {other_bad}.", "ok")
+        flash(f"Bulk add done. Inserted: {inserted}. Duplicates: {dupes}. Other: {other_bad}.", "ok")
         return redirect(url_for("shows"))
 
     @app.get("/admin/show/<int:show_id>/edit")
@@ -886,7 +728,7 @@ def create_app() -> Flask:
         title = (request.form.get("title") or "").strip()
         corps = (request.form.get("corps") or "").strip()
         year = (request.form.get("year") or "").strip()
-        poster_url = (request.form.get("poster_url") or "").strip()
+        poster_url = (request.form.get("poster_url") or "").strip() or None
 
         if not year.isdigit():
             flash("Year must be a number.", "error")
@@ -917,7 +759,7 @@ def create_app() -> Flask:
         filename = secure_filename(file.filename)
         ext = os.path.splitext(filename)[1].lower()
         if ext not in ALLOWED_IMAGE_EXTS:
-            flash("Poster must be PNG, JPG, JPEG, or WEBP.", "error")
+            flash("Poster must be PNG/JPG/JPEG/WEBP.", "error")
             return redirect(url_for("admin_edit_show", show_id=show_id))
 
         conn = get_conn()
@@ -927,19 +769,17 @@ def create_app() -> Flask:
                 abort(404)
             row = dict(row)
 
-            corps = row.get("corps", "")
-            year = row.get("year") or 0
-            out_name = poster_filename_for_show(corps, year, ext)
+            out_name = poster_filename_for_show(row.get("corps", ""), row.get("year") or 0, ext)
             out_path = POSTER_DIR / out_name
             file.save(out_path)
 
             poster_url = url_for("uploads", filename=f"posters/{out_name}")
             dbx.update_show_poster_url(conn, show_id, poster_url)
             conn.commit()
-            flash("Poster uploaded.", "ok")
         finally:
             conn.close()
 
+        flash("Poster uploaded.", "ok")
         return redirect(url_for("admin_edit_show", show_id=show_id))
 
     @app.post("/admin/show/<int:show_id>/delete")
@@ -947,80 +787,173 @@ def create_app() -> Flask:
     def admin_delete_show(show_id: int):
         conn = get_conn()
         try:
-            s = dbx.get_show_by_id(conn, show_id)
-            if not s:
-                abort(404)
-            s = dict(s)
-
-            # if poster is in uploads, optionally delete file
-            poster_url = (s.get("poster_url") or "").strip()
-            if poster_url.startswith("/uploads/"):
-                try:
-                    rel = poster_url.split("/uploads/", 1)[1]  # e.g. "posters/x.webp"
-                    abs_path = UPLOADS_DIR / rel
-                    if abs_path.is_file():
-                        abs_path.unlink()
-                except Exception:
-                    pass
-
             dbx.admin_delete_show(conn, show_id)
             conn.commit()
-            flash("Show deleted permanently.", "ok")
         finally:
             conn.close()
-
+        flash("Show deleted permanently.", "ok")
         return redirect(url_for("shows"))
 
-    # -------------------------
-    # Top pages
-    # -------------------------
-
-    @app.get("/top")
-    def top_shows():
-        mode = (request.args.get("mode") or "top").strip().lower()
-        if mode not in ("top", "bottom"):
-            mode = "top"
-
+    @app.post("/admin/show/<int:show_id>/review/<int:review_user_id>/delete")
+    @admin_required
+    def admin_delete_review(show_id: int, review_user_id: int):
         conn = get_conn()
         try:
-            rows = dbx.list_top_shows_with_top_review(conn, limit=50, mode=mode)
-            rows2 = []
-            for r in rows or []:
-                d = dict(r)
-                if not d.get("poster_url"):
-                    d["poster_url"] = poster_url_for_show(app, d.get("corps", ""), d.get("year") or 0)
-                if d.get("top_review_username") and not d.get("top_review_avatar_url"):
-                    d["top_review_avatar_url"] = pfp_url_for_username(app, d.get("top_review_username", ""))
-                rows2.append(d)
-            rows = rows2
+            dbx.admin_delete_review(conn, show_id, review_user_id)
+            conn.commit()
+        finally:
+            conn.close()
+        flash("Review deleted.", "ok")
+        return redirect(url_for("show_detail", show_id=show_id))
+
+    @app.post("/admin/show/<int:show_id>/comment/<int:comment_id>/delete")
+    @admin_required
+    def admin_delete_comment(show_id: int, comment_id: int):
+        conn = get_conn()
+        try:
+            dbx.admin_hard_delete_review_comment(conn, comment_id)
+            conn.commit()
+        finally:
+            conn.close()
+        flash("Comment deleted.", "ok")
+        return redirect(url_for("show_detail", show_id=show_id))
+
+    # -----------------------------
+    # Admin: roles (THIS FIXES your BuildError admin_roles)
+    # -----------------------------
+    @app.get("/admin/roles")
+    @admin_required
+    def admin_roles():
+        conn = get_conn()
+        try:
+            roles = dbx.list_roles(conn)
+        finally:
+            conn.close()
+        return render_template("admin_roles.html", roles=roles)
+
+    @app.post("/admin/roles")
+    @admin_required
+    def admin_roles_post():
+        name = (request.form.get("name") or "").strip()
+        color = (request.form.get("color") or "").strip()
+        conn = get_conn()
+        try:
+            dbx.create_role(conn, name, color)
+        except ValueError as e:
+            flash(str(e), "error")
+        except sqlite3.IntegrityError:
+            flash("Role name already exists.", "error")
+        finally:
+            conn.close()
+        return redirect(url_for("admin_roles"))
+
+    @app.post("/admin/roles/<int:role_id>/delete")
+    @admin_required
+    def admin_delete_role(role_id: int):
+        conn = get_conn()
+        try:
+            dbx.delete_role(conn, role_id)
+        finally:
+            conn.close()
+        flash("Role deleted.", "ok")
+        return redirect(url_for("admin_roles"))
+
+    @app.get("/admin/roles/<int:role_id>/edit")
+    @admin_required
+    def admin_edit_role(role_id: int):
+        conn = get_conn()
+        try:
+            r = dbx.role_by_id(conn, role_id)
+            if not r:
+                abort(404)
+        finally:
+            conn.close()
+        return render_template("admin_role_edit.html", r=r)
+
+    @app.post("/admin/roles/<int:role_id>/edit")
+    @admin_required
+    def admin_edit_role_post(role_id: int):
+        name = (request.form.get("name") or "").strip()
+        color = (request.form.get("color") or "").strip()
+        conn = get_conn()
+        try:
+            dbx.update_role(conn, role_id, name, color)
+        except ValueError as e:
+            flash(str(e), "error")
+            return redirect(url_for("admin_edit_role", role_id=role_id))
+        except sqlite3.IntegrityError:
+            flash("That role name already exists.", "error")
+            return redirect(url_for("admin_edit_role", role_id=role_id))
+        finally:
+            conn.close()
+        flash("Role updated.", "ok")
+        return redirect(url_for("admin_roles"))
+
+    @app.get("/admin/users")
+    @admin_required
+    def admin_users():
+        conn = get_conn()
+        try:
+            users = [dict(u) for u in dbx.list_users(conn)]
+        finally:
+            conn.close()
+        return render_template("admin_users.html", users=users)
+
+    @app.get("/admin/user/<username>/roles")
+    @admin_required
+    def admin_user_roles(username: str):
+        conn = get_conn()
+        try:
+            u = dbx.user_by_username(conn, username)
+            if not u:
+                abort(404)
+            roles = dbx.list_roles(conn)
+            user_roles = dbx.roles_for_user(conn, int(u["id"]))
+            user_role_ids = {int(r["id"]) for r in user_roles}
         finally:
             conn.close()
 
-        return render_template("top_shows.html", rows=rows, mode=mode)
+        return render_template(
+            "admin_user_roles.html",
+            u=u,
+            roles=roles,
+            user_roles=user_roles,
+            user_role_ids=user_role_ids,
+        )
 
-    @app.get("/top_users")
-    def top_users():
+    @app.post("/admin/user/<username>/roles/assign")
+    @admin_required
+    def admin_user_roles_assign(username: str):
+        role_id = int(request.form.get("role_id") or "0")
         conn = get_conn()
         try:
-            rows = dbx.list_top_users_by_review_upvotes(conn, limit=25)
-            rows2 = []
-            for r in rows or []:
-                d = dict(r)
-                if not d.get("avatar_url"):
-                    d["avatar_url"] = pfp_url_for_username(app, d.get("username", ""))
-                if d.get("top_show_id") and not d.get("top_poster_url"):
-                    d["top_poster_url"] = poster_url_for_show(app, d.get("top_corps", ""), d.get("top_year") or 0)
-                rows2.append(d)
-            rows = rows2
+            u = dbx.user_by_username(conn, username)
+            if not u:
+                abort(404)
+            dbx.assign_role_to_user(conn, int(u["id"]), role_id, assigned_by_user_id=int(session["uid"]))
         finally:
             conn.close()
+        flash("Role assigned.", "ok")
+        return redirect(url_for("admin_user_roles", username=username))
 
-        return render_template("top_users.html", rows=rows)
+    @app.post("/admin/user/<username>/roles/remove")
+    @admin_required
+    def admin_user_roles_remove(username: str):
+        role_id = int(request.form.get("role_id") or "0")
+        conn = get_conn()
+        try:
+            u = dbx.user_by_username(conn, username)
+            if not u:
+                abort(404)
+            dbx.remove_role_from_user(conn, int(u["id"]), role_id)
+        finally:
+            conn.close()
+        flash("Role removed.", "ok")
+        return redirect(url_for("admin_user_roles", username=username))
 
-    # -------------------------
-    # Social routes
-    # -------------------------
-
+    # -----------------------------
+    # Social: follow + friends
+    # -----------------------------
     @app.post("/u/<username>/follow")
     @login_required
     def follow_user(username: str):
@@ -1059,11 +992,10 @@ def create_app() -> Flask:
             u = dbx.user_by_username(conn, username)
             if not u:
                 abort(404)
-            u = dict(u)
-            rows = [dict(x) for x in (dbx.list_followers(conn, int(u["id"]), limit=500) or [])]
-            return render_template("followers.html", profile_user=u, rows=rows)
+            rows = [dict(x) for x in dbx.list_followers(conn, int(u["id"]), limit=500)]
         finally:
             conn.close()
+        return render_template("followers.html", profile_user=dict(u), rows=rows)
 
     @app.get("/u/<username>/following")
     def user_following(username: str):
@@ -1072,11 +1004,10 @@ def create_app() -> Flask:
             u = dbx.user_by_username(conn, username)
             if not u:
                 abort(404)
-            u = dict(u)
-            rows = [dict(x) for x in (dbx.list_following(conn, int(u["id"]), limit=500) or [])]
-            return render_template("following.html", profile_user=u, rows=rows)
+            rows = [dict(x) for x in dbx.list_following(conn, int(u["id"]), limit=500)]
         finally:
             conn.close()
+        return render_template("following.html", profile_user=dict(u), rows=rows)
 
     @app.get("/me/friends")
     @login_required
@@ -1085,12 +1016,11 @@ def create_app() -> Flask:
         try:
             me_id = int(session["uid"])
             me = dbx.user_by_id(conn, me_id)
-            me = dict(me) if me else None
-            friends = [dict(x) for x in (dbx.list_friends(conn, me_id, limit=500) or [])]
-            incoming = [dict(x) for x in (dbx.list_incoming_friend_requests(conn, me_id, limit=200) or [])]
-            return render_template("friends.html", me=me, friends=friends, incoming=incoming)
+            friends = [dict(x) for x in dbx.list_friends(conn, me_id, limit=500)]
+            incoming = [dict(x) for x in dbx.list_incoming_friend_requests(conn, me_id, limit=200)]
         finally:
             conn.close()
+        return render_template("friends.html", me=dict(me) if me else None, friends=friends, incoming=incoming)
 
     @app.post("/u/<username>/friend/request")
     @login_required
@@ -1153,25 +1083,58 @@ def create_app() -> Flask:
             conn.close()
         return redirect(url_for("user_profile", username=username))
 
-    # -------------------------
     # Notifications
-    # -------------------------
-
     @app.post("/me/notifications/read")
     @login_required
     def notifications_mark_read():
-        uid = int(session["uid"])
         conn = get_conn()
         try:
-            dbx.mark_all_notifications_read(conn, uid)
+            dbx.mark_all_notifications_read(conn, int(session["uid"]))
             conn.commit()
         finally:
             conn.close()
         return redirect(request.referrer or url_for("shows"))
 
-    # -------------------------
-    # Error handler
-    # -------------------------
+    # Top pages
+    @app.get("/top")
+    def top_shows():
+        mode = (request.args.get("mode") or "top").strip().lower()
+        if mode not in ("top", "bottom"):
+            mode = "top"
+
+        conn = get_conn()
+        try:
+            rows = dbx.list_top_shows_with_top_review(conn, limit=50, mode=mode)
+            rows2 = []
+            for r in rows:
+                d = dict(r)
+                if not d.get("poster_url"):
+                    d["poster_url"] = poster_url_for_show(d.get("corps", ""), d.get("year") or 0)
+                if d.get("top_review_username") and not d.get("top_review_avatar_url"):
+                    d["top_review_avatar_url"] = pfp_url_for_username(d.get("top_review_username", ""))
+                rows2.append(d)
+        finally:
+            conn.close()
+
+        return render_template("top_shows.html", rows=rows2, mode=mode)
+
+    @app.get("/top_users")
+    def top_users():
+        conn = get_conn()
+        try:
+            rows = dbx.list_top_users_by_review_upvotes(conn, limit=25)
+            rows2 = []
+            for r in rows:
+                d = dict(r)
+                if not d.get("avatar_url"):
+                    d["avatar_url"] = pfp_url_for_username(d.get("username", ""))
+                if d.get("top_show_id") and not d.get("top_poster_url"):
+                    d["top_poster_url"] = poster_url_for_show(d.get("top_corps", ""), d.get("top_year") or 0)
+                rows2.append(d)
+        finally:
+            conn.close()
+
+        return render_template("top_users.html", rows=rows2)
 
     @app.errorhandler(403)
     def forbidden(_e):
@@ -1183,7 +1146,5 @@ def create_app() -> Flask:
 app = create_app()
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
+    port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
-
-
