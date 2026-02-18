@@ -27,9 +27,10 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = os.getenv("DB_PATH", str(DATA_DIR / "site.db"))
 
 # Uploads live on the volume
-UPLOADS_DIR = Path(os.getenv("UPLOADS_DIR", str(DATA_DIR / "uploads")))
-POSTER_DIR = UPLOADS_DIR / "posters"
+BASE_DIR = Path(__file__).resolve().parent
+UPLOADS_DIR = BASE_DIR / "uploads"
 PFP_DIR = UPLOADS_DIR / "pfps"
+POSTER_DIR = UPLOADS_DIR / "posters"
 POSTER_DIR.mkdir(parents=True, exist_ok=True)
 PFP_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -118,30 +119,30 @@ def create_app() -> Flask:
         return None
 
     def poster_url_for_show(corps: str, year: int) -> str | None:
-    key = slugify(corps)
+        key = slugify(corps)
 
     # 1) year-specific poster: uploads/posters/<corpsslug><year>.<ext>
-    base_year = f"{key}{int(year)}"
-    for ext in (".png", ".jpg", ".jpeg", ".webp"):
-        abs_path = POSTER_DIR / (base_year + ext)
-        if abs_path.is_file():
-            return url_for("uploads", filename=f"posters/{base_year}{ext}")
-
-    # 2) corps default: uploads/posters/<corpsslug>default.<ext>
-    base_default = f"{key}default"
-    for ext in (".png", ".jpg", ".jpeg", ".webp"):
-        abs_path = POSTER_DIR / (base_default + ext)
-        if abs_path.is_file():
-            return url_for("uploads", filename=f"posters/{base_default}{ext}")
-
-    # 3) global default: uploads/posters/default.<ext>
-    base_global = "default"
-    for ext in (".png", ".jpg", ".jpeg", ".webp"):
-        abs_path = POSTER_DIR / (base_global + ext)
-        if abs_path.is_file():
-            return url_for("uploads", filename=f"posters/{base_global}{ext}")
-
-    return None
+        base_year = f"{key}{int(year)}"
+        for ext in (".png", ".jpg", ".jpeg", ".webp"):
+            abs_path = POSTER_DIR / (base_year + ext)
+            if abs_path.is_file():
+                return url_for("uploads", filename=f"posters/{base_year}{ext}")
+    
+        # 2) corps default: uploads/posters/<corpsslug>default.<ext>
+        base_default = f"{key}default"
+        for ext in (".png", ".jpg", ".jpeg", ".webp"):
+            abs_path = POSTER_DIR / (base_default + ext)
+            if abs_path.is_file():
+                return url_for("uploads", filename=f"posters/{base_default}{ext}")
+    
+        # 3) global default: uploads/posters/default.<ext>
+        base_global = "default"
+        for ext in (".png", ".jpg", ".jpeg", ".webp"):
+            abs_path = POSTER_DIR / (base_global + ext)
+            if abs_path.is_file():
+                return url_for("uploads", filename=f"posters/{base_global}{ext}")
+    
+        return None
     # -----------------------------
     # Global template injection
     # -----------------------------
@@ -1245,6 +1246,7 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
