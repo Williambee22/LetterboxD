@@ -1,14 +1,11 @@
 import os, re
 import sqlite3
 from functools import wraps
-from typing import Optional, Tuple, List
 from pathlib import Path
-from flask import request, redirect, url_for, session, flash, abort
-from werkzeug.utils import secure_filename
-from flask import request
-from flask import app, url_for
-from flask import send_from_directory
+from typing import Optional, Tuple, List
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
+from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import db as dbx
@@ -1787,4 +1784,5 @@ if __name__ == "__main__":
     # Local dev only
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
