@@ -13,6 +13,8 @@ import db as dbx
 from pathlib import Path
 
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,20}$")
+BASE_DIR = Path(__file__).resolve().parent
+
 
 def get_conn():
     # timeout helps with brief lock contention
@@ -74,7 +76,8 @@ DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
 DB_PATH = os.getenv("DB_PATH", str(DATA_DIR / "site.db"))
 
 # Uploads live on the volume
-UPLOADS_DIR = Path(os.getenv("UPLOADS_DIR", str(DATA_DIR / "uploads")))
+UPLOADS_DIR = BASE_DIR / "uploads"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 POSTER_DIR  = UPLOADS_DIR / "posters"
 PFP_DIR     = UPLOADS_DIR / "pfps"
 
@@ -967,8 +970,7 @@ def create_app() -> Flask:
 
     from flask import send_from_directory  # make sure this import exists at top
 
-    UPLOADS_DIR = BASE_DIR / "uploads"
-    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    
     
     @app.get("/uploads/<path:filename>")
     def uploads(filename):
@@ -1784,6 +1786,7 @@ if __name__ == "__main__":
     # Local dev only
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
