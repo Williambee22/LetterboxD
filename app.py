@@ -607,7 +607,23 @@ def create_app() -> Flask:
     # -------------------------
     # Profile
     # -------------------------
+    from flask import render_template, redirect, url_for, request, flash
+    # make sure you already import dbx and have get_conn() style helper
+    
+    @app.route("/admin/roles")
+    def admin_roles():
+        # OPTIONAL: enforce admin
+        # if not g.user or not g.user["is_admin"]: abort(403)
 
+    conn = dbx.connect(DB_PATH)
+    try:
+        dbx.ensure_roles_tables(conn)
+        roles = dbx.list_roles(conn)
+        return render_template("admin_roles.html", roles=roles)
+    finally:
+        conn.close()
+
+    
     @app.get("/me")
     @login_required
     def me_profile():
@@ -1161,3 +1177,4 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)
+
