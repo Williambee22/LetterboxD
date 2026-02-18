@@ -5,10 +5,7 @@ from functools import wraps
 from pathlib import Path
 from typing import Optional
 
-from flask import (
-    Flask, render_template, request, redirect, url_for,
-    session, flash, abort, send_from_directory
-)
+from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, send_from_directory
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -1073,6 +1070,55 @@ def create_app() -> Flask:
             conn.close()
         return render_template("friends.html", me=dict(me) if me else None, friends=friends, incoming=incoming)
 
+
+    @app.post("/me/change-password")
+    @login_required
+    def change_password():
+        """
+        Template expects endpoint name: change_password
+        POST handler that updates the current user's password.
+        """
+        old_pw = (request.form.get("old_password") or "").strip()
+        new_pw = (request.form.get("new_password") or "").strip()
+        new2   = (request.form.get("new_password2") or "").strip()
+    
+        if not old_pw or not new_pw or not new2:
+            flash("Fill out all password fields.", "error")
+            return redirect(url_for("me_profile"))
+    
+        if new_pw != new2:
+            flash("New passwords do not match.", "error")
+            return redirect(url_for("me_profile"))
+    
+        if len(new_pw) < 6:
+            flash("Password must be at least 6 characters.", "error")
+            return redirect(url_for("me_profile"))
+    
+        conn = dbx.connect(DB_PATH)
+        try:
+            me = dbx.user_by_id(conn, int(session["user_id"]))
+            if not me:
+                flash("Session user not found.", "error")
+                return redirect(url_for("logout"))
+    
+            # detect which column your users table uses
+            pw_col = dbx.users_password_col(conn)
+            current_hash = me[pw_col]
+    
+            if not check_password_hash(current_hash, old_pw):
+                flash("Current password is incorrect.", "error")
+                return redirect(url_for("me_profile"))
+    
+            new_hash = generate_password_hash(new_pw)
+            dbx.update_user_password_hash(conn, int(session["user_id"]), new_hash)
+            conn.commit()
+            flash("Password updated.", "ok")
+            return redirect(url_for("me_profile"))
+        finally:
+            conn.close()
+
+
+    
     @app.post("/u/<username>/friend/request")
     @login_required
     def friend_request(username: str):
@@ -1199,5 +1245,6 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
