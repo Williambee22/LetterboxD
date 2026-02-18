@@ -48,16 +48,12 @@ def _find_poster_filename(corps: str, year: str) -> str | None:
 
     return None
 
-def poster_url_for_show(corps: str, year: str) -> str:
-    """
-    Jinja helper: {{ poster_url_for_show(corps, year) }}
-    """
-    fn = _find_poster_filename(corps, str(year))
-    if fn:
-        return url_for("static", filename=f"posters/{fn}")
-
-    # Make sure you have this file:
-    # static/posters/placeholder.png
+def _poster_url_for_show(corps: str, year) -> str:
+    y = str(year or "").strip()
+    key = slugify(corps)
+    # Example: static/posters/blue_devils2017.png
+    if key and y:
+        return url_for("static", filename=f"posters/{key}{y}.png")
     return url_for("static", filename="posters/placeholder.png")
     
 # -----------------------------
@@ -114,7 +110,7 @@ def create_app() -> Flask:
     app = Flask(__name__, static_folder="static", template_folder="templates")
     app.secret_key = APP_SECRET
     app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
-    app.jinja_env.globals["poster_url_for_show"] = poster_url_for_show
+    app.jinja_env.globals["poster_url_for_show"] = _poster_url_for_show
     app.jinja_env.globals["POSTER_PLACEHOLDER"] = "/static/posters/placeholder.png"
 
     dbx.init_db(DB_PATH)
@@ -1297,6 +1293,7 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
