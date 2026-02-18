@@ -199,19 +199,23 @@ def create_app() -> Flask:
     @app.context_processor
     def inject_globals():
         u = current_user()
-
+    
         notif_items = []
         notif_count = 0
+    
         if u:
             conn = get_conn()
             try:
-                notif_count = dbx.unread_notifications_count(conn, int(u["id"]))
-                notif_items = [
-                    dict(x) for x in dbx.list_unread_notifications(conn, int(u["id"]), limit=20)
-                ]
+                try:
+                    notif_count = dbx.unread_notifications_count(conn, int(u["id"]))
+                    notif_items = [dict(x) for x in dbx.list_unread_notifications(conn, int(u["id"]), limit=20)]
+                except sqlite3.OperationalError:
+                    # DB might not have notifications tables yet
+                    notif_count = 0
+                    notif_items = []
             finally:
                 conn.close()
-
+    
         return {"me": u, "notif_count": notif_count, "notif_items": notif_items}
 
     # -----------------------------
@@ -248,11 +252,14 @@ def create_app() -> Flask:
 
             friend_activity = []
             if session.get("uid"):
-                friend_activity = [dict(x) for x in dbx.list_friend_activity(conn, int(session["uid"]), limit=5)]
-                for a in friend_activity:
-                    # template uses poster_url_for_show() but friend activity also sometimes expects a url
-                    if not a.get("poster_url"):
-                        a["poster_url"] = poster_url_for_show(a.get("corps", ""), a.get("year") or 0)
+                try:
+                    friend_activity = [dict(x) for x in dbx.list_friend_activity(conn, int(session["uid"]), limit=5)]
+                    for a in friend_activity:
+                        if not a.get("poster_url"):
+                            a["poster_url"] = poster_url_for_show(a.get("corps", ""), a.get("year") or 0)
+                except sqlite3.OperationalError:
+                    # DB might not have friend activity tables/joins yet
+                    friend_activity = []
         finally:
             conn.close()
 
@@ -501,30 +508,28 @@ def create_app() -> Flask:
         username = (request.form.get("username") or "").strip()
         password = (request.form.get("password") or "").strip()
         nxt = (request.form.get("next") or "").strip()
-
+    
         conn = get_conn()
         try:
             u = dbx.user_by_username(conn, username)
+            if not u:
+                flash("Invalid username/password.", "error")
+                return redirect(url_for("login"))
+    
+            u = dict(u)
+            pass_col = dbx.users_password_col(conn)
+            stored_hash = u.get(pass_col) or u.get("pass_hash") or u.get("password_hash")
+    
+            if not stored_hash or not check_password_hash(stored_hash, password):
+                flash("Invalid username/password.", "error")
+                return redirect(url_for("login"))
         finally:
             conn.close()
-
-        if not u:
-            flash("Invalid username/password.", "error")
-            return redirect(url_for("login"))
-
-        # Handle either pass_hash / password_hash column (your db helper decides)
-        u = dict(u)
-        pass_col = dbx.users_password_col(dbx.connect(DB_PATH))  # quick probe
-        stored_hash = u.get(pass_col) or u.get("pass_hash") or u.get("password_hash")
-
-        if not stored_hash or not check_password_hash(stored_hash, password):
-            flash("Invalid username/password.", "error")
-            return redirect(url_for("login"))
-
+    
         session["uid"] = int(u["id"])
         flash("Logged in.", "ok")
         return redirect(nxt or url_for("shows"))
-
+        
     @app.get("/logout")
     def logout():
         session.pop("uid", None)
@@ -1314,3 +1319,4 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
