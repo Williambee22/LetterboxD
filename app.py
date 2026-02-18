@@ -1,7 +1,7 @@
 import os
 import re
 import sqlite3
-from functools import wraps
+from functools import wraps, lru_cache
 from pathlib import Path
 from typing import Optional
 
@@ -14,35 +14,51 @@ import db as dbx
 
 _slug_re = re.compile(r"[^a-z0-9_]+")
 
-def slugify_corps(name: str) -> str:
-    s = (name or "").strip().lower()
-    s = s.replace("&", "and")
-    s = re.sub(r"\s+", "_", s)
-    s = _slug_re.sub("", s)
-    return s.strip("_") or "unknown"
+BASE_DIR = Path(__file__).resolve().parent
+POSTER_DIR = BASE_DIR / "static" / "posters"
 
-def poster_url_for_show(corps: str, year) -> str:
+def slugify(s: str) -> str:
+    s = (s or "").strip().lower()
+    s = re.sub(r"&", " and ", s)
+    s = re.sub(r"[^a-z0-9]+", "_", s).strip("_")
+    return s
+
+@lru_cache(maxsize=4096)
+def _find_poster_filename(corps: str, year: str) -> str | None:
     """
-    Returns a URL like /static/posters/blue_devils2017.png if it exists.
-    Falls back to /static/posters/placeholder.png if missing.
+    Returns the filename inside static/posters/ if it exists, else None.
+    Tries common image extensions AND extensionless (not ideal, but supported).
     """
-    fallback = url_for("static", filename="posters/placeholder.png")
+    c = slugify(corps)
+    y = re.sub(r"[^0-9]", "", str(year or ""))
+    if not c or not y:
+        return None
 
-    corps = (corps or "").strip()
-    year_s = str(year).strip() if year is not None else ""
-    if not corps or not year_s:
-        return fallback
+    base = f"{c}{y}"
 
-    key = f"{slugify_corps(corps)}{year_s}"
-    posters_dir = Path(current_app.static_folder) / "posters"
+    # Prefer real image extensions
+    for ext in (".png", ".jpg", ".jpeg", ".webp"):
+        fn = base + ext
+        if (POSTER_DIR / fn).is_file():
+            return fn
 
-    # Try common extensions
-    for ext in ("png", "jpg", "jpeg", "webp"):
-        fp = posters_dir / f"{key}.{ext}"
-        if fp.is_file():
-            return url_for("static", filename=f"posters/{key}.{ext}")
+    # Last resort: extensionless file (may not render correctly in browsers)
+    if (POSTER_DIR / base).is_file():
+        return base
 
-    return fallback
+    return None
+
+def poster_url_for_show(corps: str, year: str) -> str:
+    """
+    Jinja helper: {{ poster_url_for_show(corps, year) }}
+    """
+    fn = _find_poster_filename(corps, str(year))
+    if fn:
+        return url_for("static", filename=f"posters/{fn}")
+
+    # Make sure you have this file:
+    # static/posters/placeholder.png
+    return url_for("static", filename="posters/placeholder.png")
     
 # -----------------------------
 # Basics / Config
@@ -59,10 +75,8 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = os.getenv("DB_PATH", str(DATA_DIR / "site.db"))
 
 # Uploads live on the volume
-BASE_DIR = Path(__file__).resolve().parent
 UPLOADS_DIR = BASE_DIR / "uploads"
 PFP_DIR = UPLOADS_DIR / "pfps"
-POSTER_DIR = UPLOADS_DIR / "posters"
 POSTER_DIR.mkdir(parents=True, exist_ok=True)
 PFP_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -1283,6 +1297,7 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
