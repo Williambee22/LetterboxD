@@ -1,7 +1,7 @@
 {# =========================================================
    templates/shows.html  (FULL FILE)
    Home page grid of shows with filters + rating overlays
-   Safe against missing columns (cnt / avg_rating / poster_url)
+   Safe against missing columns (cnt / avg_rating / poster_url_for_show)
 ========================================================= #}
 
 {% extends "base.html" %}
@@ -77,7 +77,7 @@
             {% set corpsv = a["corps"] if "corps" in ak else "" %}
             {% set yearv  = a["year"] if "year" in ak else "" %}
             {% set ts   = a["ts"] if "ts" in ak else "" %}
-            {% set poster_thumb = (a["poster_url"] if "poster_url" in ak else "") %}
+            {% set poster_thumb = (a["poster_url_for_show"] if "poster_url_for_show" in ak else "") %}
 
             <div style="width:340px; flex:0 0 auto; padding:10px; border-radius:12px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);">
               <div style="display:flex; gap:10px; align-items:flex-start;">
@@ -178,7 +178,7 @@
 
       {# --- safe field reads (sqlite3.Row supports keys()) --- #}
       {% set keys = row.keys() %}
-      {% set poster = row["poster_url"] if "poster_url" in keys else "" %}
+      {% set poster = row["poster_url_for_show"] if "poster_url_for_show" in keys else "" %}
       {% set yearv = row["year"] if "year" in keys else "" %}
       {% set corpsv = row["corps"] if "corps" in keys else "" %}
       {% set titlev = row["title"] if "title" in keys else "Untitled" %}
@@ -232,5 +232,6 @@
     <div class="muted">No shows found.</div>
   </div>
 {% endif %}
+
 
 {% endblock %}
