@@ -3,6 +3,10 @@ import time
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
+avatar_url = url_for("uploads", filename=f"pfps/{out_name}")
+poster_url = url_for("uploads", filename=f"posters/{out_name}")
+
+
 def now_ts() -> int:
     return int(time.time())
 
@@ -838,6 +842,25 @@ def update_user_avatar_url(conn, user_id: int, avatar_url: str | None):
         (avatar_url, int(user_id)),
     )
 
+def pfp_url_for_username(username: str) -> str | None:
+    key = slugify(username)
+    base = f"pfp_{key}"
+    for ext in (".png", ".jpg", ".jpeg", ".webp"):
+        abs_path = PFP_DIR / (base + ext)
+        if abs_path.is_file():
+            return url_for("uploads", filename=f"pfps/{base}{ext}")
+    return None
+
+def poster_url_for_show(corps: str, year: int) -> str | None:
+    key = slugify(corps)
+    base = f"{key}{int(year)}"
+    for ext in (".png", ".jpg", ".jpeg", ".webp"):
+        abs_path = POSTER_DIR / (base + ext)
+        if abs_path.is_file():
+            return url_for("uploads", filename=f"posters/{base}{ext}")
+    return None
+
+
 def list_recent_ratings_for_user(conn, user_id: int, limit: int = 20):
     return conn.execute(
         """
@@ -1634,4 +1657,5 @@ def user_avg_rating(conn, user_id: int):
 
     cnt = int(row["cnt"] or 0) if row else 0
     avg = float(row["avg_rating"] or 0.0) if row else 0.0
+
     return avg, cnt
