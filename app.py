@@ -114,8 +114,8 @@ def create_app() -> Flask:
     app = Flask(__name__, static_folder="static", template_folder="templates")
     app.secret_key = APP_SECRET
     app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
-    poster_fn = poster_url_for_show
     app.jinja_env.globals["poster_url_for_show"] = poster_url_for_show
+    app.jinja_env.globals["POSTER_PLACEHOLDER"] = "/static/posters/placeholder.png"
 
     dbx.init_db(DB_PATH)
     return app
@@ -1297,6 +1297,7 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
