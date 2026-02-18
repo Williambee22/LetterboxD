@@ -178,7 +178,7 @@
                 <!-- Change username -->
                 <div>
                   <div class="muted small" style="margin-bottom:8px;"><b>Change username</b></div>
-                  <form method="post" action="{{ url_for('change_username') }}">
+                  <form method="post" action="{{ url_for('change_username_post') }}">
                     <div class="field">
                       <label>New username</label>
                       <input name="new_username" placeholder="New username" autocomplete="username">
@@ -198,7 +198,7 @@
                 <!-- Change password -->
                 <div>
                   <div class="muted small" style="margin-bottom:8px;"><b>Change password</b></div>
-                  <form method="post" action="{{ url_for('change_password') }}">
+                  <form method="post" action="{{ url_for('change_password_post') }}">
                     <div class="field">
                       <label>Current password</label>
                       <input type="password" name="current_password" placeholder="Current password" autocomplete="current-password">
@@ -385,5 +385,6 @@
 
   </section>
 </div>
+
 
 {% endblock %}
