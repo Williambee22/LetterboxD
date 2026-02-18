@@ -620,7 +620,7 @@ def create_app() -> Flask:
 
             file.save(out_path)
 
-            avatar_url = url_for("static", filename=f"pfps/{out_name}")
+            avatar_url = f"/static/pfps/{out_name}"
             dbx.update_user_avatar_url(conn, uid, avatar_url)
             conn.commit()
 
@@ -1784,5 +1784,6 @@ if __name__ == "__main__":
     # Local dev only
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
