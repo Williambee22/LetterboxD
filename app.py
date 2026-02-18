@@ -16,7 +16,6 @@ from flask import (
     abort,
     send_from_directory,
 )
-
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -24,35 +23,35 @@ import db as dbx
 
 
 # -----------------------------
-# Config / Paths
+# Basics / Config
 # -----------------------------
-BASE_DIR = Path(__file__).resolve().parent
+USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,20}$")
 
 APP_SECRET = os.getenv("APP_SECRET", "dev-secret-change-me")
 MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "5"))
 
-# Railway volume (persistent)
+BASE_DIR = Path(__file__).resolve().parent
+
+# Railway persistent storage root (Volume mount)
 DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
+
 DB_PATH = os.getenv("DB_PATH", str(DATA_DIR / "site.db"))
 
-# Static posters (committed in repo)
+# Uploads live on the volume
+UPLOADS_DIR = DATA_DIR / "uploads"
+PFP_DIR = UPLOADS_DIR / "pfps"
+UPLOADED_POSTER_DIR = UPLOADS_DIR / "posters"
+
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+PFP_DIR.mkdir(parents=True, exist_ok=True)
+UPLOADED_POSTER_DIR.mkdir(parents=True, exist_ok=True)
+
+# Packaged static posters (committed in repo)
 STATIC_POSTER_DIR = BASE_DIR / "static" / "posters"
 STATIC_POSTER_DIR.mkdir(parents=True, exist_ok=True)
 
-# Uploads (persistent on volume)
-UPLOADS_DIR = DATA_DIR / "uploads"
-UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-
-PFP_DIR = UPLOADS_DIR / "pfps"
-PFP_DIR.mkdir(parents=True, exist_ok=True)
-
-UPLOAD_POSTER_DIR = UPLOADS_DIR / "posters"
-UPLOAD_POSTER_DIR.mkdir(parents=True, exist_ok=True)
-
 ALLOWED_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
-
-USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,20}$")
 
 
 # -----------------------------
@@ -67,7 +66,7 @@ def slugify(s: str) -> str:
 
 
 def poster_filename_for_show(corps: str, year: int, ext: str) -> str:
-    ext = ext.lower()
+    ext = (ext or "").lower()
     if ext == ".jpeg":
         ext = ".jpg"
     key = slugify(corps)
@@ -75,7 +74,7 @@ def poster_filename_for_show(corps: str, year: int, ext: str) -> str:
 
 
 def pfp_filename_for_username(username: str, ext: str) -> str:
-    ext = ext.lower()
+    ext = (ext or "").lower()
     if ext == ".jpeg":
         ext = ".jpg"
     key = slugify(username)
@@ -83,10 +82,10 @@ def pfp_filename_for_username(username: str, ext: str) -> str:
 
 
 @lru_cache(maxsize=4096)
-def _find_static_poster_filename(corps: str, year: str) -> Optional[str]:
+def _static_poster_filename(corps: str, year: str) -> Optional[str]:
     """
-    Returns filename inside static/posters/ if it exists, else None.
-    Example: blue_devils2017.png
+    Look for a committed poster in /static/posters.
+    Returns filename like 'blue_devils2017.png' if found, else None.
     """
     c = slugify(corps)
     y = re.sub(r"[^0-9]", "", str(year or ""))
@@ -101,63 +100,18 @@ def _find_static_poster_filename(corps: str, year: str) -> Optional[str]:
     return None
 
 
-def poster_url_for_show_static(corps: str, year) -> str:
-    """
-    Always returns a valid URL to a static poster (repo):
-    - /static/posters/<slug><year>.<ext> if exists
-    - /static/posters/placeholder.png otherwise
-    """
-    fn = _find_static_poster_filename(corps, str(year or ""))
-    if fn:
-        return url_for("static", filename=f"posters/{fn}")
-    return url_for("static", filename="posters/placeholder.png")
-
-
-# -----------------------------
-# App factory
-# -----------------------------
 def create_app() -> Flask:
     app = Flask(__name__, static_folder="static", static_url_path="/static")
     app.secret_key = APP_SECRET
     app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
 
-    # Ensure DB exists/migrated
-    dbx.init_db(DB_PATH)
-
-    # Template globals (used by your base.html + shows.html)
+    # IMPORTANT:
+    # Do NOT call url_for() here (no app context yet).
+    # Keep placeholder as a plain path string.
     app.jinja_env.globals["POSTER_PLACEHOLDER"] = "/static/posters/placeholder.png"
 
-    # IMPORTANT: expose a function name that matches your templates: poster_url_for_show(corps, year)
-    # This version prefers:
-    #   1) DB row poster_url (when you pass it into rows)
-    #   2) uploaded poster in /uploads/posters if exists for that corps/year
-    #   3) static poster in /static/posters
-    #   4) placeholder
-    #
-    # But because Jinja calls this with only corps/year, it cannot directly check DB.
-    # So we implement corps/year lookup for uploaded file + static fallback.
-    @lru_cache(maxsize=4096)
-    def _find_uploaded_poster_filename(corps: str, year: str) -> Optional[str]:
-        c = slugify(corps)
-        y = re.sub(r"[^0-9]", "", str(year or ""))
-        if not c or not y:
-            return None
-        base = f"{c}{y}"
-        for ext in (".png", ".jpg", ".jpeg", ".webp"):
-            fn = base + ext
-            if (UPLOAD_POSTER_DIR / fn).is_file():
-                return fn
-        return None
-
-    def poster_url_for_show(corps: str, year) -> str:
-        # 1) uploaded poster on volume (if admin uploaded)
-        up = _find_uploaded_poster_filename(corps, str(year or ""))
-        if up:
-            return url_for("uploads", filename=f"posters/{up}")
-        # 2) static poster in repo
-        return poster_url_for_show_static(corps, year)
-
-    app.jinja_env.globals["poster_url_for_show"] = poster_url_for_show
+    # Make sure DB exists / migrates
+    dbx.init_db(DB_PATH)
 
     # -----------------------------
     # DB access
@@ -171,7 +125,8 @@ def create_app() -> Flask:
             return None
         conn = get_conn()
         try:
-            return dbx.user_by_id(conn, int(uid))
+            u = dbx.user_by_id(conn, int(uid))
+            return dict(u) if u else None
         finally:
             conn.close()
 
@@ -182,19 +137,21 @@ def create_app() -> Flask:
                 flash("Please log in to do that.", "warn")
                 return redirect(url_for("login", next=request.path))
             return fn(*args, **kwargs)
+
         return wrapper
 
     def admin_required(fn):
         @wraps(fn)
         def wrapper(*args, **kwargs):
             u = current_user()
-            if not u or int(u["is_admin"]) != 1:
+            if not u or int(u.get("is_admin", 0)) != 1:
                 abort(403)
             return fn(*args, **kwargs)
+
         return wrapper
 
     # -----------------------------
-    # URL helpers (need app context)
+    # URL helpers (safe: called during request)
     # -----------------------------
     def pfp_url_for_username(username: str) -> Optional[str]:
         key = slugify(username)
@@ -204,6 +161,37 @@ def create_app() -> Flask:
             if fpath.is_file():
                 return url_for("uploads", filename=f"pfps/{base}{ext}")
         return None
+
+    def poster_url_for_show(corps: str, year: int | str) -> str:
+        """
+        Priority:
+        1) Uploaded poster on volume (/data/uploads/posters/<slug><year>.<ext>)
+        2) Committed static poster (/static/posters/<slug><year>.<ext>)
+        3) Placeholder (/static/posters/placeholder.png)
+        """
+        key = slugify(corps)
+        y = re.sub(r"[^0-9]", "", str(year or ""))
+        if not key or not y:
+            return app.jinja_env.globals["POSTER_PLACEHOLDER"]
+
+        base = f"{key}{y}"
+
+        # 1) uploaded poster
+        for ext in (".png", ".jpg", ".jpeg", ".webp"):
+            abs_path = UPLOADED_POSTER_DIR / (base + ext)
+            if abs_path.is_file():
+                return url_for("uploads", filename=f"posters/{base}{ext}")
+
+        # 2) committed static poster
+        fn = _static_poster_filename(corps, y)
+        if fn:
+            return url_for("static", filename=f"posters/{fn}")
+
+        # 3) placeholder
+        return app.jinja_env.globals["POSTER_PLACEHOLDER"]
+
+    # Expose to templates (THIS FIXES UnboundLocalError)
+    app.jinja_env.globals["poster_url_for_show"] = poster_url_for_show
 
     # -----------------------------
     # Global template injection
@@ -218,7 +206,9 @@ def create_app() -> Flask:
             conn = get_conn()
             try:
                 notif_count = dbx.unread_notifications_count(conn, int(u["id"]))
-                notif_items = [dict(x) for x in dbx.list_unread_notifications(conn, int(u["id"]), limit=20)]
+                notif_items = [
+                    dict(x) for x in dbx.list_unread_notifications(conn, int(u["id"]), limit=20)
+                ]
             finally:
                 conn.close()
 
@@ -241,7 +231,7 @@ def create_app() -> Flask:
     # -----------------------------
     @app.get("/shows")
     def shows():
-        sort = (request.args.get("sort") or "year_desc").strip()
+        sort = (request.args.get("sort") or "").strip()
         year_filter = (request.args.get("year") or "").strip()
         corps = (request.args.get("corps") or "").strip()
 
@@ -251,24 +241,18 @@ def create_app() -> Flask:
             rows2 = []
             for r in rows:
                 d = dict(r)
-                # if your DB has a poster_url column, prefer it; otherwise fallback to helper
-                if not d.get("poster_url_for_show"):
-                    # allow DB value poster_url (uploaded) to win if present
-                    if d.get("poster_url"):
-                        d["poster_url_for_show"] = d["poster_url"]
-                    else:
-                        d["poster_url_for_show"] = poster_url_for_show(d.get("corps", ""), d.get("year") or "")
+                # Keep DB poster_url if present, else compute
+                if not d.get("poster_url"):
+                    d["poster_url"] = poster_url_for_show(d.get("corps", ""), d.get("year") or 0)
                 rows2.append(d)
 
             friend_activity = []
             if session.get("uid"):
                 friend_activity = [dict(x) for x in dbx.list_friend_activity(conn, int(session["uid"]), limit=5)]
                 for a in friend_activity:
-                    if not a.get("poster_url_for_show"):
-                        if a.get("poster_url"):
-                            a["poster_url_for_show"] = a["poster_url"]
-                        else:
-                            a["poster_url_for_show"] = poster_url_for_show(a.get("corps", ""), a.get("year") or "")
+                    # template uses poster_url_for_show() but friend activity also sometimes expects a url
+                    if not a.get("poster_url"):
+                        a["poster_url"] = poster_url_for_show(a.get("corps", ""), a.get("year") or 0)
         finally:
             conn.close()
 
@@ -290,23 +274,21 @@ def create_app() -> Flask:
             if not row:
                 abort(404)
             row = dict(row)
-
-            # poster URL for detail page
             if not row.get("poster_url"):
-                row["poster_url"] = poster_url_for_show(row.get("corps", ""), row.get("year") or "")
-            # also provide poster_url_for_show key if template expects it
-            row["poster_url_for_show"] = row.get("poster_url") or poster_url_for_show(row.get("corps", ""), row.get("year") or "")
+                row["poster_url"] = poster_url_for_show(row.get("corps", ""), row.get("year") or 0)
 
             me = dbx.user_by_id(conn, int(viewer_uid)) if viewer_uid else None
-            if me:
-                me = dict(me)
-                if not me.get("avatar_url"):
-                    me["avatar_url"] = pfp_url_for_username(me.get("username", ""))
+            me = dict(me) if me else None
+            if me and not me.get("avatar_url"):
+                me["avatar_url"] = pfp_url_for_username(me.get("username", ""))
 
             my_rating = dbx.user_rating_for_show(conn, show_id, int(viewer_uid)) if viewer_uid else None
 
             reviews = dbx.list_reviews_for_show(
-                conn, show_id, viewer_user_id=int(viewer_uid) if viewer_uid else None, limit=30
+                conn,
+                show_id,
+                viewer_user_id=int(viewer_uid) if viewer_uid else None,
+                limit=30,
             )
             reviews2 = []
             for rv in reviews:
@@ -353,6 +335,7 @@ def create_app() -> Flask:
             if not dbx.get_show_by_id(conn, show_id):
                 abort(404)
             dbx.upsert_rating(conn, show_id, int(session["uid"]), rh)
+            conn.commit()
         finally:
             conn.close()
 
@@ -365,6 +348,7 @@ def create_app() -> Flask:
         conn = get_conn()
         try:
             dbx.delete_rating(conn, show_id, int(session["uid"]))
+            conn.commit()
         finally:
             conn.close()
         flash("Removed your rating.", "ok")
@@ -379,6 +363,7 @@ def create_app() -> Flask:
             if not dbx.get_show_by_id(conn, show_id):
                 abort(404)
             dbx.upsert_review(conn, show_id, int(session["uid"]), text)
+            conn.commit()
         finally:
             conn.close()
         flash("Saved your review.", "ok")
@@ -390,6 +375,7 @@ def create_app() -> Flask:
         conn = get_conn()
         try:
             dbx.delete_review(conn, show_id, int(session["uid"]))
+            conn.commit()
         finally:
             conn.close()
         flash("Deleted your review.", "ok")
@@ -406,6 +392,7 @@ def create_app() -> Flask:
         try:
             if not dbx.get_show_by_id(conn, show_id):
                 abort(404)
+
             dbx.add_review_comment(conn, show_id, review_user_id, commenter_id, text)
 
             if commenter_id != int(review_user_id):
@@ -495,6 +482,7 @@ def create_app() -> Flask:
 
             make_admin = dbx.is_first_user(conn)
             uid = dbx.create_user(conn, username, generate_password_hash(password), make_admin=make_admin)
+            conn.commit()
         finally:
             conn.close()
 
@@ -517,14 +505,17 @@ def create_app() -> Flask:
         conn = get_conn()
         try:
             u = dbx.user_by_username(conn, username)
-            if not u:
-                flash("Invalid username/password.", "error")
-                return redirect(url_for("login"))
-
-            pw_col = dbx.users_password_col(conn)
-            stored_hash = u[pw_col]
         finally:
             conn.close()
+
+        if not u:
+            flash("Invalid username/password.", "error")
+            return redirect(url_for("login"))
+
+        # Handle either pass_hash / password_hash column (your db helper decides)
+        u = dict(u)
+        pass_col = dbx.users_password_col(dbx.connect(DB_PATH))  # quick probe
+        stored_hash = u.get(pass_col) or u.get("pass_hash") or u.get("password_hash")
 
         if not stored_hash or not check_password_hash(stored_hash, password):
             flash("Invalid username/password.", "error")
@@ -566,9 +557,11 @@ def create_app() -> Flask:
             recent_reviews = [dict(x) for x in dbx.list_recent_reviews_for_user(conn, uid, limit=8)]
 
             for rr in recent_ratings:
-                rr["poster_url_for_show"] = rr.get("poster_url") or poster_url_for_show(rr.get("corps", ""), rr.get("year") or 0)
+                if not rr.get("poster_url"):
+                    rr["poster_url"] = poster_url_for_show(rr.get("corps", ""), rr.get("year") or 0)
             for rv in recent_reviews:
-                rv["poster_url_for_show"] = rv.get("poster_url") or poster_url_for_show(rv.get("corps", ""), rv.get("year") or 0)
+                if not rv.get("poster_url"):
+                    rv["poster_url"] = poster_url_for_show(rv.get("corps", ""), rv.get("year") or 0)
 
             if not u.get("avatar_url"):
                 u["avatar_url"] = pfp_url_for_username(u.get("username", ""))
@@ -602,6 +595,7 @@ def create_app() -> Flask:
             viewer_id = int(session["uid"]) if session.get("uid") else None
             profile["followers_count"] = dbx.follower_count(conn, int(profile["id"]))
             profile["following_count"] = dbx.following_count(conn, int(profile["id"]))
+
             if viewer_id:
                 profile["viewer_is_following"] = dbx.is_following(conn, viewer_id, int(profile["id"]))
                 profile["viewer_friend_status"] = dbx.friends_status(conn, viewer_id, int(profile["id"]))
@@ -614,17 +608,16 @@ def create_app() -> Flask:
             recent_reviews = [dict(x) for x in dbx.list_recent_reviews_for_user(conn, int(profile["id"]), limit=8)]
 
             for rr in recent_ratings:
-                rr["poster_url_for_show"] = rr.get("poster_url") or poster_url_for_show(rr.get("corps", ""), rr.get("year") or 0)
+                if not rr.get("poster_url"):
+                    rr["poster_url"] = poster_url_for_show(rr.get("corps", ""), rr.get("year") or 0)
             for rv in recent_reviews:
-                rv["poster_url_for_show"] = rv.get("poster_url") or poster_url_for_show(rv.get("corps", ""), rv.get("year") or 0)
+                if not rv.get("poster_url"):
+                    rv["poster_url"] = poster_url_for_show(rv.get("corps", ""), rv.get("year") or 0)
 
             if not profile.get("avatar_url"):
                 profile["avatar_url"] = pfp_url_for_username(profile.get("username", ""))
 
-            me = None
-            if viewer_id:
-                me_row = dbx.user_by_id(conn, viewer_id)
-                me = dict(me_row) if me_row else None
+            me = current_user()
 
         finally:
             conn.close()
@@ -655,12 +648,10 @@ def create_app() -> Flask:
             rows = dbx.list_all_ratings_for_user(conn, int(profile_user["id"]), sort=sort, corps_q=q)
             rows = [dict(r) for r in rows]
             profile_user = dict(profile_user)
-            if me is not None:
-                me = dict(me)
 
             for r in rows:
-                r["poster_url_for_show"] = r.get("poster_url") or poster_url_for_show(r.get("corps", ""), r.get("year") or 0)
-
+                if not r.get("poster_url"):
+                    r["poster_url"] = poster_url_for_show(r.get("corps", ""), r.get("year") or 0)
         finally:
             conn.close()
 
@@ -688,6 +679,7 @@ def create_app() -> Flask:
         conn = get_conn()
         try:
             dbx.update_user_profile_style(conn, int(session["uid"]), avatar_url, banner_url, theme_color)
+            conn.commit()
         finally:
             conn.close()
 
@@ -782,6 +774,7 @@ def create_app() -> Flask:
                         dupes += 1
                     else:
                         other_bad += 1
+            conn.commit()
         finally:
             conn.close()
 
@@ -818,6 +811,7 @@ def create_app() -> Flask:
             if not dbx.get_show_by_id(conn, show_id):
                 abort(404)
             dbx.update_show(conn, show_id, int(year), corps, title, poster_url=poster_url)
+            conn.commit()
         except ValueError as e:
             flash(str(e), "error")
             return redirect(url_for("admin_edit_show", show_id=show_id))
@@ -827,7 +821,6 @@ def create_app() -> Flask:
         flash("Show updated.", "ok")
         return redirect(url_for("show_detail", show_id=show_id))
 
-    # Change username (endpoint name matches your templates: change_username)
     @app.post("/me/change_username", endpoint="change_username")
     @login_required
     def change_username():
@@ -894,7 +887,7 @@ def create_app() -> Flask:
             row = dict(row)
 
             out_name = poster_filename_for_show(row.get("corps", ""), row.get("year") or 0, ext)
-            out_path = UPLOAD_POSTER_DIR / out_name
+            out_path = UPLOADED_POSTER_DIR / out_name
             file.save(out_path)
 
             poster_url = url_for("uploads", filename=f"posters/{out_name}")
@@ -963,6 +956,7 @@ def create_app() -> Flask:
         conn = get_conn()
         try:
             dbx.create_role(conn, name, color)
+            conn.commit()
         except ValueError as e:
             flash(str(e), "error")
         except sqlite3.IntegrityError:
@@ -977,6 +971,7 @@ def create_app() -> Flask:
         conn = get_conn()
         try:
             dbx.delete_role(conn, role_id)
+            conn.commit()
         finally:
             conn.close()
         flash("Role deleted.", "ok")
@@ -1002,6 +997,7 @@ def create_app() -> Flask:
         conn = get_conn()
         try:
             dbx.update_role(conn, role_id, name, color)
+            conn.commit()
         except ValueError as e:
             flash(str(e), "error")
             return redirect(url_for("admin_edit_role", role_id=role_id))
@@ -1055,6 +1051,7 @@ def create_app() -> Flask:
             if not u:
                 abort(404)
             dbx.assign_role_to_user(conn, int(u["id"]), role_id, assigned_by_user_id=int(session["uid"]))
+            conn.commit()
         finally:
             conn.close()
         flash("Role assigned.", "ok")
@@ -1070,6 +1067,7 @@ def create_app() -> Flask:
             if not u:
                 abort(404)
             dbx.remove_role_from_user(conn, int(u["id"]), role_id)
+            conn.commit()
         finally:
             conn.close()
         flash("Role removed.", "ok")
@@ -1146,13 +1144,9 @@ def create_app() -> Flask:
             conn.close()
         return render_template("friends.html", me=dict(me) if me else None, friends=friends, incoming=incoming)
 
-    @app.post("/me/change-password")
+    @app.post("/me/change-password", endpoint="change_password")
     @login_required
     def change_password():
-        """
-        Template expects endpoint name: change_password
-        POST handler that updates the current user's password.
-        """
         old_pw = (request.form.get("old_password") or "").strip()
         new_pw = (request.form.get("new_password") or "").strip()
         new2 = (request.form.get("new_password2") or "").strip()
@@ -1169,18 +1163,18 @@ def create_app() -> Flask:
             flash("Password must be at least 6 characters.", "error")
             return redirect(url_for("me_profile"))
 
+        uid = int(session["uid"])
         conn = get_conn()
         try:
-            uid = int(session["uid"])
             me = dbx.user_by_id(conn, uid)
             if not me:
                 flash("Session user not found.", "error")
                 return redirect(url_for("logout"))
+            me = dict(me)
 
             pw_col = dbx.users_password_col(conn)
-            current_hash = me[pw_col]
-
-            if not check_password_hash(current_hash, old_pw):
+            current_hash = me.get(pw_col)
+            if not current_hash or not check_password_hash(current_hash, old_pw):
                 flash("Current password is incorrect.", "error")
                 return redirect(url_for("me_profile"))
 
@@ -1279,7 +1273,8 @@ def create_app() -> Flask:
             rows2 = []
             for r in rows:
                 d = dict(r)
-                d["poster_url_for_show"] = d.get("poster_url") or poster_url_for_show(d.get("corps", ""), d.get("year") or 0)
+                if not d.get("poster_url"):
+                    d["poster_url"] = poster_url_for_show(d.get("corps", ""), d.get("year") or 0)
                 if d.get("top_review_username") and not d.get("top_review_avatar_url"):
                     d["top_review_avatar_url"] = pfp_url_for_username(d.get("top_review_username", ""))
                 rows2.append(d)
@@ -1308,12 +1303,9 @@ def create_app() -> Flask:
 
     @app.errorhandler(403)
     def forbidden(_e):
-        return "Forbidden", 403
+        return render_template("base.html", body="Forbidden"), 403
 
-    @app.errorhandler(404)
-    def not_found(_e):
-        return "Not Found", 404
-
+    # ✅ IMPORTANT: return app at the VERY END (after all routes)
     return app
 
 
@@ -1322,4 +1314,3 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
-
