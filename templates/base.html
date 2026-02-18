@@ -125,7 +125,7 @@
 </head>
 
 <body class="app"
-  {% if me and me['theme_color'] is defined and me['theme_color'] %}
+  {% if me and ("theme_color" in me) and me["theme_color"] %}
     style="--accent: {{ me['theme_color'] }};"
   {% endif %}
 >
@@ -140,7 +140,7 @@
         <a href="{{ url_for('shows') }}">Shows</a>
         <a href="{{ url_for('top_shows') }}">Top Shows</a>
         <a href="{{ url_for('top_users') }}">Top Users</a>
-        {% if me and me["is_admin"] == 1 %}
+        {% if me and ("is_admin" in me) and me["is_admin"] == 1 %}
           <a href="{{ url_for('bulk_add') }}">Mass Add</a>
           <a href="{{ url_for('admin_roles') }}">Roles</a>
           <a href="{{ url_for('admin_users') }}">Users</a>
@@ -220,7 +220,7 @@
 
           <a class="nav_user" href="{{ url_for('me_profile') }}">
             <span class="avatar_sm">
-              {% if me["avatar_url"] %}
+              {% if me and ("avatar_url" in me) and me["avatar_url"] %}
                 <img src="{{ me['avatar_url'] }}" alt="avatar">
               {% else %}
                 <span class="avatar_fallback"></span>
@@ -283,3 +283,4 @@
   </script>
 </body>
 </html>
+
