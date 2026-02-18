@@ -5,40 +5,44 @@ from functools import wraps
 from pathlib import Path
 from typing import Optional
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, send_from_directory, current_app,
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import db as dbx
 
 
-def poster_basename(corps: str, year: int) -> str:
-    # "Blue Devils" -> "blue_devils"
-    s = (corps or "").strip().lower()
-    s = re.sub(r"[^a-z0-9]+", "_", s)   # spaces/punct -> _
-    s = re.sub(r"_+", "_", s).strip("_")
-    return f"{s}{int(year)}"
+_slug_re = re.compile(r"[^a-z0-9_]+")
 
-def slugify(s: str) -> str:
-    s = (s or "").strip().lower()
-    s = re.sub(r"\s+", "_", s)           # spaces -> underscore
-    s = re.sub(r"[^a-z0-9_]+", "", s)    # keep a-z 0-9 _
-    return s.strip("_") or "corps"
+def slugify_corps(name: str) -> str:
+    s = (name or "").strip().lower()
+    s = s.replace("&", "and")
+    s = re.sub(r"\s+", "_", s)
+    s = _slug_re.sub("", s)
+    return s.strip("_") or "unknown"
 
-def poster_url_for_show(corps: str, year: int | str) -> str:
-    # expects: static/posters/<slug><year>.png
-    y = str(year or "").strip()
-    key = slugify(corps)
-    fname = f"posters/{key}{y}.png"
+def poster_url_for_show(corps: str, year) -> str:
+    """
+    Returns a URL like /static/posters/blue_devils2017.png if it exists.
+    Falls back to /static/posters/placeholder.png if missing.
+    """
+    fallback = url_for("static", filename="posters/placeholder.png")
 
-    base_dir = Path(__file__).resolve().parent
-    abs_path = base_dir / "static" / fname  # /app/static/posters/...
+    corps = (corps or "").strip()
+    year_s = str(year).strip() if year is not None else ""
+    if not corps or not year_s:
+        return fallback
 
-    if abs_path.is_file():
-        return url_for("static", filename=fname)
+    key = f"{slugify_corps(corps)}{year_s}"
+    posters_dir = Path(current_app.static_folder) / "posters"
 
-    # fallback (make sure this file exists)
-    return url_for("static", filename="posters/placeholder.png")
+    # Try common extensions
+    for ext in ("png", "jpg", "jpeg", "webp"):
+        fp = posters_dir / f"{key}.{ext}"
+        if fp.is_file():
+            return url_for("static", filename=f"posters/{key}.{ext}")
+
+    return fallback
     
 # -----------------------------
 # Basics / Config
@@ -93,14 +97,16 @@ def pfp_filename_for_username(username: str, ext: str) -> str:
 
 
 def create_app() -> Flask:
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder="static", template_folder="templates")
     app.secret_key = APP_SECRET
     app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
     poster_fn = poster_url_for_show
     app.jinja_env.globals["poster_url_for_show"] = poster_url_for_show
 
-    # Make sure DB has required tables/columns on boot
     dbx.init_db(DB_PATH)
+    return app
+
+    # Make sure DB has required tables/columns on boot
 
     
     # -----------------------------
@@ -1277,6 +1283,7 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
