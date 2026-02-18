@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block content %}
+
+{# SAFE is_me #}
+{% set me_username = (me["username"] if me is not none and "username" in me else None) %}
+{% set pu_username = (profile_user["username"] if profile_user is not none and "username" in profile_user else None) %}
+{% set is_me = (me_username is not none and pu_username is not none and me_username == pu_username) %}
+
+{# HERO (same vibe as profile) #}
+<div class="profile_hero"
+  {% if profile_user is not none and "banner_url" in profile_user and profile_user["banner_url"] %}
+    style="--pBanner:url('{{ profile_user['banner_url'] }}');"
+  {% endif %}>
+
+  <div class="profile_hero_inner"
+    {% if profile_user is not none and "theme_color" in profile_user and profile_user["theme_color"] %}
+      style="--pAccent: {{ profile_user['theme_color'] }};"
+    {% endif %}>
+
+    <div class="row gap" style="align-items:center;">
+
+      <div class="avatar_lg">
+        {% if profile_user is not none and "avatar_url" in profile_user and profile_user["avatar_url"] %}
+          <img src="{{ profile_user['avatar_url'] }}" alt="avatar">
+        {% else %}
+          <div class="avatar_fallback"></div>
+        {% endif %}
+      </div>
+
+      <div style="min-width:0;">
+        <div class="kicker">Profile</div>
+        <h1 style="margin:6px 0 0;">
+          {{ profile_user["username"] if profile_user is not none and "username" in profile_user else "User" }}
+        </h1>
+
+        {% if user_roles and user_roles|length > 0 %}
+          <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
+            {% for r in user_roles %}
+              <span class="role_tag"
+                {% if r is not none and "color" in r and r["color"] %}
+                  style="border-color: {{ r['color'] }}; color: {{ r['color'] }};"
+                {% endif %}>
+                {{ r["name"] if r is not none and "name" in r else "" }}
+              </span>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
+          <a class="btn ghost" href="{{ url_for('user_profile', username=profile_user['username']) }}">Back to profile</a>
+          <a class="btn ghost on" href="{{ url_for('user_all_ratings', username=profile_user['username']) }}">All Ratings</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{# LAYOUT: stats left, content right #}
+<div class="profile_layout" style="margin-top:16px;">
+
+  <aside class="profile_side">
+    <div class="panel profile_stats">
+      <div class="kicker">Stats</div>
+      <div class="muted small" style="margin-top:10px;">
+        Total ratings: {{ rows|length if rows else 0 }}
+      </div>
+    </div>
+  </aside>
+
+  <section class="stack">
+
+    <div class="panel">
+      <div class="row between" style="align-items:flex-end;">
+        <div>
+          <div class="kicker">Ratings</div>
+          <h2 style="margin:6px 0 0;">All Ratings</h2>
+          <div class="muted small">Filter by corps name, and sort high/low.</div>
+        </div>
+      </div>
+
+      <form method="get"
+            action="{{ url_for('user_all_ratings', username=profile_user['username']) }}"
+            style="margin-top:12px;">
+        <div class="row gap" style="flex-wrap:wrap; align-items:flex-end;">
+          <div class="field" style="min-width:240px; flex:1;">
+            <label>Search corps</label>
+            <input name="q" value="{{ q or '' }}" placeholder="e.g., Blue Devils, Crown, Phantom">
+          </div>
+
+          <div class="field" style="min-width:200px;">
+            <label>Sort</label>
+            <select name="sort">
+              <option value="high" {% if sort != 'low' %}selected{% endif %}>Highest rated</option>
+              <option value="low" {% if sort == 'low' %}selected{% endif %}>Lowest rated</option>
+            </select>
+          </div>
+
+          <div class="actions" style="min-width:160px;">
+            <button class="btn green" type="submit">Apply</button>
+          </div>
+        </div>
+      </form>
+
+      {% if rows and rows|length > 0 %}
+        <div class="postergrid" style="margin-top:14px;">
+          {% for rr in rows %}
+            {% set k = (rr.keys() if rr is not none else []) %}
+
+            <a class="poster" href="{{ url_for('show_detail', show_id=rr['show_id']) }}">
+              <div class="poster_art">
+
+                {# =========================
+                   POSTER (single source of truth)
+                   ========================= #}
+                {% set p =
+                  (rr["poster_url"] if "poster_url" in k and rr["poster_url"] else
+                   rr["show_poster_url"] if "show_poster_url" in k and rr["show_poster_url"] else
+                   rr["poster"] if "poster" in k and rr["poster"] else
+                   rr["poster_path"] if "poster_path" in k and rr["poster_path"] else
+                   "")
+                %}
+
+                {% if p %}
+                  {% if "://" in p or p.startswith("/") %}
+                    <img class="poster_img" src="{{ p }}"
+                         alt="{{ rr['title'] if 'title' in k else 'poster' }}" loading="lazy">
+                  {% else %}
+                    {# handles: posters/x.jpg OR static/posters/x.jpg #}
+                    {% set p2 = (p[7:] if p.startswith("static/") else p) %}
+                    <img class="poster_img" src="{{ url_for('static', filename=p2) }}"
+                         alt="{{ rr['title'] if 'title' in k else 'poster' }}" loading="lazy">
+                  {% endif %}
+                {% else %}
+                  <div class="poster_fallback"></div>
+                {% endif %}
+
+                {# =========================
+                   OVERLAYS
+                   ========================= #}
+                {% set rh = rr["rating_half"] if "rating_half" in k and rr["rating_half"] is not none else 0 %}
+                <div class="tile_rating">
+                  <span class="tile_star">★</span> {{ "%.1f"|format(rh / 2.0) }}
+                </div>
+
+                {% if "year" in k and rr["year"] %}
+                  <div class="tile_year">{{ rr["year"] }}</div>
+                {% endif %}
+              </div>
+
+              <div class="poster_meta">
+                <div class="poster_title">{{ rr["title"] if "title" in k else "" }}</div>
+                <div class="poster_sub">{{ rr["corps"] if "corps" in k else "" }}</div>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="muted" style="margin-top:12px;">No ratings found.</div>
+      {% endif %}
+    </div>
+
+  </section>
+</div>
+
+{% endblock %}

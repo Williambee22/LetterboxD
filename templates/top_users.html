@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="topshows_page topusers_page">
+  <div style="margin-top:10px;">
+    <div class="kicker">Users</div>
+    <h1 style="margin:6px 0 0;">Top Voted Users</h1>
+    <div class="muted small">Ranked by total upvotes earned on reviews.</div>
+  </div>
+
+  {% if rows and rows|length > 0 %}
+    <div style="margin-top:14px; display:flex; flex-direction:column; gap:12px;">
+      {% for r in rows %}
+        {% set k = r.keys() %}
+        {% set rank = loop.index %}
+        {% set username = r["username"] if "username" in k else "Unknown" %}
+        {% set avatar = r["avatar_url"] if "avatar_url" in k else "" %}
+
+        {% set upvotes = r["upvotes"] if "upvotes" in k and r["upvotes"] is not none else 0 %}
+        {% set downvotes = r["downvotes"] if "downvotes" in k and r["downvotes"] is not none else 0 %}
+        {% set net = r["net_score"] if "net_score" in k and r["net_score"] is not none else 0 %}
+
+        {% set sid = r["top_show_id"] if "top_show_id" in k else None %}
+        {% set quote = r["top_review_text"] if "top_review_text" in k else "" %}
+        {% set top_corps = r["top_corps"] if "top_corps" in k else "" %}
+        {% set top_year = r["top_year"] if "top_year" in k else "" %}
+
+        <div class="ts_card">
+          <div class="ts_rank">#{{ rank }}</div>
+
+          <div class="ts_thumb">
+            {% if avatar %}
+              <img src="{{ avatar }}" alt="{{ username }} avatar">
+            {% else %}
+              <div class="ts_thumb_fallback"></div>
+            {% endif %}
+          </div>
+
+          <div class="ts_meta">
+            <div class="ts_title">
+              <a href="{{ url_for('user_profile', username=username) }}" style="text-decoration:none;">
+                {{ username }}
+              </a>
+            </div>
+
+            <div class="ts_badges">
+              <span class="badge">▲ {{ upvotes }} upvotes</span>
+              <span class="badge muted">▼ {{ downvotes }} downvotes</span>
+              <span class="badge good">{{ net }}</span>
+            </div>
+          </div>
+
+          <div class="ts_review">
+            {% if quote %}
+              <div class="tu_quote_row">
+                <div class="tu_label">
+                  Top review{% if sid and (top_corps or top_year) %} of{% endif %}
+                  {% if sid %}
+                    <a href="{{ url_for('show_detail', show_id=sid) }}" style="text-decoration:none;">
+                      {{ top_corps }}{% if top_year %} {{ top_year }}{% endif %}
+                    </a>
+                  {% elif top_corps or top_year %}
+                    {{ top_corps }}{% if top_year %} {{ top_year }}{% endif %}
+                  {% endif %}
+                </div>
+
+                <div class="tu_quote top_quote">{{ quote }}</div>
+              </div>
+            {% else %}
+              <div class="muted small">No review text found.</div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="panel" style="margin-top:14px;">
+      <div class="muted">No voted users yet.</div>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}
