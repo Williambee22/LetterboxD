@@ -3,7 +3,6 @@ import time
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
-avatar_url = f"/static/pfps/{out_name}"
 poster_url = url_for("uploads", filename=f"posters/{out_name}")
 
 
@@ -1659,4 +1658,5 @@ def user_avg_rating(conn, user_id: int):
     avg = float(row["avg_rating"] or 0.0) if row else 0.0
 
     return avg, cnt
+
 
