@@ -12,6 +12,22 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import db as dbx
 
 
+def poster_basename(corps: str, year: int) -> str:
+    # "Blue Devils" -> "blue_devils"
+    s = (corps or "").strip().lower()
+    s = re.sub(r"[^a-z0-9]+", "_", s)   # spaces/punct -> _
+    s = re.sub(r"_+", "_", s).strip("_")
+    return f"{s}{int(year)}"
+
+def poster_url_for_show(corps: str, year: int) -> str:
+    base = poster_basename(corps, year)
+    # try these extensions in order
+    for ext in (".png", ".jpg", ".jpeg", ".webp"):
+        # IMPORTANT: Flask static URLs are /static/...
+        return url_for("static", filename=f"posters/{base}{ext}")
+    # fallback (shouldn't hit)
+    return url_for("static", filename="posters/placeholder.png")
+    
 # -----------------------------
 # Basics / Config
 # -----------------------------
@@ -68,10 +84,12 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.secret_key = APP_SECRET
     app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
+    app.jinja_env.globals["poster_url_for_show"] = poster_url_for_show
 
     # Make sure DB has required tables/columns on boot
     dbx.init_db(DB_PATH)
 
+    
     # -----------------------------
     # DB access
     # -----------------------------
@@ -1246,6 +1264,7 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
