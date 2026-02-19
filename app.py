@@ -34,18 +34,17 @@ BASE_DIR = Path(__file__).resolve().parent
 
 # Railway persistent storage root (Volume mount)
 DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
-DATA_DIR.mkdir(parents=True, exist_ok=True)
+UPLOADS_DIR = DATA_DIR / "uploads"
+PFP_DIR = UPLOADS_DIR / "pfps"
+POSTER_DIR = UPLOADS_DIR / "posters"
+
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+PFP_DIR.mkdir(parents=True, exist_ok=True)
+POSTER_DIR.mkdir(parents=True, exist_ok=True)
 
 DB_PATH = os.getenv("DB_PATH", str(DATA_DIR / "site.db"))
 
 # Uploads live on the volume
-UPLOADS_DIR = DATA_DIR / "uploads"
-PFP_DIR = UPLOADS_DIR / "pfps"
-UPLOADED_POSTER_DIR = UPLOADS_DIR / "posters"
-
-UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-PFP_DIR.mkdir(parents=True, exist_ok=True)
-UPLOADED_POSTER_DIR.mkdir(parents=True, exist_ok=True)
 
 # Packaged static posters (committed in repo)
 STATIC_POSTER_DIR = BASE_DIR / "static" / "posters"
@@ -280,7 +279,7 @@ def create_app() -> Flask:
             if not row.get("poster_url"):
                 row["poster_url"] = poster_url_for_show(row.get("corps", ""), row.get("year") or 0)
 
-            me = dbx.user_by_id(conn, int(viewer_uid)) if viewer_uid else None
+            me = dbx.user_by_id(conn, int(session["uid"]))
             me = dict(me) if me else None
             if me and not me.get("avatar_url"):
                 me["avatar_url"] = pfp_url_for_username(me.get("username", ""))
@@ -1315,5 +1314,6 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
