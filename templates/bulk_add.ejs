@@ -1,14 +1,29 @@
-{% extends "base.ejs" %}
-{% block content %}
-  <h1>Mass Add Shows</h1>
-  <div class="muted" style="margin-bottom:10px;">
-    Paste lines as either <code>year, corps, title</code> OR <code>year|corps|title</code>.
-    Lines starting with <code>#</code> are ignored.
-  </div>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Mass Add Shows - Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+</head>
+<body class="app">
+  <main class="wrap">
 
-  <form class="panel form" method="post" action="{{ url_for('bulk_add_post') }}">
-    <textarea name="bulk_text" rows="18" placeholder="2017, Blue Devils, Metamorph&#10;2016|Carolina Crown|Relentless"></textarea>
-    <button class="btn" type="submit">Import</button>
-  </form>
+    <h1>Mass Add Shows</h1>
+    <div class="muted" style="margin-bottom:10px;">
+      Paste lines as either <code>year, corps, title</code> OR <code>year|corps|title</code>.
+      Lines starting with <code>#</code> are ignored.
+    </div>
 
-{% endblock %}
+    <form class="panel form" method="post" action="/admin/bulk_add">
+      <textarea
+        name="bulk_text"
+        rows="18"
+        placeholder="2017, Blue Devils, Metamorph&#10;2016|Carolina Crown|Relentless"
+      ></textarea>
+      <button class="btn" type="submit">Import</button>
+    </form>
+
+  </main>
+</body>
+</html>
