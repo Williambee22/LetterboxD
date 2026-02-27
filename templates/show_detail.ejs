@@ -5,7 +5,7 @@ STEP 6B — templates/show_detail.html (FULL FILE)
 + Admin delete review/comment
 + Normal users: delete own review (hard) + delete own comment (soft -> "[comment deleted]")
 ========================================================= -->
-{% extends "base.html" %}
+{% extends "base.ejs" %}
 {% block content %}
 
           <div class="showposter" style="position:relative; overflow:hidden; width:240px; height:360px; flex:0 0 240px;">
@@ -353,5 +353,6 @@ STEP 6B — templates/show_detail.html (FULL FILE)
     </aside>
 
   </div>
+
 
 {% endblock %}
