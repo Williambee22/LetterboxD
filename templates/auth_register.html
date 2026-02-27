@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.ejs" %}
 {% block content %}
   <h1>Register</h1>
   <form class="panel form" method="post" action="{{ url_for('register_post') }}">
@@ -10,4 +10,5 @@
 
     <button class="btn" type="submit">Create account</button>
   </form>
+
 {% endblock %}
