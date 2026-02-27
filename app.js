@@ -28,22 +28,6 @@ const PORT = parseInt(process.env.PORT || '8080', 10);
 
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-app.use('/static', express.static(path.join(BASE_DIR, 'static')));
-
-app.use(session({
-  secret: APP_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: false,
-    httpOnly: true,
-    sameSite: 'lax'
-  }
-}));
-
-
 const BAD_WORDS = new Set([
   'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'dick', 'pussy',
   'faggot', 'nigger', 'slut', 'whore', 'douchebag', 'motherfucker', 'twat',
@@ -199,7 +183,6 @@ function wantsJson(req) {
 
 function createApp() {
   const app = express();
-  const SQLiteStore = SQLiteStoreFactory(session);
 
   if (!fs.existsSync(DB_PATH)) {
     dbx.initDb(DB_PATH, { schemaPath: path.join(BASE_DIR, 'schema.sql') });
@@ -213,7 +196,6 @@ function createApp() {
   app.use(express.json({ limit: `${MAX_UPLOAD_MB}mb` }));
 
   app.use(session({
-    store: new SQLiteStore({ db: 'sessions.sqlite', dir: BASE_DIR }),
     secret: APP_SECRET,
     resave: false,
     saveUninitialized: false,
@@ -1484,13 +1466,5 @@ function createApp() {
 const app = createApp();
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
+  console.log(`DB_PATH=${DB_PATH}`);
 });
-
-
-
-
-
-
-
-
-
