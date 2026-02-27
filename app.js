@@ -184,6 +184,8 @@ function wantsJson(req) {
 function createApp() {
   const app = express();
 
+  app.set('trust proxy', 1);
+
   if (!fs.existsSync(DB_PATH)) {
     dbx.initDb(DB_PATH, { schemaPath: path.join(BASE_DIR, 'schema.sql') });
   }
@@ -199,13 +201,16 @@ function createApp() {
     secret: APP_SECRET,
     resave: false,
     saveUninitialized: false,
+    proxy: true,
+    name: 'pressboxd.sid',
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
+      secure: false,
       maxAge: 1000 * 60 * 60 * 24 * 14,
     },
   }));
-
+  
   app.use((req, res, next) => {
     if (!Array.isArray(req.session.flash)) req.session.flash = [];
 
@@ -679,7 +684,11 @@ function createApp() {
 
       req.session.uid = Number(u.id);
       req.flash('ok', 'Logged in.');
-      return res.redirect(nxt || '/shows');
+      
+      return req.session.save((err) => {
+        if (err) return next(err);
+        return res.redirect(nxt || '/shows');
+      });
     } catch (err) {
       return next(err);
     } finally {
@@ -688,7 +697,10 @@ function createApp() {
   });
 
   app.get('/logout', (req, res) => {
-    req.session.destroy(() => res.redirect('/shows'));
+    req.session.destroy(() => {
+      res.clearCookie('connect.sid');
+      res.redirect('/shows');
+    });
   });
 
   app.get('/admin/bulk_add', adminRequired(async (_req, res) => res.render('bulk_add')));
@@ -1472,4 +1484,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
