@@ -6,7 +6,10 @@ const express = require('express');
 const session = require('express-session');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
+
 const dbx = require('./db');
+
+const app = express();
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
 
@@ -26,6 +29,10 @@ const DB_PATH = process.env.DB_PATH || '/data/site.db';
 const PORT = parseInt(process.env.PORT || '8080', 10);
 
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use('/static', express.static(path.join(BASE_DIR, 'static')));
 
 app.use(session({
   secret: APP_SECRET,
@@ -1480,6 +1487,7 @@ const app = createApp();
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
+
 
 
 
