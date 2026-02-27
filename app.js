@@ -27,6 +27,28 @@ const APP_SECRET = process.env.APP_SECRET || 'dev-secret-change-me';
 const DB_PATH = process.env.DB_PATH || path.join(process.cwd(), 'site.db');
 const PORT = parseInt(process.env.PORT || '8080', 10);
 
+fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+
+
+const session = require("express-session");
+const SQLiteStore = require("connect-sqlite3")(session);
+
+app.use(session({
+  store: new SQLiteStore({
+    db: "sessions.db",
+    dir: path.dirname(DB_PATH)
+  }),
+  secret: process.env.APP_SECRET || "dev-secret-change-me",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false,
+    httpOnly: true,
+    sameSite: "lax"
+  }
+}));
+
+
 const BAD_WORDS = new Set([
   'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'dick', 'pussy',
   'faggot', 'nigger', 'slut', 'whore', 'douchebag', 'motherfucker', 'twat',
@@ -1468,3 +1490,4 @@ const app = createApp();
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
+
