@@ -1,14 +1,26 @@
-{% extends "base.ejs" %}
-{% block content %}
-  <h1>Register</h1>
-  <form class="panel form" method="post" action="{{ url_for('register_post') }}">
-    <label>Username</label>
-    <input name="username" placeholder="yourname" required minlength="3"/>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Register - Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+</head>
+<body class="app">
+  <main class="wrap">
 
-    <label>Password</label>
-    <input type="password" name="password" required minlength="6"/>
+    <h1>Register</h1>
 
-    <button class="btn" type="submit">Create account</button>
-  </form>
+    <form class="panel form" method="post" action="/register">
+      <label>Username</label>
+      <input name="username" placeholder="yourname" required minlength="3"/>
 
-{% endblock %}
+      <label>Password</label>
+      <input type="password" name="password" required minlength="6"/>
+
+      <button class="btn" type="submit">Create account</button>
+    </form>
+
+  </main>
+</body>
+</html>
