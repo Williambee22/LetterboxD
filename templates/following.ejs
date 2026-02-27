@@ -1,25 +1,40 @@
-{% extends "base.ejs" %}
-{% block content %}
-<div class="panel">
-  <div class="kicker">Following</div>
-  <h1 style="margin:6px 0 0;">{{ profile_user["username"] }}</h1>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Following - Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+</head>
+<body class="app">
+  <main class="wrap">
 
-  {% if rows and rows|length > 0 %}
-    <div class="stack" style="margin-top:12px;">
-      {% for u in rows %}
-        <div class="row between" style="align-items:center;">
-          <div class="row gap" style="align-items:center;">
-            <span class="avatar_sm">
-              {% if u["avatar_url"] %}<img src="{{ u['avatar_url'] }}" alt="avatar">{% else %}<span class="avatar_fallback"></span>{% endif %}
-            </span>
-            <a class="reviewuser" href="{{ url_for('user_profile', username=u['username']) }}">{{ u["username"] }}</a>
-          </div>
+    <div class="panel">
+      <div class="kicker">Following</div>
+      <h1 style="margin:6px 0 0;"><%= profile_user.username %></h1>
+
+      <% if (Array.isArray(rows) && rows.length > 0) { %>
+        <div class="stack" style="margin-top:12px;">
+          <% for (const u of rows) { %>
+            <div class="row between" style="align-items:center;">
+              <div class="row gap" style="align-items:center;">
+                <span class="avatar_sm">
+                  <% if (u.avatar_url) { %>
+                    <img src="<%= u.avatar_url %>" alt="avatar">
+                  <% } else { %>
+                    <span class="avatar_fallback"></span>
+                  <% } %>
+                </span>
+                <a class="reviewuser" href="/u/<%= encodeURIComponent(u.username) %>"><%= u.username %></a>
+              </div>
+            </div>
+          <% } %>
         </div>
-      {% endfor %}
+      <% } else { %>
+        <div class="muted" style="margin-top:10px;">Not following anyone yet.</div>
+      <% } %>
     </div>
-  {% else %}
-    <div class="muted" style="margin-top:10px;">Not following anyone yet.</div>
-  {% endif %}
-</div>
 
-{% endblock %}
+  </main>
+</body>
+</html>
