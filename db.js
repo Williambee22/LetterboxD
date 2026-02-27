@@ -7,9 +7,11 @@ function nowTs() {
 }
 
 function connect(dbPath) {
-  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+  const resolved = dbPath || '/data/site.db';
+  fs.mkdirSync(path.dirname(resolved), { recursive: true });
+  console.log('Opening SQLite DB at:', resolved);
 
-  const db = new Database(dbPath);
+  const db = new Database(resolved);
   db.pragma('foreign_keys = ON');
   db.pragma('journal_mode = DELETE');
   db.pragma('busy_timeout = 5000');
@@ -25,9 +27,13 @@ async function commit(_conn) {
 }
 
 function initDb(dbPath, opts = {}) {
+  const resolved = dbPath || '/data/site.db';
   const schemaPath = opts.schemaPath || path.join(process.cwd(), 'schema.sql');
+
+  fs.mkdirSync(path.dirname(resolved), { recursive: true });
+
   const schema = fs.readFileSync(schemaPath, 'utf8');
-  const conn = connect(dbPath);
+  const conn = connect(resolved);
   try {
     conn.exec(schema);
   } finally {
@@ -1342,4 +1348,5 @@ module.exports = {
   updateUserPasswordHash,
   searchUsers,
 };
+
 
