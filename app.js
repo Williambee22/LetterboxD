@@ -9,8 +9,6 @@ const bcrypt = require('bcryptjs');
 
 const dbx = require('./db');
 
-const app = express();
-
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
 
 const BASE_DIR = __dirname;
@@ -1487,6 +1485,7 @@ const app = createApp();
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
+
 
 
 
