@@ -6,8 +6,6 @@ const express = require('express');
 const session = require('express-session');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
-
-const app = express();
 const dbx = require('./db');
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
@@ -1482,6 +1480,7 @@ const app = createApp();
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
+
 
 
 
