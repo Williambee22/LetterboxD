@@ -1,60 +1,68 @@
-{% extends "base.ejs" %}
-{% block content %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Roles for <%= u.username %> - Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+</head>
+<body class="app">
+  <main class="wrap">
 
-<div class="row between" style="margin-top:10px;">
-  <div>
-    <div class="kicker">Admin</div>
-    <h1 style="margin:6px 0 0;">Roles for {{ u["username"] }}</h1>
-    <div class="muted small">Assign or remove roles for this user.</div>
-  </div>
-  <a class="btn ghost" href="{{ url_for('user_profile', username=u['username']) }}">View profile</a>
-</div>
-
-<div class="panel" style="margin-top:14px; max-width:720px;">
-  <div class="kicker">Assign role</div>
-
-  {% if roles and roles|length > 0 %}
-    <form method="post" action="{{ url_for('admin_user_roles_assign', username=u['username']) }}" style="margin-top:10px;">
-      <div class="field">
-        <label>Role</label>
-        <select name="role_id" required>
-          {% for r in roles %}
-            <option value="{{ r['id'] }}">{{ r["name"] }}</option>
-          {% endfor %}
-        </select>
+    <div class="row between" style="margin-top:10px;">
+      <div>
+        <div class="kicker">Admin</div>
+        <h1 style="margin:6px 0 0;">Roles for <%= u.username %></h1>
+        <div class="muted small">Assign or remove roles for this user.</div>
       </div>
-      <div class="actions">
-        <button class="btn green" type="submit">Assign</button>
-      </div>
-    </form>
-  {% else %}
-    <div class="muted" style="margin-top:10px;">No roles exist yet. Create one first.</div>
-  {% endif %}
-</div>
-
-<div class="panel" style="margin-top:14px;">
-  <div class="kicker">Current roles</div>
-
-  {% if user_roles and user_roles|length > 0 %}
-    <div class="stack" style="margin-top:12px;">
-      {% for r in user_roles %}
-        <div class="row between" style="padding:10px; border:1px solid rgba(255,255,255,.07); border-radius:12px;">
-          <span class="role_tag"
-                {% if r["color"] %}style="border-color: {{ r['color'] }}; color: {{ r['color'] }};"{% endif %}>
-            {{ r["name"] }}
-          </span>
-
-          <form method="post" action="{{ url_for('admin_user_roles_remove', username=u['username']) }}">
-            <input type="hidden" name="role_id" value="{{ r['id'] }}">
-            <button class="btn ghost" type="submit">Remove</button>
-          </form>
-        </div>
-      {% endfor %}
+      <a class="btn ghost" href="/u/<%= encodeURIComponent(u.username) %>">View profile</a>
     </div>
-  {% else %}
-    <div class="muted" style="margin-top:10px;">No roles assigned.</div>
-  {% endif %}
-</div>
 
+    <div class="panel" style="margin-top:14px; max-width:720px;">
+      <div class="kicker">Assign role</div>
 
-{% endblock %}
+      <% if (Array.isArray(roles) && roles.length > 0) { %>
+        <form method="post" action="/admin/user/<%= encodeURIComponent(u.username) %>/roles/assign" style="margin-top:10px;">
+          <div class="field">
+            <label>Role</label>
+            <select name="role_id" required>
+              <% for (const r of roles) { %>
+                <option value="<%= r.id %>"><%= r.name %></option>
+              <% } %>
+            </select>
+          </div>
+          <div class="actions">
+            <button class="btn green" type="submit">Assign</button>
+          </div>
+        </form>
+      <% } else { %>
+        <div class="muted" style="margin-top:10px;">No roles exist yet. Create one first.</div>
+      <% } %>
+    </div>
+
+    <div class="panel" style="margin-top:14px;">
+      <div class="kicker">Current roles</div>
+
+      <% if (Array.isArray(user_roles) && user_roles.length > 0) { %>
+        <div class="stack" style="margin-top:12px;">
+          <% for (const r of user_roles) { %>
+            <div class="row between" style="padding:10px; border:1px solid rgba(255,255,255,.07); border-radius:12px;">
+              <span class="role_tag" <%= r.color ? `style="border-color: ${r.color}; color: ${r.color};"` : "" %>>
+                <%= r.name %>
+              </span>
+
+              <form method="post" action="/admin/user/<%= encodeURIComponent(u.username) %>/roles/remove">
+                <input type="hidden" name="role_id" value="<%= r.id %>">
+                <button class="btn ghost" type="submit">Remove</button>
+              </form>
+            </div>
+          <% } %>
+        </div>
+      <% } else { %>
+        <div class="muted" style="margin-top:10px;">No roles assigned.</div>
+      <% } %>
+    </div>
+
+  </main>
+</body>
+</html>
