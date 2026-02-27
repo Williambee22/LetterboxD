@@ -6,10 +6,8 @@ const express = require('express');
 const session = require('express-session');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
-const SQLiteStoreFactory = require('connect-sqlite3');
 
 const app = express();
-
 const dbx = require('./db');
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
@@ -26,22 +24,19 @@ const ALLOWED_IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
 const MAX_UPLOAD_MB = 5;
 
 const APP_SECRET = process.env.APP_SECRET || 'dev-secret-change-me';
-const DB_PATH = process.env.DB_PATH || "/data/site.db";
+const DB_PATH = process.env.DB_PATH || '/data/site.db';
 const PORT = parseInt(process.env.PORT || '8080', 10);
 
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
-
-const SQLiteStore = require("connect-sqlite3")(session);
-
 app.use(session({
-  secret: process.env.APP_SECRET || "dev-secret-change-me",
+  secret: APP_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: false,
     httpOnly: true,
-    sameSite: "lax"
+    sameSite: 'lax'
   }
 }));
 
@@ -1487,6 +1482,7 @@ const app = createApp();
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
+
 
 
 
