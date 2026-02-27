@@ -1,15 +1,28 @@
-{% extends "base.ejs" %}
-{% block content %}
-  <h1>Login</h1>
-  <form class="panel form" method="post" action="{{ url_for('login_post') }}">
-    <input type="hidden" name="next" value="{{ next or '' }}"/>
-    <label>Username</label>
-    <input name="username" required/>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Login - Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+</head>
+<body class="app">
+  <main class="wrap">
 
-    <label>Password</label>
-    <input type="password" name="password" required/>
+    <h1>Login</h1>
 
-    <button class="btn" type="submit">Log in</button>
-  </form>
+    <form class="panel form" method="post" action="/login">
+      <input type="hidden" name="next" value="<%= next || '' %>"/>
 
-{% endblock %}
+      <label>Username</label>
+      <input name="username" required/>
+
+      <label>Password</label>
+      <input type="password" name="password" required/>
+
+      <button class="btn" type="submit">Log in</button>
+    </form>
+
+  </main>
+</body>
+</html>
