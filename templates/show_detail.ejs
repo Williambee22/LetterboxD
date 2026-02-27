@@ -1,358 +1,369 @@
-<!-- =========================================================
-STEP 6B — templates/show_detail.html (FULL FILE)
-+ Upvote/Downvote system UI for reviews
-+ Comments dropdown per review
-+ Admin delete review/comment
-+ Normal users: delete own review (hard) + delete own comment (soft -> "[comment deleted]")
-========================================================= -->
-{% extends "base.ejs" %}
-{% block content %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title><%= row && row.title ? row.title : "Show Detail" %> - Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+</head>
+<body class="app">
+<%
+  const POSTER_FALLBACK = "/static/posters/placeholder.png";
+  const meUser = typeof me !== "undefined" ? me : null;
+  const showRow = row || {};
+  const reviewList = Array.isArray(reviews) ? [...reviews] : [];
+  reviewList.sort((a, b) => Number(b?.vote_score || 0) - Number(a?.vote_score || 0));
+  const myReviewText = typeof my_review !== "undefined" ? (my_review || "") : "";
+  const myRatingVal = typeof my_rating !== "undefined" ? my_rating : null;
+  const loginNext = "/login?next=" + encodeURIComponent("/show/" + (showRow.id || ""));
+%>
 
-          <div class="showposter" style="position:relative; overflow:hidden; width:240px; height:360px; flex:0 0 240px;">
-            <img src="{{ row['poster_url'] }}"
-                alt="{{ row['title'] }} poster"
-                style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;">
-            <div class="poster_fallback" style="position:absolute; inset:0;"></div>
-          </div>
+  <main class="wrap">
 
-        <div class="showmeta">
-          <div class="kicker">Show</div>
-          <h1 style="margin:6px 0 8px;">{{ row["title"] }}</h1>
-          <div class="muted">{{ row["year"] }} — {{ row["corps"] }}</div>
+    <div class="layout" style="margin-top:14px;">
+      <section>
+        <div class="panel">
+          <div class="row gap" style="align-items:flex-start; flex-wrap:wrap;">
 
-          <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-            {% if row["cnt"] == 0 %}
-              <span class="badge muted">Unrated</span>
-            {% else %}
-              <span class="badge good">★ {{ "%.2f"|format(row["avg_rating"]) }}</span>
-              <span class="badge muted">{{ row["cnt"] }} ratings</span>
-            {% endif %}
-
-            {% if me and me["is_admin"] == 1 %}
-              <a class="btn ghost" href="{{ url_for('admin_edit_show', show_id=row['id']) }}">Edit show</a>
-            {% endif %}
-          </div>
-        </div>
-      </div>
-
-      <div class="showright">
-        <div class="panel" style="box-shadow:none; transform:translateY(-14px); position:relative; z-index:20;">
-          {% if me %}
-            <div class="kicker">Your rating</div>
-
-            <form id="rateForm" method="post" action="{{ url_for('rate_show', show_id=row['id']) }}">
-              <input type="hidden" name="rating_half" id="ratingHalf"
-                     value="{{ my_rating if my_rating is not none else 0 }}"/>
-
-              <div class="starwrap" style="justify-content:flex-end;">
-                <div class="stars" id="stars"
-                     data-current="{{ my_rating if my_rating is not none else 0 }}"
-                     aria-label="Rate this show from 0 to 5 stars in half-star steps"
-                     role="slider"
-                     tabindex="0">
-                  <div class="stars-base">★★★★★</div>
-                  <div class="stars-fill" id="starsFill">★★★★★</div>
-                </div>
-
-                <div class="muted" id="ratingLabel" style="min-width:90px;"></div>
-              </div>
-            </form>
-
-            {% if my_rating is not none %}
-              <form method="post" action="{{ url_for('unrate_show', show_id=row['id']) }}" style="margin-top:10px;">
-                <button class="btn ghost" type="submit">Remove rating</button>
-              </form>
-            {% endif %}
-
-            <script>
-              (function(){
-                const stars = document.getElementById("stars");
-                const fill  = document.getElementById("starsFill");
-                const input = document.getElementById("ratingHalf");
-                const label = document.getElementById("ratingLabel");
-                const form  = document.getElementById("rateForm");
-
-                const current = parseInt(stars.dataset.current || "0", 10);
-                setDisplay(current);
-
-                function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
-                function halfToText(rh){
-                  const val = (rh / 2).toFixed(rh % 2 ? 1 : 0);
-                  return val === "0" ? "0 ★" : (val + " ★");
-                }
-                function setDisplay(rh){
-                  const pct = (clamp(rh,0,10) / 10) * 100;
-                  fill.style.width = pct + "%";
-                  label.textContent = halfToText(clamp(rh,0,10));
-                }
-                function eventToHalf(e){
-                  const rect = stars.getBoundingClientRect();
-                  const x = clamp(e.clientX - rect.left, 0, rect.width);
-                  return clamp(Math.round((x / rect.width) * 10), 0, 10);
-                }
-
-                stars.addEventListener("mousemove", (e) => setDisplay(eventToHalf(e)));
-                stars.addEventListener("mouseleave", () => setDisplay(parseInt(input.value || "0", 10)));
-
-                stars.addEventListener("click", (e) => {
-                  const rh = eventToHalf(e);
-                  input.value = rh;
-                  setDisplay(rh);
-                  form.submit();
-                });
-
-                stars.addEventListener("keydown", (e) => {
-                  let rh = parseInt(input.value || "0", 10);
-                  if (e.key === "ArrowLeft")  rh = clamp(rh - 1, 0, 10);
-                  if (e.key === "ArrowRight") rh = clamp(rh + 1, 0, 10);
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    form.submit();
-                    return;
-                  }
-                  if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-                    e.preventDefault();
-                    input.value = rh;
-                    setDisplay(rh);
-                  }
-                });
-              })();
-            </script>
-
-          {% else %}
-            <div class="muted">
-              <a href="{{ url_for('login', next=url_for('show_detail', show_id=row['id'])) }}">Log in</a>
-              to rate this show.
+            <div class="showposter" style="position:relative; overflow:hidden; width:240px; height:360px; flex:0 0 240px;">
+              <img
+                src="<%= showRow.poster_url || POSTER_FALLBACK %>"
+                alt="<%= showRow.title || 'Show' %> poster"
+                style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;"
+                onerror="this.onerror=null;this.src='<%= POSTER_FALLBACK %>';"
+              >
+              <div class="poster_fallback" style="position:absolute; inset:0;"></div>
             </div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Reviews + editor -->
-  <div class="layout" style="margin-top:8px;">
+            <div class="showmeta" style="flex:1; min-width:260px;">
+              <div class="kicker">Show</div>
+              <h1 style="margin:6px 0 8px;"><%= showRow.title || "" %></h1>
+              <div class="muted"><%= showRow.year || "" %> — <%= showRow.corps || "" %></div>
 
-    <!-- Left: community reviews -->
-    <section>
-      <div class="panel">
-        <div class="row between" style="margin-bottom:10px;">
-          <div>
-            <div class="kicker">Reviews</div>
-            <h2 style="margin:6px 0 0;">Community</h2>
+              <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <% if (Number(showRow.cnt || 0) === 0) { %>
+                  <span class="badge muted">Unrated</span>
+                <% } else { %>
+                  <span class="badge good">★ <%= Number(showRow.avg_rating || 0).toFixed(2) %></span>
+                  <span class="badge muted"><%= Number(showRow.cnt || 0) %> ratings</span>
+                <% } %>
+
+                <% if (meUser && Number(meUser.is_admin) === 1) { %>
+                  <a class="btn ghost" href="/admin/show/<%= showRow.id %>/edit">Edit show</a>
+                <% } %>
+              </div>
+            </div>
+
+            <div class="showright" style="min-width:280px; flex:1;">
+              <div class="panel" style="box-shadow:none; transform:translateY(-14px); position:relative; z-index:20;">
+                <% if (meUser) { %>
+                  <div class="kicker">Your rating</div>
+
+                  <form id="rateForm" method="post" action="/show/<%= showRow.id %>/rate">
+                    <input type="hidden" name="rating_half" id="ratingHalf" value="<%= myRatingVal != null ? myRatingVal : 0 %>"/>
+
+                    <div class="starwrap" style="justify-content:flex-end;">
+                      <div class="stars"
+                           id="stars"
+                           data-current="<%= myRatingVal != null ? myRatingVal : 0 %>"
+                           aria-label="Rate this show from 0 to 5 stars in half-star steps"
+                           role="slider"
+                           tabindex="0">
+                        <div class="stars-base">★★★★★</div>
+                        <div class="stars-fill" id="starsFill">★★★★★</div>
+                      </div>
+
+                      <div class="muted" id="ratingLabel" style="min-width:90px;"></div>
+                    </div>
+                  </form>
+
+                  <% if (myRatingVal != null) { %>
+                    <form method="post" action="/show/<%= showRow.id %>/unrate" style="margin-top:10px;">
+                      <button class="btn ghost" type="submit">Remove rating</button>
+                    </form>
+                  <% } %>
+
+                  <script>
+                    (function(){
+                      const stars = document.getElementById("stars");
+                      const fill  = document.getElementById("starsFill");
+                      const input = document.getElementById("ratingHalf");
+                      const label = document.getElementById("ratingLabel");
+                      const form  = document.getElementById("rateForm");
+                      if (!stars || !fill || !input || !label || !form) return;
+
+                      const current = parseInt(stars.dataset.current || "0", 10);
+                      setDisplay(current);
+
+                      function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+                      function halfToText(rh){
+                        const val = (rh / 2).toFixed(rh % 2 ? 1 : 0);
+                        return val === "0" ? "0 ★" : (val + " ★");
+                      }
+                      function setDisplay(rh){
+                        const pct = (clamp(rh,0,10) / 10) * 100;
+                        fill.style.width = pct + "%";
+                        label.textContent = halfToText(clamp(rh,0,10));
+                      }
+                      function eventToHalf(e){
+                        const rect = stars.getBoundingClientRect();
+                        const x = clamp(e.clientX - rect.left, 0, rect.width);
+                        return clamp(Math.round((x / rect.width) * 10), 0, 10);
+                      }
+
+                      stars.addEventListener("mousemove", (e) => setDisplay(eventToHalf(e)));
+                      stars.addEventListener("mouseleave", () => setDisplay(parseInt(input.value || "0", 10)));
+
+                      stars.addEventListener("click", (e) => {
+                        const rh = eventToHalf(e);
+                        input.value = rh;
+                        setDisplay(rh);
+                        form.submit();
+                      });
+
+                      stars.addEventListener("keydown", (e) => {
+                        let rh = parseInt(input.value || "0", 10);
+                        if (e.key === "ArrowLeft")  rh = clamp(rh - 1, 0, 10);
+                        if (e.key === "ArrowRight") rh = clamp(rh + 1, 0, 10);
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          form.submit();
+                          return;
+                        }
+                        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                          e.preventDefault();
+                          input.value = rh;
+                          setDisplay(rh);
+                        }
+                      });
+                    })();
+                  </script>
+
+                <% } else { %>
+                  <div class="muted">
+                    <a href="<%= loginNext %>">Log in</a>
+                    to rate this show.
+                  </div>
+                <% } %>
+              </div>
+            </div>
+
           </div>
         </div>
+      </section>
+    </div>
 
-        {% if reviews and reviews|length > 0 %}
-          <div class="reviewlist">
-            {% for rv in reviews|sort(attribute='vote_score', reverse=True) %}
-              <div class="reviewcard">
-                <div class="row between" style="gap:12px; align-items:flex-start;">
+    <div class="layout" style="margin-top:8px;">
 
-                  <!-- Left: avatar + name + role + rating + text -->
-                  <div style="flex:1; min-width:0;">
-                    <div class="row gap" style="align-items:center; flex-wrap:wrap;">
-                      <span class="avatar_sm">
-                        {% if rv["avatar_url"] %}
-                          <img src="{{ rv['avatar_url'] }}" alt="avatar">
-                        {% else %}
-                          <span class="avatar_fallback"></span>
-                        {% endif %}
-                      </span>
+      <section>
+        <div class="panel">
+          <div class="row between" style="margin-bottom:10px;">
+            <div>
+              <div class="kicker">Reviews</div>
+              <h2 style="margin:6px 0 0;">Community</h2>
+            </div>
+          </div>
 
-                      <a class="reviewuser"
-                        href="{{ url_for('user_profile', username=rv['username']) }}"
-                        {% if rv["role_color"] %}style="color: {{ rv['role_color'] }};"{% endif %}>
-                        {{ rv["username"] }}
-                      </a>
+          <% if (reviewList.length > 0) { %>
+            <div class="reviewlist">
+              <% for (const rv of reviewList) { 
+                   const commentList = Array.isArray(rv.comments) ? rv.comments : [];
+                   const ccount = Number(rv.comment_count || commentList.length || 0);
+              %>
+                <div class="reviewcard">
+                  <div class="row between" style="gap:12px; align-items:flex-start;">
 
-                      {% if rv["role_name"] %}
-                        <span class="role_tag tiny"
-                              {% if rv["role_color"] %}style="border-color: {{ rv['role_color'] }}; color: {{ rv['role_color'] }};"{% endif %}>
-                          {{ rv["role_name"] }}
+                    <div style="flex:1; min-width:0;">
+                      <div class="row gap" style="align-items:center; flex-wrap:wrap;">
+                        <span class="avatar_sm">
+                          <% if (rv.avatar_url) { %>
+                            <img src="<%= rv.avatar_url %>" alt="avatar">
+                          <% } else { %>
+                            <span class="avatar_fallback"></span>
+                          <% } %>
                         </span>
-                      {% endif %}
 
-                      {% if rv["rating_half"] is not none %}
-                        <span class="muted"> ★ {{ "%.1f"|format(rv["rating_half"] / 2.0) }}</span>
-                      {% endif %}
+                        <a class="reviewuser"
+                           href="/u/<%= encodeURIComponent(rv.username) %>"
+                           <%= rv.role_color ? `style="color: ${rv.role_color};"` : "" %>>
+                          <%= rv.username %>
+                        </a>
+
+                        <% if (rv.role_name) { %>
+                          <span class="role_tag tiny" <%= rv.role_color ? `style="border-color: ${rv.role_color}; color: ${rv.role_color};"` : "" %>>
+                            <%= rv.role_name %>
+                          </span>
+                        <% } %>
+
+                        <% if (rv.rating_half != null) { %>
+                          <span class="muted"> ★ <%= (Number(rv.rating_half) / 2).toFixed(1) %></span>
+                        <% } %>
+                      </div>
+
+                      <div class="reviewtext"><%= rv.review_text || "" %></div>
+
+                      <details style="margin-top:10px;">
+                        <summary class="muted" style="cursor:pointer; user-select:none;">
+                          Comments (<%= ccount %>)
+                        </summary>
+
+                        <div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
+
+                          <% if (commentList.length > 0) { %>
+                            <% for (const c of commentList) { %>
+                              <div style="display:flex; gap:10px; align-items:flex-start;">
+                                <span class="avatar_sm">
+                                  <% if (c.commenter_avatar_url) { %>
+                                    <img src="<%= c.commenter_avatar_url %>" alt="avatar">
+                                  <% } else { %>
+                                    <span class="avatar_fallback"></span>
+                                  <% } %>
+                                </span>
+
+                                <div style="min-width:0; flex:1;">
+                                  <div class="row gap" style="align-items:baseline; flex-wrap:wrap;">
+                                    <a class="reviewuser"
+                                       href="/u/<%= encodeURIComponent(c.commenter_username) %>">
+                                      <%= c.commenter_username %>
+                                    </a>
+                                    <span class="muted" style="font-size:12px;"><%= c.created_at || "" %></span>
+
+                                    <% if (meUser && Number(meUser.is_admin) === 1) { %>
+                                      <form method="post"
+                                            action="/admin/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete"
+                                            style="margin:0; margin-left:auto;">
+                                        <button class="btn ghost" type="submit" style="padding:2px 8px; font-size:12px;">
+                                          Delete
+                                        </button>
+                                      </form>
+                                    <% } else if (meUser && Number(meUser.id) === Number(c.commenter_user_id)) { %>
+                                      <form method="post"
+                                            action="/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete"
+                                            style="margin:0; margin-left:auto;">
+                                        <button class="btn ghost" type="submit" style="padding:2px 8px; font-size:12px;">
+                                          Delete
+                                        </button>
+                                      </form>
+                                    <% } %>
+                                  </div>
+
+                                  <% if (c.comment_text === "[comment deleted]") { %>
+                                    <div class="muted" style="margin-top:2px; font-style:italic;">[comment deleted]</div>
+                                  <% } else { %>
+                                    <div class="muted" style="margin-top:2px; white-space:pre-wrap;"><%= c.comment_text || "" %></div>
+                                  <% } %>
+                                </div>
+                              </div>
+                            <% } %>
+                          <% } else { %>
+                            <div class="muted">No comments yet.</div>
+                          <% } %>
+
+                          <% if (meUser) { %>
+                            <form method="post"
+                                  action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment"
+                                  style="margin:0;">
+                              <div class="row gap" style="align-items:flex-start;">
+                                <textarea name="comment_text" rows="2"
+                                          placeholder="Add a comment…"
+                                          style="flex:1; resize:vertical;"></textarea>
+                                <button class="btn ghost" type="submit">Post</button>
+                              </div>
+                            </form>
+                          <% } else { %>
+                            <div class="muted">
+                              <a href="<%= loginNext %>">Log in</a>
+                              to comment.
+                            </div>
+                          <% } %>
+                        </div>
+                      </details>
+
                     </div>
 
-                    <div class="reviewtext">{{ rv["review_text"] }}</div>
+                    <div class="review_votes" style="display:flex; align-items:center; gap:8px;">
+                      <% if (meUser && Number(meUser.id) !== Number(rv.user_id)) { %>
+                        <form method="post"
+                              action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote"
+                              style="margin:0;">
+                          <input type="hidden" name="vote" value="1">
+                          <button class="vote_btn <%= Number(rv.my_vote) === 1 ? 'on' : '' %>" type="submit">▲</button>
+                        </form>
 
-                    {# COMMENTS DROPDOWN #}
-                    {% set ccount = rv.get("comment_count", 0) %}
-                    <details style="margin-top:10px;">
-                      <summary class="muted" style="cursor:pointer; user-select:none;">
-                        Comments ({{ ccount }})
-                      </summary>
+                        <div class="vote_score"><%= Number(rv.vote_score || 0) %></div>
 
-                      <div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
+                        <form method="post"
+                              action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote"
+                              style="margin:0;">
+                          <input type="hidden" name="vote" value="-1">
+                          <button class="vote_btn <%= Number(rv.my_vote) === -1 ? 'on' : '' %>" type="submit">▼</button>
+                        </form>
+                      <% } else { %>
+                        <div class="vote_score"><%= Number(rv.vote_score || 0) %></div>
+                      <% } %>
 
-                        {% if rv.get("comments") and rv["comments"]|length > 0 %}
-                          {% for c in rv["comments"] %}
-                            <div style="display:flex; gap:10px; align-items:flex-start;">
-                              <span class="avatar_sm">
-                                {% if c["commenter_avatar_url"] %}
-                                  <img src="{{ c['commenter_avatar_url'] }}" alt="avatar">
-                                {% else %}
-                                  <span class="avatar_fallback"></span>
-                                {% endif %}
-                              </span>
-
-                              <div style="min-width:0; flex:1;">
-                                <div class="row gap" style="align-items:baseline; flex-wrap:wrap;">
-                                  <a class="reviewuser"
-                                     href="{{ url_for('user_profile', username=c['commenter_username']) }}">
-                                    {{ c["commenter_username"] }}
-                                  </a>
-                                  <span class="muted" style="font-size:12px;">{{ c["created_at"] }}</span>
-
-                                  {# DELETE COMMENT BUTTONS:
-                                     - Admin: hard delete
-                                     - Normal user: soft delete ONLY if it's their own comment
-                                  #}
-                                  {% if me and me["is_admin"] == 1 %}
-                                    <form method="post"
-                                          action="{{ url_for('admin_delete_comment', show_id=row['id'], comment_id=c['comment_id']) }}"
-                                          style="margin:0; margin-left:auto;">
-                                      <button class="btn ghost" type="submit" style="padding:2px 8px; font-size:12px;">
-                                        Delete
-                                      </button>
-                                    </form>
-                                  {% elif me and (me["id"] == c["commenter_user_id"]) %}
-                                    <form method="post"
-                                          action="{{ url_for('delete_my_comment', show_id=row['id'], comment_id=c['comment_id']) }}"
-                                          style="margin:0; margin-left:auto;">
-                                      <button class="btn ghost" type="submit" style="padding:2px 8px; font-size:12px;">
-                                        Delete
-                                      </button>
-                                    </form>
-                                  {% endif %}
-                                </div>
-
-                                {# If soft-deleted, show placeholder as muted/italic #}
-                                {% if c["comment_text"] == "[comment deleted]" %}
-                                  <div class="muted" style="margin-top:2px; font-style:italic;">[comment deleted]</div>
-                                {% else %}
-                                  <div class="muted" style="margin-top:2px; white-space:pre-wrap;">{{ c["comment_text"] }}</div>
-                                {% endif %}
-                              </div>
-                            </div>
-                          {% endfor %}
-                        {% else %}
-                          <div class="muted">No comments yet.</div>
-                        {% endif %}
-
-                        {% if me %}
-                          <form method="post"
-                                action="{{ url_for('add_review_comment', show_id=row['id'], review_user_id=rv['user_id']) }}"
-                                style="margin:0;">
-                            <div class="row gap" style="align-items:flex-start;">
-                              <textarea name="comment_text" rows="2"
-                                        placeholder="Add a comment…"
-                                        style="flex:1; resize:vertical;"></textarea>
-                              <button class="btn ghost" type="submit">Post</button>
-                            </div>
-                          </form>
-                        {% else %}
-                          <div class="muted">
-                            <a href="{{ url_for('login', next=url_for('show_detail', show_id=row['id'])) }}">Log in</a>
-                            to comment.
-                          </div>
-                        {% endif %}
-                      </div>
-                    </details>
+                      <% if (meUser && Number(meUser.is_admin) === 1) { %>
+                        <form method="post"
+                              action="/admin/show/<%= showRow.id %>/review/<%= rv.user_id %>/delete"
+                              style="margin:0; margin-left:8px;">
+                          <button class="btn ghost" type="submit" style="padding:4px 8px; font-size:12px;">
+                            Delete
+                          </button>
+                        </form>
+                      <% } else if (meUser && Number(meUser.id) === Number(rv.user_id)) { %>
+                        <form method="post"
+                              action="/show/<%= showRow.id %>/review/delete"
+                              style="margin:0; margin-left:8px;">
+                          <button class="btn ghost" type="submit" style="padding:4px 8px; font-size:12px;">
+                            Delete
+                          </button>
+                        </form>
+                      <% } %>
+                    </div>
 
                   </div>
-
-                  <!-- Right: vote controls + delete buttons -->
-                  <div class="review_votes" style="display:flex; align-items:center; gap:8px;">
-                    {% if me and (me["id"] != rv["user_id"]) %}
-                      <form method="post"
-                            action="{{ url_for('vote_review', show_id=row['id'], review_user_id=rv['user_id']) }}"
-                            style="margin:0;">
-                        <input type="hidden" name="vote" value="1">
-                        <button class="vote_btn {% if rv['my_vote'] == 1 %}on{% endif %}" type="submit">▲</button>
-                      </form>
-
-                      <div class="vote_score">{{ rv["vote_score"] }}</div>
-
-                      <form method="post"
-                            action="{{ url_for('vote_review', show_id=row['id'], review_user_id=rv['user_id']) }}"
-                            style="margin:0;">
-                        <input type="hidden" name="vote" value="-1">
-                        <button class="vote_btn {% if rv['my_vote'] == -1 %}on{% endif %}" type="submit">▼</button>
-                      </form>
-                    {% else %}
-                      <div class="vote_score">{{ rv["vote_score"] }}</div>
-                    {% endif %}
-
-                    {# Admin can delete any review #}
-                    {% if me and me["is_admin"] == 1 %}
-                      <form method="post"
-                            action="{{ url_for('admin_delete_review', show_id=row['id'], review_user_id=rv['user_id']) }}"
-                            style="margin:0; margin-left:8px;">
-                        <button class="btn ghost" type="submit" style="padding:4px 8px; font-size:12px;">
-                          Delete
-                        </button>
-                      </form>
-
-                    {# Normal user can delete their own review #}
-                    {% elif me and (me["id"] == rv["user_id"]) %}
-                      <form method="post"
-                            action="{{ url_for('delete_my_review', show_id=row['id']) }}"
-                            style="margin:0; margin-left:8px;">
-                        <button class="btn ghost" type="submit" style="padding:4px 8px; font-size:12px;">
-                          Delete
-                        </button>
-                      </form>
-                    {% endif %}
-                  </div>
-
                 </div>
+              <% } %>
+            </div>
+          <% } else { %>
+            <div class="muted">No reviews yet. Be the first to write one.</div>
+          <% } %>
+        </div>
+      </section>
+
+      <aside class="side" style="top:86px;">
+        <div class="panel">
+
+          <% if (meUser) { %>
+            <form method="post" action="/show/<%= showRow.id %>/review">
+              <div class="field">
+                <label><%= myReviewText ? "Edit your review" : "Write a review" %></label>
+                <textarea name="review_text" rows="10" placeholder="What did you think?"><%= myReviewText %></textarea>
               </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="muted">No reviews yet. Be the first to write one.</div>
-        {% endif %}
-      </div>
-    </section>
 
-    <!-- Right: your review editor -->
-    <aside class="side" style="top:86px;">
-      <div class="panel">
-
-        {% if me %}
-          <form method="post" action="{{ url_for('review_show', show_id=row['id']) }}">
-            <div class="field">
-              <label>{% if my_review %}Edit your review{% else %}Write a review{% endif %}</label>
-              <textarea name="review_text" rows="10" placeholder="What did you think?">{{ my_review or "" }}</textarea>
-            </div>
-
-            <div class="actions">
-              <button class="btn green" type="submit">{% if my_review %}Save{% else %}Post{% endif %}</button>
-              <a class="btn ghost" href="{{ url_for('show_detail', show_id=row['id']) }}">Cancel</a>
-            </div>
-          </form>
-
-          {% if my_review %}
-            <form method="post" action="{{ url_for('delete_my_review', show_id=row['id']) }}" style="margin-top:10px;">
-              <button class="btn ghost" type="submit">Delete</button>
+              <div class="actions">
+                <button class="btn green" type="submit"><%= myReviewText ? "Save" : "Post" %></button>
+                <a class="btn ghost" href="/show/<%= showRow.id %>">Cancel</a>
+              </div>
             </form>
-          {% endif %}
 
-        {% else %}
-          <div class="muted">
-            <a href="{{ url_for('login', next=url_for('show_detail', show_id=row['id'])) }}">Log in</a>
-            to post a review.
-          </div>
-        {% endif %}
-      </div>
-    </aside>
+            <% if (myReviewText) { %>
+              <form method="post" action="/show/<%= showRow.id %>/review/delete" style="margin-top:10px;">
+                <button class="btn ghost" type="submit">Delete</button>
+              </form>
+            <% } %>
 
-  </div>
+          <% } else { %>
+            <div class="muted">
+              <a href="<%= loginNext %>">Log in</a>
+              to post a review.
+            </div>
+          <% } %>
+        </div>
+      </aside>
 
+    </div>
 
-{% endblock %}
+  </main>
+</body>
+</html>
