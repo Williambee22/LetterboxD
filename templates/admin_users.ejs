@@ -1,30 +1,39 @@
-{% extends "base.ejs" %}
-{% block content %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Users - Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+</head>
+<body class="app">
+  <main class="wrap">
 
-<div class="panel">
-  <div class="kicker">Admin</div>
-  <h1 style="margin:6px 0 14px;">Users</h1>
+    <div class="panel">
+      <div class="kicker">Admin</div>
+      <h1 style="margin:6px 0 14px;">Users</h1>
 
-  {% if users and users|length > 0 %}
-    <div class="stack">
-      {% for u in users %}
-        <div class="row between" style="align-items:center;">
-          <div>
-            <div style="font-weight:800;">{{ u["username"] }}</div>
-            <div class="muted small">{% if u["is_admin"] == 1 %}Admin{% else %}User{% endif %}</div>
-          </div>
+      <% if (Array.isArray(users) && users.length > 0) { %>
+        <div class="stack">
+          <% for (const u of users) { %>
+            <div class="row between" style="align-items:center;">
+              <div>
+                <div style="font-weight:800;"><%= u.username %></div>
+                <div class="muted small"><%= Number(u.is_admin) === 1 ? "Admin" : "User" %></div>
+              </div>
 
-          <div class="row gap" style="align-items:center;">
-            <a class="btn ghost" href="{{ url_for('user_profile', username=u['username']) }}">Profile</a>
-            <a class="btn green" href="{{ url_for('admin_user_roles', username=u['username']) }}">Assign roles</a>
-          </div>
+              <div class="row gap" style="align-items:center;">
+                <a class="btn ghost" href="/u/<%= encodeURIComponent(u.username) %>">Profile</a>
+                <a class="btn green" href="/admin/user/<%= encodeURIComponent(u.username) %>/roles">Assign roles</a>
+              </div>
+            </div>
+          <% } %>
         </div>
-      {% endfor %}
+      <% } else { %>
+        <div class="muted">No users found.</div>
+      <% } %>
     </div>
-  {% else %}
-    <div class="muted">No users found.</div>
-  {% endif %}
-</div>
 
-
-{% endblock %}
+  </main>
+</body>
+</html>
