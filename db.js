@@ -7,9 +7,12 @@ function nowTs() {
 }
 
 function connect(dbPath) {
+  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+
   const db = new Database(dbPath);
   db.pragma('foreign_keys = ON');
-  db.pragma('journal_mode = WAL');
+  db.pragma('journal_mode = DELETE');
+  db.pragma('busy_timeout = 5000');
   return db;
 }
 
@@ -1339,3 +1342,4 @@ module.exports = {
   updateUserPasswordHash,
   searchUsers,
 };
+
