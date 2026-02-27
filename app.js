@@ -33,10 +33,6 @@ fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 const SQLiteStore = require("connect-sqlite3")(session);
 
 app.use(session({
-  store: new SQLiteStore({
-    db: "sessions.db",
-    dir: path.dirname(DB_PATH)
-  }),
   secret: process.env.APP_SECRET || "dev-secret-change-me",
   resave: false,
   saveUninitialized: false,
@@ -1489,6 +1485,7 @@ const app = createApp();
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
+
 
 
 
