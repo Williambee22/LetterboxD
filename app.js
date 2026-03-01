@@ -718,31 +718,41 @@ function createApp() {
     try {
       conn = getConn();
   
+      console.log('LOGIN attempt username =', username);
+  
       const u = normalizeRow(await dbx.userByUsername(conn, username));
+      console.log('LOGIN user found =', !!u);
   
       if (!u) {
-        req.flash('error', 'Invalid username/password.');
-        return res.redirect('/login');
+        return res.status(401).send('LOGIN DEBUG: user not found');
       }
   
-      const passCol = await dbx.usersPasswordCol(conn);
+      const passCol = dbx.usersPasswordCol(conn);
       const storedHash = u[passCol];
+      console.log('LOGIN pass column =', passCol);
+      console.log('LOGIN stored hash exists =', !!storedHash);
   
       const ok = storedHash ? await bcrypt.compare(password, storedHash) : false;
+      console.log('LOGIN password match =', ok);
   
       if (!ok) {
-        req.flash('error', 'Invalid username/password.');
-        return res.redirect('/login');
+        return res.status(401).send('LOGIN DEBUG: password mismatch');
       }
   
       req.session.uid = Number(u.id);
-      req.flash('ok', 'Logged in.');
+      console.log('LOGIN set session uid =', req.session.uid);
   
       return req.session.save((err) => {
-        if (err) return next(err);
-        return res.redirect(nxt || '/shows');
+        if (err) {
+          console.error('LOGIN session save error =', err);
+          return next(err);
+        }
+  
+        console.log('LOGIN session saved. sessionID =', req.sessionID);
+        return res.send(`LOGIN DEBUG SUCCESS: uid=${req.session.uid}, sessionID=${req.sessionID}`);
       });
     } catch (err) {
+      console.error('LOGIN exception =', err);
       return next(err);
     } finally {
       if (conn) dbx.close(conn);
@@ -1561,6 +1571,28 @@ function createApp() {
     res.status(err.status || 500).send(err.message || 'Internal Server Error');
   });
 
+  app.get('/debug-session', (req, res) => {
+    res.json({
+      sessionID: req.sessionID,
+      uid: req.session?.uid || null,
+      session: req.session || null,
+    });
+  });
+
+
+  app.get('/debug-users', (_req, res, next) => {
+    let conn;
+    try {
+      conn = getConn();
+      const users = conn.prepare('SELECT id, username, is_admin, created_ts FROM users ORDER BY id ASC').all();
+      res.json(users);
+    } catch (err) {
+      next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  });
+  
   return app;
 }
 
