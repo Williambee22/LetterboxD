@@ -465,7 +465,7 @@ function createApp() {
     }
   });
 
-  app.post('/show/:show_id/comment/:comment_id/delete', loginRequired(async (req, res) => {
+  ('/show/:show_id/comment/:comment_id/delete', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const commentId = Number(req.params.comment_id);
     let conn;
@@ -484,7 +484,7 @@ function createApp() {
     return res.redirect(`/show/${showId}`);
   }));
 
-  app.post('/admin/show/:show_id/review/:review_user_id/delete', adminRequired(async (req, res) => {
+  ('/admin/show/:show_id/review/:review_user_id/delete', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const reviewUserId = Number(req.params.review_user_id);
     let conn;
@@ -501,7 +501,7 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
-  app.post('/admin/show/:show_id/comment/:comment_id/delete', adminRequired(async (req, res) => {
+  ('/admin/show/:show_id/comment/:comment_id/delete', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const commentId = Number(req.params.comment_id);
     let conn;
@@ -520,7 +520,7 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
-  app.post('/show/:show_id/review/:review_user_id/comment', loginRequired(async (req, res) => {
+  ('/show/:show_id/review/:review_user_id/comment', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const reviewUserId = Number(req.params.review_user_id);
     const commenterId = Number(req.session.uid);
@@ -555,7 +555,7 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
-  app.post('/me/upload_pfp', loginRequired((req, res, next) => {
+  ('/me/upload_pfp', loginRequired((req, res, next) => {
     uploadPfp.single('pfp_file')(req, res, async (err) => {
       if (err) {
         req.flash('error', `Upload failed: ${err.message}`);
@@ -586,7 +586,7 @@ function createApp() {
     });
   }));
 
-  app.post('/show/:show_id/rate', loginRequired(async (req, res) => {
+  ('/show/:show_id/rate', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const ratingHalf = String(req.body.rating_half || '').trim();
     if (!/^\d+$/.test(ratingHalf)) {
@@ -614,7 +614,7 @@ function createApp() {
     return res.redirect(`/show/${showId}`);
   }));
 
-  app.post('/show/:show_id/unrate', loginRequired(async (req, res) => {
+  ('/show/:show_id/unrate', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     let conn;
     try {
@@ -627,9 +627,51 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
+  app.post('/register', async (req, res, next) => {
+    const username = String(req.body.username || '').trim();
+    const password = String(req.body.password || '').trim();
+  
+    if (username.length < 3) {
+      req.flash('error', 'Username must be at least 3 characters.');
+      return res.redirect('/register');
+    }
+    if (password.length < 6) {
+      req.flash('error', 'Password must be at least 6 characters.');
+      return res.redirect('/register');
+    }
+  
+    let conn;
+    try {
+      conn = getConn();
+  
+      if (await dbx.userByUsername(conn, username)) {
+        req.flash('error', 'That username is taken.');
+        return res.redirect('/register');
+      }
+  
+      const makeAdmin = await dbx.isFirstUser(conn);
+      const uid = await dbx.createUser(conn, username, await bcrypt.hash(password, 12), { makeAdmin });
+  
+      req.session.uid = Number(uid);
+      req.flash('ok', "Account created. You're logged in.");
+      if (makeAdmin) req.flash('ok', 'First user created: you are admin (can mass add shows).');
+  
+      return req.session.save((err) => {
+        if (err) return next(err);
+        return res.redirect('/shows');
+      });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  });
+
+
+  
   app.get('/register', (_req, res) => res.render('auth_register'));
 
-  app.post('/register', async (req, res, next) => {
+  ('/register', async (req, res, next) => {
     const username = String(req.body.username || '').trim();
     const password = String(req.body.password || '').trim();
 
@@ -667,9 +709,51 @@ function createApp() {
     }
   });
 
+  app.post('/login', async (req, res, next) => {
+    const username = String(req.body.username || '').trim();
+    const password = String(req.body.password || '').trim();
+    const nxt = String(req.body.next || '').trim();
+  
+    let conn;
+    try {
+      conn = getConn();
+  
+      const u = normalizeRow(await dbx.userByUsername(conn, username));
+  
+      if (!u) {
+        req.flash('error', 'Invalid username/password.');
+        return res.redirect('/login');
+      }
+  
+      const passCol = await dbx.usersPasswordCol(conn);
+      const storedHash = u[passCol];
+  
+      const ok = storedHash ? await bcrypt.compare(password, storedHash) : false;
+  
+      if (!ok) {
+        req.flash('error', 'Invalid username/password.');
+        return res.redirect('/login');
+      }
+  
+      req.session.uid = Number(u.id);
+      req.flash('ok', 'Logged in.');
+  
+      return req.session.save((err) => {
+        if (err) return next(err);
+        return res.redirect(nxt || '/shows');
+      });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  });
+
+
+  
   app.get('/login', (req, res) => res.render('auth_login', { next: req.query.next || '' }));
 
-  app.post('/login', async (req, res, next) => {
+  ('/login', async (req, res, next) => {
     const username = String(req.body.username || '').trim();
     const password = String(req.body.password || '').trim();
     const nxt = String(req.body.next || '').trim();
@@ -699,11 +783,11 @@ function createApp() {
 
   app.get('/logout', (req, res) => {
     req.session.destroy(() => {
-      res.clearCookie('connect.sid');
+      res.clearCookie('pressboxd.sid');
       res.redirect('/shows');
     });
   });
-
+  
   app.get('/admin/bulk_add', adminRequired(async (_req, res) => res.render('bulk_add')));
 
   app.post('/admin/bulk_add', adminRequired(async (req, res) => {
@@ -1485,6 +1569,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
