@@ -718,41 +718,31 @@ function createApp() {
     try {
       conn = getConn();
   
-      console.log('LOGIN attempt username =', username);
-  
       const u = normalizeRow(await dbx.userByUsername(conn, username));
-      console.log('LOGIN user found =', !!u);
-  
       if (!u) {
         return res.status(401).send('LOGIN DEBUG: user not found');
       }
   
       const passCol = dbx.usersPasswordCol(conn);
       const storedHash = u[passCol];
-      console.log('LOGIN pass column =', passCol);
-      console.log('LOGIN stored hash exists =', !!storedHash);
   
-      const ok = storedHash ? await bcrypt.compare(password, storedHash) : false;
-      console.log('LOGIN password match =', ok);
+      if (!storedHash) {
+        return res.status(500).send(`LOGIN DEBUG: no password hash in column ${passCol}`);
+      }
+  
+      const ok = await bcrypt.compare(password, storedHash);
   
       if (!ok) {
         return res.status(401).send('LOGIN DEBUG: password mismatch');
       }
   
       req.session.uid = Number(u.id);
-      console.log('LOGIN set session uid =', req.session.uid);
   
       return req.session.save((err) => {
-        if (err) {
-          console.error('LOGIN session save error =', err);
-          return next(err);
-        }
-  
-        console.log('LOGIN session saved. sessionID =', req.sessionID);
-        return res.send(`LOGIN DEBUG SUCCESS: uid=${req.session.uid}, sessionID=${req.sessionID}`);
+        if (err) return next(err);
+        return res.send(`LOGIN DEBUG SUCCESS: uid=${req.session.uid}, next=${nxt || '/shows'}`);
       });
     } catch (err) {
-      console.error('LOGIN exception =', err);
       return next(err);
     } finally {
       if (conn) dbx.close(conn);
@@ -1601,6 +1591,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
