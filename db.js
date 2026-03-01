@@ -1335,6 +1335,7 @@ module.exports = {
   friendsStatus,
   listFriends,
   listIncomingFriendRequests,
+  listFriendActivity,
   ensureReviewCommentsTable,
   addReviewComment,
   listReviewCommentsForShow,
@@ -1348,5 +1349,6 @@ module.exports = {
   updateUserPasswordHash,
   searchUsers,
 };
+
 
 
