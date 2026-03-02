@@ -1390,3 +1390,28 @@ button.btn.green:hover,
   color: var(--accent) !important;
 }
 
+body{
+  --accent2: color-mix(in srgb, var(--accent) 55%, transparent);
+  --accentSoft: color-mix(in srgb, var(--accent) 28%, transparent);
+  --accentFaint: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+
+
+.topbar,
+.panel,
+.poster,
+.reviewcard,
+.showhero,
+.profile_hero,
+.profile_stats,
+.dropzone,
+.btn,
+.btn.ghost,
+.field input,
+.field select,
+textarea,
+.badge,
+.role_tag{
+  border-color: color-mix(in srgb, var(--accent) 28%, rgba(255,255,255,.10)) !important;
+}
