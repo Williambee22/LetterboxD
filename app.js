@@ -562,35 +562,38 @@ function createApp() {
     const username = String(req.body.username || '').trim();
     const password = String(req.body.password || '').trim();
     const nxt = String(req.body.next || '').trim();
-
+  
     let conn;
     try {
       conn = getConn();
-
+  
       const u = normalizeRow(await dbx.userByUsername(conn, username));
       if (!u) {
         req.flash('error', 'Invalid username/password.');
         return res.redirect('/login');
       }
-
+  
       const passCol = dbx.usersPasswordCol(conn);
       const storedHash = u[passCol];
-      const ok = await verifyPassword(password, storedHash);
-
+  
+      const ok = storedHash ? await comparePassword(password, storedHash) : false;
       if (!ok) {
         req.flash('error', 'Invalid username/password.');
         return res.redirect('/login');
       }
-
-      if (needsRehashToBcrypt(storedHash)) {
-        const newHash = await bcrypt.hash(password, 12);
-        await dbx.updateUserPasswordHash(conn, Number(u.id), newHash);
-        await dbx.commit(conn);
-      }
-
+  
       req.session.uid = Number(u.id);
+  
+      if (Number(u.must_change_password || 0) === 1) {
+        req.flash('warn', 'You must change your password before continuing.');
+        return req.session.save((err) => {
+          if (err) return next(err);
+          return res.redirect('/force-change-password');
+        });
+      }
+  
       req.flash('ok', 'Logged in.');
-
+  
       return req.session.save((err) => {
         if (err) return next(err);
         return res.redirect(nxt || '/shows');
@@ -1273,14 +1276,6 @@ function createApp() {
       if (conn) dbx.close(conn);
     }
   });
-  if (Number(u.must_change_password || 0) === 1) {
-    req.session.uid = Number(u.id);
-    req.flash('warn', 'You must change your password before continuing.');
-    return req.session.save((err) => {
-      if (err) return next(err);
-      return res.redirect('/me');
-    });
-  }
   
   app.get('/me', loginRequired(async (req, res) => {
     let conn;
@@ -1824,6 +1819,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
