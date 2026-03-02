@@ -281,9 +281,9 @@
               %>
                 <div style="width:340px; flex:0 0 auto; padding:10px; border-radius:12px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);">
                   <div style="display:flex; gap:10px; align-items:flex-start;">
-                    <div style="width:60px; height:80px; overflow:hidden; flex:0 0 auto; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10);">
+                    <div style="width:60px; height:80px; overflow:hidden; flex:0 0 auto; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10); display:flex; align-items:center; justify-content:center;">
                       <% if (sid) { %>
-                        <a href="/show/<%= sid %>" style="display:block; width:100%; height:100%;">
+                        <a href="/show/<%= sid %>" style="display:flex; width:100%; height:100%; align-items:center; justify-content:center;">
                           <img
                             src="<%= posterThumb %>"
                             alt="poster"
