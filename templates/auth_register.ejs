@@ -8,19 +8,27 @@
 </head>
 <body class="app">
   <main class="wrap">
+    <% if (Array.isArray(flashes) && flashes.length > 0) { %>
+      <div class="flashes">
+        <% for (const f of flashes) { %>
+          <div class="flash <%= f.category %>"><%= f.message %></div>
+        <% } %>
+      </div>
+    <% } %>
 
     <h1>Register</h1>
-
     <form class="panel form" method="post" action="/register">
       <label>Username</label>
       <input name="username" placeholder="yourname" required minlength="3"/>
+
+      <label>Email</label>
+      <input type="email" name="email" placeholder="you@example.com" required/>
 
       <label>Password</label>
       <input type="password" name="password" required minlength="6"/>
 
       <button class="btn" type="submit">Create account</button>
     </form>
-
   </main>
 </body>
 </html>
