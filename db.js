@@ -60,6 +60,18 @@ function usersColumns(conn) {
   return tableColumns(conn, 'users');
 }
 
+function pfpUrlForUsername(username) {
+  const key = slugify(username);
+  const base = `pfp_${key}`;
+
+  for (const ext of ['.png', '.jpg', '.jpeg', '.webp']) {
+    const abs = path.join(PFP_DIR, `${base}${ext}`);
+    if (fs.existsSync(abs)) return `/uploads/pfps/${base}${ext}`;
+  }
+
+  return null;
+}
+
 function usersPasswordCol(conn) {
   const cols = usersColumns(conn);
   if (cols.has('pass_hash')) return 'pass_hash';
@@ -1440,6 +1452,7 @@ clearPasswordResetToken,
 setUserMustChangePassword,
 updateUserEmail,
 };
+
 
 
 
