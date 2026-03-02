@@ -257,11 +257,19 @@ function verifyWerkzeugHash(password, storedHash) {
       return false;
     }
 
+    // Raise maxmem so Werkzeug scrypt hashes can verify
+    const estimatedMaxmem = Math.max(128 * N * r * p, 64 * 1024 * 1024);
+
     const derived = crypto.scryptSync(
       String(password),
       salt,
       keylen,
-      { N, r, p }
+      {
+        N,
+        r,
+        p,
+        maxmem: estimatedMaxmem
+      }
     ).toString('hex');
 
     return safeEqualHex(derived, expectedHex);
@@ -1654,3 +1662,4 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
