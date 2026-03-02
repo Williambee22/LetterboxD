@@ -100,7 +100,7 @@
     }
   </style>
 </head>
-<body class="app">
+<body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
 <%
   const POSTER_FALLBACK = "/static/posters/placeholder.png";
   const meUser = typeof me !== "undefined" ? me : null;
@@ -609,3 +609,4 @@
   </script>
 </body>
 </html>
+
