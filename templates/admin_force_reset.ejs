@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Force Password Reset - Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+
+  <style>
+    .auth { align-items:center; gap: 12px; }
+
+    .notifWrap { position: relative; display: inline-flex; align-items:center; }
+    .bellBtn {
+      position: relative;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: inherit;
+      padding: 6px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.95;
+    }
+    .bellBtn:hover { background: rgba(255,255,255,0.06); }
+
+    .badgeDot {
+      position:absolute;
+      top: 3px;
+      right: 3px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #ff3b30;
+      color: #fff;
+      font-size: 11px;
+      line-height: 18px;
+      text-align: center;
+      font-weight: 800;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    }
+
+    .notifDropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 40px;
+      width: 340px;
+      max-height: 420px;
+      overflow: auto;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.45);
+      z-index: 9999;
+    }
+    .notifDropdown.open { display:block; }
+
+    .notifHeader {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      position: sticky;
+      top: 0;
+      background: rgba(15, 23, 42, 0.98);
+      backdrop-filter: blur(8px);
+    }
+
+    .notifTitle { font-weight: 900; }
+
+    .markReadBtn {
+      border: none;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      opacity: 0.85;
+      font-size: 12px;
+      padding: 6px 8px;
+      border-radius: 10px;
+    }
+    .markReadBtn:hover { background: rgba(255,255,255,0.06); opacity: 1; }
+
+    .notifList { padding: 8px; display:flex; flex-direction:column; gap: 8px; }
+
+    .notifItem {
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .notifItem.unread {
+      background: rgba(99,102,241,0.18);
+      border-color: rgba(99,102,241,0.25);
+    }
+
+    .notifTime { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+    .notifEmpty { padding: 12px; opacity: 0.8; }
+    .authBellSlot { display:inline-flex; align-items:center; }
+
+    .notifDropdown,
+    .notifDropdown * {
+      pointer-events: auto !important;
+    }
+  </style>
+</head>
+
+<%
+  const meUser = typeof me !== "undefined" ? me : null;
+  const targetUser = typeof u !== "undefined" && u ? u : {};
+  const flashesList = Array.isArray(typeof flashes !== "undefined" ? flashes : []) ? flashes : [];
+  const notifCountSafe = typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
+  const notifItemsSafe = Array.isArray(typeof notif_items !== "undefined" ? notif_items : []) ? notif_items : [];
+%>
+
+<body class="app" <%= meUser && meUser.theme_color ? `style="--accent: ${meUser.theme_color};"` : "" %>>
+  <header class="topbar">
+    <div class="wrap row between">
+      <a class="brand" href="/shows">
+        <span class="dot"></span>
+        <span>Pressboxd</span>
+      </a>
+
+      <nav class="nav row">
+        <a href="/shows">Shows</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+        <% if (meUser && Number(meUser.is_admin) === 1) { %>
+          <a href="/admin/bulk_add">Mass Add</a>
+          <a href="/admin/roles">Roles</a>
+          <a href="/admin/users">Users</a>
+        <% } %>
+      </nav>
+
+      <div class="auth row">
+        <% if (meUser) { %>
+          <div class="authBellSlot">
+            <div class="notifWrap">
+              <button class="bellBtn" id="bellBtn" aria-label="Notifications" title="Notifications">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/>
+                  <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
+                </svg>
+
+                <% if (notifCountSafe > 0) { %>
+                  <span class="badgeDot"><%= notifCountSafe %></span>
+                <% } %>
+              </button>
+
+              <div class="notifDropdown" id="notifDropdown">
+                <div class="notifHeader">
+                  <div class="notifTitle">Notifications</div>
+                  <form method="post" action="/me/notifications/read">
+                    <button class="markReadBtn" type="submit">Mark all read</button>
+                  </form>
+                </div>
+
+                <% if (notifItemsSafe.length > 0) { %>
+                  <div class="notifList">
+                    <% for (const n of notifItemsSafe) {
+                      const kind = n?.kind || "";
+                      const actor = n?.actor_username || "Someone";
+                      const created = n?.created_at || "";
+                      const unread = Number(n?.is_read ?? 0) === 0;
+                      const sid = n?.show_id || null;
+                    %>
+                      <div class="notifItem <%= unread ? 'unread' : '' %>">
+                        <% if (kind === "friend_request") { %>
+                          <div><b><%= actor %></b> sent you a friend request.</div>
+                        <% } else if (kind === "follow") { %>
+                          <div><b><%= actor %></b> followed you.</div>
+                        <% } else if (kind === "review_upvote") { %>
+                          <div>
+                            <b><%= actor %></b> upvoted your review
+                            <% if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
+                          </div>
+                        <% } else if (kind === "review_comment") { %>
+                          <div>
+                            <b><%= actor %></b> commented on your review
+                            <% if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
+                          </div>
+                        <% } else { %>
+                          <div>New activity.</div>
+                        <% } %>
+
+                        <% if (created) { %>
+                          <div class="notifTime"><%= created %></div>
+                        <% } %>
+                      </div>
+                    <% } %>
+                  </div>
+                <% } else { %>
+                  <div class="notifEmpty">No notifications.</div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+          <a class="nav_user" href="/me">
+            <span class="avatar_sm">
+              <% if (meUser.avatar_url) { %>
+                <img src="<%= meUser.avatar_url %>" alt="avatar">
+              <% } else { %>
+                <span class="avatar_fallback"></span>
+              <% } %>
+            </span>
+            <span class="muted small"><%= meUser.username %></span>
+          </a>
+
+          <a href="/logout">Logout</a>
+        <% } else { %>
+          <a href="/login">Login</a>
+          <a class="btn" href="/register">Register</a>
+        <% } %>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <% if (flashesList.length > 0) { %>
+      <div class="flashes">
+        <% for (const f of flashesList) { %>
+          <div class="flash <%= f.category %>"><%= f.message %></div>
+        <% } %>
+      </div>
+    <% } %>
+
+    <div class="row between" style="margin-top:10px; align-items:flex-end; gap:12px;">
+      <div>
+        <div class="kicker">Admin</div>
+        <h1 style="margin:6px 0 0;">Force Password Reset</h1>
+        <div class="muted small">
+          Mark <b><%= targetUser.username || "user" %></b> to require a password change on next login.
+        </div>
+      </div>
+
+      <div class="row gap">
+        <a class="btn ghost" href="/admin/users">Back to Users</a>
+        <% if (targetUser.username) { %>
+          <a class="btn ghost" href="/u/<%= encodeURIComponent(targetUser.username) %>">View Profile</a>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:14px; max-width:760px;">
+      <div class="stack" style="gap:14px;">
+        <div class="muted small">
+          <% if (targetUser.email) { %>
+            Email on file: <b><%= targetUser.email %></b>
+          <% } else { %>
+            No email on file for this user.
+          <% } %>
+        </div>
+
+        <div class="panel" style="box-shadow:none;">
+          <div class="kicker">What this does</div>
+          <div class="muted small" style="margin-top:8px;">
+            This does <b>not</b> change the current password immediately.
+            It flags the account so the user must set a new password after the next successful login.
+          </div>
+        </div>
+
+        <form method="post" action="/admin/user/<%= encodeURIComponent(targetUser.username || '') %>/force-reset">
+          <div class="actions">
+            <button class="btn green" type="submit">Force Reset</button>
+            <a class="btn ghost" href="/admin/users">Cancel</a>
+          </div>
+        </form>
+
+        <% if (targetUser.username) { %>
+          <div style="border-top:1px solid rgba(255,255,255,.08); padding-top:14px;">
+            <div class="muted small" style="margin-bottom:8px;"><b>Need something stronger?</b></div>
+
+            <div class="row gap" style="flex-wrap:wrap;">
+              <a class="btn ghost" href="/admin/user/<%= encodeURIComponent(targetUser.username) %>/set-temp-password">
+                Set Temporary Password
+              </a>
+
+              <% if (targetUser.email) { %>
+                <form method="post" action="/admin/user/<%= encodeURIComponent(targetUser.username) %>/temp-password" style="margin:0;">
+                  <button class="btn ghost" type="submit">Generate and Email Temporary Password</button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </main>
+
+  <footer class="wrap footer">
+    <div class="small">Rate drum corps shows.</div>
+  </footer>
+
+  <script>
+    (() => {
+      const btn = document.getElementById("bellBtn");
+      const dd = document.getElementById("notifDropdown");
+      if (!btn || !dd) return;
+
+      dd.addEventListener("click", (e) => e.stopPropagation());
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dd.classList.toggle("open");
+      });
+
+      document.addEventListener("click", () => {
+        dd.classList.remove("open");
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") dd.classList.remove("open");
+      });
+    })();
+  </script>
+</body>
+</html>
