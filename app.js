@@ -211,6 +211,19 @@ function createApp() {
       maxAge: 1000 * 60 * 60 * 24 * 14,
     },
   }));
+
+  app.use((req, res, next) => {
+    if (!Array.isArray(req.session.flash)) req.session.flash = [];
+
+    req.flash = (category, message) => {
+      req.session.flash.push({ category, message });
+    };
+
+    res.locals.flashes = req.session.flash || [];
+    req.session.flash = [];
+
+    next();
+  });
   
   app.use((req, res, next) => {
     if (!Array.isArray(req.session.flash)) req.session.flash = [];
@@ -1579,18 +1592,6 @@ function createApp() {
     }
   });
 
-  app.use((req, res, next) => {
-    if (!Array.isArray(req.session.flash)) req.session.flash = [];
-  
-    req.flash = (category, message) => {
-      req.session.flash.push({ category, message });
-    };
-  
-    res.locals.flashes = req.session.flash || [];
-    req.session.flash = [];
-  
-    next();
-  });
 
   
    app.use((_req, res) => res.status(404).send('Not Found'));
@@ -1603,6 +1604,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
