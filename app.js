@@ -27,6 +27,7 @@ const PORT = parseInt(process.env.PORT || '8080', 10);
 
 const SOURCE_DB_PATH = path.join(BASE_DIR, 'site.db');
 const DB_PATH = process.env.DB_PATH || '/data/site.db';
+
 console.log('APP DB_PATH =', DB_PATH);
 
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
@@ -40,7 +41,6 @@ if (!fs.existsSync(DB_PATH)) {
     console.log(`Initialized new DB at ${DB_PATH}`);
   }
 }
-
 
 const BAD_WORDS = new Set([
   'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'dick', 'pussy',
@@ -195,27 +195,110 @@ function wantsJson(req) {
     || req.accepts(['html', 'json']) === 'json';
 }
 
+/* =========================
+   HASH COMPATIBILITY
+   Supports:
+   - bcrypt ($2a$ / $2b$ / $2y$)
+   - Werkzeug pbkdf2
+   - Werkzeug scrypt
+========================= */
+
+function safeEqualHex(a, b) {
+  try {
+    const aBuf = Buffer.from(String(a || ''), 'hex');
+    const bBuf = Buffer.from(String(b || ''), 'hex');
+    if (aBuf.length !== bBuf.length) return false;
+    return crypto.timingSafeEqual(aBuf, bBuf);
+  } catch {
+    return false;
+  }
+}
+
+function verifyWerkzeugHash(password, storedHash) {
+  if (!storedHash || typeof storedHash !== 'string') return false;
+
+  const parts = storedHash.split('$');
+  if (parts.length !== 3) return false;
+
+  const [methodSpec, salt, expectedHex] = parts;
+
+  if (methodSpec.startsWith('pbkdf2:')) {
+    const m = methodSpec.match(/^pbkdf2:([^:]+):(\d+)$/);
+    if (!m) return false;
+
+    const hashMethod = m[1];
+    const iterations = parseInt(m[2], 10);
+    if (!Number.isFinite(iterations) || iterations <= 0) return false;
+
+    const keylen = expectedHex.length / 2;
+    if (!Number.isFinite(keylen) || keylen <= 0) return false;
+
+    const derived = crypto.pbkdf2Sync(
+      String(password),
+      salt,
+      iterations,
+      keylen,
+      hashMethod
+    ).toString('hex');
+
+    return safeEqualHex(derived, expectedHex);
+  }
+
+  if (methodSpec.startsWith('scrypt:')) {
+    const m = methodSpec.match(/^scrypt:(\d+):(\d+):(\d+)$/);
+    if (!m) return false;
+
+    const N = parseInt(m[1], 10);
+    const r = parseInt(m[2], 10);
+    const p = parseInt(m[3], 10);
+    const keylen = expectedHex.length / 2;
+
+    if (!Number.isFinite(N) || !Number.isFinite(r) || !Number.isFinite(p) || !Number.isFinite(keylen) || keylen <= 0) {
+      return false;
+    }
+
+    const derived = crypto.scryptSync(
+      String(password),
+      salt,
+      keylen,
+      { N, r, p }
+    ).toString('hex');
+
+    return safeEqualHex(derived, expectedHex);
+  }
+
+  return false;
+}
+
+async function verifyPassword(password, storedHash) {
+  if (!storedHash || typeof storedHash !== 'string') return false;
+
+  if (
+    storedHash.startsWith('$2a$') ||
+    storedHash.startsWith('$2b$') ||
+    storedHash.startsWith('$2y$')
+  ) {
+    return bcrypt.compare(password, storedHash);
+  }
+
+  if (
+    storedHash.startsWith('pbkdf2:') ||
+    storedHash.startsWith('scrypt:')
+  ) {
+    return verifyWerkzeugHash(password, storedHash);
+  }
+
+  return false;
+}
+
+function needsRehashToBcrypt(storedHash) {
+  return !!storedHash && !storedHash.startsWith('$2');
+}
+
 function createApp() {
   const app = express();
-  const SOURCE_DB_PATH = path.join(BASE_DIR, 'site.db');
-  const DB_PATH = process.env.DB_PATH || '/data/site.db';
-  
-  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-  
-  if (!fs.existsSync(DB_PATH)) {
-    if (fs.existsSync(SOURCE_DB_PATH)) {
-      fs.copyFileSync(SOURCE_DB_PATH, DB_PATH);
-      console.log(`Copied seeded DB from ${SOURCE_DB_PATH} -> ${DB_PATH}`);
-    } else {
-      console.log(`No existing DB found at ${SOURCE_DB_PATH}; a new DB will be initialized at ${DB_PATH}`);
-    }
-  }
+
   app.set('trust proxy', 1);
-
-  if (!fs.existsSync(DB_PATH)) {
-    dbx.initDb(DB_PATH, { schemaPath: path.join(BASE_DIR, 'schema.sql') });
-  }
-
   app.set('view engine', 'ejs');
   app.set('views', path.join(BASE_DIR, 'templates'));
 
@@ -246,22 +329,6 @@ function createApp() {
 
     res.locals.flashes = req.session.flash || [];
     req.session.flash = [];
-
-    next();
-  });
-  
-  app.use((req, res, next) => {
-    if (!Array.isArray(req.session.flash)) req.session.flash = [];
-
-    req.flash = (category, message) => {
-      req.session.flash.push({ category, message });
-    };
-
-    res.locals.getFlashes = () => {
-      const items = req.session.flash || [];
-      req.session.flash = [];
-      return items;
-    };
 
     next();
   });
@@ -308,7 +375,7 @@ function createApp() {
       try {
         const u = await currentUser(req);
         if (!u || Number(u.is_admin) !== 1) {
-          return res.status(403).render('base', { body: 'Forbidden' });
+          return res.status(403).send('Forbidden');
         }
         return await handler(req, res, next);
       } catch (err) {
@@ -419,6 +486,104 @@ function createApp() {
 
   app.get('/', (_req, res) => res.redirect('/shows'));
 
+  app.get('/register', (_req, res) => res.render('auth_register'));
+
+  app.post('/register', async (req, res, next) => {
+    const username = String(req.body.username || '').trim();
+    const password = String(req.body.password || '').trim();
+
+    if (username.length < 3) {
+      req.flash('error', 'Username must be at least 3 characters.');
+      return res.redirect('/register');
+    }
+    if (password.length < 6) {
+      req.flash('error', 'Password must be at least 6 characters.');
+      return res.redirect('/register');
+    }
+
+    let conn;
+    try {
+      conn = getConn();
+
+      if (await dbx.userByUsername(conn, username)) {
+        req.flash('error', 'That username is taken.');
+        return res.redirect('/register');
+      }
+
+      const makeAdmin = await dbx.isFirstUser(conn);
+      const passwordHash = await bcrypt.hash(password, 12);
+      const uid = await dbx.createUser(conn, username, passwordHash, { makeAdmin });
+
+      req.session.uid = Number(uid);
+      req.flash('ok', "Account created. You're logged in.");
+      if (makeAdmin) req.flash('ok', 'First user created: you are admin (can mass add shows).');
+
+      return req.session.save((err) => {
+        if (err) return next(err);
+        return res.redirect('/shows');
+      });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  });
+
+  app.get('/login', (req, res) => {
+    res.render('auth_login', { next: req.query.next || '' });
+  });
+
+  app.post('/login', async (req, res, next) => {
+    const username = String(req.body.username || '').trim();
+    const password = String(req.body.password || '').trim();
+    const nxt = String(req.body.next || '').trim();
+
+    let conn;
+    try {
+      conn = getConn();
+
+      const u = normalizeRow(await dbx.userByUsername(conn, username));
+      if (!u) {
+        req.flash('error', 'Invalid username/password.');
+        return res.redirect('/login');
+      }
+
+      const passCol = dbx.usersPasswordCol(conn);
+      const storedHash = u[passCol];
+      const ok = await verifyPassword(password, storedHash);
+
+      if (!ok) {
+        req.flash('error', 'Invalid username/password.');
+        return res.redirect('/login');
+      }
+
+      if (needsRehashToBcrypt(storedHash)) {
+        const newHash = await bcrypt.hash(password, 12);
+        await dbx.updateUserPasswordHash(conn, Number(u.id), newHash);
+        await dbx.commit(conn);
+      }
+
+      req.session.uid = Number(u.id);
+      req.flash('ok', 'Logged in.');
+
+      return req.session.save((err) => {
+        if (err) return next(err);
+        return res.redirect(nxt || '/shows');
+      });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  });
+
+  app.get('/logout', (req, res) => {
+    req.session.destroy(() => {
+      res.clearCookie('pressboxd.sid');
+      res.redirect('/shows');
+    });
+  });
+
   app.get('/shows', async (req, res, next) => {
     const sort = String(req.query.sort || 'year_desc').trim();
     const year = String(req.query.year || '').trim();
@@ -464,6 +629,7 @@ function createApp() {
 
       let me = viewerUid ? normalizeRow(await dbx.userById(conn, viewerUid)) : null;
       const myRating = viewerUid ? await dbx.userRatingForShow(conn, showId, viewerUid) : null;
+      const myReview = viewerUid ? await dbx.myReviewForShow(conn, showId, viewerUid) : null;
 
       if (me && !me.avatar_url) me.avatar_url = pfpUrlForUsername(me.username || '');
 
@@ -495,7 +661,13 @@ function createApp() {
         };
       });
 
-      res.render('show_detail', { row, me, my_rating: myRating, reviews: reviewsWithComments });
+      res.render('show_detail', {
+        row,
+        me,
+        my_rating: myRating,
+        my_review: myReview,
+        reviews: reviewsWithComments,
+      });
     } catch (err) {
       next(err);
     } finally {
@@ -503,7 +675,7 @@ function createApp() {
     }
   });
 
-  ('/show/:show_id/comment/:comment_id/delete', loginRequired(async (req, res) => {
+  app.post('/show/:show_id/comment/:comment_id/delete', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const commentId = Number(req.params.comment_id);
     let conn;
@@ -522,7 +694,7 @@ function createApp() {
     return res.redirect(`/show/${showId}`);
   }));
 
-  ('/admin/show/:show_id/review/:review_user_id/delete', adminRequired(async (req, res) => {
+  app.post('/admin/show/:show_id/review/:review_user_id/delete', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const reviewUserId = Number(req.params.review_user_id);
     let conn;
@@ -539,7 +711,7 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
-  ('/admin/show/:show_id/comment/:comment_id/delete', adminRequired(async (req, res) => {
+  app.post('/admin/show/:show_id/comment/:comment_id/delete', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const commentId = Number(req.params.comment_id);
     let conn;
@@ -547,8 +719,8 @@ function createApp() {
       conn = getConn();
       if (typeof dbx.deleteReviewComment === 'function') {
         await dbx.deleteReviewComment(conn, commentId, { requesterUserId: Number(req.session.uid), isAdmin: true });
-      } else {
-        await dbx.run(conn, 'DELETE FROM review_comments WHERE id = ?', [commentId]);
+      } else if (typeof dbx.adminHardDeleteReviewComment === 'function') {
+        await dbx.adminHardDeleteReviewComment(conn, commentId);
       }
       await dbx.commit(conn);
       req.flash('ok', 'Comment deleted.');
@@ -558,7 +730,7 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
-  ('/show/:show_id/review/:review_user_id/comment', loginRequired(async (req, res) => {
+  app.post('/show/:show_id/review/:review_user_id/comment', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const reviewUserId = Number(req.params.review_user_id);
     const commenterId = Number(req.session.uid);
@@ -593,7 +765,7 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
-  ('/me/upload_pfp', loginRequired((req, res, next) => {
+  app.post('/me/upload_pfp', loginRequired((req, res, next) => {
     uploadPfp.single('pfp_file')(req, res, async (err) => {
       if (err) {
         req.flash('error', `Upload failed: ${err.message}`);
@@ -624,7 +796,7 @@ function createApp() {
     });
   }));
 
-  ('/show/:show_id/rate', loginRequired(async (req, res) => {
+  app.post('/show/:show_id/rate', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const ratingHalf = String(req.body.rating_half || '').trim();
     if (!/^\d+$/.test(ratingHalf)) {
@@ -652,7 +824,7 @@ function createApp() {
     return res.redirect(`/show/${showId}`);
   }));
 
-  ('/show/:show_id/unrate', loginRequired(async (req, res) => {
+  app.post('/show/:show_id/unrate', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     let conn;
     try {
@@ -665,165 +837,6 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
-  app.post('/register', async (req, res, next) => {
-    const username = String(req.body.username || '').trim();
-    const password = String(req.body.password || '').trim();
-  
-    if (username.length < 3) {
-      req.flash('error', 'Username must be at least 3 characters.');
-      return res.redirect('/register');
-    }
-    if (password.length < 6) {
-      req.flash('error', 'Password must be at least 6 characters.');
-      return res.redirect('/register');
-    }
-  
-    let conn;
-    try {
-      conn = getConn();
-  
-      if (await dbx.userByUsername(conn, username)) {
-        req.flash('error', 'That username is taken.');
-        return res.redirect('/register');
-      }
-  
-      const makeAdmin = await dbx.isFirstUser(conn);
-      const uid = await dbx.createUser(conn, username, await bcrypt.hash(password, 12), { makeAdmin });
-  
-      req.session.uid = Number(uid);
-      req.flash('ok', "Account created. You're logged in.");
-      if (makeAdmin) req.flash('ok', 'First user created: you are admin (can mass add shows).');
-  
-      return req.session.save((err) => {
-        if (err) return next(err);
-        return res.redirect('/shows');
-      });
-    } catch (err) {
-      return next(err);
-    } finally {
-      if (conn) dbx.close(conn);
-    }
-  });
-
-
-  
-  app.get('/register', (_req, res) => res.render('auth_register'));
-
-  ('/register', async (req, res, next) => {
-    const username = String(req.body.username || '').trim();
-    const password = String(req.body.password || '').trim();
-
-    if (username.length < 3) {
-      req.flash('error', 'Username must be at least 3 characters.');
-      return res.redirect('/register');
-    }
-    if (password.length < 6) {
-      req.flash('error', 'Password must be at least 6 characters.');
-      return res.redirect('/register');
-    }
-
-    let conn;
-    try {
-      conn = getConn();
-      if (await dbx.userByUsername(conn, username)) {
-        req.flash('error', 'That username is taken.');
-        return res.redirect('/register');
-      }
-
-      const makeAdmin = await dbx.isFirstUser(conn);
-      const uid = await dbx.createUser(conn, username, await bcrypt.hash(password, 12), { makeAdmin });
-      req.session.uid = uid;
-      req.flash('ok', "Account created. You're logged in.");
-      if (makeAdmin) req.flash('ok', 'First user created: you are admin (can mass add shows).');
-      
-      return req.session.save((err) => {
-        if (err) return next(err);
-        return res.redirect('/shows');
-      });
-    } catch (err) {
-      return next(err);
-    } finally {
-      if (conn) dbx.close(conn);
-    }
-  });
-
-  app.post('/login', async (req, res, next) => {
-    const username = String(req.body.username || '').trim();
-    const password = String(req.body.password || '').trim();
-    const nxt = String(req.body.next || '').trim();
-  
-    let conn;
-    try {
-      conn = getConn();
-  
-      const u = normalizeRow(await dbx.userByUsername(conn, username));
-      if (!u) {
-        req.flash('error', 'Invalid username/password.');
-        return res.redirect('/login');
-      }
-  
-      const passCol = dbx.usersPasswordCol(conn);
-      const storedHash = u[passCol];
-      const ok = storedHash ? await bcrypt.compare(password, storedHash) : false;
-  
-      if (!ok) {
-        req.flash('error', 'Invalid username/password.');
-        return res.redirect('/login');
-      }
-  
-      req.session.uid = Number(u.id);
-      req.flash('ok', 'Logged in.');
-  
-      return req.session.save((err) => {
-        if (err) return next(err);
-        return res.redirect(nxt || '/shows');
-      });
-    } catch (err) {
-      return next(err);
-    } finally {
-      if (conn) dbx.close(conn);
-    }
-  });
-
-
-  
-  app.get('/login', (req, res) => res.render('auth_login', { next: req.query.next || '' }));
-
-  ('/login', async (req, res, next) => {
-    const username = String(req.body.username || '').trim();
-    const password = String(req.body.password || '').trim();
-    const nxt = String(req.body.next || '').trim();
-
-    let conn;
-    try {
-      conn = getConn();
-      const u = normalizeRow(await dbx.userByUsername(conn, username));
-      if (!u || !(await bcrypt.compare(password, u.pass_hash))) {
-        req.flash('error', 'Invalid username/password.');
-        return res.redirect('/login');
-      }
-
-      req.session.uid = Number(u.id);
-      req.flash('ok', 'Logged in.');
-      
-      return req.session.save((err) => {
-        if (err) return next(err);
-        return res.redirect(nxt || '/shows');
-      });
-    } catch (err) {
-      return next(err);
-    } finally {
-      if (conn) dbx.close(conn);
-    }
-  });
-
-  app.get('/logout', (req, res) => {
-    req.session.destroy(() => {
-      res.clearCookie('pressboxd.sid');
-      res.redirect('/shows');
-    });
-  });
-  
   app.get('/admin/bulk_add', adminRequired(async (_req, res) => res.render('bulk_add')));
 
   app.post('/admin/bulk_add', adminRequired(async (req, res) => {
@@ -935,11 +948,20 @@ function createApp() {
     let conn;
     try {
       conn = getConn();
-      let me = await currentUser(req);
-      let profileUser = normalizeRow(await dbx.userByUsername(conn, username));
+      const me = await currentUser(req);
+      const profileUser = normalizeRow(await dbx.userByUsername(conn, username));
       if (!profileUser) return res.sendStatus(404);
       const rows = (await dbx.listAllRatingsForUser(conn, profileUser.id, { sort, corpsQ: q }) || []).map(normalizeRow);
-      return res.render('user_all_ratings', { me, profile_user: profileUser, sort, q, rows });
+      const userRoles = (await dbx.rolesForUser(conn, Number(profileUser.id)) || []).map(normalizeRow);
+
+      return res.render('user_all_ratings', {
+        me,
+        profile_user: profileUser,
+        user_roles: userRoles,
+        sort,
+        q,
+        rows,
+      });
     } catch (err) {
       return next(err);
     } finally {
@@ -1095,7 +1117,7 @@ function createApp() {
     try {
       conn = getConn();
       const uid = Number(req.session.uid);
-      let u = normalizeRow(await dbx.userById(conn, uid));
+      const u = normalizeRow(await dbx.userById(conn, uid));
       if (!u) return res.sendStatus(404);
 
       const [avg, cnt] = await dbx.userAvgRating(conn, uid);
@@ -1138,7 +1160,7 @@ function createApp() {
     let conn;
     try {
       conn = getConn();
-      let profile = normalizeRow(await dbx.userByUsername(conn, username));
+      const profile = normalizeRow(await dbx.userByUsername(conn, username));
       if (!profile) return res.sendStatus(404);
 
       const [avg, cnt] = await dbx.userAvgRating(conn, Number(profile.id));
@@ -1520,9 +1542,9 @@ function createApp() {
       const me = normalizeRow(await dbx.userById(conn, uid));
       if (!me) return res.sendStatus(404);
 
-      const passCol = await dbx.usersPasswordCol(conn);
+      const passCol = dbx.usersPasswordCol(conn);
       const storedHash = me[passCol];
-      const ok = storedHash ? await bcrypt.compare(currentPassword, storedHash) : false;
+      const ok = await verifyPassword(currentPassword, storedHash);
       if (!ok) {
         req.flash('error', 'Current password is incorrect.');
         return res.redirect('/me');
@@ -1539,6 +1561,12 @@ function createApp() {
       }
 
       await dbx.updateUserUsername(conn, uid, newUsername);
+
+      if (needsRehashToBcrypt(storedHash)) {
+        const newHash = await bcrypt.hash(currentPassword, 12);
+        await dbx.updateUserPasswordHash(conn, uid, newHash);
+      }
+
       await dbx.commit(conn);
       req.flash('ok', 'Username updated.');
       return res.redirect('/me');
@@ -1572,9 +1600,9 @@ function createApp() {
       const me = normalizeRow(await dbx.userById(conn, uid));
       if (!me) return res.sendStatus(404);
 
-      const passCol = await dbx.usersPasswordCol(conn);
+      const passCol = dbx.usersPasswordCol(conn);
       const storedHash = me[passCol];
-      const ok = storedHash ? await bcrypt.compare(currentPassword, storedHash) : false;
+      const ok = await verifyPassword(currentPassword, storedHash);
       if (!ok) {
         req.flash('error', 'Current password is incorrect.');
         return res.redirect('/me');
@@ -1589,12 +1617,6 @@ function createApp() {
     }
   }));
 
-  app.use((err, _req, res, _next) => {
-    console.error(err);
-    if (res.headersSent) return;
-    res.status(err.status || 500).send(err.message || 'Internal Server Error');
-  });
-
   app.get('/debug-session', (req, res) => {
     res.json({
       sessionID: req.sessionID,
@@ -1602,7 +1624,6 @@ function createApp() {
       session: req.session || null,
     });
   });
-
 
   app.get('/debug-users', (_req, res, next) => {
     let conn;
@@ -1617,10 +1638,14 @@ function createApp() {
     }
   });
 
+  app.use((err, _req, res, _next) => {
+    console.error(err);
+    if (res.headersSent) return;
+    res.status(err.status || 500).send(err.message || 'Internal Server Error');
+  });
 
-  
-   app.use((_req, res) => res.status(404).send('Not Found'));
-  
+  app.use((_req, res) => res.status(404).send('Not Found'));
+
   return app;
 }
 
@@ -1629,16 +1654,3 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
