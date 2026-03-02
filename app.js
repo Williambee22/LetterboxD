@@ -1535,6 +1535,18 @@ function createApp() {
     }
   });
 
+  app.get('/me/customize', loginRequired(async (req, res) => {
+    let conn;
+    try {
+      conn = getConn();
+      const u = await dbx.userById(conn, Number(req.session.uid));
+      if (!u) return res.sendStatus(404);
+      res.render('profile_customize', { u: normalizeRow(u) });
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+  
   app.post('/me/customize', loginRequired(async (req, res) => {
     const avatarUrl = String(req.body.avatar_url || '').trim();
     const bannerUrl = String(req.body.banner_url || '').trim();
@@ -1549,21 +1561,7 @@ function createApp() {
     } finally {
       if (conn) dbx.close(conn);
     }
-    res.redirect('/me');
-  }));
-
-  app.post('/me/customize', loginRequired(async (req, res) => {
-    const avatarUrl = String(req.body.avatar_url || '').trim();
-    const bannerUrl = String(req.body.banner_url || '').trim();
-    const themeColor = String(req.body.theme_color || '').trim();
-    let conn;
-    try {
-      conn = getConn();
-      await dbx.updateUserProfileStyle(conn, Number(req.session.uid), avatarUrl, bannerUrl, themeColor);
-      req.flash('ok', 'Profile updated.');
-    } finally {
-      if (conn) dbx.close(conn);
-    }
+  
     res.redirect('/me');
   }));
 
@@ -1988,6 +1986,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
