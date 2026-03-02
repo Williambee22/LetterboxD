@@ -8,24 +8,30 @@
 </head>
 <body class="app">
 <%
-  const meUsername = me && me.username ? me.username : null;
-  const puUsername = profile_user && profile_user.username ? profile_user.username : null;
+  const safeMe = (typeof me !== "undefined" && me) ? me : null;
+  const safeProfileUser = (typeof profile_user !== "undefined" && profile_user) ? profile_user : {};
+
+  const meUsername = safeMe && safeMe.username ? safeMe.username : null;
+  const puUsername = safeProfileUser && safeProfileUser.username ? safeProfileUser.username : null;
   const isMe = !!(meUsername && puUsername && meUsername === puUsername);
-  const safeRoles = Array.isArray(user_roles) ? user_roles : [];
-  const safeRows = Array.isArray(rows) ? rows : [];
+
+  const safeRoles = (typeof user_roles !== "undefined" && Array.isArray(user_roles)) ? user_roles : [];
+  const safeRows = (typeof rows !== "undefined" && Array.isArray(rows)) ? rows : [];
+  const safeSort = (typeof sort !== "undefined" && sort) ? sort : "high";
+  const safeQ = (typeof q !== "undefined" && q) ? q : "";
 %>
   <main class="wrap">
 
     <div class="profile_hero"
-      <%= profile_user && profile_user.banner_url ? `style="--pBanner:url('${profile_user.banner_url}');"` : "" %>>
+      <%= safeProfileUser.banner_url ? `style="--pBanner:url('${safeProfileUser.banner_url}');"` : "" %>>
       <div class="profile_hero_inner"
-        <%= profile_user && profile_user.theme_color ? `style="--pAccent: ${profile_user.theme_color};"` : "" %>>
+        <%= safeProfileUser.theme_color ? `style="--pAccent: ${safeProfileUser.theme_color};"` : "" %>>
 
         <div class="row gap" style="align-items:center;">
 
           <div class="avatar_lg">
-            <% if (profile_user && profile_user.avatar_url) { %>
-              <img src="<%= profile_user.avatar_url %>" alt="avatar">
+            <% if (safeProfileUser.avatar_url) { %>
+              <img src="<%= safeProfileUser.avatar_url %>" alt="avatar">
             <% } else { %>
               <div class="avatar_fallback"></div>
             <% } %>
@@ -34,7 +40,7 @@
           <div style="min-width:0;">
             <div class="kicker">Profile</div>
             <h1 style="margin:6px 0 0;">
-              <%= profile_user && profile_user.username ? profile_user.username : "User" %>
+              <%= safeProfileUser.username ? safeProfileUser.username : "User" %>
             </h1>
 
             <% if (safeRoles.length > 0) { %>
@@ -47,10 +53,12 @@
               </div>
             <% } %>
 
-            <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
-              <a class="btn ghost" href="/u/<%= encodeURIComponent(profile_user.username) %>">Back to profile</a>
-              <a class="btn ghost on" href="/u/<%= encodeURIComponent(profile_user.username) %>/ratings">All Ratings</a>
-            </div>
+            <% if (safeProfileUser.username) { %>
+              <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
+                <a class="btn ghost" href="/u/<%= encodeURIComponent(safeProfileUser.username) %>">Back to profile</a>
+                <a class="btn ghost on" href="/u/<%= encodeURIComponent(safeProfileUser.username) %>/ratings">All Ratings</a>
+              </div>
+            <% } %>
           </div>
 
         </div>
@@ -79,32 +87,34 @@
             </div>
           </div>
 
-          <form method="get"
-                action="/u/<%= encodeURIComponent(profile_user.username) %>/ratings"
-                style="margin-top:12px;">
-            <div class="row gap" style="flex-wrap:wrap; align-items:flex-end;">
-              <div class="field" style="min-width:240px; flex:1;">
-                <label>Search corps</label>
-                <input name="q" value="<%= q || '' %>" placeholder="e.g., Blue Devils, Crown, Phantom">
-              </div>
+          <% if (safeProfileUser.username) { %>
+            <form method="get"
+                  action="/u/<%= encodeURIComponent(safeProfileUser.username) %>/ratings"
+                  style="margin-top:12px;">
+              <div class="row gap" style="flex-wrap:wrap; align-items:flex-end;">
+                <div class="field" style="min-width:240px; flex:1;">
+                  <label>Search corps</label>
+                  <input name="q" value="<%= safeQ %>" placeholder="e.g., Blue Devils, Crown, Phantom">
+                </div>
 
-              <div class="field" style="min-width:200px;">
-                <label>Sort</label>
-                <select name="sort">
-                  <option value="high" <%= sort !== 'low' ? 'selected' : '' %>>Highest rated</option>
-                  <option value="low" <%= sort === 'low' ? 'selected' : '' %>>Lowest rated</option>
-                </select>
-              </div>
+                <div class="field" style="min-width:200px;">
+                  <label>Sort</label>
+                  <select name="sort">
+                    <option value="high" <%= safeSort !== 'low' ? 'selected' : '' %>>Highest rated</option>
+                    <option value="low" <%= safeSort === 'low' ? 'selected' : '' %>>Lowest rated</option>
+                  </select>
+                </div>
 
-              <div class="actions" style="min-width:160px;">
-                <button class="btn green" type="submit">Apply</button>
+                <div class="actions" style="min-width:160px;">
+                  <button class="btn green" type="submit">Apply</button>
+                </div>
               </div>
-            </div>
-          </form>
+            </form>
+          <% } %>
 
           <% if (safeRows.length > 0) { %>
             <div class="postergrid" style="margin-top:14px;">
-              <% for (const rr of safeRows) { 
+              <% for (const rr of safeRows) {
                    const p =
                      rr.poster_url ||
                      rr.show_poster_url ||
