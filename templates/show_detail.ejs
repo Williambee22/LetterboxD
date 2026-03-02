@@ -233,139 +233,138 @@
       </div>
     <% } %>
 
-    <div class="layout" style="margin-top:14px;">
-      <section>
-        <div class="panel">
-          <div class="row between" style="align-items:flex-start; flex-wrap:nowrap; gap:18px; width:100%;">
+    <!-- TOP SHOW AREA -->
+    <div style="margin-top:14px;">
+      <div class="panel">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:28px; width:100%;">
 
-            <div class="row gap" style="align-items:flex-start; flex:1 1 auto; min-width:0; flex-wrap:nowrap; max-width:calc(100% - 340px);">
-              <div class="showposter" style="position:relative; overflow:hidden; width:240px; height:360px; flex:0 0 240px;">
-                <img
-                  src="<%= showRow.poster_url || POSTER_FALLBACK %>"
-                  alt="<%= showRow.title || 'Show' %> poster"
-                  style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;"
-                  onerror="this.onerror=null;this.src='<%= POSTER_FALLBACK %>';"
-                >
-                <div class="poster_fallback" style="position:absolute; inset:0;"></div>
-              </div>
-
-              <div class="showmeta" style="flex:1 1 auto; min-width:0; max-width:none;">
-                <div class="kicker">Show</div>
-                <h1 style="margin:6px 0 8px;"><%= showRow.title || "" %></h1>
-                <div class="muted"><%= showRow.year || "" %> — <%= showRow.corps || "" %></div>
-
-                <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                  <% if (Number(showRow.cnt || 0) === 0) { %>
-                    <span class="badge muted">Unrated</span>
-                  <% } else { %>
-                    <span class="badge good">★ <%= Number(showRow.avg_rating || 0).toFixed(2) %></span>
-                    <span class="badge muted"><%= Number(showRow.cnt || 0) %> ratings</span>
-                  <% } %>
-
-                  <% if (meUser && Number(meUser.is_admin) === 1) { %>
-                    <a class="btn ghost" href="/admin/show/<%= showRow.id %>/edit">Edit show</a>
-                  <% } %>
-                </div>
-              </div>
+          <div style="display:flex; align-items:flex-start; gap:18px; flex:1 1 auto; min-width:0;">
+            <div class="showposter" style="position:relative; overflow:hidden; width:240px; height:360px; flex:0 0 240px;">
+              <img
+                src="<%= showRow.poster_url || POSTER_FALLBACK %>"
+                alt="<%= showRow.title || 'Show' %> poster"
+                style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;"
+                onerror="this.onerror=null;this.src='<%= POSTER_FALLBACK %>';"
+              >
+              <div class="poster_fallback" style="position:absolute; inset:0;"></div>
             </div>
 
-            <div class="showright" style="flex:0 0 320px; width:320px; min-width:320px; margin-left:auto;">
-              <div class="panel" style="box-shadow:none; position:relative; z-index:20; margin:0; width:100%;">
-                <% if (meUser) { %>
-                  <div class="kicker">Your rating</div>
+            <div class="showmeta" style="flex:1 1 auto; min-width:0;">
+              <div class="kicker">Show</div>
+              <h1 style="margin:6px 0 8px;"><%= showRow.title || "" %></h1>
+              <div class="muted"><%= showRow.year || "" %> — <%= showRow.corps || "" %></div>
 
-                  <form id="rateForm" method="post" action="/show/<%= showRow.id %>/rate">
-                    <input type="hidden" name="rating_half" id="ratingHalf" value="<%= myRatingVal != null ? myRatingVal : 0 %>"/>
-
-                    <div class="starwrap" style="justify-content:flex-end;">
-                      <div class="stars"
-                           id="stars"
-                           data-current="<%= myRatingVal != null ? myRatingVal : 0 %>"
-                           aria-label="Rate this show from 0 to 5 stars in half-star steps"
-                           role="slider"
-                           tabindex="0">
-                        <div class="stars-base">★★★★★</div>
-                        <div class="stars-fill" id="starsFill">★★★★★</div>
-                      </div>
-
-                      <div class="muted" id="ratingLabel" style="min-width:90px;"></div>
-                    </div>
-                  </form>
-
-                  <% if (myRatingVal != null) { %>
-                    <form method="post" action="/show/<%= showRow.id %>/unrate" style="margin-top:10px;">
-                      <button class="btn ghost" type="submit">Remove rating</button>
-                    </form>
-                  <% } %>
-
-                  <script>
-                    (function(){
-                      const stars = document.getElementById("stars");
-                      const fill  = document.getElementById("starsFill");
-                      const input = document.getElementById("ratingHalf");
-                      const label = document.getElementById("ratingLabel");
-                      const form  = document.getElementById("rateForm");
-                      if (!stars || !fill || !input || !label || !form) return;
-
-                      const current = parseInt(stars.dataset.current || "0", 10);
-                      setDisplay(current);
-
-                      function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
-                      function halfToText(rh){
-                        const val = (rh / 2).toFixed(rh % 2 ? 1 : 0);
-                        return val === "0" ? "0 ★" : (val + " ★");
-                      }
-                      function setDisplay(rh){
-                        const pct = (clamp(rh,0,10) / 10) * 100;
-                        fill.style.width = pct + "%";
-                        label.textContent = halfToText(clamp(rh,0,10));
-                      }
-                      function eventToHalf(e){
-                        const rect = stars.getBoundingClientRect();
-                        const x = clamp(e.clientX - rect.left, 0, rect.width);
-                        return clamp(Math.round((x / rect.width) * 10), 0, 10);
-                      }
-
-                      stars.addEventListener("mousemove", (e) => setDisplay(eventToHalf(e)));
-                      stars.addEventListener("mouseleave", () => setDisplay(parseInt(input.value || "0", 10)));
-
-                      stars.addEventListener("click", (e) => {
-                        const rh = eventToHalf(e);
-                        input.value = rh;
-                        setDisplay(rh);
-                        form.submit();
-                      });
-
-                      stars.addEventListener("keydown", (e) => {
-                        let rh = parseInt(input.value || "0", 10);
-                        if (e.key === "ArrowLeft")  rh = clamp(rh - 1, 0, 10);
-                        if (e.key === "ArrowRight") rh = clamp(rh + 1, 0, 10);
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          form.submit();
-                          return;
-                        }
-                        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-                          e.preventDefault();
-                          input.value = rh;
-                          setDisplay(rh);
-                        }
-                      });
-                    })();
-                  </script>
-
+              <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <% if (Number(showRow.cnt || 0) === 0) { %>
+                  <span class="badge muted">Unrated</span>
                 <% } else { %>
-                  <div class="muted">
-                    <a href="<%= loginNext %>">Log in</a>
-                    to rate this show.
-                  </div>
+                  <span class="badge good">★ <%= Number(showRow.avg_rating || 0).toFixed(2) %></span>
+                  <span class="badge muted"><%= Number(showRow.cnt || 0) %> ratings</span>
+                <% } %>
+
+                <% if (meUser && Number(meUser.is_admin) === 1) { %>
+                  <a class="btn ghost" href="/admin/show/<%= showRow.id %>/edit">Edit show</a>
                 <% } %>
               </div>
             </div>
-
           </div>
+
+          <div style="flex:0 0 380px; width:380px; min-width:380px; margin-left:auto;">
+            <div class="panel" style="box-shadow:none; margin:0; width:100%;">
+              <% if (meUser) { %>
+                <div class="kicker">Your rating</div>
+
+                <form id="rateForm" method="post" action="/show/<%= showRow.id %>/rate">
+                  <input type="hidden" name="rating_half" id="ratingHalf" value="<%= myRatingVal != null ? myRatingVal : 0 %>"/>
+
+                  <div class="starwrap" style="justify-content:flex-end;">
+                    <div class="stars"
+                         id="stars"
+                         data-current="<%= myRatingVal != null ? myRatingVal : 0 %>"
+                         aria-label="Rate this show from 0 to 5 stars in half-star steps"
+                         role="slider"
+                         tabindex="0">
+                      <div class="stars-base">★★★★★</div>
+                      <div class="stars-fill" id="starsFill">★★★★★</div>
+                    </div>
+
+                    <div class="muted" id="ratingLabel" style="min-width:90px;"></div>
+                  </div>
+                </form>
+
+                <% if (myRatingVal != null) { %>
+                  <form method="post" action="/show/<%= showRow.id %>/unrate" style="margin-top:10px;">
+                    <button class="btn ghost" type="submit">Remove rating</button>
+                  </form>
+                <% } %>
+
+                <script>
+                  (function(){
+                    const stars = document.getElementById("stars");
+                    const fill  = document.getElementById("starsFill");
+                    const input = document.getElementById("ratingHalf");
+                    const label = document.getElementById("ratingLabel");
+                    const form  = document.getElementById("rateForm");
+                    if (!stars || !fill || !input || !label || !form) return;
+
+                    const current = parseInt(stars.dataset.current || "0", 10);
+                    setDisplay(current);
+
+                    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+                    function halfToText(rh){
+                      const val = (rh / 2).toFixed(rh % 2 ? 1 : 0);
+                      return val === "0" ? "0 ★" : (val + " ★");
+                    }
+                    function setDisplay(rh){
+                      const pct = (clamp(rh,0,10) / 10) * 100;
+                      fill.style.width = pct + "%";
+                      label.textContent = halfToText(clamp(rh,0,10));
+                    }
+                    function eventToHalf(e){
+                      const rect = stars.getBoundingClientRect();
+                      const x = clamp(e.clientX - rect.left, 0, rect.width);
+                      return clamp(Math.round((x / rect.width) * 10), 0, 10);
+                    }
+
+                    stars.addEventListener("mousemove", (e) => setDisplay(eventToHalf(e)));
+                    stars.addEventListener("mouseleave", () => setDisplay(parseInt(input.value || "0", 10)));
+
+                    stars.addEventListener("click", (e) => {
+                      const rh = eventToHalf(e);
+                      input.value = rh;
+                      setDisplay(rh);
+                      form.submit();
+                    });
+
+                    stars.addEventListener("keydown", (e) => {
+                      let rh = parseInt(input.value || "0", 10);
+                      if (e.key === "ArrowLeft")  rh = clamp(rh - 1, 0, 10);
+                      if (e.key === "ArrowRight") rh = clamp(rh + 1, 0, 10);
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        form.submit();
+                        return;
+                      }
+                      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                        e.preventDefault();
+                        input.value = rh;
+                        setDisplay(rh);
+                      }
+                    });
+                  })();
+                </script>
+
+              <% } else { %>
+                <div class="muted">
+                  <a href="<%= loginNext %>">Log in</a>
+                  to rate this show.
+                </div>
+              <% } %>
+            </div>
+          </div>
+
         </div>
-      </section>
+      </div>
     </div>
 
     <div class="layout" style="margin-top:8px;">
@@ -610,4 +609,3 @@
   </script>
 </body>
 </html>
-
