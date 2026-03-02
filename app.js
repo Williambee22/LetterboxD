@@ -6,6 +6,7 @@ const express = require('express');
 const session = require('express-session');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
+const { Resend } = require('resend');
 
 const dbx = require('./db');
 
@@ -106,91 +107,6 @@ function slugify(s) {
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
 }
-
-async function comparePassword(plainPassword, storedHash) {
-  const plain = String(plainPassword || '');
-  const hash = String(storedHash || '');
-
-  if (!hash) return false;
-
-  // bcrypt / bcryptjs hashes
-  if (hash.startsWith('$2a$') || hash.startsWith('$2b$') || hash.startsWith('$2y$')) {
-    return bcrypt.compare(plain, hash);
-  }
-
-  // Werkzeug scrypt: scrypt:N:r:p$salt$hash
-  if (hash.startsWith('scrypt:')) {
-    try {
-      const parts = hash.split('$');
-      if (parts.length !== 3) return false;
-
-      const methodPart = parts[0]; // e.g. scrypt:32768:8:1
-      const salt = parts[1];
-      const expectedHex = parts[2];
-
-      const methodBits = methodPart.split(':');
-      if (methodBits.length !== 4) return false;
-
-      const N = parseInt(methodBits[1], 10);
-      const r = parseInt(methodBits[2], 10);
-      const p = parseInt(methodBits[3], 10);
-
-      const derived = await new Promise((resolve, reject) => {
-        crypto.scrypt(
-          plain,
-          salt,
-          expectedHex.length / 2,
-          { N, r, p, maxmem: 1024 * 1024 * 1024 },
-          (err, buf) => err ? reject(err) : resolve(buf)
-        );
-      });
-
-      const expected = Buffer.from(expectedHex, 'hex');
-      if (derived.length !== expected.length) return false;
-      return crypto.timingSafeEqual(derived, expected);
-    } catch {
-      return false;
-    }
-  }
-
-  // Werkzeug pbkdf2: pbkdf2:sha256:600000$salt$hash
-  if (hash.startsWith('pbkdf2:')) {
-    try {
-      const parts = hash.split('$');
-      if (parts.length !== 3) return false;
-
-      const methodPart = parts[0]; // pbkdf2:sha256:600000
-      const salt = parts[1];
-      const expectedHex = parts[2];
-
-      const methodBits = methodPart.split(':');
-      if (methodBits.length < 3) return false;
-
-      const digest = methodBits[1];
-      const iterations = parseInt(methodBits[2], 10);
-
-      const derived = await new Promise((resolve, reject) => {
-        crypto.pbkdf2(
-          plain,
-          salt,
-          iterations,
-          expectedHex.length / 2,
-          digest,
-          (err, buf) => err ? reject(err) : resolve(buf)
-        );
-      });
-
-      const expected = Buffer.from(expectedHex, 'hex');
-      if (derived.length !== expected.length) return false;
-      return crypto.timingSafeEqual(derived, expected);
-    } catch {
-      return false;
-    }
-  }
-
-  return false;
-}
-
 
 function staticFileExists(relPath) {
   return fs.existsSync(path.join(STATIC_DIR, relPath));
@@ -343,7 +259,6 @@ function verifyWerkzeugHash(password, storedHash) {
       return false;
     }
 
-    // Raise maxmem so Werkzeug scrypt hashes can verify
     const estimatedMaxmem = Math.max(128 * N * r * p, 64 * 1024 * 1024);
 
     const derived = crypto.scryptSync(
@@ -387,6 +302,80 @@ async function verifyPassword(password, storedHash) {
 
 function needsRehashToBcrypt(storedHash) {
   return !!storedHash && !storedHash.startsWith('$2');
+}
+
+async function hashPassword(password) {
+  return bcrypt.hash(String(password || ''), 12);
+}
+
+/* =========================
+   TEMP PASSWORD / EMAIL
+========================= */
+
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const MAIL_FROM = process.env.MAIL_FROM || 'Pressboxd <onboarding@resend.dev>';
+const APP_BASE_URL = process.env.APP_BASE_URL || 'http://localhost:8080';
+
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function makeTempPassword(length = 12) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*';
+  let out = '';
+  for (let i = 0; i < length; i += 1) {
+    out += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return out;
+}
+
+async function sendTempPasswordEmail(toEmail, username, tempPassword) {
+  if (!resend) {
+    throw new Error('Email is not configured. Missing RESEND_API_KEY.');
+  }
+
+  const html = `
+    <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.5;color:#111;">
+      <h2 style="margin-bottom:8px;">Pressboxd temporary password</h2>
+      <p>Hello <b>${escapeHtml(username)}</b>,</p>
+      <p>You requested a temporary password for your Pressboxd account.</p>
+
+      <div style="margin:16px 0;padding:14px 16px;border:1px solid #ddd;border-radius:10px;background:#f7f7f7;">
+        <div style="font-size:12px;color:#666;margin-bottom:4px;">Temporary password</div>
+        <div style="font-size:20px;font-weight:700;letter-spacing:.4px;">${escapeHtml(tempPassword)}</div>
+      </div>
+
+      <p>After logging in, you will be required to change your password.</p>
+      <p>
+        Login here:
+        <a href="${APP_BASE_URL}/login">${APP_BASE_URL}/login</a>
+      </p>
+
+      <p style="color:#666;font-size:12px;margin-top:20px;">
+        If you did not request this, you can ignore this email.
+      </p>
+    </div>
+  `;
+
+  const result = await resend.emails.send({
+    from: MAIL_FROM,
+    to: [toEmail],
+    subject: 'Your Pressboxd temporary password',
+    html,
+  });
+
+  if (result?.error) {
+    throw new Error(result.error.message || 'Failed to send email.');
+  }
+
+  return result;
 }
 
 function createApp() {
@@ -478,6 +467,112 @@ function createApp() {
       }
     };
   }
+
+  app.get('/forgot-password', (req, res) => {
+    res.render('forgot_password');
+  });
+
+  app.post('/forgot-password', async (req, res, next) => {
+    const email = String(req.body.email || '').trim().toLowerCase();
+
+    if (!email) {
+      req.flash('error', 'Enter your email address.');
+      return res.redirect('/forgot-password');
+    }
+
+    let conn;
+    try {
+      conn = getConn();
+
+      const u = normalizeRow(await dbx.userByEmail(conn, email));
+
+      if (!u) {
+        req.flash('ok', 'If that email exists, a temporary password has been sent.');
+        return res.redirect('/login');
+      }
+
+      const tempPassword = makeTempPassword(12);
+      const newHash = await hashPassword(tempPassword);
+
+      await dbx.updateUserPasswordHash(conn, Number(u.id), newHash);
+      await dbx.setUserMustChangePassword(conn, Number(u.id), 1);
+      await dbx.commit(conn);
+
+      await sendTempPasswordEmail(email, u.username, tempPassword);
+
+      req.flash('ok', 'If that email exists, a temporary password has been sent.');
+      return res.redirect('/login');
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  });
+
+  app.get('/force-change-password', loginRequired(async (req, res) => {
+    let conn;
+    try {
+      conn = getConn();
+      const u = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
+      if (!u) return res.redirect('/login');
+
+      if (Number(u.must_change_password || 0) !== 1) {
+        return res.redirect('/shows');
+      }
+
+      return res.render('force_change_password');
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+
+  app.post('/force-change-password', loginRequired(async (req, res) => {
+    const uid = Number(req.session.uid);
+    const currentPassword = String(req.body.current_password || '').trim();
+    const newPassword = String(req.body.new_password || '').trim();
+    const newPassword2 = String(req.body.new_password2 || '').trim();
+
+    if (!currentPassword) {
+      req.flash('error', 'Enter your current password.');
+      return res.redirect('/force-change-password');
+    }
+
+    if (newPassword.length < 6) {
+      req.flash('error', 'New password must be at least 6 characters.');
+      return res.redirect('/force-change-password');
+    }
+
+    if (newPassword !== newPassword2) {
+      req.flash('error', 'New passwords do not match.');
+      return res.redirect('/force-change-password');
+    }
+
+    let conn;
+    try {
+      conn = getConn();
+      const u = normalizeRow(await dbx.userById(conn, uid));
+      if (!u) return res.redirect('/login');
+
+      const passCol = dbx.usersPasswordCol(conn);
+      const storedHash = u[passCol];
+      const ok = await verifyPassword(currentPassword, storedHash);
+
+      if (!ok) {
+        req.flash('error', 'Current password is incorrect.');
+        return res.redirect('/force-change-password');
+      }
+
+      const newHash = await hashPassword(newPassword);
+      await dbx.updateUserPasswordHash(conn, uid, newHash);
+      await dbx.setUserMustChangePassword(conn, uid, 0);
+      await dbx.commit(conn);
+
+      req.flash('ok', 'Password updated.');
+      return res.redirect('/shows');
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
 
   const uploadPfp = multer({
     storage: multer.diskStorage({
@@ -587,47 +682,47 @@ function createApp() {
     const username = String(req.body.username || '').trim();
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '').trim();
-  
+
     if (username.length < 3) {
       req.flash('error', 'Username must be at least 3 characters.');
       return res.redirect('/register');
     }
-  
+
     if (!EMAIL_RE.test(email)) {
       req.flash('error', 'Enter a valid email address.');
       return res.redirect('/register');
     }
-  
+
     if (password.length < 6) {
       req.flash('error', 'Password must be at least 6 characters.');
       return res.redirect('/register');
     }
-  
+
     let conn;
     try {
       conn = getConn();
-  
+
       if (await dbx.userByUsername(conn, username)) {
         req.flash('error', 'That username is taken.');
         return res.redirect('/register');
       }
-  
+
       if (await dbx.userByEmail(conn, email)) {
         req.flash('error', 'That email is already in use.');
         return res.redirect('/register');
       }
-  
+
       const makeAdmin = await dbx.isFirstUser(conn);
       const uid = await dbx.createUser(
         conn,
         username,
-        await bcrypt.hash(password, 12),
+        await hashPassword(password),
         { makeAdmin, email }
       );
-  
+
       req.session.uid = Number(uid);
       req.flash('ok', "Account created. You're logged in.");
-  
+
       return req.session.save((err) => {
         if (err) return next(err);
         return res.redirect('/shows');
@@ -647,28 +742,34 @@ function createApp() {
     const username = String(req.body.username || '').trim();
     const password = String(req.body.password || '').trim();
     const nxt = String(req.body.next || '').trim();
-  
+
     let conn;
     try {
       conn = getConn();
-  
+
       const u = normalizeRow(await dbx.userByUsername(conn, username));
       if (!u) {
         req.flash('error', 'Invalid username/password.');
         return res.redirect('/login');
       }
-  
+
       const passCol = dbx.usersPasswordCol(conn);
       const storedHash = u[passCol];
-  
-      const ok = storedHash ? await comparePassword(password, storedHash) : false;
+
+      const ok = storedHash ? await verifyPassword(password, storedHash) : false;
       if (!ok) {
         req.flash('error', 'Invalid username/password.');
         return res.redirect('/login');
       }
-  
+
+      if (needsRehashToBcrypt(storedHash)) {
+        const newHash = await hashPassword(password);
+        await dbx.updateUserPasswordHash(conn, Number(u.id), newHash);
+        await dbx.commit(conn);
+      }
+
       req.session.uid = Number(u.id);
-  
+
       if (Number(u.must_change_password || 0) === 1) {
         req.flash('warn', 'You must change your password before continuing.');
         return req.session.save((err) => {
@@ -676,9 +777,9 @@ function createApp() {
           return res.redirect('/force-change-password');
         });
       }
-  
+
       req.flash('ok', 'Logged in.');
-  
+
       return req.session.save((err) => {
         if (err) return next(err);
         return res.redirect(nxt || '/shows');
@@ -697,44 +798,6 @@ function createApp() {
     });
   });
 
-  app.get('/forgot-password', (_req, res) => {
-    res.render('forgot_password');
-  });
-
-  app.post('/forgot-password', async (req, res, next) => {
-    const email = String(req.body.email || '').trim().toLowerCase();
-  
-    if (!EMAIL_RE.test(email)) {
-      req.flash('error', 'Enter a valid email address.');
-      return res.redirect('/forgot-password');
-    }
-  
-    let conn;
-    try {
-      conn = getConn();
-  
-      const u = normalizeRow(await dbx.userByEmail(conn, email));
-  
-      if (u) {
-        const token = crypto.randomBytes(32).toString('hex');
-        const expiresTs = Math.floor(Date.now() / 1000) + (60 * 60); // 1 hour
-        await dbx.setPasswordResetToken(conn, Number(u.id), token, expiresTs);
-        await dbx.commit(conn);
-  
-        // For now: log the link until you wire up real email sending
-        console.log(`PASSWORD RESET LINK for ${u.email}: ${process.env.APP_BASE_URL || ''}/reset-password/${token}`);
-      }
-  
-      req.flash('ok', 'If that email exists, a password reset link has been generated.');
-      return res.redirect('/login');
-    } catch (err) {
-      return next(err);
-    } finally {
-      if (conn) dbx.close(conn);
-    }
-  });
-
-  
   app.get('/shows', async (req, res, next) => {
     const sort = String(req.query.sort || 'year_desc').trim();
     const year = String(req.query.year || '').trim();
@@ -767,27 +830,6 @@ function createApp() {
     }
   });
 
-  app.get('/reset-password/:token', async (req, res, next) => {
-    const token = String(req.params.token || '').trim();
-  
-    let conn;
-    try {
-      conn = getConn();
-      const u = normalizeRow(await dbx.userByResetToken(conn, token));
-      if (!u) {
-        req.flash('error', 'That reset link is invalid or expired.');
-        return res.redirect('/login');
-      }
-  
-      return res.render('reset_password', { token });
-    } catch (err) {
-      return next(err);
-    } finally {
-      if (conn) dbx.close(conn);
-    }
-  });
-
-  
   app.get('/show/:show_id', async (req, res, next) => {
     const showId = Number(req.params.show_id);
     const viewerUid = req.session.uid ? Number(req.session.uid) : null;
@@ -943,22 +985,22 @@ function createApp() {
         req.flash('error', `Upload failed: ${err.message}`);
         return res.redirect('/me');
       }
-  
+
       if (!req.file) {
         req.flash('error', 'No file selected.');
         return res.redirect('/me');
       }
-  
+
       let conn;
       try {
         conn = getConn();
         const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
         if (!me) return res.sendStatus(404);
-  
+
         const avatarUrl = `/static/pfps/${req.file.filename}`;
         await dbx.updateUserAvatarUrl(conn, Number(req.session.uid), avatarUrl);
         await dbx.commit(conn);
-  
+
         req.flash('ok', 'Profile picture updated.');
         return res.redirect('/me');
       } catch (e) {
@@ -968,7 +1010,7 @@ function createApp() {
       }
     });
   }));
-  
+
   app.post('/show/:show_id/rate', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const ratingHalf = String(req.body.rating_half || '').trim();
@@ -1285,40 +1327,40 @@ function createApp() {
       if (conn) dbx.close(conn);
     }
   }));
-  
+
   app.post('/admin/user/:username/set-temp-password', adminRequired(async (req, res) => {
     const username = req.params.username;
     const tempPassword = String(req.body.temp_password || '').trim();
     const tempPassword2 = String(req.body.temp_password2 || '').trim();
-  
+
     if (tempPassword.length < 6) {
       req.flash('error', 'Temporary password must be at least 6 characters.');
       return res.redirect(`/admin/user/${encodeURIComponent(username)}/set-temp-password`);
     }
-  
+
     if (tempPassword !== tempPassword2) {
       req.flash('error', 'Temporary passwords do not match.');
       return res.redirect(`/admin/user/${encodeURIComponent(username)}/set-temp-password`);
     }
-  
+
     let conn;
     try {
       conn = getConn();
       const u = normalizeRow(await dbx.userByUsername(conn, username));
       if (!u) return res.sendStatus(404);
-  
-      const newHash = await bcrypt.hash(tempPassword, 12);
+
+      const newHash = await hashPassword(tempPassword);
       await dbx.updateUserPasswordHash(conn, Number(u.id), newHash);
       await dbx.setUserMustChangePassword(conn, Number(u.id), 1);
       await dbx.commit(conn);
-  
+
       req.flash('ok', `Temporary password set for ${u.username}.`);
       res.redirect('/admin/users');
     } finally {
       if (conn) dbx.close(conn);
     }
   }));
-  
+
   app.post('/admin/user/:username/force-reset', adminRequired(async (req, res) => {
     const username = req.params.username;
     let conn;
@@ -1326,17 +1368,50 @@ function createApp() {
       conn = getConn();
       const u = normalizeRow(await dbx.userByUsername(conn, username));
       if (!u) return res.sendStatus(404);
-  
+
       await dbx.setUserMustChangePassword(conn, Number(u.id), 1);
       await dbx.commit(conn);
-  
+
       req.flash('ok', `Forced password reset for ${u.username}.`);
       res.redirect('/admin/users');
     } finally {
       if (conn) dbx.close(conn);
     }
   }));
-  
+
+  app.post('/admin/user/:username/temp-password', adminRequired(async (req, res, next) => {
+    const username = String(req.params.username || '').trim();
+
+    let conn;
+    try {
+      conn = getConn();
+
+      const u = normalizeRow(await dbx.userByUsername(conn, username));
+      if (!u) return res.sendStatus(404);
+
+      if (!u.email) {
+        req.flash('error', 'That user does not have an email address on file.');
+        return res.redirect('/admin/users');
+      }
+
+      const tempPassword = makeTempPassword(12);
+      const newHash = await hashPassword(tempPassword);
+
+      await dbx.updateUserPasswordHash(conn, Number(u.id), newHash);
+      await dbx.setUserMustChangePassword(conn, Number(u.id), 1);
+      await dbx.commit(conn);
+
+      await sendTempPasswordEmail(u.email, u.username, tempPassword);
+
+      req.flash('ok', `Temporary password sent to ${u.email}.`);
+      return res.redirect('/admin/users');
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+
   app.get('/api/users/search', async (req, res, next) => {
     const q = String(req.query.q || '').trim();
     if (!q) return res.json({ results: [] });
@@ -1361,7 +1436,7 @@ function createApp() {
       if (conn) dbx.close(conn);
     }
   });
-  
+
   app.get('/me', loginRequired(async (req, res) => {
     let conn;
     try {
@@ -1813,7 +1888,7 @@ function createApp() {
       await dbx.updateUserUsername(conn, uid, newUsername);
 
       if (needsRehashToBcrypt(storedHash)) {
-        const newHash = await bcrypt.hash(currentPassword, 12);
+        const newHash = await hashPassword(currentPassword);
         await dbx.updateUserPasswordHash(conn, uid, newHash);
       }
 
@@ -1858,7 +1933,8 @@ function createApp() {
         return res.redirect('/me');
       }
 
-      await dbx.updateUserPasswordHash(conn, uid, await bcrypt.hash(newPassword, 12));
+      await dbx.updateUserPasswordHash(conn, uid, await hashPassword(newPassword));
+      await dbx.setUserMustChangePassword(conn, uid, 0);
       await dbx.commit(conn);
       req.flash('ok', 'Password updated.');
       return res.redirect('/me');
@@ -1879,7 +1955,7 @@ function createApp() {
     let conn;
     try {
       conn = getConn();
-      const users = conn.prepare('SELECT id, username, is_admin, created_ts FROM users ORDER BY id ASC').all();
+      const users = conn.prepare('SELECT id, username, email, is_admin, created_ts FROM users ORDER BY id ASC').all();
       res.json(users);
     } catch (err) {
       next(err);
@@ -1904,11 +1980,3 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
-
-
-
-
-
-
-
-
