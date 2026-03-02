@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title><%= title || "Pressboxd" %></title>
+  <title><%= (profile_user && profile_user.username ? profile_user.username : "Profile") %> - Pressboxd</title>
   <link rel="stylesheet" href="/static/styles.css"/>
 
   <style>
@@ -101,6 +101,26 @@
   </style>
 </head>
 
+<%
+  const pu = profile_user || {};
+  const meUsername = me && me.username ? me.username : null;
+  const puUsername = pu && pu.username ? pu.username : null;
+  const isMe = typeof is_me !== "undefined"
+    ? !!is_me
+    : !!(meUsername && puUsername && meUsername === puUsername);
+
+  const viewerIsFollowing = !!pu.viewer_is_following;
+  const friendStatus = pu.viewer_friend_status || "none";
+
+  const recentRatings = Array.isArray(recent_ratings) ? recent_ratings : [];
+  const recentReviews = Array.isArray(recent_reviews) ? recent_reviews : [];
+  const roles = Array.isArray(user_roles) ? user_roles : [];
+  const flashesList = Array.isArray(flashes) ? flashes : [];
+
+  const avgRatingCnt = pu.avg_rating_cnt != null ? Number(pu.avg_rating_cnt) : 0;
+  const avgRating = pu.avg_rating != null ? Number(pu.avg_rating) : 0;
+%>
+
 <body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
   <header class="topbar">
     <div class="wrap row between">
@@ -146,11 +166,11 @@
                 <% if (notif_items && notif_items.length > 0) { %>
                   <div class="notifList">
                     <% for (const n of notif_items) {
-                         const kind = n.kind || "";
-                         const actor = n.actor_username || "Someone";
-                         const created = n.created_at || "";
-                         const unread = Number(n.is_read || 0) === 0;
-                         const sid = n.show_id || null;
+                      const kind = n.kind || "";
+                      const actor = n.actor_username || "Someone";
+                      const created = n.created_at || "";
+                      const unread = Number(n.is_read || 0) === 0;
+                      const sid = n.show_id || null;
                     %>
                       <div class="notifItem <%= unread ? 'unread' : '' %>">
                         <% if (kind === "friend_request") { %>
@@ -202,15 +222,340 @@
   </header>
 
   <main class="wrap">
-    <% if (typeof flashes !== "undefined" && Array.isArray(flashes) && flashes.length > 0) { %>
+    <% if (flashesList.length > 0) { %>
       <div class="flashes">
-        <% for (const f of flashes) { %>
+        <% for (const f of flashesList) { %>
           <div class="flash <%= f.category %>"><%= f.message %></div>
         <% } %>
       </div>
     <% } %>
 
-    <%- body || "" %>
+    <% if (pu.username) { %>
+      <div class="row gap" style="margin-top:10px; flex-wrap:wrap; align-items:center;">
+        <a class="badge muted" href="/u/<%= encodeURIComponent(pu.username) %>/followers">
+          Followers: <%= pu.followers_count != null ? pu.followers_count : 0 %>
+        </a>
+
+        <a class="badge muted" href="/u/<%= encodeURIComponent(pu.username) %>/following">
+          Following: <%= pu.following_count != null ? pu.following_count : 0 %>
+        </a>
+
+        <% if (me && !isMe) { %>
+          <% if (viewerIsFollowing) { %>
+            <form method="post" action="/u/<%= encodeURIComponent(pu.username) %>/unfollow">
+              <button class="btn ghost" type="submit">Unfollow</button>
+            </form>
+          <% } else { %>
+            <form method="post" action="/u/<%= encodeURIComponent(pu.username) %>/follow">
+              <button class="btn green" type="submit">Follow</button>
+            </form>
+          <% } %>
+
+          <% if (friendStatus === "friends") { %>
+            <form method="post" action="/u/<%= encodeURIComponent(pu.username) %>/friend/remove">
+              <button class="btn ghost" type="submit">Remove friend</button>
+            </form>
+          <% } else if (friendStatus === "pending_out") { %>
+            <span class="badge muted">Friend request sent</span>
+          <% } else if (friendStatus === "pending_in") { %>
+            <form method="post" action="/u/<%= encodeURIComponent(pu.username) %>/friend/accept">
+              <button class="btn green" type="submit">Accept friend</button>
+            </form>
+            <form method="post" action="/u/<%= encodeURIComponent(pu.username) %>/friend/decline">
+              <button class="btn ghost" type="submit">Decline</button>
+            </form>
+          <% } else { %>
+            <form method="post" action="/u/<%= encodeURIComponent(pu.username) %>/friend/request">
+              <button class="btn ghost" type="submit">Add friend</button>
+            </form>
+          <% } %>
+        <% } %>
+
+        <% if (isMe) { %>
+          <a class="btn ghost" href="/me/friends">Friends</a>
+        <% } %>
+      </div>
+    <% } %>
+
+    <div class="profile_hero" <%= pu.banner_url ? `style="--pBanner:url('${pu.banner_url}');"` : "" %>>
+      <div class="profile_hero_inner" <%= pu.theme_color ? `style="--pAccent: ${pu.theme_color};"` : "" %>>
+        <div class="row gap" style="align-items:center;">
+          <div class="avatar_lg">
+            <% if (pu.avatar_url) { %>
+              <img src="<%= pu.avatar_url %>" alt="avatar">
+            <% } else { %>
+              <div class="avatar_fallback"></div>
+            <% } %>
+          </div>
+
+          <div style="min-width:0;">
+            <div class="kicker">Profile</div>
+            <h1 style="margin:6px 0 0;"><%= pu.username || "User" %></h1>
+
+            <% if (roles.length > 0) { %>
+              <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
+                <% for (const r of roles) { %>
+                  <span class="role_tag" <%= r && r.color ? `style="border-color:${r.color}; color:${r.color};"` : "" %>>
+                    <%= r && r.name ? r.name : "" %>
+                  </span>
+                <% } %>
+              </div>
+            <% } %>
+
+            <div class="muted small"><%= isMe ? "This is you." : "" %></div>
+
+            <% if (pu.username) { %>
+              <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
+                <% if (isMe) { %>
+                  <a class="btn ghost" href="/me/customize">Customize</a>
+                <% } %>
+                <a class="btn ghost" href="/u/<%= encodeURIComponent(pu.username) %>/ratings">All Ratings</a>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="profile_avg_box">
+            <div class="kicker">Avg rating</div>
+            <% if (avgRatingCnt > 0) { %>
+              <div class="profile_avg_value">
+                <span class="profile_avg_star">★</span>
+                <%= avgRating.toFixed(2) %>
+              </div>
+              <div class="muted small"><%= avgRatingCnt %> ratings</div>
+            <% } else { %>
+              <div class="muted">No ratings</div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile_layout" style="margin-top:16px;">
+      <aside class="profile_side">
+        <div class="panel profile_stats">
+          <div class="kicker">Stats</div>
+          <div class="muted small" style="margin-top:10px;">
+            Ratings shown: <%= recentRatings.length %><br/>
+            Reviews shown: <%= recentReviews.length %>
+          </div>
+
+          <% if (me && Number(me.is_admin) === 1 && pu.username) { %>
+            <div style="margin-top:10px;">
+              <a class="btn ghost" href="/admin/user/<%= encodeURIComponent(pu.username) %>/roles">Roles</a>
+            </div>
+          <% } %>
+
+          <% if (isMe) { %>
+            <div style="margin-top:12px; border-top:1px solid rgba(255,255,255,.08); padding-top:12px;">
+              <details class="acct_details">
+                <summary class="btn ghost" style="width:100%; justify-content:space-between;">
+                  Account
+                  <span class="muted small">▼</span>
+                </summary>
+
+                <div class="panel acct_panel" style="margin-top:10px; padding:14px;">
+                  <div class="kicker">Account</div>
+
+                  <div style="margin-top:12px; display:grid; grid-template-columns: 1fr; gap:14px;">
+                    <div>
+                      <div class="muted small" style="margin-bottom:8px;"><b>Change username</b></div>
+                      <form method="post" action="/me/change_username">
+                        <div class="field">
+                          <label>New username</label>
+                          <input name="new_username" placeholder="New username" autocomplete="username">
+                        </div>
+
+                        <div class="field">
+                          <label>Current password</label>
+                          <input type="password" name="current_password" placeholder="Current password" autocomplete="current-password">
+                        </div>
+
+                        <div class="actions">
+                          <button class="btn green" type="submit">Update username</button>
+                        </div>
+                      </form>
+                    </div>
+
+                    <div>
+                      <div class="muted small" style="margin-bottom:8px;"><b>Change password</b></div>
+                      <form method="post" action="/me/change_password">
+                        <div class="field">
+                          <label>Current password</label>
+                          <input type="password" name="current_password" placeholder="Current password" autocomplete="current-password">
+                        </div>
+
+                        <div class="field">
+                          <label>New password</label>
+                          <input type="password" name="new_password" placeholder="New password" autocomplete="new-password">
+                        </div>
+
+                        <div class="field">
+                          <label>Confirm new password</label>
+                          <input type="password" name="new_password2" placeholder="Confirm new password" autocomplete="new-password">
+                        </div>
+
+                        <div class="actions">
+                          <button class="btn green" type="submit">Update password</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </details>
+            </div>
+          <% } %>
+        </div>
+      </aside>
+
+      <section class="stack">
+        <% if (isMe) { %>
+          <div class="panel">
+            <div class="kicker">Profile picture</div>
+
+            <div class="field" style="margin-top:10px;">
+              <label>Upload</label>
+
+              <div class="dropzone" id="pfpDrop">
+                <div class="dropzone_inner">
+                  <div class="muted">Drag & drop an image here, or click to choose</div>
+                  <div class="muted small">PNG / JPG / WEBP • auto-saved as <code>pfp_username.ext</code></div>
+                </div>
+              </div>
+
+              <form id="pfpUploadForm"
+                    method="post"
+                    action="/me/upload_pfp"
+                    enctype="multipart/form-data"
+                    style="margin-top:10px;">
+                <input type="file"
+                       id="pfpFileReal"
+                       name="pfp_file"
+                       accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+                       hidden>
+                <button class="btn green" type="submit" id="pfpUploadBtn" style="display:none;">Upload</button>
+              </form>
+
+              <% if (pu.avatar_url) { %>
+                <div style="margin-top:10px;">
+                  <div class="muted small">Current:</div>
+                  <img src="<%= pu.avatar_url %>" alt="pfp"
+                       style="width:96px; height:96px; object-fit:cover; display:block; margin-top:6px;">
+                </div>
+              <% } %>
+            </div>
+
+            <script>
+            (function(){
+              const drop = document.getElementById("pfpDrop");
+              const hiddenInput = document.getElementById("pfpFileReal");
+              const btn = document.getElementById("pfpUploadBtn");
+              const form = document.getElementById("pfpUploadForm");
+              if (!drop || !hiddenInput || !form) return;
+
+              function setFile(file){
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                hiddenInput.files = dt.files;
+                if (btn) btn.style.display = "inline-block";
+              }
+
+              drop.addEventListener("click", () => hiddenInput.click());
+
+              hiddenInput.addEventListener("change", () => {
+                if (hiddenInput.files && hiddenInput.files[0]) {
+                  if (btn) btn.style.display = "inline-block";
+                  form.submit();
+                }
+              });
+
+              drop.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                drop.classList.add("hover");
+              });
+
+              drop.addEventListener("dragleave", () => drop.classList.remove("hover"));
+
+              drop.addEventListener("drop", (e) => {
+                e.preventDefault();
+                drop.classList.remove("hover");
+                const file = e.dataTransfer.files && e.dataTransfer.files[0];
+                if (!file) return;
+                setFile(file);
+                form.submit();
+              });
+            })();
+            </script>
+          </div>
+        <% } %>
+
+        <div class="panel">
+          <div class="kicker">Recent ratings</div>
+
+          <% if (recentRatings.length > 0) { %>
+            <div class="postergrid" style="margin-top:12px;">
+              <% for (const rr of recentRatings) {
+                const rh = rr && rr.rating_half != null ? Number(rr.rating_half) : 0;
+              %>
+                <a class="poster" href="/show/<%= rr.show_id %>">
+                  <div class="poster_art">
+                    <% if (rr && rr.poster_url) { %>
+                      <img class="poster_img" src="<%= rr.poster_url %>" alt="<%= rr.title || 'poster' %> poster" loading="lazy">
+                    <% } else { %>
+                      <div class="poster_fallback"></div>
+                    <% } %>
+
+                    <div class="tile_rating">
+                      <span class="tile_star">★</span> <%= (rh / 2).toFixed(1) %>
+                    </div>
+
+                    <% if (rr && rr.year) { %>
+                      <div class="tile_year"><%= rr.year %></div>
+                    <% } %>
+                  </div>
+
+                  <div class="poster_meta">
+                    <div class="poster_title"><%= rr && rr.title ? rr.title : "" %></div>
+                    <div class="poster_sub"><%= rr && rr.corps ? rr.corps : "" %></div>
+                  </div>
+                </a>
+              <% } %>
+            </div>
+          <% } else { %>
+            <div class="muted" style="margin-top:8px;">No ratings yet.</div>
+          <% } %>
+        </div>
+
+        <div class="panel">
+          <div class="kicker">Recent reviews</div>
+
+          <% if (recentReviews.length > 0) { %>
+            <div class="reviewlist" style="margin-top:12px;">
+              <% for (const rv of recentReviews) { %>
+                <div class="reviewcard">
+                  <div class="small">
+                    <a class="reviewuser" href="/show/<%= rv.show_id %>">
+                      <%= rv && rv.title ? rv.title : "Show" %>
+                    </a>
+
+                    <% if (rv && rv.year && rv.corps) { %>
+                      <span class="muted">• <%= rv.year %> — <%= rv.corps %></span>
+                    <% } %>
+
+                    <% if (rv && rv.rating_half != null) { %>
+                      <span class="muted">• ★ <%= (Number(rv.rating_half) / 2).toFixed(1) %></span>
+                    <% } %>
+                  </div>
+
+                  <div class="reviewtext">“<%= rv && rv.review_text ? rv.review_text : "" %>”</div>
+                </div>
+              <% } %>
+            </div>
+          <% } else { %>
+            <div class="muted" style="margin-top:8px;">No reviews yet.</div>
+          <% } %>
+        </div>
+      </section>
+    </div>
   </main>
 
   <footer class="wrap footer">
