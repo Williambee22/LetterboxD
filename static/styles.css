@@ -6,14 +6,14 @@
   --panel2:#0f131a;
   --card:#000000;
 
-  --line:#000000;
-  --line2:#000000;
+  --line:rgba(255,255,255,.22);
+  --line:rgba(255,255,255,.22);
 
   --text:#e7ebf2;
   --muted:#a3adbb;
 
   /* fallback only */
-  --accent:#7c7c7c;
+  --accent:#9f9f9f;
 
   --good:#068818;
 
@@ -1415,3 +1415,4 @@ textarea,
 .role_tag{
   border-color: color-mix(in srgb, var(--accent) 28%, rgba(255,255,255,.10)) !important;
 }
+
