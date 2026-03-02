@@ -779,21 +779,22 @@ function createApp() {
         req.flash('error', `Upload failed: ${err.message}`);
         return res.redirect('/me');
       }
-
+  
       if (!req.file) {
         req.flash('error', 'No file selected.');
         return res.redirect('/me');
       }
-
+  
       let conn;
       try {
         conn = getConn();
         const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
         if (!me) return res.sendStatus(404);
-
+  
         const avatarUrl = `/static/pfps/${req.file.filename}`;
         await dbx.updateUserAvatarUrl(conn, Number(req.session.uid), avatarUrl);
         await dbx.commit(conn);
+  
         req.flash('ok', 'Profile picture updated.');
         return res.redirect('/me');
       } catch (e) {
@@ -803,7 +804,7 @@ function createApp() {
       }
     });
   }));
-
+  
   app.post('/show/:show_id/rate', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const ratingHalf = String(req.body.rating_half || '').trim();
@@ -1662,6 +1663,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
