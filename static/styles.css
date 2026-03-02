@@ -1,3 +1,67 @@
+:root{
+
+  /* matte, darker base */
+
+  --bg:#090909;
+
+  --bg2:#000000;
+
+
+
+  /* flatter surfaces */
+
+  --panel:#000000;
+
+  --panel2:#0f131a;
+
+  --card:#000000;
+
+
+
+  /* subtle separators */
+
+  --line:#000000;
+
+  --line2:#000000;
+
+
+
+  --text:#e7ebf2;
+
+  --muted:#a3adbb;
+
+
+
+  /* calmer accents (fallback only; body overrides per-user) */
+
+  --accent:#7c7c7c; /* fallback */
+
+  --accent2: color-mix(in srgb, var(--accent) 55%, transparent);
+
+  --accentSoft: color-mix(in srgb, var(--accent) 28%, transparent);
+
+  --accentFaint: color-mix(in srgb, var(--accent) 14%, transparent);
+
+
+
+  --good:#068818;
+
+
+
+  /* much less “pill/rounded” */
+
+  --radius: 10px;
+
+  --radius2: 12px;
+
+
+
+  /* flatter shadows */
+
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+
+}
+
 *{ box-sizing:border-box; }
 
 html, body{ height:100%; }
