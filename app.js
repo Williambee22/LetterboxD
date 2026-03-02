@@ -720,27 +720,25 @@ function createApp() {
   
       const u = normalizeRow(await dbx.userByUsername(conn, username));
       if (!u) {
-        return res.status(401).send('LOGIN DEBUG: user not found');
+        req.flash('error', 'Invalid username/password.');
+        return res.redirect('/login');
       }
   
       const passCol = dbx.usersPasswordCol(conn);
       const storedHash = u[passCol];
-  
-      if (!storedHash) {
-        return res.status(500).send(`LOGIN DEBUG: no password hash in column ${passCol}`);
-      }
-  
-      const ok = await bcrypt.compare(password, storedHash);
+      const ok = storedHash ? await bcrypt.compare(password, storedHash) : false;
   
       if (!ok) {
-        return res.status(401).send('LOGIN DEBUG: password mismatch');
+        req.flash('error', 'Invalid username/password.');
+        return res.redirect('/login');
       }
   
       req.session.uid = Number(u.id);
+      req.flash('ok', 'Logged in.');
   
       return req.session.save((err) => {
         if (err) return next(err);
-        return res.send(`LOGIN DEBUG SUCCESS: uid=${req.session.uid}, next=${nxt || '/shows'}`);
+        return res.redirect(nxt || '/shows');
       });
     } catch (err) {
       return next(err);
@@ -1591,6 +1589,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
