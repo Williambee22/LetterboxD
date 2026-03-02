@@ -176,9 +176,9 @@ a{ color:inherit; }
 }
 
 .btn{
+  color: var(--text);
   background: rgba(255,255,255,.08);
   border:1px solid rgba(255,255,255,.10);
-  color: var(--text);
   padding:9px 12px;
   border-radius:10px;
   font-weight:900;
@@ -1205,11 +1205,11 @@ a:focus{
 /* Primary button: make it theme-driven */
 .btn.primary{
   border-color: var(--accentSoft);
-  background: color-mix(in srgb, var(--accent) 10%, rgba(0,0,0,0.10));
+  background: color-mix(in srgb, var(--accent) 10%, rgba(0,0,0,0.40));
 }
 
 .btn.primary:hover{
-  background: color-mix(in srgb, var(--accent) 14%, rgba(0,0,0,0.14));
+  background: color-mix(in srgb, var(--accent) 14%, rgba(0,100,0,0.14));
   border-color: color-mix(in srgb, var(--accent) 36%, transparent);
 }
 
@@ -1444,6 +1444,7 @@ a:focus{
 .notifItem::after{
   pointer-events:none;
 }
+
 
 
 
