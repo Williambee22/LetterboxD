@@ -107,6 +107,91 @@ function slugify(s) {
     .replace(/^_+|_+$/g, '');
 }
 
+async function comparePassword(plainPassword, storedHash) {
+  const plain = String(plainPassword || '');
+  const hash = String(storedHash || '');
+
+  if (!hash) return false;
+
+  // bcrypt / bcryptjs hashes
+  if (hash.startsWith('$2a$') || hash.startsWith('$2b$') || hash.startsWith('$2y$')) {
+    return bcrypt.compare(plain, hash);
+  }
+
+  // Werkzeug scrypt: scrypt:N:r:p$salt$hash
+  if (hash.startsWith('scrypt:')) {
+    try {
+      const parts = hash.split('$');
+      if (parts.length !== 3) return false;
+
+      const methodPart = parts[0]; // e.g. scrypt:32768:8:1
+      const salt = parts[1];
+      const expectedHex = parts[2];
+
+      const methodBits = methodPart.split(':');
+      if (methodBits.length !== 4) return false;
+
+      const N = parseInt(methodBits[1], 10);
+      const r = parseInt(methodBits[2], 10);
+      const p = parseInt(methodBits[3], 10);
+
+      const derived = await new Promise((resolve, reject) => {
+        crypto.scrypt(
+          plain,
+          salt,
+          expectedHex.length / 2,
+          { N, r, p, maxmem: 1024 * 1024 * 1024 },
+          (err, buf) => err ? reject(err) : resolve(buf)
+        );
+      });
+
+      const expected = Buffer.from(expectedHex, 'hex');
+      if (derived.length !== expected.length) return false;
+      return crypto.timingSafeEqual(derived, expected);
+    } catch {
+      return false;
+    }
+  }
+
+  // Werkzeug pbkdf2: pbkdf2:sha256:600000$salt$hash
+  if (hash.startsWith('pbkdf2:')) {
+    try {
+      const parts = hash.split('$');
+      if (parts.length !== 3) return false;
+
+      const methodPart = parts[0]; // pbkdf2:sha256:600000
+      const salt = parts[1];
+      const expectedHex = parts[2];
+
+      const methodBits = methodPart.split(':');
+      if (methodBits.length < 3) return false;
+
+      const digest = methodBits[1];
+      const iterations = parseInt(methodBits[2], 10);
+
+      const derived = await new Promise((resolve, reject) => {
+        crypto.pbkdf2(
+          plain,
+          salt,
+          iterations,
+          expectedHex.length / 2,
+          digest,
+          (err, buf) => err ? reject(err) : resolve(buf)
+        );
+      });
+
+      const expected = Buffer.from(expectedHex, 'hex');
+      if (derived.length !== expected.length) return false;
+      return crypto.timingSafeEqual(derived, expected);
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}
+
+
 function staticFileExists(relPath) {
   return fs.existsSync(path.join(STATIC_DIR, relPath));
 }
@@ -1819,6 +1904,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
