@@ -236,9 +236,9 @@
     <div class="layout" style="margin-top:14px;">
       <section>
         <div class="panel">
-          <div class="row gap" style="align-items:flex-start; flex-wrap:nowrap; gap:18px;">
+          <div class="row between" style="align-items:flex-start; flex-wrap:nowrap; gap:18px; width:100%;">
 
-            <div class="row gap" style="align-items:flex-start; flex:1 1 auto; min-width:0; flex-wrap:nowrap;">
+            <div class="row gap" style="align-items:flex-start; flex:1 1 auto; min-width:0; flex-wrap:nowrap; max-width:calc(100% - 340px);">
               <div class="showposter" style="position:relative; overflow:hidden; width:240px; height:360px; flex:0 0 240px;">
                 <img
                   src="<%= showRow.poster_url || POSTER_FALLBACK %>"
@@ -269,8 +269,8 @@
               </div>
             </div>
 
-            <div class="showright" style="flex:0 0 320px; width:320px; min-width:320px;">
-              <div class="panel" style="box-shadow:none; position:relative; z-index:20; margin:0;">
+            <div class="showright" style="flex:0 0 320px; width:320px; min-width:320px; margin-left:auto;">
+              <div class="panel" style="box-shadow:none; position:relative; z-index:20; margin:0; width:100%;">
                 <% if (meUser) { %>
                   <div class="kicker">Your rating</div>
 
@@ -610,3 +610,4 @@
   </script>
 </body>
 </html>
+
