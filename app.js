@@ -16,7 +16,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const BASE_DIR = __dirname;
 const STATIC_DIR = path.join(BASE_DIR, 'static');
 const POSTER_DIR = path.join(STATIC_DIR, 'posters');
-const PFP_DIR = path.join(STATIC_DIR, 'pfps');
+
+const DATA_DIR = process.env.DATA_DIR || '/data';
+const PFP_DIR = path.join(DATA_DIR, 'pfps');
 
 fs.mkdirSync(POSTER_DIR, { recursive: true });
 fs.mkdirSync(PFP_DIR, { recursive: true });
@@ -386,6 +388,7 @@ function createApp() {
   app.set('views', path.join(BASE_DIR, 'templates'));
 
   app.use('/static', express.static(STATIC_DIR));
+  app.use('/uploads/pfps', express.static(PFP_DIR));
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json({ limit: `${MAX_UPLOAD_MB}mb` }));
 
@@ -985,22 +988,22 @@ function createApp() {
         req.flash('error', `Upload failed: ${err.message}`);
         return res.redirect('/me');
       }
-
+  
       if (!req.file) {
         req.flash('error', 'No file selected.');
         return res.redirect('/me');
       }
-
+  
       let conn;
       try {
         conn = getConn();
         const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
         if (!me) return res.sendStatus(404);
-
-        const avatarUrl = `/static/pfps/${req.file.filename}`;
+  
+        const avatarUrl = `/uploads/pfps/${req.file.filename}`;
         await dbx.updateUserAvatarUrl(conn, Number(req.session.uid), avatarUrl);
         await dbx.commit(conn);
-
+  
         req.flash('ok', 'Profile picture updated.');
         return res.redirect('/me');
       } catch (e) {
@@ -1980,5 +1983,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
