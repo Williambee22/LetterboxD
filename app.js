@@ -1658,9 +1658,10 @@ function createApp() {
 }
 
 const app = createApp();
-app.listen(PORT, '8.0.8.0', () => {
-  console.log(`Server running on http://8.0.8.0:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
