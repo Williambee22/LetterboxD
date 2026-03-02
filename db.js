@@ -75,6 +75,33 @@ function reviewsTextCol(conn) {
   throw new Error(`reviews table has no recognized text column. Found: ${JSON.stringify([...cols].sort())}`);
 }
 
+function ensureAuthColumns(conn) {
+  const cols = tableColumns(conn, 'users');
+
+  if (!cols.has('email')) {
+    conn.prepare('ALTER TABLE users ADD COLUMN email TEXT').run();
+  }
+  if (!cols.has('must_change_password')) {
+    conn.prepare('ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0').run();
+  }
+  if (!cols.has('reset_token')) {
+    conn.prepare('ALTER TABLE users ADD COLUMN reset_token TEXT').run();
+  }
+  if (!cols.has('reset_token_expires_ts')) {
+    conn.prepare('ALTER TABLE users ADD COLUMN reset_token_expires_ts INTEGER').run();
+  }
+
+  try {
+    conn.prepare('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_unique ON users(email)').run();
+  } catch (_) {}
+}
+
+function userByEmail(conn, email) {
+  return conn.prepare(
+    'SELECT * FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))'
+  ).get(String(email || '').trim()) || null;
+}
+
 function bestTsExpr(cols, prefix) {
   for (const c of ['updated_at', 'created_at', 'ts', 'timestamp']) {
     if (cols.has(c)) return `${prefix}.${c}`;
@@ -104,12 +131,69 @@ function userById(conn, userId) {
 
 function createUser(conn, username, passHash, opts = {}) {
   const makeAdmin = !!opts.makeAdmin;
+  const email = String(opts.email || '').trim() || null;
+
+  const cols = usersColumns(conn);
+
+  if (cols.has('email')) {
+    const stmt = conn.prepare(
+      'INSERT INTO users(username, email, pass_hash, is_admin, created_ts) VALUES (?,?,?,?,?)'
+    );
+    const info = stmt.run(String(username || '').trim(), email, passHash, makeAdmin ? 1 : 0, nowTs());
+    return Number(info.lastInsertRowid);
+  }
+
   const stmt = conn.prepare(
     'INSERT INTO users(username, pass_hash, is_admin, created_ts) VALUES (?,?,?,?)'
   );
   const info = stmt.run(String(username || '').trim(), passHash, makeAdmin ? 1 : 0, nowTs());
   return Number(info.lastInsertRowid);
 }
+
+function setPasswordResetToken(conn, userId, token, expiresTs) {
+  conn.prepare(`
+    UPDATE users
+    SET reset_token = ?, reset_token_expires_ts = ?
+    WHERE id = ?
+  `).run(String(token || ''), Number(expiresTs), Number(userId));
+}
+
+function userByResetToken(conn, token) {
+  return conn.prepare(`
+    SELECT *
+    FROM users
+    WHERE reset_token = ?
+      AND reset_token_expires_ts IS NOT NULL
+      AND reset_token_expires_ts >= ?
+    LIMIT 1
+  `).get(String(token || ''), nowTs()) || null;
+}
+
+function clearPasswordResetToken(conn, userId) {
+  conn.prepare(`
+    UPDATE users
+    SET reset_token = NULL,
+        reset_token_expires_ts = NULL
+    WHERE id = ?
+  `).run(Number(userId));
+}
+
+function setUserMustChangePassword(conn, userId, flag = 1) {
+  conn.prepare(`
+    UPDATE users
+    SET must_change_password = ?
+    WHERE id = ?
+  `).run(flag ? 1 : 0, Number(userId));
+}
+
+function updateUserEmail(conn, userId, email) {
+  conn.prepare(`
+    UPDATE users
+    SET email = ?
+    WHERE id = ?
+  `).run(String(email || '').trim() || null, Number(userId));
+}
+
 
 function addShow(conn, year, corps, title, opts = {}) {
   const yearI = Number(year);
@@ -1348,7 +1432,15 @@ module.exports = {
   updateUserUsername,
   updateUserPasswordHash,
   searchUsers,
+  ensureAuthColumns,
+userByEmail,
+setPasswordResetToken,
+userByResetToken,
+clearPasswordResetToken,
+setUserMustChangePassword,
+updateUserEmail,
 };
+
 
 
 
