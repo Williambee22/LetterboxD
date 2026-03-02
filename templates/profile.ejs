@@ -121,7 +121,7 @@
   const avgRating = pu.avg_rating != null ? Number(pu.avg_rating) : 0;
 %>
 
-<body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
+<body class="app" <%= profile_user && profile_user.theme_color ? `style="--accent: ${profile_user.theme_color};"` : "" %>>
   <header class="topbar">
     <div class="wrap row between">
       <a class="brand" href="/shows">
@@ -589,4 +589,5 @@
   </script>
 </body>
 </html>
+
 
