@@ -1350,7 +1350,7 @@ a:focus{
 
 /* Vote + quote in one clean block (NO negative margins) */
 .topshows_page .ts_quote_row{
-  display:felx;
+  display:flex;
   gap:10px;
   margin-top:8px;
   align-items:flex-start;
@@ -1391,3 +1391,4 @@ a:focus{
 .notifItem::after{
   pointer-events:none;
 }
+
