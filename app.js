@@ -313,7 +313,7 @@ async function hashPassword(password) {
 ========================= */
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || 're_dNcSQUTw_4vJre8Avs4k2b6CUHrsdzj47';
-const MAIL_FROM = process.env.MAIL_FROM || 'Pressboxd PressboxdContact@gmail.com';
+const MAIL_FROM = process.env.MAIL_FROM || 'Pressboxd pressboxdcontact@gmail.com';
 const APP_BASE_URL = process.env.APP_BASE_URL || 'https://www.pressboxd.com';
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
@@ -1980,4 +1980,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
