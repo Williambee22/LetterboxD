@@ -5,17 +5,226 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Followers - Pressboxd</title>
   <link rel="stylesheet" href="/static/styles.css"/>
+
+  <style>
+    .auth { align-items:center; gap: 12px; }
+
+    .notifWrap { position: relative; display: inline-flex; align-items:center; }
+    .bellBtn {
+      position: relative;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: inherit;
+      padding: 6px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.95;
+    }
+    .bellBtn:hover { background: rgba(255,255,255,0.06); }
+    .badgeDot {
+      position:absolute;
+      top: 3px;
+      right: 3px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #ff3b30;
+      color: #fff;
+      font-size: 11px;
+      line-height: 18px;
+      text-align: center;
+      font-weight: 800;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    }
+
+    .notifDropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 40px;
+      width: 340px;
+      max-height: 420px;
+      overflow: auto;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.45);
+      z-index: 9999;
+    }
+    .notifDropdown.open { display:block; }
+
+    .notifHeader {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      position: sticky;
+      top: 0;
+      background: rgba(15, 23, 42, 0.98);
+      backdrop-filter: blur(8px);
+    }
+    .notifTitle { font-weight: 900; }
+    .markReadBtn {
+      border: none;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      opacity: 0.85;
+      font-size: 12px;
+      padding: 6px 8px;
+      border-radius: 10px;
+    }
+    .markReadBtn:hover { background: rgba(255,255,255,0.06); opacity: 1; }
+
+    .notifList { padding: 8px; display:flex; flex-direction:column; gap: 8px; }
+    .notifItem {
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .notifItem.unread { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.25); }
+    .notifTime { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+    .notifEmpty { padding: 12px; opacity: 0.8; }
+
+    .authBellSlot { display:inline-flex; align-items:center; }
+
+    .notifDropdown,
+    .notifDropdown * {
+      pointer-events: auto !important;
+    }
+  </style>
 </head>
-<body class="app">
+<body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
+<%
+  const safeMe = (typeof me !== "undefined" && me) ? me : null;
+  const safeProfileUser = (typeof profile_user !== "undefined" && profile_user) ? profile_user : {};
+  const safeRows = (typeof rows !== "undefined" && Array.isArray(rows)) ? rows : [];
+  const safeNotifCount = (typeof notif_count !== "undefined" && notif_count) ? notif_count : 0;
+  const safeNotifItems = (typeof notif_items !== "undefined" && Array.isArray(notif_items)) ? notif_items : [];
+  const safeFlashes = (typeof flashes !== "undefined" && Array.isArray(flashes)) ? flashes : [];
+%>
+
+  <header class="topbar">
+    <div class="wrap row between">
+      <a class="brand" href="/shows">
+        <span class="dot"></span>
+        <span>Pressboxd</span>
+      </a>
+
+      <nav class="nav row">
+        <a href="/shows">Shows</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+        <% if (safeMe && Number(safeMe.is_admin) === 1) { %>
+          <a href="/admin/bulk_add">Mass Add</a>
+          <a href="/admin/roles">Roles</a>
+          <a href="/admin/users">Users</a>
+        <% } %>
+      </nav>
+
+      <div class="auth row">
+        <% if (safeMe) { %>
+          <div class="authBellSlot">
+            <div class="notifWrap">
+              <button class="bellBtn" id="bellBtn" aria-label="Notifications" title="Notifications">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/>
+                  <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
+                </svg>
+
+                <% if (safeNotifCount > 0) { %>
+                  <span class="badgeDot"><%= safeNotifCount %></span>
+                <% } %>
+              </button>
+
+              <div class="notifDropdown" id="notifDropdown">
+                <div class="notifHeader">
+                  <div class="notifTitle">Notifications</div>
+                  <form method="post" action="/me/notifications/read">
+                    <button class="markReadBtn" type="submit">Mark all read</button>
+                  </form>
+                </div>
+
+                <% if (safeNotifItems.length > 0) { %>
+                  <div class="notifList">
+                    <% for (const n of safeNotifItems) {
+                      const kind = n.kind || "";
+                      const actor = n.actor_username || "Someone";
+                      const created = n.created_at || "";
+                      const unread = Number(n.is_read || 0) === 0;
+                      const sid = n.show_id || null;
+                    %>
+                      <div class="notifItem <%= unread ? 'unread' : '' %>">
+                        <% if (kind === "friend_request") { %>
+                          <div><b><%= actor %></b> sent you a friend request.</div>
+                        <% } else if (kind === "follow") { %>
+                          <div><b><%= actor %></b> followed you.</div>
+                        <% } else if (kind === "review_upvote") { %>
+                          <div>
+                            <b><%= actor %></b> upvoted your review
+                            <% if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
+                          </div>
+                        <% } else { %>
+                          <div>New activity.</div>
+                        <% } %>
+
+                        <% if (created) { %>
+                          <div class="notifTime"><%= created %></div>
+                        <% } %>
+                      </div>
+                    <% } %>
+                  </div>
+                <% } else { %>
+                  <div class="notifEmpty">No notifications.</div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+          <a class="nav_user" href="/me">
+            <span class="avatar_sm">
+              <% if (safeMe.avatar_url) { %>
+                <img src="<%= safeMe.avatar_url %>" alt="avatar">
+              <% } else { %>
+                <span class="avatar_fallback"></span>
+              <% } %>
+            </span>
+            <span class="muted small"><%= safeMe.username %></span>
+          </a>
+
+          <a href="/logout">Logout</a>
+        <% } else { %>
+          <a href="/login">Login</a>
+          <a class="btn" href="/register">Register</a>
+        <% } %>
+      </div>
+    </div>
+  </header>
+
   <main class="wrap">
+    <% if (safeFlashes.length > 0) { %>
+      <div class="flashes">
+        <% for (const f of safeFlashes) { %>
+          <div class="flash <%= f.category %>"><%= f.message %></div>
+        <% } %>
+      </div>
+    <% } %>
 
     <div class="panel">
       <div class="kicker">Followers</div>
-      <h1 style="margin:6px 0 0;"><%= profile_user.username %></h1>
+      <h1 style="margin:6px 0 0;"><%= safeProfileUser.username || "User" %></h1>
 
-      <% if (Array.isArray(rows) && rows.length > 0) { %>
+      <% if (safeRows.length > 0) { %>
         <div class="stack" style="margin-top:12px;">
-          <% for (const u of rows) { %>
+          <% for (const u of safeRows) { %>
             <div class="row between" style="align-items:center;">
               <div class="row gap" style="align-items:center;">
                 <span class="avatar_sm">
@@ -34,7 +243,34 @@
         <div class="muted" style="margin-top:10px;">No followers yet.</div>
       <% } %>
     </div>
-
   </main>
+
+  <footer class="wrap footer">
+    <div class="small">Rate drum corps shows.</div>
+  </footer>
+
+  <script>
+    (() => {
+      const btn = document.getElementById("bellBtn");
+      const dd  = document.getElementById("notifDropdown");
+      if (!btn || !dd) return;
+
+      dd.addEventListener("click", (e) => e.stopPropagation());
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dd.classList.toggle("open");
+      });
+
+      document.addEventListener("click", () => {
+        dd.classList.remove("open");
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") dd.classList.remove("open");
+      });
+    })();
+  </script>
 </body>
 </html>
