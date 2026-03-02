@@ -129,7 +129,7 @@
   const notifItemsSafe = Array.isArray(typeof notif_items !== "undefined" ? notif_items : []) ? notif_items : [];
   const bodyStyle = meUser && meUser.theme_color ? `--accent: ${meUser.theme_color};` : "";
 %>
-<body class="app" <%= bodyStyle ? `style="${bodyStyle}"` : "" %>>
+<body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
   <header class="topbar">
     <div class="wrap row between">
       <a class="brand" href="/shows">
@@ -452,4 +452,5 @@
   </script>
 </body>
 </html>
+
 
