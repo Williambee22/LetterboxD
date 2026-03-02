@@ -184,7 +184,19 @@ function wantsJson(req) {
 
 function createApp() {
   const app = express();
-
+  const SOURCE_DB_PATH = path.join(BASE_DIR, 'site.db');
+  const DB_PATH = process.env.DB_PATH || '/data/site.db';
+  
+  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+  
+  if (!fs.existsSync(DB_PATH)) {
+    if (fs.existsSync(SOURCE_DB_PATH)) {
+      fs.copyFileSync(SOURCE_DB_PATH, DB_PATH);
+      console.log(`Copied seeded DB from ${SOURCE_DB_PATH} -> ${DB_PATH}`);
+    } else {
+      console.log(`No existing DB found at ${SOURCE_DB_PATH}; a new DB will be initialized at ${DB_PATH}`);
+    }
+  }
   app.set('trust proxy', 1);
 
   if (!fs.existsSync(DB_PATH)) {
@@ -1604,6 +1616,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
