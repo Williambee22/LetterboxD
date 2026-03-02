@@ -1096,6 +1096,83 @@ function createApp() {
     res.redirect(`/admin/user/${encodeURIComponent(username)}/roles`);
   }));
 
+  app.get('/admin/user/:username/force-reset', adminRequired(async (req, res) => {
+    const username = req.params.username;
+    let conn;
+    try {
+      conn = getConn();
+      const u = normalizeRow(await dbx.userByUsername(conn, username));
+      if (!u) return res.sendStatus(404);
+      res.render('admin_force_reset', { u });
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+
+  app.get('/admin/user/:username/set-temp-password', adminRequired(async (req, res) => {
+    const username = req.params.username;
+    let conn;
+    try {
+      conn = getConn();
+      const u = normalizeRow(await dbx.userByUsername(conn, username));
+      if (!u) return res.sendStatus(404);
+      res.render('admin_set_temp_password', { u });
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+  
+  app.post('/admin/user/:username/set-temp-password', adminRequired(async (req, res) => {
+    const username = req.params.username;
+    const tempPassword = String(req.body.temp_password || '').trim();
+    const tempPassword2 = String(req.body.temp_password2 || '').trim();
+  
+    if (tempPassword.length < 6) {
+      req.flash('error', 'Temporary password must be at least 6 characters.');
+      return res.redirect(`/admin/user/${encodeURIComponent(username)}/set-temp-password`);
+    }
+  
+    if (tempPassword !== tempPassword2) {
+      req.flash('error', 'Temporary passwords do not match.');
+      return res.redirect(`/admin/user/${encodeURIComponent(username)}/set-temp-password`);
+    }
+  
+    let conn;
+    try {
+      conn = getConn();
+      const u = normalizeRow(await dbx.userByUsername(conn, username));
+      if (!u) return res.sendStatus(404);
+  
+      const newHash = await bcrypt.hash(tempPassword, 12);
+      await dbx.updateUserPasswordHash(conn, Number(u.id), newHash);
+      await dbx.setUserMustChangePassword(conn, Number(u.id), 1);
+      await dbx.commit(conn);
+  
+      req.flash('ok', `Temporary password set for ${u.username}.`);
+      res.redirect('/admin/users');
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+  
+  app.post('/admin/user/:username/force-reset', adminRequired(async (req, res) => {
+    const username = req.params.username;
+    let conn;
+    try {
+      conn = getConn();
+      const u = normalizeRow(await dbx.userByUsername(conn, username));
+      if (!u) return res.sendStatus(404);
+  
+      await dbx.setUserMustChangePassword(conn, Number(u.id), 1);
+      await dbx.commit(conn);
+  
+      req.flash('ok', `Forced password reset for ${u.username}.`);
+      res.redirect('/admin/users');
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+  
   app.get('/api/users/search', async (req, res, next) => {
     const q = String(req.query.q || '').trim();
     if (!q) return res.json({ results: [] });
@@ -1120,7 +1197,15 @@ function createApp() {
       if (conn) dbx.close(conn);
     }
   });
-
+  if (Number(u.must_change_password || 0) === 1) {
+    req.session.uid = Number(u.id);
+    req.flash('warn', 'You must change your password before continuing.');
+    return req.session.save((err) => {
+      if (err) return next(err);
+      return res.redirect('/me');
+    });
+  }
+  
   app.get('/me', loginRequired(async (req, res) => {
     let conn;
     try {
@@ -1663,6 +1748,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
