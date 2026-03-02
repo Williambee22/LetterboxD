@@ -66,6 +66,31 @@
 
 html, body{ height:100%; }
 
+const picker = document.getElementById('themePicker');
+const root = document.documentElement;
+
+// 1. Check if a theme was saved previously
+const savedColor = localStorage.getItem('userAccentColor');
+
+if (savedColor) {
+    root.style.setProperty('--accent', savedColor);
+    if(picker) picker.value = savedColor;
+}
+
+// 2. Listen for changes and save them
+if (picker) {
+    picker.addEventListener('input', (e) => {
+        const newColor = e.target.value;
+        
+        // Update the CSS variable immediately
+        root.style.setProperty('--accent', newColor);
+        
+        // Save the choice to the browser's memory
+        localStorage.setItem('userAccentColor', newColor);
+    });
+}
+
+
 body{
   margin:0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
@@ -1419,5 +1444,6 @@ a:focus{
 .notifItem::after{
   pointer-events:none;
 }
+
 
 
