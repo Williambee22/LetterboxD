@@ -16,15 +16,30 @@
       <% if (Array.isArray(users) && users.length > 0) { %>
         <div class="stack">
           <% for (const u of users) { %>
-            <div class="row between" style="align-items:center;">
+            <div class="row between" style="align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.08);">
               <div>
                 <div style="font-weight:800;"><%= u.username %></div>
                 <div class="muted small"><%= Number(u.is_admin) === 1 ? "Admin" : "User" %></div>
+
+                <% if (u.password_hash_type) { %>
+                  <div class="muted small" style="margin-top:4px;">
+                    Password type: <%= u.password_hash_type %>
+                  </div>
+                <% } %>
               </div>
 
-              <div class="row gap" style="align-items:center;">
+              <div class="row gap" style="align-items:center; flex-wrap:wrap;">
                 <a class="btn ghost" href="/u/<%= encodeURIComponent(u.username) %>">Profile</a>
                 <a class="btn green" href="/admin/user/<%= encodeURIComponent(u.username) %>/roles">Assign roles</a>
+
+                <!-- safer admin actions -->
+                <form method="post" action="/admin/user/<%= encodeURIComponent(u.username) %>/force-reset" style="margin:0;">
+                  <button class="btn ghost" type="submit">Force reset</button>
+                </form>
+
+                <form method="post" action="/admin/user/<%= encodeURIComponent(u.username) %>/set-temp-password" style="margin:0;">
+                  <button class="btn ghost" type="submit">Set temp password</button>
+                </form>
               </div>
             </div>
           <% } %>
