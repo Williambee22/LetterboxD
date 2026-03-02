@@ -236,39 +236,41 @@
     <div class="layout" style="margin-top:14px;">
       <section>
         <div class="panel">
-          <div class="row gap" style="align-items:flex-start; flex-wrap:wrap;">
+          <div class="row gap" style="align-items:flex-start; flex-wrap:nowrap; gap:18px;">
 
-            <div class="showposter" style="position:relative; overflow:hidden; width:240px; height:360px; flex:0 0 240px;">
-              <img
-                src="<%= showRow.poster_url || POSTER_FALLBACK %>"
-                alt="<%= showRow.title || 'Show' %> poster"
-                style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;"
-                onerror="this.onerror=null;this.src='<%= POSTER_FALLBACK %>';"
-              >
-              <div class="poster_fallback" style="position:absolute; inset:0;"></div>
-            </div>
+            <div class="row gap" style="align-items:flex-start; flex:1 1 auto; min-width:0; flex-wrap:nowrap;">
+              <div class="showposter" style="position:relative; overflow:hidden; width:240px; height:360px; flex:0 0 240px;">
+                <img
+                  src="<%= showRow.poster_url || POSTER_FALLBACK %>"
+                  alt="<%= showRow.title || 'Show' %> poster"
+                  style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;"
+                  onerror="this.onerror=null;this.src='<%= POSTER_FALLBACK %>';"
+                >
+                <div class="poster_fallback" style="position:absolute; inset:0;"></div>
+              </div>
 
-            <div class="showmeta" style="flex:1; min-width:260px;">
-              <div class="kicker">Show</div>
-              <h1 style="margin:6px 0 8px;"><%= showRow.title || "" %></h1>
-              <div class="muted"><%= showRow.year || "" %> — <%= showRow.corps || "" %></div>
+              <div class="showmeta" style="flex:1 1 auto; min-width:0; max-width:none;">
+                <div class="kicker">Show</div>
+                <h1 style="margin:6px 0 8px;"><%= showRow.title || "" %></h1>
+                <div class="muted"><%= showRow.year || "" %> — <%= showRow.corps || "" %></div>
 
-              <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                <% if (Number(showRow.cnt || 0) === 0) { %>
-                  <span class="badge muted">Unrated</span>
-                <% } else { %>
-                  <span class="badge good">★ <%= Number(showRow.avg_rating || 0).toFixed(2) %></span>
-                  <span class="badge muted"><%= Number(showRow.cnt || 0) %> ratings</span>
-                <% } %>
+                <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                  <% if (Number(showRow.cnt || 0) === 0) { %>
+                    <span class="badge muted">Unrated</span>
+                  <% } else { %>
+                    <span class="badge good">★ <%= Number(showRow.avg_rating || 0).toFixed(2) %></span>
+                    <span class="badge muted"><%= Number(showRow.cnt || 0) %> ratings</span>
+                  <% } %>
 
-                <% if (meUser && Number(meUser.is_admin) === 1) { %>
-                  <a class="btn ghost" href="/admin/show/<%= showRow.id %>/edit">Edit show</a>
-                <% } %>
+                  <% if (meUser && Number(meUser.is_admin) === 1) { %>
+                    <a class="btn ghost" href="/admin/show/<%= showRow.id %>/edit">Edit show</a>
+                  <% } %>
+                </div>
               </div>
             </div>
 
-            <div class="showright" style="min-width:280px; flex:1;">
-              <div class="panel" style="box-shadow:none; transform:translateY(-14px); position:relative; z-index:20;">
+            <div class="showright" style="flex:0 0 320px; width:320px; min-width:320px;">
+              <div class="panel" style="box-shadow:none; position:relative; z-index:20; margin:0;">
                 <% if (meUser) { %>
                   <div class="kicker">Your rating</div>
 
