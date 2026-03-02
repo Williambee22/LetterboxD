@@ -27,7 +27,21 @@ const DB_PATH = process.env.DB_PATH || '/data/site.db';
 console.log('APP DB_PATH =', DB_PATH);
 const PORT = parseInt(process.env.PORT || '8080', 10);
 
+const SOURCE_DB_PATH = path.join(BASE_DIR, 'site.db');
+const DB_PATH = process.env.DB_PATH || '/data/site.db';
+
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+
+if (!fs.existsSync(DB_PATH)) {
+  if (fs.existsSync(SOURCE_DB_PATH)) {
+    fs.copyFileSync(SOURCE_DB_PATH, DB_PATH);
+    console.log(`Copied seeded DB from ${SOURCE_DB_PATH} -> ${DB_PATH}`);
+  } else {
+    dbx.initDb(DB_PATH, { schemaPath: path.join(BASE_DIR, 'schema.sql') });
+    console.log(`Initialized new DB at ${DB_PATH}`);
+  }
+}
+
 
 const BAD_WORDS = new Set([
   'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'dick', 'pussy',
@@ -1616,6 +1630,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
