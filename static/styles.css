@@ -1,43 +1,40 @@
 :root{
+  /* matte, darker base */
   --bg:#090909;
   --bg2:#000000;
 
+  /* flatter surfaces */
   --panel:#000000;
   --panel2:#0f131a;
   --card:#000000;
 
-  --line:rgba(255,255,255,.22);
-  --line:rgba(255,255,255,.22);
+  /* subtle separators */
+  --line:#000000;
+  --line2:#000000;
 
   --text:#e7ebf2;
   --muted:#a3adbb;
 
-  /* fallback only */
-  --accent:#9f9f9f;
-
-  --good:#068818;
-
-  --radius: 10px;
-  --radius2: 12px;
-
-  --shadow: 0 10px 30px rgba(0,0,0,.35);
-}
-
-/* IMPORTANT: recompute all accent-derived vars here */
-body.app{
+  /* calmer accents (fallback only; body overrides per-user) */
+  --accent:#7c7c7c; /* fallback */
   --accent2: color-mix(in srgb, var(--accent) 55%, transparent);
   --accentSoft: color-mix(in srgb, var(--accent) 28%, transparent);
   --accentFaint: color-mix(in srgb, var(--accent) 14%, transparent);
-  --accentWeak: color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,.08));
-  --accentMid: color-mix(in srgb, var(--accent) 34%, rgba(255,255,255,.10));
-  --accentStrong: color-mix(in srgb, var(--accent) 82%, white 0%);
-  --accentBgSoft: color-mix(in srgb, var(--accent) 10%, rgba(255,255,255,.03));
-  --accentBg: color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,.05));
-  --accent3: color-mix(in srgb, var(--accent) 25%, transparent);
+
+  --good:#068818;
+
+  /* much less “pill/rounded” */
+  --radius: 10px;
+  --radius2: 12px;
+
+  /* flatter shadows */
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
 }
 
 *{ box-sizing:border-box; }
-html,body{ height:100%; }
+
+html, body{ height:100%; }
+
 body{
   margin:0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
@@ -46,9 +43,15 @@ body{
 }
 
 a{ color:inherit; }
-a:hover{ color: var(--accent); }
 
-.wrap{ width: 90%; max-width:none; margin:0; padding:18px; margin-left:auto; margin-right:auto; }
+.wrap{
+  width:90%;
+  max-width:none;
+  margin:0;
+  padding:18px;
+  margin-left:auto;
+  margin-right:auto;
+}
 
 .row{ display:flex; align-items:center; gap:12px; }
 .between{ justify-content:space-between; }
@@ -57,29 +60,39 @@ a:hover{ color: var(--accent); }
 
 .muted{ color:var(--muted); }
 .small{ font-size:13px; }
-.kicker{ font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); }
+
+.kicker{
+  font-size:12px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
 
 .topbar{
-  position:sticky; top:0; z-index:20;
+  position:sticky;
+  top:0;
+  z-index:20;
   background:rgba(0, 0, 0, 0.72);
-  border-bottom:2px solid var(--accentSoft);
+  border-bottom:2px solid rgba(255,255,255,.06);
   backdrop-filter: blur(5px);
-  box-shadow: 0 8px 30px color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .brand{
   text-decoration:none;
-  font-size: 28px;
+  font-size:28px;
   font-weight:920;
   letter-spacing:.16em;
   display:flex;
   align-items:center;
   gap:10px;
 }
+
 .brand .dot{
-  width:10px; height:10px; border-radius:999px;
+  width:10px;
+  height:10px;
+  border-radius:999px;
   background:linear-gradient(135deg, var(--accent), var(--accent2));
-  box-shadow: 0 0 0 4px var(--accentFaint);
+  box-shadow: 0 0 0 4px rgba(78,161,255,.12);
 }
 
 .nav a{
@@ -88,9 +101,10 @@ a:hover{ color: var(--accent); }
   padding:8px 10px;
   border-radius:12px;
 }
+
 .nav a:hover{
   color:var(--text);
-  background: color-mix(in srgb, var(--accent) 10%, rgba(255,255,255,.04));
+  background:rgba(255,255,255,.04);
 }
 
 .auth a{
@@ -99,18 +113,19 @@ a:hover{ color: var(--accent); }
   padding:8px 10px;
   border-radius:12px;
 }
+
 .auth a:hover{
   color:var(--text);
-  background: color-mix(in srgb, var(--accent) 10%, rgba(255,255,255,.04));
+  background:rgba(255,255,255,.04);
 }
 
 .btn{
-  background: rgba(58, 208, 124, .10);
-  border: 1px solid rgba(58, 208, 124, .26);
+  background: rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.10);
   color: var(--text);
   padding:9px 12px;
-  border-radius: 10px;
-  font-weight: 900;
+  border-radius:10px;
+  font-weight:900;
   cursor:pointer;
   text-decoration:none;
   display:inline-flex;
@@ -118,62 +133,76 @@ a:hover{ color: var(--accent); }
   gap:8px;
   box-shadow:none;
 }
+
 .btn:hover{
-  background: rgba(58, 208, 124, .16);
-  border-color: rgba(58, 208, 124, .40);
+  background: rgba(255,255,255,.11);
+  border-color: rgba(255,255,255,.14);
   transform:none;
 }
+
 .btn:active{ transform:none; }
 
 .btn.ghost{
-  background: rgba(58, 208, 124, .05);
-  border: 1px solid rgba(58, 208, 124, .22);
+  background: transparent;
+  border:1px solid rgba(255,255,255,.10);
   color: var(--text);
 }
+
 .btn.ghost:hover{
-  background: rgba(58, 208, 124, .10);
-  border-color: rgba(58, 208, 124, .36);
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.14);
 }
 
 .btn.primary{
-  background: rgba(58, 208, 124, .14);
-  border-color: rgba(58, 208, 124, .34);
-}
-.btn.primary:hover{
-  background: rgba(58, 208, 124, .20);
-  border-color: rgba(58, 208, 124, .48);
+  border-color: rgba(108, 108, 108, 0.3);
+  background: rgba(0, 0, 0, 0.1);
 }
 
+.btn.primary:hover{
+  background: rgba(0, 0, 0, 0.14);
+  border-color: rgba(102, 102, 102, 0.38);
+}
+
+/* Green primary action button */
 .btn.green{
-  background: rgba(58, 208, 124, .18);
-  border: 1px solid rgba(58, 208, 124, .44);
+  background: rgba(58, 208, 124, .16);
+  border: 1px solid rgba(58, 208, 124, .40);
   color: var(--text);
 }
+
 .btn.green:hover{
-  background: rgba(58, 208, 124, .24);
-  border-color: rgba(58, 208, 124, .58);
+  background: rgba(58, 208, 124, .22);
+  border-color: rgba(58, 208, 124, .52);
 }
+
 .panel{
   background: rgba(0, 0, 0, 0.92);
-  border:1px solid var(--accentSoft);
+  border:1px solid rgba(150, 150, 150, 0.282);
   border-radius: var(--radius2);
   padding:16px;
   box-shadow: var(--shadow);
 }
 
-.flashes{ margin-top:12px; display:flex; flex-direction:column; gap:10px; }
+.flashes{
+  margin-top:12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
 .flash{
-  border:1px solid var(--accentFaint);
+  border:1px solid rgba(255,255,255,.08);
   border-radius:16px;
   padding:12px 14px;
   background:rgba(13,21,36,.7);
 }
+
 .flash.ok{ border-color:rgba(34,197,94,.35); }
 .flash.error{ border-color:rgba(239,68,68,.35); }
 .flash.warn{ border-color:rgba(234,179,8,.35); }
 
 .footer{
-  border-top:1px solid var(--accentSoft);
+  border-top:1px solid rgba(255,255,255,.06);
   margin-top:32px;
   padding-top:18px;
   color:var(--muted);
@@ -186,6 +215,7 @@ a:hover{ color: var(--accent); }
   gap:18px;
   align-items:start;
 }
+
 @media (max-width: 980px){
   .layout{ grid-template-columns: 1fr; }
 }
@@ -195,6 +225,7 @@ a:hover{ color: var(--accent); }
   position:logical;
   top:92px;
 }
+
 .side .panel{ padding:14px; }
 
 .field label{
@@ -206,43 +237,64 @@ a:hover{ color: var(--accent); }
   margin:12px 0 6px;
 }
 
-.field input, .field select, textarea{
+.field input,
+.field select,
+textarea{
   width:100%;
   background: rgba(255,255,255,.04);
-  border:1px solid var(--accentFaint);
-  border-radius: 10px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:10px;
   padding:11px 12px;
   color:var(--text);
   outline:none;
 }
-.field input:focus, .field select:focus, textarea:focus{
-  border-color: var(--accentStrong);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+
+.field input:focus,
+.field select:focus,
+textarea:focus{
+  border-color: rgba(255,255,255,.18);
+  box-shadow:none;
 }
-.actions{ display:flex; gap:10px; margin-top:14px; }
-.actions .btn{ flex:1; justify-content:center; }
+
+.actions{
+  display:flex;
+  gap:10px;
+  margin-top:14px;
+}
+
+.actions .btn{
+  flex:1;
+  justify-content:center;
+}
 
 /* subnav pills (sort tabs) */
-.pills{ display:flex; flex-wrap:wrap; gap:10px; }
+.pills{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
 .pilltab{
   text-decoration:none;
   color:var(--muted);
   padding:8px 8px;
-  border-radius: 10px;
-  border:1px solid var(--accentFaint);
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.10);
   background: rgba(255,255,255,.03);
   font-weight:800;
   font-size:13px;
 }
+
 .pilltab:hover{
   color:var(--text);
-  border-color: var(--accentSoft);
-  background: color-mix(in srgb, var(--accent) 10%, rgba(255,255,255,.05));
+  border-color: rgba(255,255,255,.16);
+  background: rgba(255,255,255,.05);
 }
+
 .pilltab.active{
   color:var(--text);
-  border-color: var(--accentSoft);
-  background: color-mix(in srgb, var(--accent) 12%, rgba(255,255,255,.03));
+  border-color: rgba(0, 0, 0, 0);
+  background: rgba(0, 0, 0, 0);
 }
 
 /* grid like posters */
@@ -254,14 +306,15 @@ a:hover{ color: var(--accent); }
 
 .poster{
   text-decoration:none;
-  border-radius: 12px;
+  border-radius:12px;
   overflow:hidden;
-  border:1px solid var(--accentSoft);
+  border:1px solid rgba(255,255,255,.07);
   background: rgba(17,21,28,.65);
   transition: border-color .12s ease, background .12s ease;
 }
+
 .poster:hover{
-  border-color: var(--accentStrong);
+  border-color: rgba(255,255,255,.12);
   background: rgba(17,21,28,.78);
   transform:none;
   box-shadow:none;
@@ -271,8 +324,8 @@ a:hover{ color: var(--accent); }
   position:relative;
   height:240px;
   background:
-    radial-gradient(220px 140px at 30% 25%, color-mix(in srgb, var(--accent) 18%, transparent), rgba(0,0,0,0)),
-    radial-gradient(220px 140px at 70% 15%, color-mix(in srgb, var(--accent) 12%, transparent), rgba(0,0,0,0)),
+    radial-gradient(220px 140px at 30% 25%, rgba(78,161,255,.18), rgba(0,0,0,0)),
+    radial-gradient(220px 140px at 70% 15%, rgba(139,92,246,.14), rgba(0,0,0,0)),
     linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.30));
 }
 
@@ -289,8 +342,8 @@ a:hover{ color: var(--accent); }
   position:absolute;
   inset:0;
   background:
-    radial-gradient(240px 180px at 35% 25%, color-mix(in srgb, var(--accent) 14%, transparent), rgba(0,0,0,0)),
-    radial-gradient(240px 180px at 70% 35%, color-mix(in srgb, var(--accent) 10%, transparent), rgba(0,0,0,0)),
+    radial-gradient(240px 180px at 35% 25%, rgba(87, 87, 87, 0), rgba(0,0,0,0)),
+    radial-gradient(240px 180px at 70% 35%, rgba(139,92,246,.18), rgba(0,0,0,0)),
     linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.32));
 }
 
@@ -308,37 +361,32 @@ a:hover{ color: var(--accent); }
   font-weight:900;
   border-radius:999px;
   padding:6px 10px;
-  border:1px solid var(--accentFaint);
+  border:1px solid rgba(255,255,255,.10);
   background:rgba(7,10,16,.50);
   color:var(--text);
 }
-.badge.muted{ color:var(--muted); }
-.badge.good{
-  border-color: var(--accentStrong);
-  background: color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,.05));
-  color: var(--accentStrong);
-}
 
-.poster_meta{
-  padding:12px 12px 14px;
-}
+.badge.muted{ color:var(--muted); }
+.badge.good{ border-color: rgba(34,197,94,.35); background:rgba(34,197,94,.10); }
+
+.poster_meta{ padding:12px 12px 14px; }
+
 .poster_title{
   font-weight:950;
   line-height:1.15;
   margin-bottom:6px;
 }
-.poster_title:hover{ color: var(--accent); }
 
 .showhero,
 .profile_hero{
-  border-radius: 14px;
+  border-radius:14px;
   box-shadow: var(--shadow);
-  border: 1px solid var(--accentSoft);
+  border:1px solid rgba(255,255,255,.07);
 }
 
 .showhero.hasbanner::before,
 .profile_hero::before{
-  opacity: .14;
+  opacity:.14;
   filter: blur(6px);
 }
 
@@ -374,7 +422,7 @@ a:hover{ color: var(--accent); }
   height:250px;
   border-radius:18px;
   overflow:hidden;
-  border:1px solid var(--accentSoft);
+  border:1px solid rgba(255,255,255,.10);
   background: rgba(0,0,0,.20);
   flex: 0 0 auto;
   max-width: 200px;
@@ -397,56 +445,92 @@ a:hover{ color: var(--accent); }
   align-items:center;
 }
 
-.poster_art{ position:relative; height:240px; overflow:hidden; }
-.poster_img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:block; }
+.poster_art{
+  position:relative;
+  height:240px;
+  overflow:hidden;
+}
+
+.poster_img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}
 
 /* existing half-star widget styles (kept) */
-.starwrap{ display:flex; align-items:center; gap:14px; margin-top:8px; }
-.stars{ position:relative; display:inline-block; font-size:32px; line-height:1; cursor:pointer; user-select:none; outline:none; }
+.starwrap{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin-top:8px;
+}
+
+.stars{
+  position:relative;
+  display:inline-block;
+  font-size:32px;
+  line-height:1;
+  cursor:pointer;
+  user-select:none;
+  outline:none;
+}
+
 .stars-base{ opacity:.25; }
-.stars-fill{ position:absolute; left:0; top:0; width:0%; overflow:hidden; white-space:nowrap; color: var(--accent); }
-.stars:focus{ box-shadow:0 0 0 4px var(--accentFaint); border-radius:12px; }
+
+.stars-fill{
+  position:absolute;
+  left:0;
+  top:0;
+  width:0%;
+  overflow:hidden;
+  white-space:nowrap;
+}
+
+.stars:focus{
+  box-shadow:0 0 0 4px rgba(123, 123, 123, 0);
+  border-radius:12px;
+}
 
 /* Make banner/gradient overlays click-through */
 .showhero.hasbanner::before,
 .showhero::after{
-  pointer-events: none;
+  pointer-events:none;
 }
 
 /* Ensure the actual content sits above overlays */
 .showhero_inner{
-  position: relative;
-  z-index: 2;
+  position:relative;
+  z-index:2;
 }
 
-.showhero { position: relative; }
+.showhero{ position:relative; }
 
 /* Make sure left-side meta (incl. Edit show) is above any overlays/panels */
 .showleft,
 .showmeta{
-  position: relative;
-  z-index: 10;
+  position:relative;
+  z-index:10;
 }
 
 /* In case the right panel is overlapping the left column */
 .showright{
-  position: relative;
-  z-index: 5;
+  position:relative;
+  z-index:5;
 }
 
 /* Prevent poster block from covering the meta row */
 .showposter{
-  position: relative;
-  z-index: 1;
-}
-.showmeta{
-  z-index: 20;
+  position:relative;
+  z-index:1;
 }
 
+.showmeta{ z-index:20; }
+
 /* --- Home tile: rating/year/count layout --- */
-.poster_art{
-  position:relative;
-}
+.poster_art{ position:relative; }
 
 /* Big rating at bottom-left INSIDE image area */
 .tile_rating{
@@ -456,8 +540,8 @@ a:hover{ color: var(--accent); }
   font-weight:950;
   font-size:19px;
   letter-spacing:.01em;
-  color: var(--accentStrong);
-  border: 1px solid rgba(255,255,255,0);
+  color: rgba(255, 214, 92, 0.95);
+  border: #c8c7c7 1px solid rgba(255,255,255,.14);
   text-shadow: 0 2px 12px rgba(0,0,0,.65);
 }
 
@@ -477,8 +561,8 @@ a:hover{ color: var(--accent); }
   font-size:13px;
   color: rgba(230,234,242,.85);
   background: transparent;
-  border: none;
-  padding: 0;
+  border:none;
+  padding:0;
   text-shadow: 0 2px 12px rgba(0,0,0,.65);
 }
 
@@ -487,25 +571,30 @@ a:hover{ color: var(--accent); }
   margin-top:10px;
   font-size:12px;
   color: var(--muted);
-  z-index: 10;
+  z-index:10;
 }
 
-.reviewlist{ display:flex; flex-direction:column; gap:12px; }
+.reviewlist{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
 .reviewcard{
-  border:1px solid var(--accentSoft);
+  border:1px solid rgba(255,255,255,.08);
   background: rgba(7,10,16,.35);
-  border-radius: 18px;
+  border-radius:18px;
   padding:12px 14px;
 }
+
 .reviewuser{
   color: var(--text);
   text-decoration:none;
   font-weight:900;
 }
-.reviewuser:hover{
-  text-decoration:underline;
-  color: var(--accent);
-}
+
+.reviewuser:hover{ text-decoration:underline; }
+
 .reviewtext{
   margin-top:10px;
   white-space: pre-wrap;
@@ -526,41 +615,58 @@ a:hover{ color: var(--accent); }
 
 .profile_side{
   position: sticky;
-  top: 86px;
+  top:86px;
 }
 
 .profile_stats{
-  padding: 12px;
-  border-radius: 18px;
+  padding:12px;
+  border-radius:18px;
 }
 
 /* --- avatars --- */
 .avatar_sm{
-  width:24px; height:24px;
+  width:24px;
+  height:24px;
   border-radius:999px;
   overflow:hidden;
-  border:1px solid var(--accentFaint);
+  border:1px solid rgba(255,255,255,.12);
   background: rgba(0,0,0,.25);
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  flex: 0 0 auto;
+  flex:0 0 auto;
 }
-.avatar_sm img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+.avatar_sm img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
 .avatar_lg{
-  width:120px; height:120px;
+  width:120px;
+  height:120px;
   border-radius:999px;
   overflow:hidden;
-  border:1px solid var(--accentSoft);
+  border:1px solid rgba(255,255,255,.16);
   background: rgba(0,0,0,.25);
   box-shadow: 0 14px 40px rgba(0,0,0,.35);
 }
-.avatar_lg img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+.avatar_lg img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
 .avatar_fallback{
-  width:100%; height:100%;
+  width:100%;
+  height:100%;
   background:
-    radial-gradient(18px 18px at 40% 35%, color-mix(in srgb, var(--accent) 10%, transparent), rgba(0,0,0,0)),
-    radial-gradient(20px 20px at 70% 65%, color-mix(in srgb, var(--accent) 12%, transparent), rgba(0,0,0,0)),
+    radial-gradient(18px 18px at 40% 35%, rgba(102, 102, 102, 0), rgba(0,0,0,0)),
+    radial-gradient(20px 20px at 70% 65%, rgba(139,92,246,.18), rgba(0,0,0,0)),
     rgba(255,255,255,.06);
 }
 
@@ -573,14 +679,15 @@ a:hover{ color: var(--accent); }
   padding:6px 8px;
   border-radius:14px;
 }
-.nav_user:hover{ background: color-mix(in srgb, var(--accent) 10%, rgba(255,255,255,.04)); }
+
+.nav_user:hover{ background:rgba(255,255,255,.04); }
 
 /* --- profile hero banner + theme --- */
 .profile_hero{
   position:relative;
   border-radius:24px;
   overflow:hidden;
-  border:1px solid var(--accentSoft);
+  border:1px solid rgba(255,255,255,.08);
   background: rgba(10,16,28,.55);
   box-shadow: var(--shadow);
 }
@@ -593,7 +700,7 @@ a:hover{ color: var(--accent); }
   background-size: cover;
   background-position: center;
   filter: blur(6px) saturate(1.05);
-  opacity: .18;
+  opacity:.18;
   transform: scale(1.08);
   pointer-events:none;
 }
@@ -614,16 +721,12 @@ a:hover{ color: var(--accent); }
 }
 
 .profile_hero_inner .btn{
-  background: color-mix(in srgb, var(--pAccent) 10%, rgba(255,255,255,.03));
-  border-color: color-mix(in srgb, var(--pAccent) 34%, rgba(255,255,255,.10));
+  background: linear-gradient(135deg, var(--pAccent), rgba(85, 85, 85, 0));
 }
-.profile_hero_inner .btn.ghost{
-  color: var(--pAccent);
-}
+
 .profile_hero_inner .btn.ghost:hover{
   border-color: color-mix(in srgb, var(--pAccent) 45%, rgba(255,255,255,.10));
-  background: color-mix(in srgb, var(--pAccent) 14%, rgba(255,255,255,.06));
-  color: color-mix(in srgb, var(--pAccent) 82%, white 0%);
+  background: color-mix(in srgb, var(--pAccent) 14%, rgba(78,161,255,.06));
 }
 
 .role_tag{
@@ -631,36 +734,34 @@ a:hover{ color: var(--accent); }
   align-items:center;
   gap:8px;
   padding:6px 10px;
-  border-radius: 10px;
-  border:1px solid var(--accentFaint);
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.14);
   background: rgba(255,255,255,.03);
-  font-weight: 900;
-  font-size: 12px;
-  letter-spacing: .02em;
-  color: var(--accent);
+  font-weight:900;
+  font-size:12px;
+  letter-spacing:.02em;
 }
 
 .role_tag.tiny{
   padding:4px 8px;
   font-size:11px;
-  border-radius: 9px;
+  border-radius:9px;
 }
 
 /* =========================================================
    SQUARE MODE — NO CURVED EDGES ANYWHERE
-   Put this at the BOTTOM of styles.css
 ========================================================= */
 
 :root{
-  --radius: 0px;
-  --radius2: 0px;
+  --radius:0px;
+  --radius2:0px;
 }
 
 /* hard override: kill all rounding */
 *,
 *::before,
 *::after{
-  border-radius: 0 !important;
+  border-radius:0 !important;
 }
 
 /* also kill any clip rounding from overflow containers */
@@ -682,7 +783,7 @@ textarea,
 .poster_art,
 .poster_img,
 .reviewcard{
-  border-radius: 0 !important;
+  border-radius:0 !important;
 }
 
 /* avatars become square too */
@@ -691,7 +792,7 @@ textarea,
 .avatar_sm img,
 .avatar_lg img,
 .avatar_fallback{
-  border-radius: 0 !important;
+  border-radius:0 !important;
 }
 
 /* Text outline for home-tile overlays */
@@ -713,33 +814,33 @@ textarea,
 /* Bigger star, but keep same color as the rating text */
 .tile_star{
   color: inherit !important;
-  font-size: 26px;
-  line-height: 1;
-  font-weight: 900;
-  position: relative;
-  top: 1px;
+  font-size:26px;
+  line-height:1;
+  font-weight:900;
+  position:relative;
+  top:1px;
 }
 
 /* Unrated badge only: bottom-left overlay inside the poster tile */
 .badge.unrated.bottom_left{
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
-  top: auto;
-  right: auto;
+  position:absolute;
+  left:10px;
+  bottom:10px;
+  top:auto;
+  right:auto;
 }
 
 /* Make dropdown (select) text readable */
 .field select{
   color: var(--text) !important;
   background: rgba(255,255,255,.06) !important;
-  border: 1px solid var(--accentFaint) !important;
+  border:1px solid rgba(255,255,255,.16) !important;
 }
 
 /* The dropdown list items (important on Windows/Chrome) */
 .field select option{
-  color: #e7ebf2;
-  background: #0f131a;
+  color:#e7ebf2;
+  background:#0f131a;
 }
 
 .review_votes{
@@ -752,63 +853,55 @@ textarea,
 .review_votes form{ margin:0; }
 
 .vote_btn{
-  background: transparent;
-  border: 1px solid var(--accentMid);
+  background: rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.14);
   color: var(--text);
-  padding: 6px 10px;
-  font-weight: 900;
-  cursor: pointer;
+  padding:6px 10px;
+  font-weight:900;
+  cursor:pointer;
 }
 
 .vote_btn.on{
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
-  border-color: var(--accentSoft);
-  color: var(--accent);
-}
-
-.vote_btn:hover{
-  border-color: var(--accentStrong);
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  background: rgba(110,166,255,.14);
+  border-color: rgba(110,166,255,.35);
 }
 
 .vote_score{
-  min-width: 28px;
+  min-width:28px;
   text-align:center;
-  font-weight: 900;
+  font-weight:900;
 }
 
 .top_quote{
-  opacity: .92;
-  font-style: italic;
+  opacity:.92;
+  font-style:italic;
 }
 
 /* highlight active toggle button */
 .btn.ghost.on{
-  border-color: var(--accentStrong) !important;
-  background: color-mix(in srgb, var(--accent) 12%, transparent) !important;
-  color: var(--accentStrong) !important;
-  font-weight: 900;
+  border-color: rgba(255,255,255,.30) !important;
+  background: rgba(255,255,255,.06) !important;
+  font-weight:900;
 }
 
 /* Show detail page: make community reviews column wider */
 .layout{
-  display: grid;
+  display:grid;
   grid-template-columns: 0.55fr 0.95fr;
-  gap: 16px;
+  gap:16px;
 }
 
 .dropzone{
-  border: 1px dashed var(--accentSoft);
+  border:1px dashed rgba(255,255,255,.22);
   background: rgba(255,255,255,.03);
-  padding: 14px;
-  cursor: pointer;
-  user-select: none;
+  padding:14px;
+  cursor:pointer;
+  user-select:none;
 }
 
 .dropzone.hover{
-  background: color-mix(in srgb, var(--accent) 10%, rgba(255,255,255,.06));
-  border-color: var(--accentStrong);
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.35);
 }
 
 .dropzone code{
@@ -817,40 +910,40 @@ textarea,
 
 /* ===== Clamp poster size on individual show page ===== */
 .showhero .showposter{
-  width: auto !important;
-  max-width: 220px !important;
-  max-height: 320px !important;
+  width:auto !important;
+  max-width:220px !important;
+  max-height:320px !important;
 }
 
 .showhero .showposter img{
-  width: auto !important;
-  height: auto !important;
-  max-width: 100px !important;
-  max-height: 220px !important;
-  object-fit: contain !important;
-  display: block !important;
-  align-items: center !important;
+  width:auto !important;
+  height:auto !important;
+  max-width:100px !important;
+  max-height:220px !important;
+  object-fit:contain !important;
+  display:block !important;
+  align-items:center !important;
 }
 
 /* Individual show page poster clamp */
 .poster_img{
-  width: auto !important;
-  height: auto !important;
-  max-width: 180px !important;
-  max-height: 300px !important;
-  object-fit: contain !important;
-  display: block !important;
-  align-items: center !important;
+  width:auto !important;
+  height:auto !important;
+  max-width:180px !important;
+  max-height:300px !important;
+  object-fit:contain !important;
+  display:block !important;
+  align-items:center !important;
 }
 
 /* Clamp any poster image loaded from /static/posters/ */
 img[src^="/static/posters/"]{
-  width: auto !important;
-  height: auto !important;
-  max-width: 220px !important;
-  max-height: 360px !important;
-  object-fit: contain !important;
-  display: block !important;
+  width:auto !important;
+  height:auto !important;
+  max-width:220px !important;
+  max-height:360px !important;
+  object-fit:contain !important;
+  display:block !important;
 }
 
 /* Move only poster + meta down */
@@ -864,7 +957,7 @@ img[src^="/static/posters/"]{
 
 /* =========================================================
    ACCENT OUTLINES (site-wide)
-   ========================================================= */
+========================================================= */
 
 /* Major containers / cards / panels */
 .panel,
@@ -876,28 +969,33 @@ img[src^="/static/posters/"]{
 .dropzone,
 .seg,
 .nav,
-.tablewrap {
-  border: 1px solid var(--accentSoft);
+.tablewrap{
+  border:1px solid var(--accentSoft);
 }
 
 /* Tiles / show cards on home */
 .tile,
 .show_tile,
 .poster_art,
-.ts_thumb {
-  border: 1px solid var(--accentFaint);
+.ts_thumb{
+  border:1px solid var(--accentFaint);
 }
 
 /* Form fields get accent border */
-input, select, textarea {
-  border: 1px solid var(--accentFaint);
+input,
+select,
+textarea{
+  border:1px solid var(--accentFaint);
 }
 
 /* Focus ring uses accent */
-input:focus, select:focus, textarea:focus,
-.btn:focus, a:focus {
-  outline: 2px solid var(--accentSoft);
-  outline-offset: 2px;
+input:focus,
+select:focus,
+textarea:focus,
+.btn:focus,
+a:focus{
+  outline:2px solid var(--accentSoft);
+  outline-offset:2px;
 }
 
 /* Hover increases accent visibility */
@@ -905,50 +1003,43 @@ input:focus, select:focus, textarea:focus,
 .poster:hover,
 .reviewcard:hover,
 .ts_card:hover,
-.dropzone.hover {
+.dropzone.hover{
   border-color: var(--accentSoft);
   box-shadow: 0 0 0 1px var(--accentFaint);
 }
 
 /* Make badges/pills optionally use accent outline too */
-.badge{
-  border: 1px solid var(--accentFaint);
-}
-
+.badge,
 .role_tag{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:6px 10px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.03);
-  font-weight:900;
-  font-size:12px;
-  letter-spacing:.02em;
+  border:1px solid var(--accentFaint);
 }
-
 
 /* If you want hard “Letterboxd-style” square edges */
-.panel, .poster, .reviewcard, .ts_card, .badge, .role_tag, .dropzone {
-  border-radius: 0 !important;
+.panel,
+.poster,
+.reviewcard,
+.ts_card,
+.badge,
+.role_tag,
+.dropzone{
+  border-radius:0 !important;
 }
 
 /* FORCE poster images to fill their existing cell (override everything) */
 .showposter{
-  position: relative !important;
-  overflow: hidden !important;
+  position:relative !important;
+  overflow:hidden !important;
 }
 
 .showposter img,
 .showposter .poster_img{
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  display: block !important;
-  object-fit: cover !important;
-  object-position: center !important;
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  display:block !important;
+  object-fit:cover !important;
+  object-position:center !important;
 }
 
 /* ==== HOME PAGE TILE IMAGE FILL (FORCE) ==== */
@@ -960,8 +1051,8 @@ input:focus, select:focus, textarea:focus,
 .tile_thumb,
 .showthumb,
 .posterthumb{
-  position: relative !important;
-  overflow: hidden !important;
+  position:relative !important;
+  overflow:hidden !important;
 }
 
 /* Force any image inside those areas to fill */
@@ -973,11 +1064,11 @@ input:focus, select:focus, textarea:focus,
 .tile_thumb img,
 .showthumb img,
 .posterthumb img{
-  width: 100% !important;
-  height: 100% !important;
-  display: block !important;
-  object-fit: cover !important;
-  object-position: center !important;
+  width:100% !important;
+  height:100% !important;
+  display:block !important;
+  object-fit:cover !important;
+  object-position:center !important;
 }
 
 /* Make sure any fallback/gradient is behind the image */
@@ -985,10 +1076,10 @@ input:focus, select:focus, textarea:focus,
 .ts_thumb_fallback,
 .tile_fallback,
 .art_fallback{
-  position: absolute !important;
-  inset: 0 !important;
-  z-index: 0 !important;
-  pointer-events: none !important;
+  position:absolute !important;
+  inset:0 !important;
+  z-index:0 !important;
+  pointer-events:none !important;
 }
 
 .poster_art img,
@@ -999,22 +1090,22 @@ input:focus, select:focus, textarea:focus,
 .tile_thumb img,
 .showthumb img,
 .posterthumb img{
-  position: absolute;
-  inset: 0;
-  z-index: 0;
+  position:absolute;
+  inset:0;
+  z-index:0;
 }
 
 .poster_sub{
   color:var(--muted);
   font-size:13px;
   line-height:1.25;
-  z-index: 16;
+  z-index:16;
 }
 
 .profile_avg_box{
   margin-left:auto;
   text-align:right;
-  border:1px solid var(--pAccent, var(--accentSoft));
+  border:1px solid var(--pAccent, #11151d00);
   padding:10px 12px;
   border-radius:0;
   min-width:160px;
@@ -1031,7 +1122,6 @@ input:focus, select:focus, textarea:focus,
   font-size:30px;
   font-weight:900;
   margin-right:6px;
-  color: var(--accent);
 }
 
 /* Friend activity thumbnail ONLY */
@@ -1045,8 +1135,7 @@ input:focus, select:focus, textarea:focus,
 
 /* ============================
    THEME ALIGNMENT (COLORS ONLY)
-   Put at bottom of styles.css
-   ============================ */
+============================ */
 
 /* Brand dot glow: use accent instead of hard-coded blue */
 .brand .dot{
@@ -1065,6 +1154,7 @@ input:focus, select:focus, textarea:focus,
   border-color: var(--accentSoft);
   background: color-mix(in srgb, var(--accent) 10%, rgba(0,0,0,0.10));
 }
+
 .btn.primary:hover{
   background: color-mix(in srgb, var(--accent) 14%, rgba(0,0,0,0.14));
   border-color: color-mix(in srgb, var(--accent) 36%, transparent);
@@ -1077,10 +1167,14 @@ input:focus, select:focus, textarea:focus,
 }
 
 /* Focus ring: theme-driven */
-input:focus, select:focus, textarea:focus,
-.btn:focus, a:focus{
+input:focus,
+select:focus,
+textarea:focus,
+.btn:focus,
+a:focus{
   outline-color: var(--accentSoft);
 }
+
 .stars:focus{
   box-shadow: 0 0 0 4px var(--accentFaint);
 }
@@ -1116,7 +1210,7 @@ input:focus, select:focus, textarea:focus,
 
 /* Top Users page: nudge quote down slightly (does not affect other pages) */
 .topusers_page .ts_quote{
-  margin-top: 6px !important;
+  margin-top:6px !important;
 }
 
 /* Top Users: "Top review of X" label to the left of the quote */
@@ -1124,7 +1218,7 @@ input:focus, select:focus, textarea:focus,
   display:flex;
   gap:14px;
   align-items:flex-start;
-  margin-left: -160px;
+  margin-left:-160px;
 }
 
 .topusers_page .tu_label{
@@ -1135,58 +1229,62 @@ input:focus, select:focus, textarea:focus,
 }
 
 .topusers_page .tu_label a{
-  color: var(--accent);
+  color: rgb(66, 134, 174);
 }
+
 .topusers_page .tu_label a:hover{
   text-decoration: underline;
 }
 
 /* Top Users: clamp the displayed review text so cards don't get huge */
 .topusers_page .tu_quote{
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 8;
-  overflow: hidden;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:8;
+  overflow:hidden;
 }
 
 /* ===== Profile: Account dropdown (top-right, no layout shift) ===== */
 .acct_dd{
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 50;
+  position:absolute;
+  top:12px;
+  right:12px;
+  z-index:50;
 }
 
 /* hide default triangle marker (Chrome/Edge) */
-.acct_dd > summary::-webkit-details-marker{ display:none; }
+.acct_dd > summary::-webkit-details-marker{
+  display:none;
+}
 
 /* Button wrapper */
-.acct_dd{ position: relative; }
+.acct_dd{ position:relative; }
 
 /* Panel floats on the page (not inside the hero) */
 .acct_dd_panel{
-  position: fixed;
-  z-index: 9999;
-  display: none;
-  max-width: min(520px, 92vw);
-  max-height: 70vh;
-  overflow: auto;
-  padding: 16px;
+  position:fixed;
+  z-index:9999;
+  display:none;
+  max-width:min(520px, 92vw);
+  max-height:70vh;
+  overflow:auto;
+  padding:16px;
 }
 
 /* Show when open */
-.acct_dd.open .acct_dd_panel{ display: block; }
+.acct_dd.open .acct_dd_panel{
+  display:block;
+}
 
 /* =========================================================
    TOP SHOWS (clean + single source of truth)
-   Paste at very bottom of styles.css
 ========================================================= */
 
 .topshows_page .ts_card{
   display:flex;
   gap:12px;
   padding:12px;
-  border:1px solid var(--accentSoft);
+  border:1px solid rgba(255,255,255,.07);
   align-items:flex-start;
 }
 
@@ -1204,14 +1302,16 @@ input:focus, select:focus, textarea:focus,
   flex:0 0 auto;
   display:block;
   overflow:hidden;
-  border:1px solid var(--accentFaint);
+  border:1px solid rgba(255,255,255,.07);
 }
+
 .topshows_page .ts_thumb img{
   width:100%;
   height:100%;
   display:block;
   object-fit:cover;
 }
+
 .topshows_page .ts_thumb_fallback{
   width:100%;
   height:100%;
@@ -1226,9 +1326,6 @@ input:focus, select:focus, textarea:focus,
 .topshows_page .ts_title{
   font-weight:900;
 }
-.topshows_page .ts_title a:hover{
-  color: var(--accent);
-}
 
 .topshows_page .ts_badges{
   margin-top:8px;
@@ -1242,7 +1339,6 @@ input:focus, select:focus, textarea:focus,
   font-weight:900;
   font-size:24px;
   line-height:1.1;
-  color: var(--accentStrong);
 }
 
 /* Review column */
@@ -1254,7 +1350,7 @@ input:focus, select:focus, textarea:focus,
 
 /* Vote + quote in one clean block (NO negative margins) */
 .topshows_page .ts_quote_row{
-  display:flex;
+  display:felx;
   gap:10px;
   margin-top:8px;
   align-items:flex-start;
@@ -1277,126 +1373,21 @@ input:focus, select:focus, textarea:focus,
 /* Quote (clamped so cards don't explode) */
 .topshows_page .ts_quote{
   white-space: pre-wrap;
-  line-height: 1.35;
-  font-size: 16px;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 7;
-  overflow: hidden;
+  line-height:1.35;
+  font-size:16px;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:7;
+  overflow:hidden;
 }
 
-.notifItem a { position: relative; z-index: 5; pointer-events: auto; }
+.notifItem a{
+  position:relative;
+  z-index:5;
+  pointer-events:auto;
+}
+
 .notifItem::before,
-.notifItem::after { pointer-events: none; }
-
-/* ============================================
-   FINAL THEME OVERRIDES
-   These make the user's theme color drive
-   outlines, buttons, badges, links, panels
-   ============================================ */
-
-.panel,
-.reviewcard,
-.ts_card,
-.acct_panel,
-.profile_stats,
-.notifItem,
-.dropzone,
-.poster,
-.showposter,
-.field input,
-.field textarea,
-.field select,
-.topshows_page .ts_thumb,
-.topshows_page .ts_card,
-.profile_avg_box {
-  border-color: var(--accentSoft) !important;
+.notifItem::after{
+  pointer-events:none;
 }
-
-.panel:hover,
-.reviewcard:hover,
-.ts_card:hover,
-.poster:hover,
-.dropzone:hover,
-.field input:focus,
-.field textarea:focus,
-.field select:focus {
-  border-color: var(--accentMid) !important;
-  box-shadow: 0 0 0 1px var(--accentFaint);
-}
-
-.notifDropdown {
-  border: 1px solid var(--accentSoft) !important;
-}
-
-.notifItem.unread {
-  border-color: var(--accentSoft) !important;
-  background: color-mix(in srgb, var(--accent) 16%, rgba(255,255,255,0.04)) !important;
-}
-
-.badge.good {
-  border-color: var(--accentStrong) !important;
-  background: color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,.05)) !important;
-  color: var(--accentStrong) !important;
-}
-
-.badge,
-.role_tag,
-.vote_btn,
-.btn,
-.btn.ghost,
-.btn.primary {
-  border-color: var(--accentMid) !important;
-}
-
-.btn.ghost,
-.role_tag,
-.kicker {
-  color: var(--accent) !important;
-}
-
-.btn {
-  background: var(--accentBgSoft) !important;
-}
-
-.btn:hover {
-  background: var(--accentBg) !important;
-  border-color: var(--accentStrong) !important;
-}
-
-.btn.ghost {
-  background: transparent !important;
-}
-
-.btn.ghost:hover,
-.btn.ghost.on {
-  background: color-mix(in srgb, var(--accent) 12%, transparent) !important;
-  color: var(--accentStrong) !important;
-  border-color: var(--accentStrong) !important;
-}
-
-.btn.green,
-button.btn.green,
-.actions .btn.green {
-  background: var(--accent) !important;
-  border-color: var(--accentStrong) !important;
-  color: #fff !important;
-}
-
-.btn.green:hover,
-button.btn.green:hover,
-.actions .btn.green:hover {
-  background: color-mix(in srgb, var(--accent) 88%, white 12%) !important;
-  border-color: var(--accentStrong) !important;
-}
-
-.reviewuser:hover,
-.poster_title:hover,
-.topshows_page .ts_title a:hover,
-.topusers_page .tu_label a:hover,
-.nav a:hover,
-.auth a:hover {
-  color: var(--accent) !important;
-}
-
-
