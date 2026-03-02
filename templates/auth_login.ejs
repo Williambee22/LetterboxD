@@ -8,9 +8,15 @@
 </head>
 <body class="app">
   <main class="wrap">
+    <% if (Array.isArray(flashes) && flashes.length > 0) { %>
+      <div class="flashes">
+        <% for (const f of flashes) { %>
+          <div class="flash <%= f.category %>"><%= f.message %></div>
+        <% } %>
+      </div>
+    <% } %>
 
     <h1>Login</h1>
-
     <form class="panel form" method="post" action="/login">
       <input type="hidden" name="next" value="<%= next || '' %>"/>
 
@@ -21,8 +27,11 @@
       <input type="password" name="password" required/>
 
       <button class="btn" type="submit">Log in</button>
-    </form>
 
+      <div style="margin-top:12px;">
+        <a class="muted small" href="/forgot-password">Forgot your password?</a>
+      </div>
+    </form>
   </main>
 </body>
 </html>
