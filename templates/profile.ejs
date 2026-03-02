@@ -427,11 +427,13 @@
                     action="/me/upload_pfp"
                     enctype="multipart/form-data"
                     style="margin-top:10px;">
-                <input type="file"
-                       id="pfpFileReal"
-                       name="pfp_file"
-                       accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
-                       hidden>
+                <input
+                  type="file"
+                  id="pfpFileReal"
+                  name="pfp_file"
+                  accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+                  required
+                  hidden>
                 <button class="btn green" type="submit" id="pfpUploadBtn" style="display:none;">Upload</button>
               </form>
 
