@@ -10,6 +10,7 @@ const bcrypt = require('bcryptjs');
 const dbx = require('./db');
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const BASE_DIR = __dirname;
 const STATIC_DIR = path.join(BASE_DIR, 'static');
@@ -350,6 +351,7 @@ function createApp() {
     dbx.ensureReviewCommentsTable(conn);
     dbx.ensureSocialTables(conn);
     dbx.ensureNotificationsTable(conn);
+    dbx.ensureAuthColumns(conn);
     return conn;
   }
 
@@ -498,34 +500,49 @@ function createApp() {
 
   app.post('/register', async (req, res, next) => {
     const username = String(req.body.username || '').trim();
+    const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '').trim();
-
+  
     if (username.length < 3) {
       req.flash('error', 'Username must be at least 3 characters.');
       return res.redirect('/register');
     }
+  
+    if (!EMAIL_RE.test(email)) {
+      req.flash('error', 'Enter a valid email address.');
+      return res.redirect('/register');
+    }
+  
     if (password.length < 6) {
       req.flash('error', 'Password must be at least 6 characters.');
       return res.redirect('/register');
     }
-
+  
     let conn;
     try {
       conn = getConn();
-
+  
       if (await dbx.userByUsername(conn, username)) {
         req.flash('error', 'That username is taken.');
         return res.redirect('/register');
       }
-
+  
+      if (await dbx.userByEmail(conn, email)) {
+        req.flash('error', 'That email is already in use.');
+        return res.redirect('/register');
+      }
+  
       const makeAdmin = await dbx.isFirstUser(conn);
-      const passwordHash = await bcrypt.hash(password, 12);
-      const uid = await dbx.createUser(conn, username, passwordHash, { makeAdmin });
-
+      const uid = await dbx.createUser(
+        conn,
+        username,
+        await bcrypt.hash(password, 12),
+        { makeAdmin, email }
+      );
+  
       req.session.uid = Number(uid);
       req.flash('ok', "Account created. You're logged in.");
-      if (makeAdmin) req.flash('ok', 'First user created: you are admin (can mass add shows).');
-
+  
       return req.session.save((err) => {
         if (err) return next(err);
         return res.redirect('/shows');
@@ -592,6 +609,44 @@ function createApp() {
     });
   });
 
+  app.get('/forgot-password', (_req, res) => {
+    res.render('forgot_password');
+  });
+
+  app.post('/forgot-password', async (req, res, next) => {
+    const email = String(req.body.email || '').trim().toLowerCase();
+  
+    if (!EMAIL_RE.test(email)) {
+      req.flash('error', 'Enter a valid email address.');
+      return res.redirect('/forgot-password');
+    }
+  
+    let conn;
+    try {
+      conn = getConn();
+  
+      const u = normalizeRow(await dbx.userByEmail(conn, email));
+  
+      if (u) {
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresTs = Math.floor(Date.now() / 1000) + (60 * 60); // 1 hour
+        await dbx.setPasswordResetToken(conn, Number(u.id), token, expiresTs);
+        await dbx.commit(conn);
+  
+        // For now: log the link until you wire up real email sending
+        console.log(`PASSWORD RESET LINK for ${u.email}: ${process.env.APP_BASE_URL || ''}/reset-password/${token}`);
+      }
+  
+      req.flash('ok', 'If that email exists, a password reset link has been generated.');
+      return res.redirect('/login');
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  });
+
+  
   app.get('/shows', async (req, res, next) => {
     const sort = String(req.query.sort || 'year_desc').trim();
     const year = String(req.query.year || '').trim();
@@ -624,6 +679,27 @@ function createApp() {
     }
   });
 
+  app.get('/reset-password/:token', async (req, res, next) => {
+    const token = String(req.params.token || '').trim();
+  
+    let conn;
+    try {
+      conn = getConn();
+      const u = normalizeRow(await dbx.userByResetToken(conn, token));
+      if (!u) {
+        req.flash('error', 'That reset link is invalid or expired.');
+        return res.redirect('/login');
+      }
+  
+      return res.render('reset_password', { token });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  });
+
+  
   app.get('/show/:show_id', async (req, res, next) => {
     const showId = Number(req.params.show_id);
     const viewerUid = req.session.uid ? Number(req.session.uid) : null;
@@ -1748,6 +1824,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
