@@ -200,12 +200,12 @@ a{ color:inherit; }
 
 .btn.ghost{
   background: transparent;
-  border:1px solid rgba(255,255,255,.10);
+  border:1px solid rgba(50,50,50,.30);
   color: var(--text);
 }
 
 .btn.ghost:hover{
-  background: rgba(255,255,255,.06);
+  background: rgba(10,255,10,.30);
   border-color: rgba(255,255,255,.14);
 }
 
@@ -1444,6 +1444,7 @@ a:focus{
 .notifItem::after{
   pointer-events:none;
 }
+
 
 
 
