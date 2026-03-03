@@ -98,6 +98,66 @@
     .notifDropdown * {
       pointer-events: auto !important;
     }
+
+    /* simple ratings list */
+    .ratings_list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .rating_row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      color: inherit;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .rating_row:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.12);
+    }
+
+    .rating_main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .rating_title {
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .rating_sub {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .rating_score {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      font-weight: 800;
+    }
+
+    @media (max-width: 700px) {
+      .rating_row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .rating_score {
+        margin-top: 4px;
+      }
+    }
   </style>
 </head>
 <body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
@@ -310,49 +370,23 @@
           <% } %>
 
           <% if (safeRows.length > 0) { %>
-            <div class="postergrid" style="margin-top:14px;">
+            <div class="ratings_list">
               <% for (const rr of safeRows) {
-                   const p =
-                     rr.poster_url ||
-                     rr.show_poster_url ||
-                     rr.poster ||
-                     rr.poster_path ||
-                     "";
                    const rh = rr.rating_half != null ? Number(rr.rating_half) : 0;
-                   const titleText = rr.title || "";
+                   const titleText = rr.title || "Untitled Show";
                    const corpsText = rr.corps || "";
                    const yearText = rr.year || "";
-                   let imgSrc = "";
-                   if (p) {
-                     if (String(p).includes("://") || String(p).startsWith("/")) {
-                       imgSrc = p;
-                     } else {
-                       imgSrc = "/" + String(p).replace(/^static\//, "");
-                       if (!imgSrc.startsWith("/")) imgSrc = "/" + imgSrc;
-                     }
-                   }
               %>
-                <a class="poster" href="/show/<%= rr.show_id %>">
-                  <div class="poster_art">
-                    <% if (imgSrc) { %>
-                      <img class="poster_img" src="<%= imgSrc %>"
-                           alt="<%= titleText || 'poster' %>" loading="lazy">
-                    <% } else { %>
-                      <div class="poster_fallback"></div>
-                    <% } %>
-
-                    <div class="tile_rating">
-                      <span class="tile_star">★</span> <%= (rh / 2).toFixed(1) %>
+                <a class="rating_row" href="/show/<%= rr.show_id %>">
+                  <div class="rating_main">
+                    <div class="rating_title"><%= titleText %></div>
+                    <div class="rating_sub">
+                      <%= corpsText %><%= corpsText && yearText ? " • " : "" %><%= yearText %>
                     </div>
-
-                    <% if (yearText) { %>
-                      <div class="tile_year"><%= yearText %></div>
-                    <% } %>
                   </div>
 
-                  <div class="poster_meta">
-                    <div class="poster_title"><%= titleText %></div>
-                    <div class="poster_sub"><%= corpsText %></div>
+                  <div class="rating_score">
+                    ★ <%= (rh / 2).toFixed(1) %>
                   </div>
                 </a>
               <% } %>
