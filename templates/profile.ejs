@@ -288,7 +288,7 @@
             <% } %>
           </div>
 
-          <div style="min-width:0;">
+          <div style="min-width:0; flex: 1;">
             <div class="kicker">Profile</div>
             <h1 style="margin:6px 0 0;"><%= pu.username || "User" %></h1>
 
@@ -302,7 +302,11 @@
               </div>
             <% } %>
 
-            <div class="muted small"><%= isMe ? "This is you. (uploading profile pictures does not work with new update." %></div>
+            <% if (pu.bio) { %>
+                <div class="profile_bio" style="margin-top: 12px; opacity: 0.9; line-height: 1.5;">
+                    <%= pu.bio %>
+                </div>
+            <% } %>
 
             <% if (pu.username) { %>
               <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
@@ -410,83 +414,43 @@
       <section class="stack">
         <% if (isMe) { %>
           <div class="panel">
-            <div class="kicker">Profile picture</div>
+            <div class="kicker">Edit Profile</div>
 
-            <div class="field" style="margin-top:10px;">
-              <label>Upload</label>
-
+            <div class="field" style="margin-top:16px;">
+              <label>Profile Picture</label>
               <div class="dropzone" id="pfpDrop">
                 <div class="dropzone_inner">
-                  <div class="muted">Drag & drop an image here, or click to choose</div>
-                  <div class="muted small">PNG / JPG / WEBP • auto-saved as <code>pfp_username.ext</code></div>
+                  <div class="muted">Drag & drop image or click</div>
+                  <div class="muted small">PNG/JPG/WEBP</div>
                 </div>
               </div>
-
-              <form id="pfpUploadForm"
-                    method="post"
-                    action="/me/upload_pfp"
-                    enctype="multipart/form-data"
-                    style="margin-top:10px;">
-                <input
-                  type="file"
-                  id="pfpFileReal"
-                  name="pfp_file"
-                  accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
-                  required
-                  hidden>
-                <button class="btn green" type="submit" id="pfpUploadBtn" style="display:none;">Upload</button>
+              <form id="pfpUploadForm" method="post" action="/me/upload_pfp" enctype="multipart/form-data">
+                <input type="file" id="pfpFileReal" name="pfp_file" accept="image/*" hidden>
               </form>
-
-              <% if (pu.avatar_url) { %>
-                <div style="margin-top:10px;">
-                  <div class="muted small">Current:</div>
-                  <img src="<%= pu.avatar_url %>" alt="pfp"
-                       style="width:96px; height:96px; object-fit:cover; display:block; margin-top:6px;">
-                </div>
-              <% } %>
             </div>
 
-            <script>
-            (function(){
-              const drop = document.getElementById("pfpDrop");
-              const hiddenInput = document.getElementById("pfpFileReal");
-              const btn = document.getElementById("pfpUploadBtn");
-              const form = document.getElementById("pfpUploadForm");
-              if (!drop || !hiddenInput || !form) return;
+            <div class="field" style="margin-top:16px;">
+              <label>Banner Image</label>
+              <div class="dropzone" id="bannerDrop">
+                <div class="dropzone_inner">
+                  <div class="muted">Drag & drop banner or click</div>
+                  <div class="muted small">Recommended: 1200x300</div>
+                </div>
+              </div>
+              <form id="bannerUploadForm" method="post" action="/me/upload_banner" enctype="multipart/form-data">
+                <input type="file" id="bannerFileReal" name="banner_file" accept="image/*" hidden>
+              </form>
+            </div>
 
-              function setFile(file){
-                const dt = new DataTransfer();
-                dt.items.add(file);
-                hiddenInput.files = dt.files;
-                if (btn) btn.style.display = "inline-block";
-              }
-
-              drop.addEventListener("click", () => hiddenInput.click());
-
-              hiddenInput.addEventListener("change", () => {
-                if (hiddenInput.files && hiddenInput.files[0]) {
-                  if (btn) btn.style.display = "inline-block";
-                  form.submit();
-                }
-              });
-
-              drop.addEventListener("dragover", (e) => {
-                e.preventDefault();
-                drop.classList.add("hover");
-              });
-
-              drop.addEventListener("dragleave", () => drop.classList.remove("hover"));
-
-              drop.addEventListener("drop", (e) => {
-                e.preventDefault();
-                drop.classList.remove("hover");
-                const file = e.dataTransfer.files && e.dataTransfer.files[0];
-                if (!file) return;
-                setFile(file);
-                form.submit();
-              });
-            })();
-            </script>
+            <div class="field" style="margin-top:16px;">
+                <label>Bio</label>
+                <form method="post" action="/me/update_bio">
+                    <textarea name="bio" placeholder="Tell us about your favorite corps..." rows="3" style="width:100%;"><%= pu.bio || "" %></textarea>
+                    <div class="actions" style="margin-top:8px;">
+                        <button class="btn green" type="submit">Save Bio</button>
+                    </div>
+                </form>
+            </div>
           </div>
         <% } %>
 
@@ -566,31 +530,53 @@
 
   <script>
     (() => {
+      // Notification Logic
       const btn = document.getElementById("bellBtn");
       const dd  = document.getElementById("notifDropdown");
-      if (!btn || !dd) return;
+      if (btn && dd) {
+        dd.addEventListener("click", (e) => e.stopPropagation());
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dd.classList.toggle("open");
+        });
+        document.addEventListener("click", () => dd.classList.remove("open"));
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") dd.classList.remove("open");
+        });
+      }
 
-      dd.addEventListener("click", (e) => e.stopPropagation());
+      // Dropzone logic (Handles both PFP and Banner)
+      function setupDropzone(dropId, inputId, formId) {
+        const drop = document.getElementById(dropId);
+        const input = document.getElementById(inputId);
+        const form = document.getElementById(formId);
+        if (!drop || !input || !form) return;
 
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dd.classList.toggle("open");
-      });
+        drop.addEventListener("click", () => input.click());
+        input.addEventListener("change", () => {
+          if (input.files && input.files[0]) form.submit();
+        });
+        drop.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          drop.classList.add("hover");
+        });
+        drop.addEventListener("dragleave", () => drop.classList.remove("hover"));
+        drop.addEventListener("drop", (e) => {
+          e.preventDefault();
+          drop.classList.remove("hover");
+          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            const dt = new DataTransfer();
+            dt.items.add(e.dataTransfer.files[0]);
+            input.files = dt.files;
+            form.submit();
+          }
+        });
+      }
 
-      document.addEventListener("click", () => {
-        dd.classList.remove("open");
-      });
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") dd.classList.remove("open");
-      });
+      setupDropzone("pfpDrop", "pfpFileReal", "pfpUploadForm");
+      setupDropzone("bannerDrop", "bannerFileReal", "bannerUploadForm");
     })();
   </script>
 </body>
 </html>
-
-
-
-
-
