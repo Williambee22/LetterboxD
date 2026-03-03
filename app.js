@@ -63,17 +63,25 @@ const BAD_WORDS = new Set([
  */
 function adminRequired(handler) {
   return async (req, res, next) => {
-    // Check if user is logged in and is an admin
-    // Adjust 'req.session.user' to match how you store your user session
-    if (!req.session.user || Number(req.session.user.is_admin) !== 1) {
-      // Optional: if you use connect-flash
-      if (req.flash) req.flash('error', 'Admin access required.');
-      return res.redirect('/');
+    const user = req.session.user; // or req.session.me? 
+    
+    console.log("--- Admin Check ---");
+    console.log("User object found:", !!user);
+    if (user) {
+      console.log("User is_admin value:", user.is_admin);
+      console.log("User is_admin type:", typeof user.is_admin);
     }
-    return handler(req, res, next);
+
+    // This check handles strings "1", numbers 1, and booleans
+    if (user && (String(user.is_admin) === "1" || user.is_admin === true)) {
+      return handler(req, res, next);
+    }
+
+    console.log("ACCESS DENIED: Redirecting...");
+    req.flash('error', 'You do not have admin permissions.');
+    return res.redirect('/shows'); 
   };
 }
-
 
 
 function compileBadRegex(words) {
@@ -2083,6 +2091,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
