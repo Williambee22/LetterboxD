@@ -7,6 +7,7 @@ const session = require('express-session');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const { Resend } = require('resend');
+const { uploadBufferToR2, deleteFromR2 } = require('./r2');
 
 const dbx = require('./db');
 
@@ -15,12 +16,11 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const BASE_DIR = __dirname;
 const STATIC_DIR = path.join(BASE_DIR, 'static');
-const POSTER_DIR = path.join(STATIC_DIR, 'posters');
+
 
 const DATA_DIR = process.env.DATA_DIR || '/data';
 const PFP_DIR = path.join(DATA_DIR, 'pfps');
 
-fs.mkdirSync(POSTER_DIR, { recursive: true });
 fs.mkdirSync(PFP_DIR, { recursive: true });
 
 const ALLOWED_IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
@@ -81,6 +81,8 @@ function adminRequired(handler) {
   };
 }
 
+
+
 function compileBadRegex(words) {
   const parts = [...words]
     .filter(Boolean)
@@ -137,25 +139,76 @@ function staticFileExists(relPath) {
   return fs.existsSync(path.join(STATIC_DIR, relPath));
 }
 
-function pfpFilenameForUsername(username, ext) {
-  let safeExt = String(ext || '').toLowerCase();
-  if (safeExt === '.jpeg') safeExt = '.jpg';
-  return `pfp_${slugify(username)}${safeExt}`;
+
+function r2KeyFromPublicUrl(url) {
+  const base = String(process.env.R2_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
+  const full = String(url || '').trim();
+
+  if (!base || !full) return null;
+  if (!full.startsWith(base + '/')) return null;
+
+  return full.slice(base.length + 1);
 }
 
-function posterFilenameForShow(corps, year, ext) {
-  let safeExt = String(ext || '').toLowerCase();
-  if (safeExt === '.jpeg') safeExt = '.jpg';
-  return `${slugify(corps)}${parseInt(year, 10)}${safeExt}`;
+
+function deleteLocalFileIfExists(absPath) {
+  try {
+    if (absPath && fs.existsSync(absPath)) {
+      fs.unlinkSync(absPath);
+    }
+  } catch (err) {
+    console.error('Failed to delete local file:', absPath, err);
+  }
 }
+
+async function deleteStoredImageByUrl(url, kind) {
+  const full = String(url || '').trim();
+  if (!full) return;
+
+  const r2Key = r2KeyFromPublicUrl(full);
+  if (r2Key) {
+    await deleteFromR2(r2Key);
+    return;
+  }
+
+  if (kind === 'poster') {
+    if (full.includes('/static/')) {
+      const rel = full.split('/static/')[1];
+      if (rel) deleteLocalFileIfExists(path.join(STATIC_DIR, rel));
+    }
+    return;
+  }
+
+  if (kind === 'pfp') {
+    if (full.includes('/uploads/pfps/')) {
+      const rel = full.split('/uploads/pfps/')[1];
+      if (rel) deleteLocalFileIfExists(path.join(PFP_DIR, rel));
+      return;
+    }
+
+    if (full.includes('/static/pfps/')) {
+      const rel = full.split('/static/')[1];
+      if (rel) deleteLocalFileIfExists(path.join(STATIC_DIR, rel));
+    }
+  }
+}
+
 
 function pfpUrlForUsername(username) {
   const key = slugify(username);
-  const base = `pfps/pfp_${key}`;
+  const base = `pfp_${key}`;
+
   for (const ext of ['.png', '.jpg', '.jpeg', '.webp']) {
-    const rel = `${base}${ext}`;
+    const file = `${base}${ext}`;
+    const abs = path.join(PFP_DIR, file);
+    if (fs.existsSync(abs)) return `/uploads/pfps/${file}`;
+  }
+
+  for (const ext of ['.png', '.jpg', '.jpeg', '.webp']) {
+    const rel = `pfps/${base}${ext}`;
     if (staticFileExists(rel)) return `/static/${rel}`;
   }
+
   return null;
 }
 
@@ -221,6 +274,7 @@ function wantsJson(req) {
     || req.get('X-Requested-With') === 'XMLHttpRequest'
     || req.accepts(['html', 'json']) === 'json';
 }
+
 
 /* =========================
    HASH COMPATIBILITY
@@ -417,22 +471,14 @@ function createApp() {
       res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
     }
   }));
-
-  app.use('/posters', express.static(path.join(__dirname, 'static', 'posters'), {
-    maxAge: '30d',
-    setHeaders: (res, filePath) => {
-      res.setHeader('Cache-Control', 'public, max-age=2592000');
-    }
-  }));
   
-  app.use('/pfps', express.static(process.env.DATA_DIR
-    ? path.join(process.env.DATA_DIR, 'pfps')
-    : path.join(__dirname, 'data', 'pfps'), {
+  app.use('/uploads/pfps', express.static(PFP_DIR, {
     maxAge: '7d',
-    setHeaders: (res, filePath) => {
+    setHeaders: (res) => {
       res.setHeader('Cache-Control', 'public, max-age=604800');
     }
   }));
+
 
   app.use((req, res, next) => {
     const uncachedPrefixes = [
@@ -454,7 +500,6 @@ function createApp() {
   });
 
   
-  app.use('/uploads/pfps', express.static(PFP_DIR));
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json({ limit: `${MAX_UPLOAD_MB}mb` }));
 
@@ -467,7 +512,7 @@ function createApp() {
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 1000 * 60 * 60 * 24 * 14,
     },
   }));
@@ -630,19 +675,7 @@ function createApp() {
   }));
 
   const uploadPfp = multer({
-    storage: multer.diskStorage({
-      destination: (_req, _file, cb) => cb(null, PFP_DIR),
-      filename: async (req, file, cb) => {
-        try {
-          const conn = getConn();
-          const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
-          dbx.close(conn);
-          cb(null, pfpFilenameForUsername(me.username, path.extname(file.originalname).toLowerCase()));
-        } catch (e) {
-          cb(e);
-        }
-      },
-    }),
+    storage: multer.memoryStorage(),
     limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase();
@@ -650,21 +683,9 @@ function createApp() {
       return cb(null, true);
     },
   });
-
+  
   const uploadPoster = multer({
-    storage: multer.diskStorage({
-      destination: (_req, _file, cb) => cb(null, POSTER_DIR),
-      filename: async (req, file, cb) => {
-        try {
-          const conn = getConn();
-          const row = normalizeRow(await dbx.getShowById(conn, Number(req.params.show_id)));
-          dbx.close(conn);
-          cb(null, posterFilenameForShow(row.corps, row.year, path.extname(file.originalname).toLowerCase()));
-        } catch (e) {
-          cb(e);
-        }
-      },
-    }),
+    storage: multer.memoryStorage(),
     limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase();
@@ -1104,22 +1125,40 @@ function createApp() {
         req.flash('error', `Upload failed: ${err.message}`);
         return res.redirect('/me');
       }
-
+  
       if (!req.file) {
         req.flash('error', 'No file selected.');
         return res.redirect('/me');
       }
-
+  
       let conn;
       try {
         conn = getConn();
         const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
         if (!me) return res.sendStatus(404);
-
-        const avatarUrl = `/uploads/pfps/${req.file.filename}`;
+  
+        let ext = path.extname(req.file.originalname || '').toLowerCase();
+        if (!ALLOWED_IMAGE_EXTS.has(ext)) {
+          req.flash('error', 'Invalid file type.');
+          return res.redirect('/me');
+        }
+        if (ext === '.jpeg') ext = '.jpg';
+  
+        const oldAvatarUrl = String(me.avatar_url || '').trim();
+  
+        const fileName = `pfp_${slugify(me.username)}_${crypto.randomUUID()}${ext}`;
+        const key = `pfps/${fileName}`;
+  
+        const avatarUrl = await uploadBufferToR2({
+          key,
+          buffer: req.file.buffer,
+          contentType: req.file.mimetype || 'application/octet-stream',
+          cacheControl: 'public, max-age=604800',
+        });
+  
         await dbx.updateUserAvatarUrl(conn, Number(req.session.uid), avatarUrl);
         await dbx.commit(conn);
-
+  
         req.session.user = {
           ...(req.session.user || {}),
           id: Number(me.id),
@@ -1128,7 +1167,15 @@ function createApp() {
           is_admin: Number(me.is_admin || 0),
           avatar_url: avatarUrl,
         };
-
+  
+        try {
+          if (oldAvatarUrl && oldAvatarUrl !== avatarUrl) {
+            await deleteStoredImageByUrl(oldAvatarUrl, 'pfp');
+          }
+        } catch (cleanupErr) {
+          console.error('Failed to delete old avatar asset:', cleanupErr);
+        }
+  
         req.flash('ok', 'Profile picture updated.');
         return res.redirect('/me');
       } catch (e) {
@@ -1222,21 +1269,34 @@ function createApp() {
   app.post('/admin/user/:user_id/delete-pfp', adminRequired(async (req, res) => {
     const userId = Number(req.params.user_id);
     let conn;
+    let redirectTo = `/u/${userId}`;
+  
     try {
       conn = getConn();
       const u = normalizeRow(await dbx.userById(conn, userId));
       if (!u) return res.status(404).send('User not found');
-
+  
+      redirectTo = `/u/${encodeURIComponent(u.username)}`;
+  
+      const avatarUrl = String(u.avatar_url || '').trim();
+  
+      try {
+        await deleteStoredImageByUrl(avatarUrl, 'pfp');
+      } catch (err) {
+        console.error('Failed to delete profile picture asset:', err);
+      }
+  
       await dbx.updateUserAvatarUrl(conn, userId, null);
       await dbx.commit(conn);
-
+  
       req.flash('ok', `Profile picture for ${u.username} has been removed.`);
     } catch (err) {
       req.flash('error', `Failed to delete PFP: ${err.message}`);
     } finally {
       if (conn) dbx.close(conn);
     }
-    res.redirect(`/u/${u?.username ? encodeURIComponent(u.username) : userId}`);
+  
+    res.redirect(redirectTo);
   }));
 
   app.post('/admin/user/:user_id/delete-account', adminRequired(async (req, res) => {
@@ -1311,24 +1371,53 @@ function createApp() {
   app.post('/admin/show/:show_id/upload_poster', adminRequired((req, res, next) => {
     uploadPoster.single('poster_file')(req, res, async (err) => {
       const showId = Number(req.params.show_id);
+  
       if (err) {
         req.flash('error', `Upload failed: ${err.message}`);
         return res.redirect(`/admin/show/${showId}/edit`);
       }
-
+  
       if (!req.file) {
         req.flash('error', 'No file selected.');
         return res.redirect(`/admin/show/${showId}/edit`);
       }
-
+  
       let conn;
       try {
         conn = getConn();
         const row = normalizeRow(await dbx.getShowById(conn, showId));
         if (!row) return res.sendStatus(404);
-        const posterUrl = `/static/posters/${req.file.filename}`;
+  
+        let ext = path.extname(req.file.originalname || '').toLowerCase();
+        if (!ALLOWED_IMAGE_EXTS.has(ext)) {
+          req.flash('error', 'Invalid file type.');
+          return res.redirect(`/admin/show/${showId}/edit`);
+        }
+        if (ext === '.jpeg') ext = '.jpg';
+  
+        const oldPosterUrl = String(row.poster_url || '').trim();
+  
+        const fileName = `${slugify(row.corps)}${parseInt(row.year, 10)}_${crypto.randomUUID()}${ext}`;
+        const key = `posters/${fileName}`;
+  
+        const posterUrl = await uploadBufferToR2({
+          key,
+          buffer: req.file.buffer,
+          contentType: req.file.mimetype || 'application/octet-stream',
+          cacheControl: 'public, max-age=31536000, immutable',
+        });
+  
         await dbx.updateShowPosterUrl(conn, showId, posterUrl);
         await dbx.commit(conn);
+  
+        try {
+          if (oldPosterUrl && oldPosterUrl !== posterUrl) {
+            await deleteStoredImageByUrl(oldPosterUrl, 'poster');
+          }
+        } catch (cleanupErr) {
+          console.error('Failed to delete old poster asset:', cleanupErr);
+        }
+  
         req.flash('ok', 'Poster uploaded.');
         return res.redirect(`/admin/show/${showId}/edit`);
       } catch (e) {
@@ -1338,7 +1427,7 @@ function createApp() {
       }
     });
   }));
-
+  
   app.get('/u/:username/ratings', async (req, res, next) => {
     const username = req.params.username;
     const sort = String(req.query.sort || 'high').trim().toLowerCase();
@@ -2073,29 +2162,30 @@ function createApp() {
   app.post('/admin/show/:show_id/delete', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     let conn;
+  
     try {
       conn = getConn();
       const s = normalizeRow(await dbx.getShowById(conn, showId));
       if (!s) return res.sendStatus(404);
-
+  
       const posterUrl = String(s.poster_url || '').trim();
-      if (posterUrl.includes('/static/')) {
-        try {
-          const rel = posterUrl.split('/static/')[1];
-          const absPath = path.join(STATIC_DIR, rel);
-          if (fs.existsSync(absPath)) fs.unlinkSync(absPath);
-        } catch (_) {}
+  
+      try {
+        await deleteStoredImageByUrl(posterUrl, 'poster');
+      } catch (err) {
+        console.error('Failed to delete poster asset:', err);
       }
-
+  
       await dbx.adminDeleteShow(conn, showId);
       await dbx.commit(conn);
       req.flash('ok', 'Show deleted permanently.');
     } finally {
       if (conn) dbx.close(conn);
     }
+  
     res.redirect('/shows');
   }));
-
+  
   app.post('/me/change_username', loginRequired(async (req, res) => {
     const uid = Number(req.session.uid);
     const newUsername = String(req.body.new_username || '').trim();
@@ -2241,6 +2331,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
