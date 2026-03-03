@@ -191,7 +191,7 @@
   const notifCountSafe = typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
   const notifItemsSafe = Array.isArray(typeof notif_items !== "undefined" ? notif_items : []) ? notif_items : [];
 
-  const distLabels = ["5.0","4.5","4.0","3.5","3.0","2.5","2.0","1.5","1.0","0.5"];
+  const distLabels = ["5.0","4.5","4.0","3.5","3.0","2.5","2.0","1.5","1.0","0.5","0.0"];
 
   const ratingHistogramRaw = (typeof rating_histogram !== "undefined" && rating_histogram) ? rating_histogram : {};
   const verifiedHistogramRaw = (typeof verified_rating_histogram !== "undefined" && verified_rating_histogram) ? verified_rating_histogram : {};
@@ -770,6 +770,7 @@
   </script>
 </body>
 </html>
+
 
 
 
