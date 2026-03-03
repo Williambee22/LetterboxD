@@ -59,26 +59,27 @@ const BAD_WORDS = new Set([
 ]);
 
 /**
- * Middleware to restrict routes to admin users only
+ * Middleware to restrict routes to admin users only.
+ * This relies on req.session.user, which we keep synchronized from DB
+ * in a later middleware on every request.
  */
 function adminRequired(handler) {
   return async (req, res, next) => {
-    // 1. Get the user from the session
-    const user = req.session.user;
+    try {
+      const user = req.session?.user;
 
-    // 2. Check if user exists and if is_admin is 1 (as number or string)
-    // We use String() to make sure "1" == 1
-    if (user && String(user.is_admin) === "1") {
-      return handler(req, res, next);
+      if (user && Number(user.is_admin) === 1) {
+        return await handler(req, res, next);
+      }
+
+      console.log('Access Denied for user:', user?.username || '(no session user)');
+      if (req.flash) req.flash('error', 'Admin access required.');
+      return res.redirect('/shows');
+    } catch (err) {
+      return next(err);
     }
-
-    // 3. If they aren't an admin, send them to /shows with a message
-    console.log("Access Denied for user:", user?.username);
-    if (req.flash) req.flash('error', 'Admin access required.');
-    return res.redirect('/shows');
   };
 }
-
 
 function compileBadRegex(words) {
   const parts = [...words]
@@ -479,20 +480,6 @@ function createApp() {
     };
   }
 
-  function Required(handler) {
-    return async (req, res, next) => {
-      try {
-        const u = await currentUser(req);
-        if (!u || Number(u.is_) !== 1) {
-          return res.status(403).send('Forbidden');
-        }
-        return await handler(req, res, next);
-      } catch (err) {
-        return next(err);
-      }
-    };
-  }
-
   app.get('/forgot-password', (req, res) => {
     res.render('forgot_password');
   });
@@ -674,6 +661,13 @@ function createApp() {
     return next();
   });
 
+  /**
+   * Sync current DB user into:
+   * - res.locals.me
+   * - req.session.user
+   *
+   * This is what makes adminRequired work consistently.
+   */
   app.use(async (req, res, next) => {
     try {
       const me = await currentUser(req);
@@ -681,6 +675,14 @@ function createApp() {
       let notifItems = [];
 
       if (me) {
+        req.session.user = {
+          id: Number(me.id),
+          username: me.username,
+          email: me.email || null,
+          is_admin: Number(me.is_admin || 0),
+          avatar_url: me.avatar_url || null,
+        };
+
         const conn = getConn();
         try {
           notifCount = await dbx.unreadNotificationsCount(conn, Number(me.id));
@@ -688,6 +690,8 @@ function createApp() {
         } finally {
           dbx.close(conn);
         }
+      } else {
+        delete req.session.user;
       }
 
       res.locals.me = me;
@@ -746,6 +750,14 @@ function createApp() {
       );
 
       req.session.uid = Number(uid);
+      req.session.user = {
+        id: Number(uid),
+        username,
+        email,
+        is_admin: make ? 1 : 0,
+        avatar_url: null,
+      };
+
       req.flash('ok', "Account created. You're logged in.");
 
       return req.session.save((err) => {
@@ -794,6 +806,13 @@ function createApp() {
       }
 
       req.session.uid = Number(u.id);
+      req.session.user = {
+        id: Number(u.id),
+        username: u.username,
+        email: u.email || null,
+        is_admin: Number(u.is_admin || 0),
+        avatar_url: u.avatar_url || null,
+      };
 
       if (Number(u.must_change_password || 0) === 1) {
         req.flash('warn', 'You must change your password before continuing.');
@@ -1010,22 +1029,31 @@ function createApp() {
         req.flash('error', `Upload failed: ${err.message}`);
         return res.redirect('/me');
       }
-  
+
       if (!req.file) {
         req.flash('error', 'No file selected.');
         return res.redirect('/me');
       }
-  
+
       let conn;
       try {
         conn = getConn();
         const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
         if (!me) return res.sendStatus(404);
-  
+
         const avatarUrl = `/uploads/pfps/${req.file.filename}`;
         await dbx.updateUserAvatarUrl(conn, Number(req.session.uid), avatarUrl);
         await dbx.commit(conn);
-  
+
+        req.session.user = {
+          ...(req.session.user || {}),
+          id: Number(me.id),
+          username: me.username,
+          email: me.email || null,
+          is_admin: Number(me.is_admin || 0),
+          avatar_url: avatarUrl,
+        };
+
         req.flash('ok', 'Profile picture updated.');
         return res.redirect('/me');
       } catch (e) {
@@ -1056,6 +1084,7 @@ function createApp() {
       const show = await dbx.getShowById(conn, showId);
       if (!show) return res.sendStatus(404);
       await dbx.upsertRating(conn, showId, Number(req.session.uid), rh);
+      await dbx.commit(conn);
       req.flash('ok', 'Saved your rating.');
     } finally {
       if (conn) dbx.close(conn);
@@ -1070,6 +1099,7 @@ function createApp() {
     try {
       conn = getConn();
       await dbx.deleteRating(conn, showId, Number(req.session.uid));
+      await dbx.commit(conn);
       req.flash('ok', 'Removed your rating.');
     } finally {
       if (conn) dbx.close(conn);
@@ -1077,17 +1107,15 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
-  // Change _req to req so we can access the session
   app.get('/admin/bulk_add', adminRequired(async (req, res) => {
     return res.render('bulk_add', {
-      me: req.session.user, // Passes your admin status to the header
-      flashes: req.flash ? req.flash() : [] // Shows the success/error messages
+      me: res.locals.me,
     });
   }));
 
-
   app.post('/admin/bulk_add', adminRequired(async (req, res) => {
-    const { items, errors } = parseBulkLines(req.body.bulk_text || '');
+    const { items, errors } = parseLines(req.body.bulk_text || '');
+
     if (errors.length) {
       for (const e of errors.slice(0, 10)) req.flash('error', e);
       if (errors.length > 10) req.flash('error', `...and ${errors.length - 10} more errors.`);
@@ -1107,6 +1135,7 @@ function createApp() {
         else if (msg === 'Duplicate') dupes += 1;
         else otherBad += 1;
       }
+      await dbx.commit(conn);
     } finally {
       if (conn) dbx.close(conn);
     }
@@ -1115,8 +1144,6 @@ function createApp() {
     return res.redirect('/shows');
   }));
 
-
-  // Route to clear a user's Profile Picture
   app.post('/admin/user/:user_id/delete-pfp', adminRequired(async (req, res) => {
     const userId = Number(req.params.user_id);
     let conn;
@@ -1124,42 +1151,36 @@ function createApp() {
       conn = getConn();
       const u = normalizeRow(await dbx.userById(conn, userId));
       if (!u) return res.status(404).send('User not found');
-  
-      // Reset the avatar_url in the database
+
       await dbx.updateUserAvatarUrl(conn, userId, null);
       await dbx.commit(conn);
-  
+
       req.flash('ok', `Profile picture for ${u.username} has been removed.`);
     } catch (err) {
       req.flash('error', `Failed to delete PFP: ${err.message}`);
     } finally {
       if (conn) dbx.close(conn);
     }
-    // Redirect back to the user's profile page
-    res.redirect(`/u/${userId}`); 
+    res.redirect(`/u/${u?.username ? encodeURIComponent(u.username) : userId}`);
   }));
-  
-  // Route to delete a user's entire account (The Nuclear Option)
+
   app.post('/admin/user/:user_id/delete-account', adminRequired(async (req, res) => {
-    const userId = Number(req.params.user_id);
     const targetId = Number(req.params.user_id);
-    
-    // Safety check: Prevent admins from accidentally deleting themselves
+
     if (targetId === Number(req.session.uid)) {
-      req.flash('error', "You cannot delete your own account from the admin panel.");
+      req.flash('error', 'You cannot delete your own account from the admin panel.');
       return res.redirect(`/u/${targetId}`);
     }
-  
+
     let conn;
     try {
       conn = getConn();
       const u = normalizeRow(await dbx.userById(conn, targetId));
       if (!u) return res.status(404).send('User not found');
-  
-      // Assuming dbx.deleteUser handles cascading deletes for reviews/ratings
-      await dbx.deleteUser(conn, targetId); 
+
+      await dbx.deleteUser(conn, targetId);
       await dbx.commit(conn);
-  
+
       req.flash('ok', `Account for ${u.username} has been permanently deleted.`);
       res.redirect('/shows');
     } catch (err) {
@@ -1170,9 +1191,6 @@ function createApp() {
     }
   }));
 
-
-
-  
   app.get('/admin/show/:show_id/edit', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     let conn;
@@ -1180,7 +1198,7 @@ function createApp() {
       conn = getConn();
       const s = normalizeRow(await dbx.getShowById(conn, showId));
       if (!s) return res.sendStatus(404);
-      return res.render('admin_edit_show', { s });
+      return res.render('admin_edit_show', { s, me: res.locals.me });
     } finally {
       if (conn) dbx.close(conn);
     }
@@ -1204,6 +1222,7 @@ function createApp() {
       const s = await dbx.getShowById(conn, showId);
       if (!s) return res.sendStatus(404);
       await dbx.updateShow(conn, showId, Number(year), corps, title, { posterUrl });
+      await dbx.commit(conn);
       req.flash('ok', 'Show updated.');
       return res.redirect(`/show/${showId}`);
     } catch (err) {
@@ -1283,6 +1302,7 @@ function createApp() {
       const show = await dbx.showDetail(conn, showId);
       if (!show) return res.sendStatus(404);
       await dbx.upsertReview(conn, showId, Number(req.session.uid), text);
+      await dbx.commit(conn);
       req.flash('ok', 'Saved your review.');
     } catch (err) {
       req.flash('error', String(err.message || err));
@@ -1298,6 +1318,7 @@ function createApp() {
     try {
       conn = getConn();
       await dbx.deleteReview(conn, showId, Number(req.session.uid));
+      await dbx.commit(conn);
       req.flash('ok', 'Deleted your review.');
     } finally {
       if (conn) dbx.close(conn);
@@ -1305,16 +1326,14 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
-  app.get('/admin/roles', adminRequired(async (req, res) => { // Changed _req to req
+  app.get('/admin/roles', adminRequired(async (req, res) => {
     let conn;
     try {
       conn = getConn();
-      const roles = await dbx.listRoles(conn);
-      // You MUST pass 'me' and 'flashes' for the navbar/alerts to work
-      return res.render('admin_roles', { 
-        roles, 
-        me: req.session.user, // or req.session.me depending on your setup
-        flashes: req.flash ? req.flash() : [] 
+      const roles = (await dbx.listRoles(conn) || []).map(normalizeRow);
+      return res.render('admin_roles', {
+        roles,
+        me: res.locals.me,
       });
     } finally {
       if (conn) dbx.close(conn);
@@ -1328,6 +1347,7 @@ function createApp() {
     try {
       conn = getConn();
       await dbx.createRole(conn, name, color);
+      await dbx.commit(conn);
       req.flash('ok', 'Role created.');
     } catch (err) {
       req.flash('error', String(err.message || 'Role name already exists.'));
@@ -1342,6 +1362,7 @@ function createApp() {
     try {
       conn = getConn();
       await dbx.deleteRole(conn, Number(req.params.role_id));
+      await dbx.commit(conn);
       req.flash('ok', 'Role deleted.');
     } finally {
       if (conn) dbx.close(conn);
@@ -1356,10 +1377,16 @@ function createApp() {
       conn = getConn();
       const u = normalizeRow(await dbx.userByUsername(conn, username));
       if (!u) return res.sendStatus(404);
-      const roles = await dbx.listRoles(conn);
+      const roles = (await dbx.listRoles(conn) || []).map(normalizeRow);
       const userRoles = (await dbx.rolesForUser(conn, Number(u.id)) || []).map(normalizeRow);
       const userRoleIds = new Set(userRoles.map((r) => Number(r.id)));
-      return res.render('admin_user_roles', { u, roles, user_roles: userRoles, user_role_ids: userRoleIds });
+      return res.render('admin_user_roles', {
+        u,
+        roles,
+        user_roles: userRoles,
+        user_role_ids: userRoleIds,
+        me: res.locals.me,
+      });
     } finally {
       if (conn) dbx.close(conn);
     }
@@ -1374,6 +1401,7 @@ function createApp() {
       const u = normalizeRow(await dbx.userByUsername(conn, username));
       if (!u) return res.sendStatus(404);
       await dbx.assignRoleToUser(conn, Number(u.id), roleId, { assignedByUserId: Number(req.session.uid) });
+      await dbx.commit(conn);
       req.flash('ok', 'Role assigned.');
     } finally {
       if (conn) dbx.close(conn);
@@ -1390,6 +1418,7 @@ function createApp() {
       const u = normalizeRow(await dbx.userByUsername(conn, username));
       if (!u) return res.sendStatus(404);
       await dbx.removeRoleFromUser(conn, Number(u.id), roleId);
+      await dbx.commit(conn);
       req.flash('ok', 'Role removed.');
     } finally {
       if (conn) dbx.close(conn);
@@ -1404,7 +1433,7 @@ function createApp() {
       conn = getConn();
       const u = normalizeRow(await dbx.userByUsername(conn, username));
       if (!u) return res.sendStatus(404);
-      res.render('admin_force_reset', { u });
+      res.render('admin_force_reset', { u, me: res.locals.me });
     } finally {
       if (conn) dbx.close(conn);
     }
@@ -1417,7 +1446,7 @@ function createApp() {
       conn = getConn();
       const u = normalizeRow(await dbx.userByUsername(conn, username));
       if (!u) return res.sendStatus(404);
-      res.render('admin_set_temp_password', { u });
+      res.render('admin_set_temp_password', { u, me: res.locals.me });
     } finally {
       if (conn) dbx.close(conn);
     }
@@ -1638,12 +1667,12 @@ function createApp() {
       if (conn) dbx.close(conn);
     }
   }));
-  
+
   app.post('/me/customize', loginRequired(async (req, res) => {
     const avatarUrl = String(req.body.avatar_url || '').trim();
     const bannerUrl = String(req.body.banner_url || '').trim();
     const themeColor = String(req.body.theme_color || '').trim();
-  
+
     let conn;
     try {
       conn = getConn();
@@ -1653,27 +1682,55 @@ function createApp() {
     } finally {
       if (conn) dbx.close(conn);
     }
-  
+
     res.redirect('/me');
   }));
 
-  app.get('/admin/users', adminRequired(async (req, res) => {
-    // Removing the try/catch temporarily will force Node to show 
-    // the specific error (like "Failed to lookup view") in the terminal.
-    res.render('admin_users', { 
-      me: req.session.user, 
-      users: [], 
-      flashes: [] 
-    });
+  app.get('/admin/users', adminRequired(async (req, res, next) => {
+    let conn;
+    try {
+      conn = getConn();
+
+      const users = conn.prepare(`
+        SELECT
+          id,
+          username,
+          email,
+          is_admin,
+          avatar_url,
+          created_ts,
+          must_change_password
+        FROM users
+        ORDER BY LOWER(username) ASC
+      `).all().map(normalizeRow);
+
+      for (const u of users) {
+        if (!u.avatar_url) u.avatar_url = pfpUrlForUsername(u.username || '');
+        try {
+          u.roles = (await dbx.rolesForUser(conn, Number(u.id)) || []).map(normalizeRow);
+        } catch {
+          u.roles = [];
+        }
+      }
+
+      return res.render('admin_users', {
+        me: res.locals.me,
+        users,
+      });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
   }));
-  
+
   app.get('/admin/roles/:role_id/edit', adminRequired(async (req, res) => {
     let conn;
     try {
       conn = getConn();
       const r = await dbx.roleById(conn, Number(req.params.role_id));
       if (!r) return res.sendStatus(404);
-      res.render('admin_role_edit', { r: normalizeRow(r) });
+      res.render('admin_role_edit', { r: normalizeRow(r), me: res.locals.me });
     } finally {
       if (conn) dbx.close(conn);
     }
@@ -1687,6 +1744,7 @@ function createApp() {
     try {
       conn = getConn();
       await dbx.updateRole(conn, roleId, name, color);
+      await dbx.commit(conn);
       req.flash('ok', 'Role updated.');
       res.redirect('/admin/roles');
     } catch (err) {
@@ -1990,6 +2048,17 @@ function createApp() {
       }
 
       await dbx.commit(conn);
+
+      const fresh = normalizeRow(await dbx.userById(conn, uid));
+      req.session.user = {
+        ...(req.session.user || {}),
+        id: Number(fresh.id),
+        username: fresh.username,
+        email: fresh.email || null,
+        is_admin: Number(fresh.is_admin || 0),
+        avatar_url: fresh.avatar_url || null,
+      };
+
       req.flash('ok', 'Username updated.');
       return res.redirect('/me');
     } finally {
@@ -2044,6 +2113,7 @@ function createApp() {
     res.json({
       sessionID: req.sessionID,
       uid: req.session?.uid || null,
+      sessionUser: req.session?.user || null,
       session: req.session || null,
     });
   });
@@ -2077,14 +2147,3 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
-
-
-
-
-
-
-
-
-
-
-
