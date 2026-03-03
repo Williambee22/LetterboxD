@@ -170,6 +170,15 @@ function setPasswordResetToken(conn, userId, token, expiresTs) {
   `).run(String(token || ''), Number(expiresTs), Number(userId));
 }
 
+function updateUserBio(conn, userId, bio) {
+  return conn.prepare(`
+    UPDATE users
+    SET bio = ?
+    WHERE id = ?
+  `).run(bio, userId);
+}
+
+
 function userByResetToken(conn, token) {
   return conn.prepare(`
     SELECT *
@@ -1452,6 +1461,7 @@ clearPasswordResetToken,
 setUserMustChangePassword,
 updateUserEmail,
 };
+
 
 
 
