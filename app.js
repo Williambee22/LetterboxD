@@ -410,7 +410,50 @@ function createApp() {
   app.set('view engine', 'ejs');
   app.set('views', path.join(BASE_DIR, 'templates'));
 
-  app.use('/static', express.static(STATIC_DIR));
+  app.use('/static', express.static(path.join(__dirname, 'static'), {
+    maxAge: '30d',
+    immutable: true,
+    setHeaders: (res, filePath) => {
+      res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+    }
+  }));
+
+  app.use('/posters', express.static(path.join(__dirname, 'static', 'posters'), {
+    maxAge: '30d',
+    setHeaders: (res, filePath) => {
+      res.setHeader('Cache-Control', 'public, max-age=2592000');
+    }
+  }));
+  
+  app.use('/pfps', express.static(process.env.DATA_DIR
+    ? path.join(process.env.DATA_DIR, 'pfps')
+    : path.join(__dirname, 'data', 'pfps'), {
+    maxAge: '7d',
+    setHeaders: (res, filePath) => {
+      res.setHeader('Cache-Control', 'public, max-age=604800');
+    }
+  }));
+
+  app.use((req, res, next) => {
+    const uncachedPrefixes = [
+      '/login',
+      '/register',
+      '/logout',
+      '/me',
+      '/settings',
+      '/notifications',
+      '/admin',
+      '/api'
+    ];
+  
+    if (uncachedPrefixes.some(prefix => req.path === prefix || req.path.startsWith(prefix + '/'))) {
+      res.setHeader('Cache-Control', 'private, no-store');
+    }
+  
+    next();
+  });
+
+  
   app.use('/uploads/pfps', express.static(PFP_DIR));
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json({ limit: `${MAX_UPLOAD_MB}mb` }));
@@ -2198,6 +2241,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
