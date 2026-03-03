@@ -457,11 +457,11 @@ function createApp() {
     };
   }
 
-  function adminRequired(handler) {
+  function Required(handler) {
     return async (req, res, next) => {
       try {
         const u = await currentUser(req);
-        if (!u || Number(u.is_admin) !== 1) {
+        if (!u || Number(u.is_) !== 1) {
           return res.status(403).send('Forbidden');
         }
         return await handler(req, res, next);
@@ -715,12 +715,12 @@ function createApp() {
         return res.redirect('/register');
       }
 
-      const makeAdmin = await dbx.isFirstUser(conn);
+      const make = await dbx.isFirstUser(conn);
       const uid = await dbx.createUser(
         conn,
         username,
         await hashPassword(password),
-        { makeAdmin, email }
+        { make, email }
       );
 
       req.session.uid = Number(uid);
@@ -911,7 +911,7 @@ function createApp() {
     return res.redirect(`/show/${showId}`);
   }));
 
-  app.post('/admin/show/:show_id/review/:review_user_id/delete', adminRequired(async (req, res) => {
+  app.post('//show/:show_id/review/:review_user_id/delete', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const reviewUserId = Number(req.params.review_user_id);
     let conn;
@@ -1086,6 +1086,64 @@ function createApp() {
     return res.redirect('/shows');
   }));
 
+
+  // Route to clear a user's Profile Picture
+  app.post('/admin/user/:user_id/delete-pfp', adminRequired(async (req, res) => {
+    const userId = Number(req.params.user_id);
+    let conn;
+    try {
+      conn = getConn();
+      const u = normalizeRow(await dbx.userById(conn, userId));
+      if (!u) return res.status(404).send('User not found');
+  
+      // Reset the avatar_url in the database
+      await dbx.updateUserAvatarUrl(conn, userId, null);
+      await dbx.commit(conn);
+  
+      req.flash('ok', `Profile picture for ${u.username} has been removed.`);
+    } catch (err) {
+      req.flash('error', `Failed to delete PFP: ${err.message}`);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+    // Redirect back to the user's profile page
+    res.redirect(`/u/${userId}`); 
+  }));
+  
+  // Route to delete a user's entire account (The Nuclear Option)
+  app.post('/admin/user/:user_id/delete-account', adminRequired(async (req, res) => {
+    const userId = Number(req.params.user_id);
+    const targetId = Number(req.params.user_id);
+    
+    // Safety check: Prevent admins from accidentally deleting themselves
+    if (targetId === Number(req.session.uid)) {
+      req.flash('error', "You cannot delete your own account from the admin panel.");
+      return res.redirect(`/u/${targetId}`);
+    }
+  
+    let conn;
+    try {
+      conn = getConn();
+      const u = normalizeRow(await dbx.userById(conn, targetId));
+      if (!u) return res.status(404).send('User not found');
+  
+      // Assuming dbx.deleteUser handles cascading deletes for reviews/ratings
+      await dbx.deleteUser(conn, targetId); 
+      await dbx.commit(conn);
+  
+      req.flash('ok', `Account for ${u.username} has been permanently deleted.`);
+      res.redirect('/shows');
+    } catch (err) {
+      req.flash('error', `Failed to delete account: ${err.message}`);
+      res.redirect(`/u/${targetId}`);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+
+
+
+  
   app.get('/admin/show/:show_id/edit', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     let conn;
@@ -1986,6 +2044,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
