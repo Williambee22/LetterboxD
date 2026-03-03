@@ -1073,7 +1073,14 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
-  app.get('/admin/bulk_add', adminRequired(async (_req, res) => res.render('bulk_add')));
+  // Change _req to req so we can access the session
+  app.get('/admin/bulk_add', adminRequired(async (req, res) => {
+    return res.render('bulk_add', {
+      me: req.session.user, // Passes your admin status to the header
+      flashes: req.flash ? req.flash() : [] // Shows the success/error messages
+    });
+  }));
+
 
   app.post('/admin/bulk_add', adminRequired(async (req, res) => {
     const { items, errors } = parseBulkLines(req.body.bulk_text || '');
@@ -1294,12 +1301,17 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
-  app.get('/admin/roles', adminRequired(async (_req, res) => {
+  app.get('/admin/roles', adminRequired(async (req, res) => { // Changed _req to req
     let conn;
     try {
       conn = getConn();
       const roles = await dbx.listRoles(conn);
-      return res.render('admin_roles', { roles });
+      // You MUST pass 'me' and 'flashes' for the navbar/alerts to work
+      return res.render('admin_roles', { 
+        roles, 
+        me: req.session.user, // or req.session.me depending on your setup
+        flashes: req.flash ? req.flash() : [] 
+      });
     } finally {
       if (conn) dbx.close(conn);
     }
@@ -1641,17 +1653,26 @@ function createApp() {
     res.redirect('/me');
   }));
 
-  app.get('/admin/users', adminRequired(async (_req, res) => {
+  app.get('/admin/users', adminRequired(async (req, res) => {
     let conn;
     try {
-      conn = getConn();
-      const users = (await dbx.listUsers(conn) || []).map(normalizeRow);
-      res.render('admin_users', { users });
+        conn = getConn();
+        // Use your dbx helper to list users, or a direct query if dbx doesn't have it
+        const allUsers = await dbx.listUsers(conn); 
+        
+        res.render('admin_users', { 
+            me: req.session.user, 
+            users: allUsers,
+            flashes: req.flash ? req.flash() : [] 
+        });
+    } catch (err) {
+        console.error("Error fetching users:", err);
+        res.status(500).send("Internal Server Error");
     } finally {
-      if (conn) dbx.close(conn);
+        if (conn) dbx.close(conn);
     }
-  }));
-
+}));
+  
   app.get('/admin/roles/:role_id/edit', adminRequired(async (req, res) => {
     let conn;
     try {
@@ -2062,6 +2083,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
