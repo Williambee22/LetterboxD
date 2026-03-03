@@ -445,10 +445,9 @@ function listShows(conn, args = {}) {
     params.push(Number(year));
   }
   if (corps) {
-    where.push('s.corps = ?');
-    params.push(corps);
+    where.push('s.corps LIKE ? COLLATE NOCASE');
+    params.push(`%${corps}%`);
   }
-
   const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
   let orderSql = 's.year DESC, s.corps ASC, s.title ASC';
@@ -1463,6 +1462,7 @@ module.exports = {
   updateUserEmail,
   updateUserBio 
 };
+
 
 
 
