@@ -100,7 +100,8 @@ function getVerifiedRatingHistogram(conn, showId) {
       COUNT(*) AS cnt
     FROM ratings r
     JOIN users u ON u.id = r.user_id
-    LEFT JOIN roles ro ON ro.id = u.role_id
+    JOIN user_roles ur ON ur.user_id = u.id
+    JOIN roles ro ON ro.id = ur.role_id
     WHERE r.show_id = ?
       AND r.rating_half IS NOT NULL
       AND ro.name = 'Verified Reviewer'
@@ -1544,6 +1545,7 @@ module.exports = {
   getVerifiedRatingHistogram,
   updateUserBio 
 };
+
 
 
 
