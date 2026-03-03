@@ -772,7 +772,9 @@ textarea:focus{
   font-weight:900;
   font-size:12px;
   letter-spacing:.02em;
+  line-height:1;
 }
+
 
 .role_tag.tiny{
   padding:4px 8px;
@@ -1420,6 +1422,7 @@ a:focus{
 .notifItem::after{
   pointer-events:none;
 }
+
 
 
 
