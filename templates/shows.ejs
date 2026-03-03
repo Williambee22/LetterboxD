@@ -121,6 +121,93 @@
     .notifDropdown * {
       pointer-events: auto !important;
     }
+
+    .userSearchWrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .userSearchInput {
+      width: 220px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: inherit;
+      padding: 0 12px;
+      outline: none;
+    }
+
+    .userSearchInput::placeholder {
+      color: rgba(255,255,255,0.55);
+    }
+
+    .userSearchInput:focus {
+      border-color: color-mix(in srgb, var(--accent) 40%, rgba(255,255,255,0.15));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+
+    .userSearchDropdown {
+      display: none;
+      position: absolute;
+      top: 44px;
+      right: 0;
+      width: 280px;
+      max-height: 320px;
+      overflow: auto;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.45);
+      z-index: 9999;
+    }
+
+    .userSearchDropdown.open {
+      display: block;
+    }
+
+    .userSearchItem {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      text-decoration: none;
+      color: inherit;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .userSearchItem:last-child {
+      border-bottom: none;
+    }
+
+    .userSearchItem:hover {
+      background: rgba(255,255,255,0.06);
+    }
+
+    .userSearchAvatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      overflow: hidden;
+      flex: 0 0 auto;
+      background: rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .userSearchAvatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .userSearchEmpty {
+      padding: 12px;
+      opacity: 0.8;
+    }
   </style>
 </head>
 <%
@@ -153,6 +240,17 @@
 
       <div class="auth row">
         <% if (meUser) { %>
+          <div class="userSearchWrap">
+            <input
+              id="userSearchInput"
+              class="userSearchInput"
+              type="text"
+              placeholder="Search users..."
+              autocomplete="off"
+            >
+            <div id="userSearchDropdown" class="userSearchDropdown"></div>
+          </div>
+
           <div class="authBellSlot">
             <div class="notifWrap">
               <button class="bellBtn" id="bellBtn" aria-label="Notifications" title="Notifications">
@@ -453,9 +551,103 @@
       });
     })();
   </script>
+
+  <script>
+    (() => {
+      const input = document.getElementById('userSearchInput');
+      const dropdown = document.getElementById('userSearchDropdown');
+      if (!input || !dropdown) return;
+
+      let timer = null;
+
+      function closeDropdown() {
+        dropdown.classList.remove('open');
+        dropdown.innerHTML = '';
+      }
+
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function renderResults(results) {
+        if (!Array.isArray(results) || results.length === 0) {
+          dropdown.innerHTML = '<div class="userSearchEmpty">No users found.</div>';
+          dropdown.classList.add('open');
+          return;
+        }
+
+        dropdown.innerHTML = results.map((u) => `
+          <a class="userSearchItem" href="${escapeHtml(u.profile_url)}">
+            <span class="userSearchAvatar">
+              ${u.avatar_url
+                ? `<img src="${escapeHtml(u.avatar_url)}" alt="avatar">`
+                : `<span></span>`}
+            </span>
+            <span>${escapeHtml(u.username)}</span>
+          </a>
+        `).join('');
+
+        dropdown.classList.add('open');
+      }
+
+      async function doSearch(q) {
+        const term = String(q || '').trim();
+        if (!term) {
+          closeDropdown();
+          return;
+        }
+
+        try {
+          const res = await fetch(`/api/users/search?q=${encodeURIComponent(term)}`, {
+            headers: { 'Accept': 'application/json' }
+          });
+
+          if (!res.ok) {
+            closeDropdown();
+            return;
+          }
+
+          const data = await res.json();
+          renderResults(data.results || []);
+        } catch (err) {
+          closeDropdown();
+        }
+      }
+
+      input.addEventListener('input', () => {
+        clearTimeout(timer);
+        const q = input.value;
+
+        timer = setTimeout(() => {
+          doSearch(q);
+        }, 180);
+      });
+
+      input.addEventListener('focus', () => {
+        if (input.value.trim()) doSearch(input.value);
+      });
+
+      dropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
+      input.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', () => {
+        closeDropdown();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeDropdown();
+      });
+    })();
+  </script>
 </body>
 </html>
-
-
-
-
