@@ -657,6 +657,7 @@ function ensureProfileColumns(conn) {
   if (!cols.has('avatar_url')) conn.prepare('ALTER TABLE users ADD COLUMN avatar_url TEXT').run();
   if (!cols.has('banner_url')) conn.prepare('ALTER TABLE users ADD COLUMN banner_url TEXT').run();
   if (!cols.has('theme_color')) conn.prepare('ALTER TABLE users ADD COLUMN theme_color TEXT').run();
+  try { conn.prepare(`ALTER TABLE users ADD COLUMN bio TEXT`).run(); } catch (_) {}
 }
 
 const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{6})$/;
@@ -1462,6 +1463,7 @@ module.exports = {
   updateUserEmail,
   updateUserBio 
 };
+
 
 
 
