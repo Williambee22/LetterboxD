@@ -295,7 +295,7 @@
             <% if (roles.length > 0) { %>
               <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
                 <% for (const r of roles) { %>
-                  <span class="role_tag" <%= r && r.color ? `style="border-color:${r.color}; color:${r.color};"` : "" %>>
+                  <span class="role_tag" <%= r && r.color ? `style="border-color:${r.color}; color:${r.color}; background:${r.color}22;"` : "" %>>
                     <%= r && r.name ? r.name : "" %>
                   </span>
                 <% } %>
@@ -580,3 +580,4 @@
   </script>
 </body>
 </html>
+
