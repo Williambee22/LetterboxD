@@ -1352,15 +1352,28 @@ function updateUserPasswordHash(conn, userId, newHash) {
 function searchUsers(conn, q, opts = {}) {
   const limit = Math.max(1, Math.min(Number(opts.limit || 8), 20));
   const term = String(q || '').trim();
+
   if (!term) return [];
 
+  const starts = `${term}%`;
+  const contains = `%${term}%`;
+
   return conn.prepare(`
-    SELECT id, username, avatar_url
+    SELECT
+      id,
+      username,
+      avatar_url
     FROM users
     WHERE username LIKE ? COLLATE NOCASE
-    ORDER BY username ASC
+    ORDER BY
+      CASE
+        WHEN username LIKE ? COLLATE NOCASE THEN 0
+        ELSE 1
+      END,
+      LENGTH(username) ASC,
+      username COLLATE NOCASE ASC
     LIMIT ?
-  `).all(`%${term}%`, limit);
+  `).all(contains, starts, limit);
 }
 
 module.exports = {
@@ -1458,6 +1471,7 @@ module.exports = {
   updateUserEmail,
   updateUserBio 
 };
+
 
 
 
