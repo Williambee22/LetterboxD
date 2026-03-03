@@ -189,7 +189,7 @@ function normalizeRow(row) {
   return { ...row };
 }
 
-function parseBulkLines(text) {
+function parseLines(text) {
   const items = [];
   const errors = [];
 
@@ -1662,24 +1662,14 @@ function createApp() {
   }));
 
   app.get('/admin/users', adminRequired(async (req, res) => {
-    let conn;
-    try {
-        conn = getConn();
-        // Use your dbx helper to list users, or a direct query if dbx doesn't have it
-        const allUsers = await dbx.listUsers(conn); 
-        
-        res.render('admin_users', { 
-            me: req.session.user, 
-            users: allUsers,
-            flashes: req.flash ? req.flash() : [] 
-        });
-    } catch (err) {
-        console.error("Error fetching users:", err);
-        res.status(500).send("Internal Server Error");
-    } finally {
-        if (conn) dbx.close(conn);
-    }
-}));
+    // Removing the try/catch temporarily will force Node to show 
+    // the specific error (like "Failed to lookup view") in the terminal.
+    res.render('admin_users', { 
+      me: req.session.user, 
+      users: [], 
+      flashes: [] 
+    });
+  }));
   
   app.get('/admin/roles/:role_id/edit', adminRequired(async (req, res) => {
     let conn;
@@ -2091,6 +2081,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
