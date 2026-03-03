@@ -466,59 +466,63 @@
               <% } %>
             </div>
 
-            <div class="panel ratingDistPanel" style="width:100%;">
-              <div class="ratingDistHeader">
-                <div>
-                  <div class="kicker">Ratings</div>
-                  <div class="ratingDistTitle">Distribution</div>
-                </div>
-                <div class="ratingDistMeta"><%= ratingDistTotal %> total</div>
-              </div>
-
-              <% if (ratingDistTotal > 0) { %>
-                <div class="ratingDistList">
-                  <% for (const r of ratingDistRows) {
-                       const pct = ratingDistMax > 0 ? (r.count / ratingDistMax) * 100 : 0;
-                  %>
-                    <div class="ratingDistRow">
-                      <div class="ratingDistLabel"><%= r.label %> ★</div>
-                      <div class="ratingDistTrack">
-                        <div class="ratingDistFill" style="width:<%= pct %>%"></div>
-                      </div>
-                      <div class="ratingDistCount"><%= r.count %></div>
+            <div style="display:flex; gap:10px; margin-top:12px; align-items:flex-start;">
+                <div class="panel ratingDistPanel" style="width:50%; margin-top:0; padding:10px;">
+                  <div class="ratingDistHeader" style="margin-bottom:8px;">
+                    <div>
+                      <div class="kicker">Verified reviewers</div>
+                      <div class="ratingDistTitle" style="font-size:15px;">Distribution</div>
                     </div>
+                    <div class="ratingDistMeta" style="font-size:11px;"><%= verifiedDistTotal %> total</div>
+                  </div>
+              
+                  <% if (verifiedDistTotal > 0) { %>
+                    <div class="ratingDistList" style="gap:6px;">
+                      <% for (const r of verifiedDistRows) {
+                           const pct = verifiedDistMax > 0 ? (r.count / verifiedDistMax) * 100 : 0;
+                      %>
+                        <div class="ratingDistRow" style="grid-template-columns: 42px 1fr 30px; gap:8px;">
+                          <div class="ratingDistLabel" style="font-size:12px;"><%= r.label %>★</div>
+                          <div class="ratingDistTrack" style="height:8px;">
+                            <div class="ratingDistFill" style="width:<%= pct %>%"></div>
+                          </div>
+                          <div class="ratingDistCount" style="font-size:11px;"><%= r.count %></div>
+                        </div>
+                      <% } %>
+                    </div>
+                  <% } else { %>
+                    <div class="ratingDistEmpty" style="font-size:12px;">No verified reviewer ratings yet.</div>
                   <% } %>
                 </div>
-              <% } else { %>
-                <div class="ratingDistEmpty">No ratings yet.</div>
-              <% } %>
-            </div>
-
-            <div class="panel ratingDistPanel" style="width:100%;">
-              <div class="ratingDistHeader">
-                <div>
-                  <div class="kicker">Verified reviewers</div>
-                  <div class="ratingDistTitle">Distribution</div>
-                </div>
-                <div class="ratingDistMeta"><%= verifiedDistTotal %> total</div>
-              </div>
-
-              <% if (verifiedDistTotal > 0) { %>
-                <div class="ratingDistList">
-                  <% for (const r of verifiedDistRows) {
-                       const pct = verifiedDistMax > 0 ? (r.count / verifiedDistMax) * 100 : 0;
-                  %>
-                    <div class="ratingDistRow">
-                      <div class="ratingDistLabel"><%= r.label %> ★</div>
-                      <div class="ratingDistTrack">
-                        <div class="ratingDistFill" style="width:<%= pct %>%"></div>
-                      </div>
-                      <div class="ratingDistCount"><%= r.count %></div>
+              
+                <div class="panel ratingDistPanel" style="width:50%; margin-top:0; padding:10px;">
+                  <div class="ratingDistHeader" style="margin-bottom:8px;">
+                    <div>
+                      <div class="kicker">Ratings</div>
+                      <div class="ratingDistTitle" style="font-size:15px;">Distribution</div>
                     </div>
+                    <div class="ratingDistMeta" style="font-size:11px;"><%= ratingDistTotal %> total</div>
+                  </div>
+              
+                  <% if (ratingDistTotal > 0) { %>
+                    <div class="ratingDistList" style="gap:6px;">
+                      <% for (const r of ratingDistRows) {
+                           const pct = ratingDistMax > 0 ? (r.count / ratingDistMax) * 100 : 0;
+                      %>
+                        <div class="ratingDistRow" style="grid-template-columns: 42px 1fr 30px; gap:8px;">
+                          <div class="ratingDistLabel" style="font-size:12px;"><%= r.label %>★</div>
+                          <div class="ratingDistTrack" style="height:8px;">
+                            <div class="ratingDistFill" style="width:<%= pct %>%"></div>
+                          </div>
+                          <div class="ratingDistCount" style="font-size:11px;"><%= r.count %></div>
+                        </div>
+                      <% } %>
+                    </div>
+                  <% } else { %>
+                    <div class="ratingDistEmpty" style="font-size:12px;">No ratings yet.</div>
                   <% } %>
                 </div>
-              <% } else { %>
-                <div class="ratingDistEmpty">No verified reviewer ratings yet.</div>
+              </div>
               <% } %>
             </div>
           </div>
@@ -769,3 +773,4 @@
   </script>
 </body>
 </html>
+
