@@ -98,6 +98,84 @@
     .notifDropdown * {
       pointer-events: auto !important;
     }
+
+    .ratingDistPanel {
+      margin-top: 12px;
+      box-shadow: none;
+    }
+
+    .ratingDistHeader {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 12px;
+    }
+
+    .ratingDistTitle {
+      font-weight: 900;
+      line-height: 1.15;
+    }
+
+    .ratingDistMeta {
+      text-align:right;
+      font-size: 12px;
+      opacity: 0.8;
+      white-space: nowrap;
+    }
+
+    .ratingDistList {
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .ratingDistRow {
+      display:grid;
+      grid-template-columns: 52px 1fr 42px;
+      gap:10px;
+      align-items:center;
+    }
+
+    .ratingDistLabel {
+      font-size: 13px;
+      font-weight: 700;
+      opacity: 0.95;
+    }
+
+    .ratingDistTrack {
+      position: relative;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .ratingDistFill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      min-width: 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg,
+        color-mix(in srgb, var(--accent) 90%, #ffffff 0%),
+        color-mix(in srgb, var(--accent) 60%, #ffffff 0%)
+      );
+    }
+
+    .ratingDistCount {
+      text-align: right;
+      font-size: 12px;
+      opacity: 0.85;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ratingDistEmpty {
+      font-size: 13px;
+      opacity: 0.75;
+    }
   </style>
 </head>
 <body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
@@ -112,6 +190,33 @@
   const loginNext = "/login?next=" + encodeURIComponent("/show/" + (showRow.id || ""));
   const notifCountSafe = typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
   const notifItemsSafe = Array.isArray(typeof notif_items !== "undefined" ? notif_items : []) ? notif_items : [];
+
+  const distLabels = ["5.0","4.5","4.0","3.5","3.0","2.5","2.0","1.5","1.0","0.5"];
+
+  const ratingHistogramRaw = (typeof rating_histogram !== "undefined" && rating_histogram) ? rating_histogram : {};
+  const verifiedHistogramRaw = (typeof verified_rating_histogram !== "undefined" && verified_rating_histogram) ? verified_rating_histogram : {};
+
+  function getHistCount(obj, key) {
+    if (!obj) return 0;
+    const v = obj[key];
+    const n = Number(v || 0);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  const ratingDistRows = distLabels.map((label) => ({
+    label,
+    count: getHistCount(ratingHistogramRaw, label)
+  }));
+
+  const verifiedDistRows = distLabels.map((label) => ({
+    label,
+    count: getHistCount(verifiedHistogramRaw, label)
+  }));
+
+  const ratingDistTotal = ratingDistRows.reduce((sum, r) => sum + r.count, 0);
+  const verifiedDistTotal = verifiedDistRows.reduce((sum, r) => sum + r.count, 0);
+  const ratingDistMax = ratingDistRows.reduce((m, r) => Math.max(m, r.count), 0);
+  const verifiedDistMax = verifiedDistRows.reduce((m, r) => Math.max(m, r.count), 0);
 %>
 
   <header class="topbar">
@@ -233,7 +338,6 @@
       </div>
     <% } %>
 
-    <!-- TOP SHOW AREA -->
     <div style="margin-top:14px;">
       <div class="panel">
         <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:28px; width:100%;">
@@ -361,6 +465,62 @@
                 </div>
               <% } %>
             </div>
+
+            <div class="panel ratingDistPanel" style="width:100%;">
+              <div class="ratingDistHeader">
+                <div>
+                  <div class="kicker">Ratings</div>
+                  <div class="ratingDistTitle">Distribution</div>
+                </div>
+                <div class="ratingDistMeta"><%= ratingDistTotal %> total</div>
+              </div>
+
+              <% if (ratingDistTotal > 0) { %>
+                <div class="ratingDistList">
+                  <% for (const r of ratingDistRows) {
+                       const pct = ratingDistMax > 0 ? (r.count / ratingDistMax) * 100 : 0;
+                  %>
+                    <div class="ratingDistRow">
+                      <div class="ratingDistLabel"><%= r.label %> ★</div>
+                      <div class="ratingDistTrack">
+                        <div class="ratingDistFill" style="width:<%= pct %>%"></div>
+                      </div>
+                      <div class="ratingDistCount"><%= r.count %></div>
+                    </div>
+                  <% } %>
+                </div>
+              <% } else { %>
+                <div class="ratingDistEmpty">No ratings yet.</div>
+              <% } %>
+            </div>
+
+            <div class="panel ratingDistPanel" style="width:100%;">
+              <div class="ratingDistHeader">
+                <div>
+                  <div class="kicker">Verified reviewers</div>
+                  <div class="ratingDistTitle">Distribution</div>
+                </div>
+                <div class="ratingDistMeta"><%= verifiedDistTotal %> total</div>
+              </div>
+
+              <% if (verifiedDistTotal > 0) { %>
+                <div class="ratingDistList">
+                  <% for (const r of verifiedDistRows) {
+                       const pct = verifiedDistMax > 0 ? (r.count / verifiedDistMax) * 100 : 0;
+                  %>
+                    <div class="ratingDistRow">
+                      <div class="ratingDistLabel"><%= r.label %> ★</div>
+                      <div class="ratingDistTrack">
+                        <div class="ratingDistFill" style="width:<%= pct %>%"></div>
+                      </div>
+                      <div class="ratingDistCount"><%= r.count %></div>
+                    </div>
+                  <% } %>
+                </div>
+              <% } else { %>
+                <div class="ratingDistEmpty">No verified reviewer ratings yet.</div>
+              <% } %>
+            </div>
           </div>
 
         </div>
@@ -380,7 +540,7 @@
 
           <% if (reviewList.length > 0) { %>
             <div class="reviewlist">
-              <% for (const rv of reviewList) { 
+              <% for (const rv of reviewList) {
                    const commentList = Array.isArray(rv.comments) ? rv.comments : [];
                    const ccount = Number(rv.comment_count || commentList.length || 0);
               %>
@@ -609,4 +769,3 @@
   </script>
 </body>
 </html>
-
