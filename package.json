@@ -1,6 +1,7 @@
 {
-  "name": "pressboxd-node",
+  "name": "Pressboxd",
   "version": "1.0.0",
+  "description": "Pressboxd - A social platform for tracking and reviewing Drum Corps shows.",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
@@ -16,7 +17,4 @@
     "multer": "^1.4.5-lts.1",
     "resend": "^4.0.0"
   }
-
 }
-
-
