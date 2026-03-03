@@ -1350,21 +1350,17 @@ function updateUserPasswordHash(conn, userId, newHash) {
 }
 
 function searchUsers(conn, q, opts = {}) {
-  const limit = Number(opts.limit || 8);
-  const query = String(q || '').trim().slice(0, 50);
-  const likeAny = `%${query}%`;
-  const likePrefix = `${query}%`;
+  const limit = Math.max(1, Math.min(Number(opts.limit || 8), 20));
+  const term = String(q || '').trim();
+  if (!term) return [];
 
   return conn.prepare(`
     SELECT id, username, avatar_url
     FROM users
-    WHERE LOWER(username) LIKE LOWER(?)
-    ORDER BY
-      CASE WHEN LOWER(username) LIKE LOWER(?) THEN 0 ELSE 1 END,
-      LENGTH(username) ASC,
-      username ASC
+    WHERE username LIKE ? COLLATE NOCASE
+    ORDER BY username ASC
     LIMIT ?
-  `).all(likeAny, likePrefix, limit);
+  `).all(`%${term}%`, limit);
 }
 
 module.exports = {
@@ -1462,6 +1458,7 @@ module.exports = {
   updateUserEmail,
   updateUserBio 
 };
+
 
 
 
