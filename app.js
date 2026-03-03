@@ -63,23 +63,19 @@ const BAD_WORDS = new Set([
  */
 function adminRequired(handler) {
   return async (req, res, next) => {
-    const user = req.session.user; // or req.session.me? 
-    
-    console.log("--- Admin Check ---");
-    console.log("User object found:", !!user);
-    if (user) {
-      console.log("User is_admin value:", user.is_admin);
-      console.log("User is_admin type:", typeof user.is_admin);
-    }
+    // 1. Get the user from the session
+    const user = req.session.user;
 
-    // This check handles strings "1", numbers 1, and booleans
-    if (user && (String(user.is_admin) === "1" || user.is_admin === true)) {
+    // 2. Check if user exists and if is_admin is 1 (as number or string)
+    // We use String() to make sure "1" == 1
+    if (user && String(user.is_admin) === "1") {
       return handler(req, res, next);
     }
 
-    console.log("ACCESS DENIED: Redirecting...");
-    req.flash('error', 'You do not have admin permissions.');
-    return res.redirect('/shows'); 
+    // 3. If they aren't an admin, send them to /shows with a message
+    console.log("Access Denied for user:", user?.username);
+    if (req.flash) req.flash('error', 'Admin access required.');
+    return res.redirect('/shows');
   };
 }
 
@@ -2081,6 +2077,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
