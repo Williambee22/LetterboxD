@@ -175,7 +175,7 @@ function updateUserBio(conn, userId, bio) {
     UPDATE users
     SET bio = ?
     WHERE id = ?
-  `).run(bio, userId);
+  `).run(String(bio || '').trim(), Number(userId));
 }
 
 
@@ -1461,6 +1461,7 @@ clearPasswordResetToken,
 setUserMustChangePassword,
 updateUserEmail,
 };
+
 
 
 
