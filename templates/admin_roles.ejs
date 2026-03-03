@@ -43,7 +43,7 @@
           <% for (const r of roles) { %>
             <div class="row between" style="padding:10px; border:1px solid rgba(255,255,255,.07); border-radius:12px;">
               <div class="row gap" style="align-items:center;">
-                <span class="role_tag" <%= r.color ? `style="border-color: ${r.color}; color: ${r.color};"` : "" %>>
+                <span class="role_tag" <%= r.color ? `style="border-color:${r.color}; color:${r.color}; background:${r.color}22;"` : "" %>>
                   <%= r.name %>
                 </span>
                 <span class="muted small"><%= r.slug %></span>
@@ -64,3 +64,4 @@
   </main>
 </body>
 </html>
+
