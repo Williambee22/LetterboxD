@@ -1454,13 +1454,15 @@ module.exports = {
   updateUserPasswordHash,
   searchUsers,
   ensureAuthColumns,
-userByEmail,
-setPasswordResetToken,
-userByResetToken,
-clearPasswordResetToken,
-setUserMustChangePassword,
-updateUserEmail,
+  userByEmail,
+  setPasswordResetToken,
+  userByResetToken,
+  clearPasswordResetToken,
+  setUserMustChangePassword,
+  updateUserEmail,
+  updateUserBio 
 };
+
 
 
 
