@@ -842,6 +842,32 @@ function createApp() {
     });
   });
 
+  app.post('/me/update_bio', loginRequired(async (req, res) => {
+    const bio = String(req.body.bio || '').trim();
+  
+    let conn;
+    try {
+      conn = getConn();
+  
+      if (typeof dbx.updateUserBio !== 'function') {
+        req.flash('error', 'updateUserBio() is missing in db.js');
+        return res.redirect('/me');
+      }
+  
+      await dbx.updateUserBio(conn, Number(req.session.uid), bio);
+      await dbx.commit(conn);
+  
+      req.flash('ok', 'Bio updated.');
+      return res.redirect('/me');
+    } catch (err) {
+      req.flash('error', String(err.message || err));
+      return res.redirect('/me');
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+
+  
   app.get('/shows', async (req, res, next) => {
     const sort = String(req.query.sort || 'year_desc').trim();
     const year = String(req.query.year || '').trim();
@@ -2147,3 +2173,4 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
