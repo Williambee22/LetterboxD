@@ -60,6 +60,77 @@ function usersColumns(conn) {
   return tableColumns(conn, 'users');
 }
 
+function getRatingHistogram(conn, showId) {
+  const rows = conn.prepare(`
+    SELECT
+      rating_half,
+      COUNT(*) AS cnt
+    FROM ratings
+    WHERE show_id = ?
+      AND rating_half IS NOT NULL
+    GROUP BY rating_half
+    ORDER BY rating_half ASC
+  `).all(Number(showId));
+
+  const out = {
+    "0.5": 0,
+    "1.0": 0,
+    "1.5": 0,
+    "2.0": 0,
+    "2.5": 0,
+    "3.0": 0,
+    "3.5": 0,
+    "4.0": 0,
+    "4.5": 0,
+    "5.0": 0
+  };
+
+  for (const r of rows || []) {
+    const label = (Number(r.rating_half) / 2).toFixed(1);
+    if (label in out) out[label] = Number(r.cnt || 0);
+  }
+
+  return out;
+}
+
+function getVerifiedRatingHistogram(conn, showId) {
+  const rows = conn.prepare(`
+    SELECT
+      r.rating_half,
+      COUNT(*) AS cnt
+    FROM ratings r
+    JOIN users u ON u.id = r.user_id
+    LEFT JOIN roles ro ON ro.id = u.role_id
+    WHERE r.show_id = ?
+      AND r.rating_half IS NOT NULL
+      AND ro.name = 'Verified Reviewer'
+    GROUP BY r.rating_half
+    ORDER BY r.rating_half ASC
+  `).all(Number(showId));
+
+  const out = {
+    "0.5": 0,
+    "1.0": 0,
+    "1.5": 0,
+    "2.0": 0,
+    "2.5": 0,
+    "3.0": 0,
+    "3.5": 0,
+    "4.0": 0,
+    "4.5": 0,
+    "5.0": 0
+  };
+
+  for (const r of rows || []) {
+    const label = (Number(r.rating_half) / 2).toFixed(1);
+    if (label in out) out[label] = Number(r.cnt || 0);
+  }
+
+  return out;
+}
+
+
+
 function pfpUrlForUsername(username) {
   const key = slugify(username);
   const base = `pfp_${key}`;
@@ -1469,8 +1540,11 @@ module.exports = {
   clearPasswordResetToken,
   setUserMustChangePassword,
   updateUserEmail,
+  getRatingHistogram,
+  getVerifiedRatingHistogram,
   updateUserBio 
 };
+
 
 
 
