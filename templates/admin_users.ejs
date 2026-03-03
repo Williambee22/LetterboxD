@@ -11,7 +11,12 @@
 
     <div class="panel">
       <div class="kicker">Admin</div>
-      <h1 style="margin:6px 0 14px;">Users</h1>
+      <h1 style="margin:6px 0 8px;">Users</h1>
+
+      <div class="muted small" style="margin-bottom:14px;">
+        Total users:
+        <strong><%= Array.isArray(users) ? users.length : 0 %></strong>
+      </div>
 
       <% if (Array.isArray(users) && users.length > 0) { %>
         <div class="stack">
