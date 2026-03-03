@@ -58,6 +58,24 @@ const BAD_WORDS = new Set([
   'dogshit', 'cuntface', 'cuntfaces', 'pisshead', 'pissheads', 'twatface', 'twatfaces', 'twink', 'twinks'
 ]);
 
+/**
+ * Middleware to restrict routes to admin users only
+ */
+function adminRequired(handler) {
+  return async (req, res, next) => {
+    // Check if user is logged in and is an admin
+    // Adjust 'req.session.user' to match how you store your user session
+    if (!req.session.user || Number(req.session.user.is_admin) !== 1) {
+      // Optional: if you use connect-flash
+      if (req.flash) req.flash('error', 'Admin access required.');
+      return res.redirect('/');
+    }
+    return handler(req, res, next);
+  };
+}
+
+
+
 function compileBadRegex(words) {
   const parts = [...words]
     .filter(Boolean)
@@ -911,7 +929,7 @@ function createApp() {
     return res.redirect(`/show/${showId}`);
   }));
 
-  app.post('//show/:show_id/review/:review_user_id/delete', adminRequired(async (req, res) => {
+  app.post('/show/:show_id/review/:review_user_id/delete', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const reviewUserId = Number(req.params.review_user_id);
     let conn;
@@ -2044,6 +2062,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
