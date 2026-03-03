@@ -1562,30 +1562,20 @@ function createApp() {
     }
   }));
 
-  app.get('/api/users/search', async (req, res, next) => {
-    const q = String(req.query.q || '').trim();
-    if (!q) return res.json({ results: [] });
-
-    let conn;
-    try {
-      conn = getConn();
-      const rows = await dbx.searchUsers(conn, q.slice(0, 50), { limit: 8 });
-      const results = (rows || []).map((r) => {
-        const d = normalizeRow(r);
-        if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
-        return {
-          username: d.username,
-          avatar_url: d.avatar_url,
-          profile_url: `/u/${encodeURIComponent(d.username)}`,
-        };
-      });
-      return res.json({ results });
-    } catch (err) {
-      return next(err);
-    } finally {
-      if (conn) dbx.close(conn);
-    }
-  });
+  function searchUsers(conn, q, opts = {}) {
+    const limit = Math.max(1, Math.min(Number(opts.limit || 8), 20));
+    const term = String(q || '').trim();
+  
+    if (!term) return [];
+  
+    return conn.prepare(`
+      SELECT id, username, avatar_url
+      FROM users
+      WHERE username LIKE ? COLLATE NOCASE
+      ORDER BY username ASC
+      LIMIT ?
+    `).all(`%${term}%`, limit);
+  }
 
   app.get('/me', loginRequired(async (req, res) => {
     let conn;
@@ -2173,4 +2163,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
