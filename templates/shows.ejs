@@ -380,7 +380,7 @@
                    const ratingHalf = a?.rating_half;
                    const stars = ratingHalf != null ? Number(ratingHalf) / 2 : null;
               %>
-                <div style="width:340px; flex:0 0 auto; padding:10px; border-radius:12px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);">
+                <div style="flex:1 1 260px; min-width:220px; max-width:100%; padding:10px; border-radius:12px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);">
                     <div style="min-width:0;">
                       <div class="small" style="line-height:1.35;">
                         <b><%= who %></b>
@@ -628,6 +628,7 @@
   </script>
 </body>
 </html>
+
 
 
 
