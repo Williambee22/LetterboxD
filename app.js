@@ -210,9 +210,17 @@ function pfpUrlForUsername(username) {
 }
 
 function posterUrlForShow(corps, year) {
-  const key = slugify(corps);
+  const key = String(corps || '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
   const y = parseInt(year || 0, 10);
-  return `/poster/${encodeURIComponent(key)}/${encodeURIComponent(y)}`;
+  if (!key || !y) return '/static/posters/placeholder.png';
+
+  return `/poster/${encodeURIComponent(`${key}${y}`)}`;
 }
 
 function normalizeRow(row) {
@@ -538,32 +546,25 @@ function createApp() {
     };
   }
 
-  app.get('/poster/:key/:year', async (req, res) => {
-    const key = String(req.params.key || '').trim();
-    const year = parseInt(req.params.year || 0, 10);
+  app.get('/poster/:name', async (req, res) => {
+    const name = String(req.params.name || '').trim();
     const base = String(process.env.R2_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
   
-    if (!base || !key || !year) {
+    if (!base || !name) {
       return res.redirect('/static/posters/placeholder.png');
     }
   
-    const candidates = [
-      `${base}/posters/${key}${year}.png`,
-      `${base}/posters/${key}${year}.jpg`,
-      `${base}/posters/${key}${year}.jpeg`,
-      `${base}/posters/${key}${year}.webp`,
-      `${base}/posters/${key}default.png`,
-      `${base}/posters/${key}default.jpg`,
-      `${base}/posters/${key}default.jpeg`,
-      `${base}/posters/${key}default.webp`,
-      `${base}/posters/default.png`,
-      `${base}/posters/default.jpg`,
-      `${base}/posters/default.jpeg`,
-      `${base}/posters/default.webp`,
-    ];
+    const exts = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
   
     try {
-      for (const url of candidates) {
+      for (const ext of exts) {
+        const url = `${base}/posters/${name}${ext}`;
+        const r = await fetch(url, { method: 'HEAD' });
+        if (r.ok) return res.redirect(url);
+      }
+  
+      for (const ext of exts) {
+        const url = `${base}/posters/default${ext}`;
         const r = await fetch(url, { method: 'HEAD' });
         if (r.ok) return res.redirect(url);
       }
@@ -2427,6 +2428,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
