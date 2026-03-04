@@ -560,13 +560,17 @@ function createApp() {
       for (const ext of exts) {
         const url = `${base}/posters/${name}${ext}`;
         const r = await fetch(url, { method: 'HEAD' });
-        if (r.ok) return res.redirect(url);
+        if (r.ok) {
+          return res.redirect(url);
+        }
       }
   
       for (const ext of exts) {
         const url = `${base}/posters/default${ext}`;
         const r = await fetch(url, { method: 'HEAD' });
-        if (r.ok) return res.redirect(url);
+        if (r.ok) {
+          return res.redirect(url);
+        }
       }
     } catch (err) {
       console.error('poster lookup failed:', err);
@@ -574,7 +578,6 @@ function createApp() {
   
     return res.redirect('/static/posters/placeholder.png');
   });
-
 
   
   app.get('/forgot-password', (req, res) => {
@@ -2436,6 +2439,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
