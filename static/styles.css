@@ -11,8 +11,8 @@
 
   --accent:#7c7c7c;
   --accent2: color-mix(in srgb, var(--accent) 55%, transparent);
-  --accentSoft: color-mix(in srgb, var(--accent) 45%, transparent);
-  --accentFaint: color-mix(in srgb, var(--accent) 22%, transparent);
+  --accentSoft: color-mix(in srgb, var(--accent) 28%, transparent);
+  --accentFaint: color-mix(in srgb, var(--accent) 14%, transparent);
 
   --good:#068818;
   --radius:10px;
@@ -64,9 +64,8 @@ a:hover{
   font-size:12px;
   letter-spacing:.16em;
   text-transform:uppercase;
-  color: color-mix(in srgb, var(--accent) 72%, white 28%);
+  color: color-mix(in srgb, var(--accent) 60%, var(--muted));
 }
-
 .topbar{
   position:sticky;
   top:0;
@@ -806,7 +805,13 @@ img[src^="/static/posters/"]{
   position:relative;
   z-index:2;
   padding:16px;
-  --pAccent:var(--accent);
+  --pAccent: var(--accent);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--pAccent) 16%, rgba(0,0,0,.35)),
+      rgba(0,0,0,.10)
+    );
 }
 
 .profile_hero_inner .btn{
@@ -824,17 +829,8 @@ img[src^="/static/posters/"]{
 }
 
 .role_tag{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:6px 10px;
-  border:1px solid var(--accentFaint);
-  background:var(--accentFaint);
-  color:var(--accent);
-  font-weight:900;
-  font-size:12px;
-  letter-spacing:.02em;
-  line-height:1;
+  border:1px solid var(--accentSoft);
+  background: color-mix(in srgb, var(--accent) 12%, rgba(255,255,255,.03));
 }
 
 .role_tag.tiny{
@@ -845,12 +841,10 @@ img[src^="/static/posters/"]{
 .profile_avg_box{
   margin-left:auto;
   text-align:right;
-  border:1px solid color-mix(in srgb, var(--pAccent, var(--accent)) 55%, transparent);
-  background: color-mix(in srgb, var(--pAccent, var(--accent)) 10%, rgba(0,0,0,.32));
+  border:1px solid var(--pAccent, var(--accentSoft));
+  background: color-mix(in srgb, var(--pAccent) 10%, rgba(255,255,255,.02));
   padding:10px 12px;
-  border-radius:0;
   min-width:160px;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--pAccent, var(--accent)) 14%, transparent);
 }
 
 .profile_avg_value{
@@ -1103,4 +1097,5 @@ img[src^="/static/posters/"]{
   border-left: 3px solid color-mix(in srgb, var(--pAccent, var(--accent)) 45%, transparent);
   padding-left: 10px;
 }
+
 
