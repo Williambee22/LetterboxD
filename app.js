@@ -947,40 +947,48 @@ function createApp() {
     const sort = String(req.query.sort || 'year_desc').trim();
     const year = String(req.query.year || '').trim();
     const corps = String(req.query.corps || '').trim();
-
+  
     let conn;
     try {
       conn = getConn();
+  
       const rows = await dbx.listShows(conn, { sort, year, corps });
       const rows2 = (rows || []).map((r) => {
         const d = normalizeRow(r);
-        if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+  
+        // always rebuild from corps/year
+        d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+  
+        if (!d.poster_url) {
+          d.poster_url = '/static/posters/placeholder.png';
+        }
+  
         return d;
       });
-
+  
       let friendActivity = [];
       if (req.session.uid) {
         friendActivity = (await dbx.listFriendActivity(conn, Number(req.session.uid), { limit: 5 }) || []).map((x) => {
           const d = normalizeRow(x);
-        
-          const hasOldStaticPoster =
-            d.poster_url &&
-            typeof d.poster_url === 'string' &&
-            d.poster_url.startsWith('/static/posters/');
-        
-          if ((!d.poster_url || hasOldStaticPoster) && d.corps && d.year) {
-            d.poster_url = posterUrlForShow(d.corps, d.year);
-          }
-        
+  
+          // always rebuild from corps/year
+          d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+  
           if (!d.poster_url) {
             d.poster_url = '/static/posters/placeholder.png';
           }
-        
+  
           return d;
         });
       }
-
-      res.render('shows', { rows: rows2, sort, year, corps, friend_activity: friendActivity });
+  
+      res.render('shows', {
+        rows: rows2,
+        sort,
+        year,
+        corps,
+        friend_activity: friendActivity,
+      });
     } catch (err) {
       next(err);
     } finally {
@@ -2428,6 +2436,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
