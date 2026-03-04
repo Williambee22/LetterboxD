@@ -970,20 +970,22 @@ function createApp() {
       });
   
       let friendActivity = [];
-      if (req.session.uid) {
-        friendActivity = (await dbx.listFriendActivity(conn, Number(req.session.uid), { limit: 5 }) || []).map((x) => {
-          const d = normalizeRow(x);
-  
-          // always rebuild from corps/year
-          d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
-  
-          if (!d.poster_url) {
-            d.poster_url = '/static/posters/placeholder.png';
-          }
-  
-          return d;
-        });
-      }
+        if (req.session.uid) {
+          friendActivity = (await dbx.listFriendActivity(conn, Number(req.session.uid), { limit: 5 }) || []).map((x) => {
+            const d = normalizeRow(x);
+        
+            const posterThumb =
+              (d.corps && d.year)
+                ? posterUrlForShow(d.corps, d.year)
+                : '/static/posters/placeholder.png';
+        
+            return {
+              ...d,
+              poster_thumb: posterThumb,
+              poster_url: posterThumb,
+            };
+          });
+        }
   
       res.render('shows', {
         rows: rows2,
@@ -2439,6 +2441,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
