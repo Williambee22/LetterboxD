@@ -638,7 +638,7 @@
                 <a class="poster" href="/show/<%= rr.show_id %>">
                   <div class="poster_art">
                     <% if (rr && rr.poster_url) { %>
-                      <img class="poster_img" src="<%= rr.poster_url %>" alt="<%= rr.title || 'poster' %> poster" loading="lazy">
+                      <img class="poster_img" src="<%= rr.poster_url %>" alt="<%= rr.title || 'poster' %> poster" loading="lazy, object-position:center center;">
                     <% } else { %>
                       <div class="poster_fallback"></div>
                     <% } %>
@@ -721,6 +721,7 @@
   </script>
 </body>
 </html>
+
 
 
 
