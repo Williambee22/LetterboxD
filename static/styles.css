@@ -969,6 +969,35 @@ textarea:focus{
   object-fit: contain;
 }
 
+/* base vote button */
+.vote_btn{
+  border: 1px solid rgba(255,255,255,.18);
+  background: transparent;
+  color: inherit;
+  padding: 4px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  line-height: 1;
+  opacity: .9;
+}
+
+.vote_btn:hover{
+  background: rgba(255,255,255,.06);
+  opacity: 1;
+}
+
+/* selected states */
+.vote_btn.up.on{
+  background: rgba(6, 136, 24, .18);
+  border-color: rgba(6, 136, 24, .7);
+  color: #06a31d; /* green */
+}
+
+.vote_btn.down.on{
+  background: rgba(220, 38, 38, .18);
+  border-color: rgba(220, 38, 38, .7);
+  color: #ef4444; /* red */
+}
 
 
 
