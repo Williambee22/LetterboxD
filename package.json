@@ -8,6 +8,7 @@
     "dev": "node app.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.866.0",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.7.0",
     "connect-sqlite3": "^0.9.15",
