@@ -662,7 +662,14 @@
                               action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote"
                               style="margin:0;">
                           <input type="hidden" name="vote" value="1">
-                          <button class="vote_btn up <%= Number(rv.my_vote) === 1 ? 'on' : '' %>" type="submit">▲</button>
+                          <button
+                            class="vote_btn up"
+                            type="submit"
+                            style="<%= Number(rv.my_vote) === 1
+                              ? 'background: rgba(6,136,24,.18); border: 1px solid rgba(6,136,24,.7); color:#06a31d;'
+                              : 'background: transparent; border: 1px solid rgba(255,255,255,.18); color: inherit;' %>
+                                   padding:4px 8px; border-radius:10px; cursor:pointer; line-height:1; opacity:.9;"
+                          >▲</button>
                         </form>
                     
                         <div class="vote_score"><%= Number(rv.vote_score || 0) %></div>
@@ -671,7 +678,14 @@
                               action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote"
                               style="margin:0;">
                           <input type="hidden" name="vote" value="-1">
-                          <button class="vote_btn down <%= Number(rv.my_vote) === -1 ? 'on' : '' %>" type="submit">▼</button>
+                          <button
+                            class="vote_btn down"
+                            type="submit"
+                            style="<%= Number(rv.my_vote) === -1
+                              ? 'background: rgba(220,38,38,.18); border: 1px solid rgba(220,38,38,.7); color:#ef4444;'
+                              : 'background: transparent; border: 1px solid rgba(255,255,255,.18); color: inherit;' %>
+                                   padding:4px 8px; border-radius:10px; cursor:pointer; line-height:1; opacity:.9;"
+                          >▼</button>
                         </form>
                       <% } else { %>
                         <div class="vote_score"><%= Number(rv.vote_score || 0) %></div>
@@ -695,15 +709,6 @@
                         </form>
                       <% } %>
                     </div>
-
-                  </div>
-                </div>
-              <% } %>
-            </div>
-          <% } else { %>
-            <div class="muted">No reviews yet. Be the first to write one.</div>
-          <% } %>
-        </div>
       </section>
 
       <aside class="side" style="top:86px;">
@@ -770,6 +775,7 @@
   </script>
 </body>
 </html>
+
 
 
 
