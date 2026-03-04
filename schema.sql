@@ -151,4 +151,11 @@ CREATE INDEX IF NOT EXISTS idx_notifications_user_created
 ON notifications(user_id, created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_notifications_user_unread
+
+
+
+SELECT username, theme_color
+FROM users
+WHERE username = 'yourusername';
+
 ON notifications(user_id, is_read);
