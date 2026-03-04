@@ -368,43 +368,53 @@
             <a class="muted small" href="/me/friends" style="text-decoration:none;">Friends</a>
           </div>
 
-          <% if (safeFriendActivity.length > 0) { %>
-            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:stretch; margin-top: 20px;">
+         <% if (safeFriendActivity.length > 0) { %>
+            <div style="
+              display:flex;
+              flex-wrap:wrap;
+              gap:10px;
+              margin-top:14px;
+              align-items:stretch;
+            ">
               <% for (const a of safeFriendActivity) {
                    const kind = a?.kind || "";
                    const who = a?.actor_username || "Someone";
                    const sid = a?.show_id || null;
                    const corpsv = a?.corps || "";
                    const yearv = a?.year || "";
-                   const posterThumb = a?.poster_url || POSTER_FALLBACK;
                    const ratingHalf = a?.rating_half;
                    const stars = ratingHalf != null ? Number(ratingHalf) / 2 : null;
               %>
-                <div style="flex:1 1 260px; min-width:220px; max-width:100%; padding:10px; border-radius:12px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);">
-                    <div style="min-width:0;">
-                      <div class="small" style="line-height:1.35;">
-                        <b><%= who %></b>
-                        <% if (kind === "rating") { %>
-                          rated
-                        <% } else if (kind === "review") { %>
-                          reviewed
-                        <% } else { %>
-                          did something on
-                        <% } %>
-                  
-                        <% if (sid) { %>
-                          <a href="/show/<%= sid %>" style="text-decoration:none;">
-                            <%= corpsv %><% if (yearv) { %> <%= yearv %><% } %>
-                          </a>
-                        <% } else { %>
-                          <%= corpsv %><% if (yearv) { %> <%= yearv %><% } %>
-                        <% } %>
-                  
-                        <% if (kind === "rating" && ratingHalf != null) { %>
-                          <span class="muted">(<%= stars %>★)</span>
-                        <% } %>
-                      </div>
-                    </div>
+                <div style="
+                  flex: 1 1 240px;
+                  max-width: 360px;
+                  padding:10px;
+                  border-radius:12px;
+                  background: rgba(255,255,255,0.04);
+                  border:1px solid rgba(255,255,255,0.10);
+                  overflow:hidden;
+                ">
+                  <div class="small" style="line-height:1.35; min-width:0;">
+                    <b><%= who %></b>
+                    <% if (kind === "rating") { %>
+                      rated
+                    <% } else if (kind === "review") { %>
+                      reviewed
+                    <% } else { %>
+                      did something on
+                    <% } %>
+          
+                    <% if (sid) { %>
+                      <a href="/show/<%= sid %>" style="text-decoration:none;">
+                        <%= corpsv %><% if (yearv) { %> <%= yearv %><% } %>
+                      </a>
+                    <% } else { %>
+                      <%= corpsv %><% if (yearv) { %> <%= yearv %><% } %>
+                    <% } %>
+          
+                    <% if (kind === "rating" && ratingHalf != null) { %>
+                      <span class="muted">(<%= stars %>★)</span>
+                    <% } %>
                   </div>
                 </div>
               <% } %>
@@ -628,6 +638,7 @@
   </script>
 </body>
 </html>
+
 
 
 
