@@ -962,7 +962,12 @@ function createApp() {
         friendActivity = (await dbx.listFriendActivity(conn, Number(req.session.uid), { limit: 5 }) || []).map((x) => {
           const d = normalizeRow(x);
         
-          if (!d.poster_url && d.corps && d.year) {
+          const hasOldStaticPoster =
+            d.poster_url &&
+            typeof d.poster_url === 'string' &&
+            d.poster_url.startsWith('/static/posters/');
+        
+          if ((!d.poster_url || hasOldStaticPoster) && d.corps && d.year) {
             d.poster_url = posterUrlForShow(d.corps, d.year);
           }
         
@@ -2422,6 +2427,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
