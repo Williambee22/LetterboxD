@@ -1264,7 +1264,7 @@ function listFriendActivity(conn, viewerId, opts = {}) {
       s.id AS show_id,
       s.corps AS corps,
       s.year AS year,
-      s.poster_url AS poster_url
+      s.poster_url AS poster_url,
       NULL AS rating_half,
       ${reviewTs} AS ts
     FROM reviews r
@@ -1281,6 +1281,7 @@ function listFriendActivity(conn, viewerId, opts = {}) {
       s.id AS show_id,
       s.corps AS corps,
       s.year AS year,
+      s.poster_url AS poster_url,
       rt.rating_half AS rating_half,
       ${ratingTs} AS ts
     FROM ratings rt
@@ -1536,6 +1537,7 @@ module.exports = {
   getVerifiedRatingHistogram,
   updateUserBio 
 };
+
 
 
 
