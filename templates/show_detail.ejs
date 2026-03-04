@@ -662,7 +662,7 @@
                               action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote"
                               style="margin:0;">
                           <input type="hidden" name="vote" value="1">
-                          <button class="vote_btn <%= Number(rv.my_vote) === 1 ? 'on' : '' %>" type="submit">▲</button>
+                          <button class="vote_btn up <%= Number(rv.my_vote) === 1 ? 'on' : '' %>" type="submit">▲</button>
                         </form>
 
                         <div class="vote_score"><%= Number(rv.vote_score || 0) %></div>
@@ -671,7 +671,7 @@
                               action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote"
                               style="margin:0;">
                           <input type="hidden" name="vote" value="-1">
-                          <button class="vote_btn <%= Number(rv.my_vote) === -1 ? 'on' : '' %>" type="submit">▼</button>
+                          <button class="vote_btn down <%= Number(rv.my_vote) === -1 ? 'on' : '' %>" type="submit">▼</button>
                         </form>
                       <% } else { %>
                         <div class="vote_score"><%= Number(rv.vote_score || 0) %></div>
@@ -770,6 +770,7 @@
   </script>
 </body>
 </html>
+
 
 
 
