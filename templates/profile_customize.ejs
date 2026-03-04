@@ -132,23 +132,7 @@
       display:block;
     }
 
-    .previewBanner {
-      width: 100%;
-      height: 160px;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .previewBanner img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display:block;
-    }
+   
 
     .dropzone {
       border: 1px dashed rgba(255,255,255,.18);
@@ -203,7 +187,6 @@
   const safeNotifItems = (typeof notif_items !== "undefined" && Array.isArray(notif_items)) ? notif_items : [];
   const safeFlashes = (typeof flashes !== "undefined" && Array.isArray(flashes)) ? flashes : [];
   const currentAvatar = safeU.avatar_url || '';
-  const currentBanner = safeU.banner_url || '';
   const currentTheme = safeU.theme_color || '';
 %>
 
@@ -326,7 +309,6 @@
       <div>
         <div class="kicker">Settings</div>
         <h1 style="margin:6px 0 0;">Customize Profile</h1>
-        <div class="muted small">Update your theme, profile picture, and banner here.</div>
       </div>
       <a class="btn ghost" href="/me">Back to Profile</a>
     </div>
@@ -357,35 +339,6 @@
 
             <form id="pfpUploadForm" method="post" action="/me/upload_pfp" enctype="multipart/form-data">
               <input type="file" id="pfpFileReal" name="pfp_file" accept="image/*" hidden>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="kicker">Banner Image</div>
-
-        <div style="margin-top:14px;">
-          <div class="previewBanner">
-            <% if (currentBanner) { %>
-              <img src="<%= currentBanner %>" alt="Current banner">
-            <% } else { %>
-              <div class="muted">No banner uploaded</div>
-            <% } %>
-          </div>
-
-          <div style="margin-top:12px;">
-            <div class="muted small" style="margin-bottom:10px;">Upload a new profile banner.</div>
-
-            <div class="dropzone" id="bannerDrop">
-              <div class="dropzone_inner">
-                <div class="muted">Drag & drop banner or click</div>
-                <div class="muted small">Recommended: wide image</div>
-              </div>
-            </div>
-
-            <form id="bannerUploadForm" method="post" action="/me/upload_banner" enctype="multipart/form-data">
-              <input type="file" id="bannerFileReal" name="banner_file" accept="image/*" hidden>
             </form>
           </div>
         </div>
@@ -523,3 +476,4 @@
   </script>
 </body>
 </html>
+
