@@ -86,12 +86,15 @@ a:hover{
 }
 
 .brand_logo{
-  width:10px;
-  height:10px;
-  object-fit:cover;
-  display:block;
-  flex:0 0 auto;
-  box-shadow: 0 0 0 4px var(--accentFaint);
+  width:10px !important;
+  height:10px !important;
+  min-width:10px !important;
+  min-height:10px !important;
+  max-width:10px !important;
+  max-height:10px !important;
+  display:block !important;
+  object-fit:cover !important;
+  flex:0 0 10px !important;
 }
 
 .nav a,
@@ -1099,6 +1102,7 @@ img[src^="/static/posters/"]{
   border-left: 3px solid color-mix(in srgb, var(--pAccent, var(--accent)) 45%, transparent);
   padding-left: 10px;
 }
+
 
 
 
