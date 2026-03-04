@@ -10,20 +10,26 @@
     .auth { align-items:center; gap: 12px; }
 
     .notifWrap { position: relative; display: inline-flex; align-items:center; }
+
     .bellBtn {
       position: relative;
-      border: none;
+      border: 1px solid transparent;
       background: transparent;
       cursor: pointer;
       color: inherit;
       padding: 6px;
-      border-radius: 10px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       opacity: 0.95;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
     }
-    .bellBtn:hover { background: rgba(255,255,255,0.06); }
+    .bellBtn:hover {
+      background: var(--accentFaint);
+      border-color: var(--accentSoft);
+      box-shadow: 0 0 0 1px var(--accentFaint);
+    }
+
     .badgeDot {
       position:absolute;
       top: 3px;
@@ -31,14 +37,14 @@
       min-width: 18px;
       height: 18px;
       padding: 0 6px;
-      border-radius: 999px;
-      background: #ff3b30;
+      background: var(--accent);
       color: #fff;
       font-size: 11px;
       line-height: 18px;
       text-align: center;
       font-weight: 800;
       box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+      border: 1px solid var(--accentSoft);
     }
 
     .notifDropdown {
@@ -50,8 +56,7 @@
       max-height: 420px;
       overflow: auto;
       background: rgba(15, 23, 42, 0.98);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 14px;
+      border: 1px solid var(--accentSoft);
       box-shadow: 0 14px 40px rgba(0,0,0,0.45);
       z-index: 9999;
     }
@@ -62,41 +67,177 @@
       align-items:center;
       justify-content:space-between;
       padding: 10px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.10);
+      border-bottom: 1px solid var(--accentSoft);
       position: sticky;
       top: 0;
       background: rgba(15, 23, 42, 0.98);
       backdrop-filter: blur(8px);
     }
-    .notifTitle { font-weight: 900; }
+    .notifTitle {
+      font-weight: 900;
+      color: var(--text);
+    }
+
     .markReadBtn {
-      border: none;
+      border: 1px solid transparent;
       background: transparent;
       color: inherit;
       cursor: pointer;
-      opacity: 0.85;
+      opacity: 0.9;
       font-size: 12px;
       padding: 6px 8px;
-      border-radius: 10px;
+      transition: background .15s ease, border-color .15s ease;
     }
-    .markReadBtn:hover { background: rgba(255,255,255,0.06); opacity: 1; }
+    .markReadBtn:hover {
+      background: var(--accentFaint);
+      border-color: var(--accentSoft);
+      opacity: 1;
+    }
 
     .notifList { padding: 8px; display:flex; flex-direction:column; gap: 8px; }
+
     .notifItem {
       padding: 10px;
-      border-radius: 12px;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.08);
+      transition: border-color .15s ease, background .15s ease;
     }
-    .notifItem.unread { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.25); }
-    .notifTime { font-size: 12px; opacity: 0.7; margin-top: 4px; }
-    .notifEmpty { padding: 12px; opacity: 0.8; }
+
+    .notifItem.unread {
+      background: var(--accentFaint);
+      border-color: var(--accentSoft);
+    }
+
+    .notifItem a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .notifItem a:hover {
+      text-decoration: underline;
+    }
+
+    .notifTime {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+
+    .notifEmpty {
+      padding: 12px;
+      opacity: 0.8;
+    }
 
     .authBellSlot { display:inline-flex; align-items:center; }
 
     .notifDropdown,
     .notifDropdown * {
       pointer-events: auto !important;
+    }
+
+    .profile_top_actions{
+      margin-top:10px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .profile_counts .badge{
+      border-color: var(--accentFaint);
+      background: var(--accentFaint);
+      color: var(--text);
+    }
+
+    .profile_bio{
+      margin-top:12px;
+      opacity:0.95;
+      line-height:1.55;
+      border-left: 3px solid var(--accentSoft);
+      padding-left: 12px;
+    }
+
+    .profile_section_title{
+      color: var(--accent);
+    }
+
+    .acct_details{
+      border-top: 1px solid var(--accentSoft);
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+
+    .acct_panel{
+      border: 1px solid var(--accentSoft) !important;
+      background: color-mix(in srgb, var(--accent) 6%, rgba(0,0,0,.92));
+      box-shadow: 0 0 0 1px var(--accentFaint);
+    }
+
+    .profile_main_panel{
+      border-color: var(--accentSoft);
+      box-shadow: 0 0 0 1px var(--accentFaint);
+    }
+
+    .profile_ratings_panel .kicker,
+    .profile_reviews_panel .kicker,
+    .profile_stats .kicker{
+      color: var(--accent);
+    }
+
+    .profile_stats{
+      background: color-mix(in srgb, var(--accent) 5%, rgba(0,0,0,.92));
+    }
+
+    .profile_hero_inner h1{
+      color: var(--text);
+      text-shadow: 0 2px 18px rgba(0,0,0,.45);
+    }
+
+    .profile_avg_box{
+      background: color-mix(in srgb, var(--accent) 10%, rgba(0,0,0,.35));
+      border-color: var(--accentSoft) !important;
+      box-shadow: 0 0 0 1px var(--accentFaint);
+    }
+
+    .profile_avg_value{
+      color: var(--text);
+    }
+
+    .profile_avg_star{
+      color: var(--accent);
+    }
+
+    .role_tag{
+      box-shadow: 0 0 0 1px rgba(0,0,0,.15) inset;
+    }
+
+    .poster_meta{
+      border-top: 1px solid var(--accentFaint);
+    }
+
+    .reviewcard{
+      border-color: var(--accentSoft);
+      background: color-mix(in srgb, var(--accent) 5%, rgba(7,10,16,.35));
+    }
+
+    .reviewtext{
+      border-left: 3px solid var(--accentSoft);
+      padding-left: 12px;
+      margin-top: 12px;
+    }
+
+    .tile_rating{
+      border-color: var(--accentSoft) !important;
+      background: rgba(0,0,0,.72) !important;
+    }
+
+    .tile_star{
+      color: var(--accent) !important;
+    }
+
+    .topline_accent{
+      border-top: 1px solid var(--accentSoft);
+      padding-top: 12px;
     }
   </style>
 </head>
@@ -184,6 +325,13 @@
                               — <a href="/show/<%= sid %>">View show</a>
                             <% } %>
                           </div>
+                        <% } else if (kind === "review_comment") { %>
+                          <div>
+                            <b><%= actor %></b> commented on your review
+                            <% if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
+                          </div>
                         <% } else { %>
                           <div>New activity.</div>
                         <% } %>
@@ -231,7 +379,7 @@
     <% } %>
 
     <% if (pu.username) { %>
-      <div class="row gap" style="margin-top:10px; flex-wrap:wrap; align-items:center;">
+      <div class="profile_top_actions profile_counts">
         <a class="badge muted" href="/u/<%= encodeURIComponent(pu.username) %>/followers">
           Followers: <%= pu.followers_count != null ? pu.followers_count : 0 %>
         </a>
@@ -289,7 +437,7 @@
           </div>
 
           <div style="min-width:0; flex: 1;">
-            <div class="kicker">Profile</div>
+            <div class="kicker profile_section_title">Profile</div>
             <h1 style="margin:6px 0 0;"><%= pu.username || "User" %></h1>
 
             <% if (roles.length > 0) { %>
@@ -303,9 +451,9 @@
             <% } %>
 
             <% if (pu.bio) { %>
-                <div class="profile_bio" style="margin-top: 12px; opacity: 0.9; line-height: 1.5;">
-                    <%= pu.bio %>
-                </div>
+              <div class="profile_bio">
+                <%= pu.bio %>
+              </div>
             <% } %>
 
             <% if (pu.username) { %>
@@ -350,15 +498,15 @@
           <% } %>
 
           <% if (isMe) { %>
-            <div style="margin-top:12px; border-top:1px solid rgba(255,255,255,.08); padding-top:12px;">
-              <details class="acct_details">
+            <div class="acct_details">
+              <details>
                 <summary class="btn ghost" style="width:100%; justify-content:space-between;">
                   Account
                   <span class="muted small">▼</span>
                 </summary>
 
                 <div class="panel acct_panel" style="margin-top:10px; padding:14px;">
-                  <div class="kicker">Account</div>
+                  <div class="kicker profile_section_title">Account</div>
 
                   <div style="margin-top:12px; display:grid; grid-template-columns: 1fr; gap:14px;">
                     <div>
@@ -380,7 +528,7 @@
                       </form>
                     </div>
 
-                    <div>
+                    <div class="topline_accent">
                       <div class="muted small" style="margin-bottom:8px;"><b>Change password</b></div>
                       <form method="post" action="/me/change_password">
                         <div class="field">
@@ -413,20 +561,20 @@
 
       <section class="stack">
         <% if (isMe) { %>
-          <div class="panel">
-            <div class="field" style="margin-top:16px;">
-                <label>Bio</label>
-                <form method="post" action="/me/update_bio">
-                    <textarea name="bio" placeholder="Tell us about your favorite corps..." rows="3" style="width:100%;"><%= pu.bio || "" %></textarea>
-                    <div class="actions" style="margin-top:8px;">
-                        <button class="btn green" type="submit">Save Bio</button>
-                    </div>
-                </form>
+          <div class="panel profile_main_panel">
+            <div class="kicker profile_section_title">Bio</div>
+            <div class="field" style="margin-top:12px;">
+              <form method="post" action="/me/update_bio">
+                <textarea name="bio" placeholder="Tell us about your favorite corps..." rows="3" style="width:100%;"><%= pu.bio || "" %></textarea>
+                <div class="actions" style="margin-top:8px;">
+                  <button class="btn green" type="submit">Save Bio</button>
+                </div>
+              </form>
             </div>
           </div>
         <% } %>
 
-        <div class="panel">
+        <div class="panel profile_ratings_panel">
           <div class="kicker">Recent ratings</div>
 
           <% if (recentRatings.length > 0) { %>
@@ -463,7 +611,7 @@
           <% } %>
         </div>
 
-        <div class="panel">
+        <div class="panel profile_reviews_panel">
           <div class="kicker">Recent reviews</div>
 
           <% if (recentReviews.length > 0) { %>
@@ -502,7 +650,6 @@
 
   <script>
     (() => {
-      // Notification Logic
       const btn = document.getElementById("bellBtn");
       const dd  = document.getElementById("notifDropdown");
       if (btn && dd) {
@@ -517,40 +664,7 @@
           if (e.key === "Escape") dd.classList.remove("open");
         });
       }
-
-      // Dropzone logic (Handles both PFP and Banner)
-      function setupDropzone(dropId, inputId, formId) {
-        const drop = document.getElementById(dropId);
-        const input = document.getElementById(inputId);
-        const form = document.getElementById(formId);
-        if (!drop || !input || !form) return;
-
-        drop.addEventListener("click", () => input.click());
-        input.addEventListener("change", () => {
-          if (input.files && input.files[0]) form.submit();
-        });
-        drop.addEventListener("dragover", (e) => {
-          e.preventDefault();
-          drop.classList.add("hover");
-        });
-        drop.addEventListener("dragleave", () => drop.classList.remove("hover"));
-        drop.addEventListener("drop", (e) => {
-          e.preventDefault();
-          drop.classList.remove("hover");
-          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            const dt = new DataTransfer();
-            dt.items.add(e.dataTransfer.files[0]);
-            input.files = dt.files;
-            form.submit();
-          }
-        });
-      }
-
-      setupDropzone("pfpDrop", "pfpFileReal", "pfpUploadForm");
-      setupDropzone("bannerDrop", "bannerFileReal", "bannerUploadForm");
     })();
   </script>
 </body>
 </html>
-
-
