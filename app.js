@@ -190,9 +190,16 @@ async function deleteStoredImageByUrl(url, kind) {
       const rel = full.split('/static/')[1];
       if (rel) deleteLocalFileIfExists(path.join(STATIC_DIR, rel));
     }
+    return;
+  }
+
+  if (kind === 'banner') {
+    if (full.includes('/static/')) {
+      const rel = full.split('/static/')[1];
+      if (rel) deleteLocalFileIfExists(path.join(STATIC_DIR, rel));
+    }
   }
 }
-
 
 function pfpUrlForUsername(username) {
   const key = slugify(username);
@@ -694,6 +701,17 @@ function createApp() {
     },
   });
 
+  const uploadBanner = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (!ALLOWED_IMAGE_EXTS.has(ext)) return cb(new Error('Invalid file type'));
+      return cb(null, true);
+    },
+  });
+
+  
   app.use(async (req, res, next) => {
     if (!['POST', 'PUT', 'PATCH'].includes(req.method)) return next();
 
@@ -1048,6 +1066,72 @@ function createApp() {
     return res.redirect(`/show/${showId}`);
   }));
 
+  app.post('/me/upload_banner', loginRequired((req, res, next) => {
+    uploadBanner.single('banner_file')(req, res, async (err) => {
+      if (err) {
+        req.flash('error', `Upload failed: ${err.message}`);
+        return res.redirect('/me');
+      }
+  
+      if (!req.file) {
+        req.flash('error', 'No file selected.');
+        return res.redirect('/me');
+      }
+  
+      let conn;
+      try {
+        conn = getConn();
+        const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
+        if (!me) return res.sendStatus(404);
+  
+        let ext = path.extname(req.file.originalname || '').toLowerCase();
+        if (!ALLOWED_IMAGE_EXTS.has(ext)) {
+          req.flash('error', 'Invalid file type.');
+          return res.redirect('/me');
+        }
+        if (ext === '.jpeg') ext = '.jpg';
+  
+        const oldBannerUrl = String(me.banner_url || '').trim();
+  
+        const fileName = `banner_${slugify(me.username)}_${crypto.randomUUID()}${ext}`;
+        const key = `banners/${fileName}`;
+  
+        const bannerUrl = await uploadBufferToR2({
+          key,
+          buffer: req.file.buffer,
+          contentType: req.file.mimetype || 'application/octet-stream',
+          cacheControl: 'public, max-age=604800',
+        });
+  
+        await dbx.updateUserProfileStyle(
+          conn,
+          Number(req.session.uid),
+          me.avatar_url || null,
+          bannerUrl,
+          me.theme_color || null
+        );
+        await dbx.commit(conn);
+  
+        try {
+          if (oldBannerUrl && oldBannerUrl !== bannerUrl) {
+            await deleteStoredImageByUrl(oldBannerUrl, 'banner');
+          }
+        } catch (cleanupErr) {
+          console.error('Failed to delete old banner asset:', cleanupErr);
+        }
+  
+        req.flash('ok', 'Banner updated.');
+        return res.redirect('/me');
+      } catch (e) {
+        return next(e);
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+    });
+  }));
+
+
+  
   app.post('/show/:show_id/review/:review_user_id/delete', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const reviewUserId = Number(req.params.review_user_id);
@@ -2331,6 +2415,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
