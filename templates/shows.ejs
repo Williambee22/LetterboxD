@@ -376,7 +376,7 @@
                    const sid = a?.show_id || null;
                    const corpsv = a?.corps || "";
                    const yearv = a?.year || "";
-                   const posterThumb = a?.poster_thumb || POSTER_FALLBACK;
+                   const posterThumb = a?.poster_url || POSTER_FALLBACK;
                    const ratingHalf = a?.rating_half;
                    const stars = ratingHalf != null ? Number(ratingHalf) / 2 : null;
               %>
@@ -656,6 +656,7 @@
   </script>
 </body>
 </html>
+
 
 
 
