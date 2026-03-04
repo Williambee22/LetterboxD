@@ -1098,4 +1098,11 @@ img[src^="/static/posters/"]{
   padding-left: 10px;
 }
 
+.brand_logo{
+  width:10px;
+  height:10px;
+  object-fit:cover;
+  display:block;
+  flex:0 0 auto;
+}
 
