@@ -184,12 +184,12 @@
   const meUser = typeof me !== "undefined" ? me : null;
   const showRow = row || {};
   const reviewList = Array.isArray(reviews) ? [...reviews] : [];
-  reviewList.sort((a, b) => Number(b?.vote_score || 0) - Number(a?.vote_score || 0));
+  reviewList.sort((a, b) => Number((b && b.vote_score) || 0) - Number((a && a.vote_score) || 0));
   const myReviewText = typeof my_review !== "undefined" ? (my_review || "") : "";
   const myRatingVal = typeof my_rating !== "undefined" ? my_rating : null;
   const loginNext = "/login?next=" + encodeURIComponent("/show/" + (showRow.id || ""));
   const notifCountSafe = typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
-  const notifItemsSafe = Array.isArray(typeof notif_items !== "undefined" ? notif_items : []) ? notif_items : [];
+  const notifItemsSafe = (typeof notif_items !== "undefined" && Array.isArray(notif_items)) ? notif_items : [];
 
   const distLabels = ["5.0","4.5","4.0","3.5","3.0","2.5","2.0","1.5","1.0","0.5","0.0"];
 
@@ -263,11 +263,11 @@
                 <% if (notifItemsSafe.length > 0) { %>
                   <div class="notifList">
                     <% for (const n of notifItemsSafe) {
-                         const kind = n?.kind || "";
-                         const actor = n?.actor_username || "Someone";
-                         const created = n?.created_at || "";
-                         const unread = Number(n?.is_read ?? 0) === 0;
-                         const sid = n?.show_id || null;
+                         const kind = (n && n.kind) || "";
+                         const actor = (n && n.actor_username) || "Someone";
+                         const created = (n && n.created_at) || "";
+                         const unread = Number((n && n.is_read) != null ? n.is_read : 0) === 0;
+                         const sid = (n && n.show_id) || null;
                     %>
                       <div class="notifItem <%= unread ? 'unread' : '' %>">
                         <% if (kind === "friend_request") { %>
@@ -467,59 +467,58 @@
             </div>
 
             <div style="display:flex; gap:10px; margin-top:12px; align-items:flex-start;">
-                <div class="panel ratingDistPanel" style="width:50%; margin-top:0; padding:10px;">
-                  <div class="ratingDistHeader" style="margin-bottom:8px;">
-                    <div>
-                      <div class="kicker" style="font-size:10px;">Verified Reviewer Ratings</div>
-                    </div>
-                    <div class="ratingDistMeta" style="font-size:11px;"><%= verifiedDistTotal %> total</div>
+              <div class="panel ratingDistPanel" style="width:50%; margin-top:0; padding:10px;">
+                <div class="ratingDistHeader" style="margin-bottom:8px;">
+                  <div>
+                    <div class="kicker" style="font-size:10px;">Verified Reviewer Ratings</div>
                   </div>
-              
-                  <% if (verifiedDistTotal > 0) { %>
-                    <div class="ratingDistList" style="gap:6px;">
-                      <% for (const r of verifiedDistRows) {
-                           const pct = verifiedDistMax > 0 ? (r.count / verifiedDistMax) * 100 : 0;
-                      %>
-                        <div class="ratingDistRow" style="grid-template-columns: 42px 1fr 30px; gap:8px;">
-                          <div class="ratingDistLabel" style="font-size:12px;"><%= r.label %>★</div>
-                          <div class="ratingDistTrack" style="height:8px;">
-                            <div class="ratingDistFill" style="width:<%= pct %>%"></div>
-                          </div>
-                          <div class="ratingDistCount" style="font-size:11px;"><%= r.count %></div>
-                        </div>
-                      <% } %>
-                    </div>
-                  <% } else { %>
-                    <div class="ratingDistEmpty" style="font-size:12px;">No verified reviewer ratings yet.</div>
-                  <% } %>
+                  <div class="ratingDistMeta" style="font-size:11px;"><%= verifiedDistTotal %> total</div>
                 </div>
-              
-                <div class="panel ratingDistPanel" style="width:50%; margin-top:0; padding:10px;">
-                  <div class="ratingDistHeader" style="margin-bottom:8px;">
-                    <div>
-                      <div class="kicker">All Ratings</div>
-                    </div>
-                    <div class="ratingDistMeta" style="font-size:11px;"><%= ratingDistTotal %> total</div>
+
+                <% if (verifiedDistTotal > 0) { %>
+                  <div class="ratingDistList" style="gap:6px;">
+                    <% for (const r of verifiedDistRows) {
+                         const pct = verifiedDistMax > 0 ? (r.count / verifiedDistMax) * 100 : 0;
+                    %>
+                      <div class="ratingDistRow" style="grid-template-columns: 42px 1fr 30px; gap:8px;">
+                        <div class="ratingDistLabel" style="font-size:12px;"><%= r.label %>★</div>
+                        <div class="ratingDistTrack" style="height:8px;">
+                          <div class="ratingDistFill" style="width:<%= pct %>%"></div>
+                        </div>
+                        <div class="ratingDistCount" style="font-size:11px;"><%= r.count %></div>
+                      </div>
+                    <% } %>
                   </div>
-              
-                  <% if (ratingDistTotal > 0) { %>
-                    <div class="ratingDistList" style="gap:6px;">
-                      <% for (const r of ratingDistRows) {
-                           const pct = ratingDistMax > 0 ? (r.count / ratingDistMax) * 100 : 0;
-                      %>
-                        <div class="ratingDistRow" style="grid-template-columns: 42px 1fr 30px; gap:8px;">
-                          <div class="ratingDistLabel" style="font-size:12px;"><%= r.label %>★</div>
-                          <div class="ratingDistTrack" style="height:8px;">
-                            <div class="ratingDistFill" style="width:<%= pct %>%"></div>
-                          </div>
-                          <div class="ratingDistCount" style="font-size:11px;"><%= r.count %></div>
-                        </div>
-                      <% } %>
-                    </div>
-                  <% } else { %>
-                    <div class="ratingDistEmpty" style="font-size:12px;">No ratings yet.</div>
-                  <% } %>
+                <% } else { %>
+                  <div class="ratingDistEmpty" style="font-size:12px;">No verified reviewer ratings yet.</div>
+                <% } %>
+              </div>
+
+              <div class="panel ratingDistPanel" style="width:50%; margin-top:0; padding:10px;">
+                <div class="ratingDistHeader" style="margin-bottom:8px;">
+                  <div>
+                    <div class="kicker">All Ratings</div>
+                  </div>
+                  <div class="ratingDistMeta" style="font-size:11px;"><%= ratingDistTotal %> total</div>
                 </div>
+
+                <% if (ratingDistTotal > 0) { %>
+                  <div class="ratingDistList" style="gap:6px;">
+                    <% for (const r of ratingDistRows) {
+                         const pct = ratingDistMax > 0 ? (r.count / ratingDistMax) * 100 : 0;
+                    %>
+                      <div class="ratingDistRow" style="grid-template-columns: 42px 1fr 30px; gap:8px;">
+                        <div class="ratingDistLabel" style="font-size:12px;"><%= r.label %>★</div>
+                        <div class="ratingDistTrack" style="height:8px;">
+                          <div class="ratingDistFill" style="width:<%= pct %>%"></div>
+                        </div>
+                        <div class="ratingDistCount" style="font-size:11px;"><%= r.count %></div>
+                      </div>
+                    <% } %>
+                  </div>
+                <% } else { %>
+                  <div class="ratingDistEmpty" style="font-size:12px;">No ratings yet.</div>
+                <% } %>
               </div>
             </div>
           </div>
@@ -544,6 +543,12 @@
               <% for (const rv of reviewList) {
                    const commentList = Array.isArray(rv.comments) ? rv.comments : [];
                    const ccount = Number(rv.comment_count || commentList.length || 0);
+                   const upStyle = Number(rv.my_vote) === 1
+                     ? 'background: rgba(6,136,24,.18); border:1px solid rgba(6,136,24,.7); color:#06a31d; padding:4px 8px; border-radius:10px; cursor:pointer; line-height:1; opacity:.9;'
+                     : 'background: transparent; border:1px solid rgba(255,255,255,.18); color:inherit; padding:4px 8px; border-radius:10px; cursor:pointer; line-height:1; opacity:.9;';
+                   const downStyle = Number(rv.my_vote) === -1
+                     ? 'background: rgba(220,38,38,.18); border:1px solid rgba(220,38,38,.7); color:#ef4444; padding:4px 8px; border-radius:10px; cursor:pointer; line-height:1; opacity:.9;'
+                     : 'background: transparent; border:1px solid rgba(255,255,255,.18); color:inherit; padding:4px 8px; border-radius:10px; cursor:pointer; line-height:1; opacity:.9;';
               %>
                 <div class="reviewcard">
                   <div class="row between" style="gap:12px; align-items:flex-start;">
@@ -653,30 +658,19 @@
                           <% } %>
                         </div>
                       </details>
-
                     </div>
 
                     <div class="review_votes" style="display:flex; align-items:center; gap:8px;">
                       <% if (meUser && Number(meUser.id) !== Number(rv.user_id)) { %>
-                        <% 
-                          const upStyle = Number(rv.my_vote) === 1
-                            ? 'background: rgba(6,136,24,.18); border:1px solid rgba(6,136,24,.7); color:#06a31d; padding:4px 8px; border-radius:10px; cursor:pointer; line-height:1; opacity:.9;'
-                            : 'background: transparent; border:1px solid rgba(255,255,255,.18); color:inherit; padding:4px 8px; border-radius:10px; cursor:pointer; line-height:1; opacity:.9;';
-                          
-                          const downStyle = Number(rv.my_vote) === -1
-                            ? 'background: rgba(220,38,38,.18); border:1px solid rgba(220,38,38,.7); color:#ef4444; padding:4px 8px; border-radius:10px; cursor:pointer; line-height:1; opacity:.9;'
-                            : 'background: transparent; border:1px solid rgba(255,255,255,.18); color:inherit; padding:4px 8px; border-radius:10px; cursor:pointer; line-height:1; opacity:.9;';
-                        %>
-                    
                         <form method="post"
                               action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote"
                               style="margin:0;">
                           <input type="hidden" name="vote" value="1">
                           <button class="vote_btn up" type="submit" style="<%= upStyle %>">▲</button>
                         </form>
-                    
+
                         <div class="vote_score"><%= Number(rv.vote_score || 0) %></div>
-                    
+
                         <form method="post"
                               action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote"
                               style="margin:0;">
@@ -686,7 +680,7 @@
                       <% } else { %>
                         <div class="vote_score"><%= Number(rv.vote_score || 0) %></div>
                       <% } %>
-                    
+
                       <% if (meUser && Number(meUser.is_admin) === 1) { %>
                         <form method="post"
                               action="/admin/show/<%= showRow.id %>/review/<%= rv.user_id %>/delete"
@@ -705,6 +699,15 @@
                         </form>
                       <% } %>
                     </div>
+
+                  </div>
+                </div>
+              <% } %>
+            </div>
+          <% } else { %>
+            <div class="muted">No reviews yet. Be the first to write one.</div>
+          <% } %>
+        </div>
       </section>
 
       <aside class="side" style="top:86px;">
@@ -771,13 +774,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
