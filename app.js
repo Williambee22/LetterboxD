@@ -211,23 +211,11 @@ function pfpUrlForUsername(username) {
 
 function posterUrlForShow(corps, year) {
   const key = slugify(corps);
+  const base = (process.env.R2_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
 
-  for (const ext of ['.png', '.jpg', '.jpeg', '.webp']) {
-    const rel = `posters/${key}${parseInt(year || 0, 10)}${ext}`;
-    if (staticFileExists(rel)) return `/static/${rel}`;
-  }
+  if (!base) return null;
 
-  for (const ext of ['.png', '.jpg', '.jpeg', '.webp']) {
-    const rel = `posters/${key}default${ext}`;
-    if (staticFileExists(rel)) return `/static/${rel}`;
-  }
-
-  for (const ext of ['.png', '.jpg', '.jpeg', '.webp']) {
-    const rel = `posters/default${ext}`;
-    if (staticFileExists(rel)) return `/static/${rel}`;
-  }
-
-  return null;
+  return `${base}/posters/${key}${parseInt(year || 0, 10)}.png`;
 }
 
 function normalizeRow(row) {
@@ -2391,3 +2379,4 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
