@@ -1,225 +1,37 @@
 <!doctype html>
 <html lang="en">
 <head>
-<title>Pressboxd — Rate Drum Corps Shows</title>
-<meta name="description" content="Pressboxd is a site for rating drum corps shows, writing reviews, and tracking favorites.">
-<link rel="canonical" href="https://www.pressboxd.com/">
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>All Shows - Pressboxd</title>
+  <title>Shows - Pressboxd</title>
   <link rel="stylesheet" href="/static/styles.css"/>
-
-  <style>
-    .accentBorder { border: 1px solid color-mix(in srgb, var(--accent) 28%, rgba(255,255,255,0.10)); }
-    .accentBorderSoft { border: 1px solid color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,0.10)); }
-
-    .accentCard {
-      background: color-mix(in srgb, var(--accent) 10%, rgba(255,255,255,0.03));
-      border: 1px solid color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,0.10));
-      border-radius: 12px;
-    }
-
-    .accentThumb {
-      background: color-mix(in srgb, var(--accent) 10%, rgba(255,255,255,0.05));
-      border: 1px solid color-mix(in srgb, var(--accent) 16%, rgba(255,255,255,0.10));
-    }
-
-    .accentLink { color: var(--accent); }
-    .accentLink:hover { text-decoration: underline; }
-
-    .accentMutedLink { color: color-mix(in srgb, var(--accent) 55%, rgba(255,255,255,0.65)); }
-    .accentMutedLink:hover { color: var(--accent); }
-
-    .auth { align-items:center; gap: 12px; }
-
-    .notifWrap { position: relative; display: inline-flex; align-items:center; }
-    .bellBtn {
-      position: relative;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      color: inherit;
-      padding: 6px;
-      border-radius: 10px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0.95;
-    }
-    .bellBtn:hover { background: rgba(255,255,255,0.06); }
-    .badgeDot {
-      position:absolute;
-      top: 3px;
-      right: 3px;
-      min-width: 18px;
-      height: 18px;
-      padding: 0 6px;
-      border-radius: 999px;
-      background: #ff3b30;
-      color: #fff;
-      font-size: 11px;
-      line-height: 18px;
-      text-align: center;
-      font-weight: 800;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-    }
-
-    .notifDropdown {
-      display: none;
-      position: absolute;
-      right: 0;
-      top: 40px;
-      width: 340px;
-      max-height: 420px;
-      overflow: auto;
-      background: rgba(15, 23, 42, 0.98);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 14px;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.45);
-      z-index: 9999;
-    }
-    .notifDropdown.open { display:block; }
-
-    .notifHeader {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.10);
-      position: sticky;
-      top: 0;
-      background: rgba(15, 23, 42, 0.98);
-      backdrop-filter: blur(8px);
-    }
-    .notifTitle { font-weight: 900; }
-    .markReadBtn {
-      border: none;
-      background: transparent;
-      color: inherit;
-      cursor: pointer;
-      opacity: 0.85;
-      font-size: 12px;
-      padding: 6px 8px;
-      border-radius: 10px;
-    }
-    .markReadBtn:hover { background: rgba(255,255,255,0.06); opacity: 1; }
-
-    .notifList { padding: 8px; display:flex; flex-direction:column; gap: 8px; }
-    .notifItem {
-      padding: 10px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    .notifItem.unread { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.25); }
-    .notifTime { font-size: 12px; opacity: 0.7; margin-top: 4px; }
-    .notifEmpty { padding: 12px; opacity: 0.8; }
-
-    .authBellSlot { display:inline-flex; align-items:center; }
-
-    .notifDropdown,
-    .notifDropdown * {
-      pointer-events: auto !important;
-    }
-
-    .userSearchWrap {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    .userSearchInput {
-      width: 220px;
-      height: 38px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.05);
-      color: inherit;
-      padding: 0 12px;
-      outline: none;
-    }
-
-    .userSearchInput::placeholder {
-      color: rgba(255,255,255,0.55);
-    }
-
-    .userSearchInput:focus {
-      border-color: color-mix(in srgb, var(--accent) 40%, rgba(255,255,255,0.15));
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
-    }
-
-    .userSearchDropdown {
-      display: none;
-      position: absolute;
-      top: 44px;
-      right: 0;
-      width: 280px;
-      max-height: 320px;
-      overflow: auto;
-      background: rgba(15, 23, 42, 0.98);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 14px;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.45);
-      z-index: 9999;
-    }
-
-    .userSearchDropdown.open {
-      display: block;
-    }
-
-    .userSearchItem {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      text-decoration: none;
-      color: inherit;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .userSearchItem:last-child {
-      border-bottom: none;
-    }
-
-    .userSearchItem:hover {
-      background: rgba(255,255,255,0.06);
-    }
-
-    .userSearchAvatar {
-      width: 30px;
-      height: 30px;
-      border-radius: 999px;
-      overflow: hidden;
-      flex: 0 0 auto;
-      background: rgba(255,255,255,0.08);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .userSearchAvatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .userSearchEmpty {
-      padding: 12px;
-      opacity: 0.8;
-    }
-  </style>
 </head>
+
 <%
-  const POSTER_FALLBACK = "/static/posters/placeholder.png";
+  const safeMe = (typeof me !== "undefined" && me) ? me : null;
   const safeRows = Array.isArray(rows) ? rows : [];
   const safeFriendActivity = Array.isArray(friend_activity) ? friend_activity : [];
-  const meUser = typeof me !== "undefined" ? me : null;
-  const notifCountSafe = typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
-  const notifItemsSafe = Array.isArray(typeof notif_items !== "undefined" ? notif_items : []) ? notif_items : [];
-  const bodyStyle = meUser && meUser.theme_color ? `--accent: ${meUser.theme_color};` : "";
+  const safeNotifCount = (typeof notif_count !== "undefined" && notif_count) ? Number(notif_count) : 0;
+  const safeNotifItems = Array.isArray(notif_items) ? notif_items : [];
+  const safeFlashes = Array.isArray(flashes) ? flashes : [];
+
+  const currentSort = String(sort || "year_desc");
+  const currentYear = String(year || "");
+  const currentCorps = String(corps || "");
+
+  function avgLabel(n) {
+    const v = Number(n || 0);
+    if (!Number.isFinite(v) || v <= 0) return "Unrated";
+    return v.toFixed(2);
+  }
+
+  function ratingCount(n) {
+    const v = Number(n || 0);
+    return Number.isFinite(v) ? v : 0;
+  }
 %>
-<body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
+
+<body class="app" <%= safeMe && safeMe.theme_color ? `style="--accent:${safeMe.theme_color};"` : "" %>>
   <header class="topbar">
     <div class="wrap row between">
       <a class="brand" href="/shows">
@@ -231,7 +43,7 @@
         <a href="/shows">Shows</a>
         <a href="/top">Top Shows</a>
         <a href="/top_users">Top Users</a>
-        <% if (meUser && Number(meUser.is_admin) === 1) { %>
+        <% if (safeMe && Number(safeMe.is_admin) === 1) { %>
           <a href="/admin/bulk_add">Mass Add</a>
           <a href="/admin/roles">Roles</a>
           <a href="/admin/users">Users</a>
@@ -239,18 +51,7 @@
       </nav>
 
       <div class="auth row">
-        <% if (meUser) { %>
-          <div class="userSearchWrap">
-            <input
-              id="userSearchInput"
-              class="userSearchInput"
-              type="text"
-              placeholder="Search users..."
-              autocomplete="off"
-            >
-            <div id="userSearchDropdown" class="userSearchDropdown"></div>
-          </div>
-
+        <% if (safeMe) { %>
           <div class="authBellSlot">
             <div class="notifWrap">
               <button class="bellBtn" id="bellBtn" aria-label="Notifications" title="Notifications">
@@ -259,8 +60,8 @@
                   <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
                 </svg>
 
-                <% if (notifCountSafe > 0) { %>
-                  <span class="badgeDot"><%= notifCountSafe %></span>
+                <% if (safeNotifCount > 0) { %>
+                  <span class="badgeDot"><%= safeNotifCount %></span>
                 <% } %>
               </button>
 
@@ -272,16 +73,16 @@
                   </form>
                 </div>
 
-                <% if (notifItemsSafe.length > 0) { %>
+                <% if (safeNotifItems.length > 0) { %>
                   <div class="notifList">
-                    <% for (const n of notifItemsSafe) {
-                         const kind = n?.kind || "";
-                         const actor = n?.actor_username || "Someone";
-                         const created = n?.created_at || "";
-                         const unread = Number(n?.is_read ?? 0) === 0;
-                         const sid = n?.show_id || null;
+                    <% for (const n of safeNotifItems) {
+                      const kind = n.kind || "";
+                      const actor = n.actor_username || "Someone";
+                      const created = n.created_at || "";
+                      const unread = Number(n.is_read || 0) === 0;
+                      const sid = n.show_id || null;
                     %>
-                      <div class="notifItem <%= unread ? 'unread' : '' %>">
+                      <div class="notifItem <%= unread ? "unread" : "" %>">
                         <% if (kind === "friend_request") { %>
                           <div><b><%= actor %></b> sent you a friend request.</div>
                         <% } else if (kind === "follow") { %>
@@ -319,16 +120,13 @@
 
           <a class="nav_user" href="/me">
             <span class="avatar_sm">
-              <% if (meUser.avatar_url) { %>
-                <img src="<%= meUser.avatar_url %>" alt="avatar">
+              <% if (safeMe.avatar_url) { %>
+                <img src="<%= safeMe.avatar_url %>" alt="avatar">
               <% } else { %>
                 <span class="avatar_fallback"></span>
               <% } %>
             </span>
-
-            <span class="muted small">
-              <%= meUser.username || "me" %>
-            </span>
+            <span class="muted small"><%= safeMe.username %></span>
           </a>
 
           <a href="/logout">Logout</a>
@@ -341,187 +139,159 @@
   </header>
 
   <main class="wrap">
-    <div style="margin-top:10px;">
-      <div class="row between" style="align-items:flex-end; gap:12px;">
-        <div>
-          <div class="kicker"></div>
-          <h1 style="margin:6px 0 0; margin-top: 140px;">All Shows</h1>
-          <div class="muted small">Browse, sort, and click a show to rate and review.</div>
-        </div>
+    <% if (safeFlashes.length > 0) { %>
+      <div class="flashes">
+        <% for (const f of safeFlashes) { %>
+          <div class="flash <%= f.category %>"><%= f.message %></div>
+        <% } %>
+      </div>
+    <% } %>
 
-        <div style="flex:1; text-align:center; padding-bottom:2px;">
-          <div style="font-weight:900; font-size:42px; line-height:1.2; margin-top: 0px;">
-            Welcome to Pressboxd!
-          </div>
-          <div class="muted small" style="margin-top:80px;">
-            This website is still in early development. So there are a lot of things (e.g., profile pictures, personalized themes) that do not work yet. Feel free to send suggestions to PressboxdContact@gmail.com.
-          </div>
+    <section class="shows_header">
+      <div class="shows_intro">
+        <div class="kicker">Library</div>
+        <h1 style="margin:6px 0 8px;">All Shows</h1>
+        <div class="muted">
+          Browse, filter, and rate drum corps shows.
+          <% if (safeRows.length > 0) { %>
+            Currently showing <b><%= safeRows.length %></b> show<%= safeRows.length === 1 ? "" : "s" %>.
+          <% } %>
         </div>
-
-        <div style="width:220px;"></div>
       </div>
 
-      <% if (meUser) { %>
-        <div class="panel" style="margin-top:12px; padding:12px;">
-          <div class="row between" style="align-items:center; margin-bottom:-10px;">
-            <div style="font-weight:900;">Friend activity</div>
-            <a class="muted small" href="/me/friends" style="text-decoration:none;">Friends</a>
-          </div>
+      <div class="pills">
+        <a class="pilltab <%= currentSort === 'year_desc' ? 'active' : '' %>" href="/shows?sort=year_desc<%= currentYear ? `&year=${encodeURIComponent(currentYear)}` : '' %><%= currentCorps ? `&corps=${encodeURIComponent(currentCorps)}` : '' %>">Newest</a>
+        <a class="pilltab <%= currentSort === 'year_asc' ? 'active' : '' %>" href="/shows?sort=year_asc<%= currentYear ? `&year=${encodeURIComponent(currentYear)}` : '' %><%= currentCorps ? `&corps=${encodeURIComponent(currentCorps)}` : '' %>">Oldest</a>
+        <a class="pilltab <%= currentSort === 'corps' ? 'active' : '' %>" href="/shows?sort=corps<%= currentYear ? `&year=${encodeURIComponent(currentYear)}` : '' %><%= currentCorps ? `&corps=${encodeURIComponent(currentCorps)}` : '' %>">Corps</a>
+        <a class="pilltab <%= currentSort === 'top' ? 'active' : '' %>" href="/shows?sort=top<%= currentYear ? `&year=${encodeURIComponent(currentYear)}` : '' %><%= currentCorps ? `&corps=${encodeURIComponent(currentCorps)}` : '' %>">Top Rated</a>
+        <a class="pilltab <%= currentSort === 'bottom' ? 'active' : '' %>" href="/shows?sort=bottom<%= currentYear ? `&year=${encodeURIComponent(currentYear)}` : '' %><%= currentCorps ? `&corps=${encodeURIComponent(currentCorps)}` : '' %>">Lowest Rated</a>
+      </div>
+    </section>
 
-          <% if (safeFriendActivity.length > 0) { %>
-            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:stretch; margin-top: 20px;">
-              <% for (const a of safeFriendActivity) {
-                   const kind = a?.kind || "";
-                   const who = a?.actor_username || "Someone";
-                   const sid = a?.show_id || null;
-                   const corpsv = a?.corps || "";
-                   const yearv = a?.year || "";
-                   const posterThumb = a?.poster_url || POSTER_FALLBACK;
-                   const ratingHalf = a?.rating_half;
-                   const stars = ratingHalf != null ? Number(ratingHalf) / 2 : null;
-              %>
-                <div style="width:340px; flex:0 0 auto; padding:10px; border-radius:12px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);">
-                  <div style="display:flex; gap:10px; align-items:flex-start;">
-                    <div style="width:60px; height:80px; overflow:hidden; flex:0 0 auto; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10); display:flex; align-items:center; justify-content:center;">
-                      <% if (sid) { %>
-                        <a href="/show/<%= sid %>" style="display:flex; width:100%; height:100%; align-items:center; justify-content:center;">
-                          <img
-                            src="<%= posterThumb %>"
-                            alt="poster"
-                            style="width:100%; height:100%; object-fit:contain; display:block;"
-                            loading="lazy"
-                            onerror="this.onerror=null;this.src='<%= POSTER_FALLBACK %>';"
-                          >
-                        </a>
+    <section class="shows_shell">
+      <aside class="shows_sidebar stack">
+        <div class="panel">
+          <div class="kicker">Filters</div>
+
+          <form class="filter_form" method="get" action="/shows" style="margin-top:12px;">
+            <div class="field">
+              <label for="sort">Sort</label>
+              <select id="sort" name="sort">
+                <option value="year_desc" <%= currentSort === 'year_desc' ? 'selected' : '' %>>Newest first</option>
+                <option value="year_asc" <%= currentSort === 'year_asc' ? 'selected' : '' %>>Oldest first</option>
+                <option value="corps" <%= currentSort === 'corps' ? 'selected' : '' %>>Corps A–Z</option>
+                <option value="top" <%= currentSort === 'top' ? 'selected' : '' %>>Top rated</option>
+                <option value="bottom" <%= currentSort === 'bottom' ? 'selected' : '' %>>Lowest rated</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="year">Year</label>
+              <input id="year" name="year" value="<%= currentYear %>" placeholder="e.g. 2024">
+            </div>
+
+            <div class="field">
+              <label for="corps">Corps</label>
+              <input id="corps" name="corps" value="<%= currentCorps %>" placeholder="e.g. Bluecoats">
+            </div>
+
+            <div class="filter_actions">
+              <button class="btn primary" type="submit">Apply</button>
+              <a class="btn ghost" href="/shows">Reset</a>
+            </div>
+          </form>
+        </div>
+
+        <% if (safeMe) { %>
+          <div class="panel">
+            <div class="kicker">Friend Activity</div>
+
+            <% if (safeFriendActivity.length > 0) { %>
+              <div class="friend_activity" style="margin-top:12px;">
+                <% for (const item of safeFriendActivity) { %>
+                  <a class="friend_item" href="/show/<%= item.show_id %>">
+                    <div class="friend_thumb">
+                      <% if (item.poster_url) { %>
+                        <img src="<%= item.poster_url %>" alt="<%= item.title || item.corps || 'Poster' %> poster">
                       <% } else { %>
-                        <img
-                          src="<%= posterThumb %>"
-                          alt="poster"
-                          style="width:100%; height:100%; object-fit:contain; display:block;"
-                          loading="lazy"
-                          onerror="this.onerror=null;this.src='<%= POSTER_FALLBACK %>';"
-                        >
+                        <div class="avatar_fallback"></div>
                       <% } %>
                     </div>
 
-                    <div style="min-width:0;">
-                      <div class="small" style="line-height:1.25;">
-                        <b><%= who %></b>
-                        <% if (kind === "rating") { %>
-                          rated
-                        <% } else if (kind === "review") { %>
+                    <div class="friend_body">
+                      <div class="friend_title">
+                        <%= item.actor_username || 'Someone' %>
+                        <% if (item.kind === 'review') { %>
                           reviewed
                         <% } else { %>
-                          did something on
+                          rated
                         <% } %>
+                        <%= item.title || `${item.corps || ''} ${item.year || ''}` %>
+                      </div>
 
-                        <% if (sid) { %>
-                          <a href="/show/<%= sid %>" style="text-decoration:none;">
-                            <%= corpsv %><% if (yearv) { %> <%= yearv %><% } %>
-                          </a>
-                        <% } else { %>
-                          <%= corpsv %><% if (yearv) { %> <%= yearv %><% } %>
-                        <% } %>
-
-                        <% if (kind === "rating" && ratingHalf != null) { %>
-                          <span class="muted">(<%= stars %>★)</span>
+                      <div class="friend_meta">
+                        <% if (item.year) { %><%= item.year %><% } %>
+                        <% if (item.corps) { %> • <%= item.corps %><% } %>
+                        <% if (item.rating_half != null) { %>
+                          • ★ <%= (Number(item.rating_half) / 2).toFixed(1) %>
                         <% } %>
                       </div>
                     </div>
+                  </a>
+                <% } %>
+              </div>
+            <% } else { %>
+              <div class="empty_state" style="margin-top:12px;">
+                No friend activity yet.
+              </div>
+            <% } %>
+          </div>
+        <% } %>
+      </aside>
+
+      <section class="stack">
+        <% if (safeRows.length > 0) { %>
+          <div class="postergrid">
+            <% for (const s of safeRows) { %>
+              <a class="poster" href="/show/<%= s.id %>">
+                <div class="poster_art">
+                  <% if (s.poster_url) { %>
+                    <img class="poster_img" src="<%= s.poster_url %>" alt="<%= s.title || 'Show' %> poster" loading="lazy">
+                  <% } else { %>
+                    <div class="poster_fallback"></div>
+                  <% } %>
+
+                  <div class="tile_rating">
+                    <% if (ratingCount(s.cnt) > 0) { %>
+                      <span class="tile_star">★</span>
+                      <span><%= avgLabel(s.avg_rating) %></span>
+                    <% } else { %>
+                      <span>Unrated</span>
+                    <% } %>
+                  </div>
+
+                  <% if (s.year) { %>
+                    <div class="tile_year"><%= s.year %></div>
+                  <% } %>
+                </div>
+
+                <div class="poster_meta">
+                  <div class="poster_title"><%= s.title || '' %></div>
+                  <div class="poster_sub"><%= s.corps || '' %></div>
+                  <div class="tile_count">
+                    <%= ratingCount(s.cnt) %> rating<%= ratingCount(s.cnt) === 1 ? '' : 's' %>
                   </div>
                 </div>
-              <% } %>
-            </div>
-          <% } else { %>
-            <div class="muted small">No recent friend activity.</div>
-          <% } %>
-        </div>
-      <% } %>
-    </div>
-
-    <div class="panel" style="margin-top:14px;">
-      <form method="get" action="/shows" class="row gap" style="flex-wrap:wrap; align-items:flex-end;">
-        <div class="field" style="min-width:220px;">
-          <label>Sort</label>
-          <select name="sort">
-            <option value="" <%= !sort ? "selected" : "" %>>Default</option>
-            <option value="year_desc" <%= sort === "year_desc" ? "selected" : "" %>>Year (New → Old)</option>
-            <option value="year_asc" <%= sort === "year_asc" ? "selected" : "" %>>Year (Old → New)</option>
-            <option value="top" <%= sort === "top" ? "selected" : "" %>>Top Average Rating</option>
-            <option value="bottom" <%= sort === "bottom" ? "selected" : "" %>>Lowest Average Rating</option>
-            <option value="corps" <%= sort === "corps" ? "selected" : "" %>>Corps (A → Z)</option>
-          </select>
-        </div>
-
-        <div class="field" style="width:140px;">
-          <label>Year</label>
-          <input name="year" value="<%= year || '' %>" placeholder="2014">
-        </div>
-
-        <div class="field" style="min-width:240px;">
-          <label>Corps</label>
-          <input name="corps" value="<%= corps || '' %>" placeholder="Blue Devils">
-        </div>
-
-        <div class="actions">
-          <button class="btn green" type="submit">Apply</button>
-          <a class="btn ghost" href="/shows">Reset</a>
-        </div>
-      </form>
-    </div>
-
-    <% if (safeRows.length > 0) { %>
-      <div class="postergrid" style="margin-top:14px;">
-        <% for (const row of safeRows) {
-             const yearv = row?.year || "";
-             const corpsv = row?.corps || "";
-             const titlev = row?.title || "Untitled";
-             const cnt = row?.cnt != null ? Number(row.cnt) : 0;
-             const avg = row?.avg_rating != null ? Number(row.avg_rating) : (row?.avg != null ? Number(row.avg) : 0);
-             const poster = row?.poster_url || POSTER_FALLBACK;
-
-             let pct = avg / 5.0;
-             if (pct < 0) pct = 0;
-             if (pct > 1) pct = 1;
-             const curve = Math.pow(pct, 2.6);
-             const hue = 60 * curve;
-        %>
-          <a class="poster" href="/show/<%= row.id %>">
-            <div class="poster_art">
-              <img
-                class="poster_img"
-                src="<%= poster %>"
-                alt="<%= titlev %> poster"
-                loading="lazy"
-                onerror="this.onerror=null;this.src='<%= POSTER_FALLBACK %>';"
-              >
-
-              <% if (yearv) { %>
-                <div class="tile_year"><%= yearv %></div>
-              <% } %>
-
-              <% if (cnt > 0) { %>
-                <div class="tile_rating" style="color: hsl(<%= hue %>, 98%, 62%);">
-                  <span class="tile_star">★</span> <%= avg.toFixed(2) %>
-                </div>
-                <div class="tile_count"><%= cnt %> ratings</div>
-              <% } else { %>
-                <span class="badge unrated bottom_left">Unrated</span>
-              <% } %>
-            </div>
-
-            <div class="poster_meta">
-              <div class="poster_title"><%= titlev %></div>
-              <div class="poster_sub"><%= corpsv %></div>
-            </div>
-          </a>
+              </a>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="panel empty_state">
+            No shows matched your filters.
+          </div>
         <% } %>
-      </div>
-    <% } else { %>
-      <div class="panel" style="margin-top:14px;">
-        <div class="muted">No shows found.</div>
-      </div>
-    <% } %>
+      </section>
+    </section>
   </main>
 
   <footer class="wrap footer">
@@ -531,124 +301,26 @@
   <script>
     (() => {
       const btn = document.getElementById("bellBtn");
-      const dd  = document.getElementById("notifDropdown");
-      if (!btn || !dd) return;
+      const dd = document.getElementById("notifDropdown");
 
-      dd.addEventListener("click", (e) => e.stopPropagation());
+      if (btn && dd) {
+        dd.addEventListener("click", (e) => e.stopPropagation());
 
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dd.classList.toggle("open");
-      });
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dd.classList.toggle("open");
+        });
 
-      document.addEventListener("click", () => {
-        dd.classList.remove("open");
-      });
+        document.addEventListener("click", () => {
+          dd.classList.remove("open");
+        });
 
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") dd.classList.remove("open");
-      });
-    })();
-  </script>
-
-  <script>
-    (() => {
-      const input = document.getElementById('userSearchInput');
-      const dropdown = document.getElementById('userSearchDropdown');
-      if (!input || !dropdown) return;
-
-      let timer = null;
-
-      function closeDropdown() {
-        dropdown.classList.remove('open');
-        dropdown.innerHTML = '';
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") dd.classList.remove("open");
+        });
       }
-
-      function escapeHtml(str) {
-        return String(str || '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#39;');
-      }
-
-      function renderResults(results) {
-        if (!Array.isArray(results) || results.length === 0) {
-          dropdown.innerHTML = '<div class="userSearchEmpty">No users found.</div>';
-          dropdown.classList.add('open');
-          return;
-        }
-
-        dropdown.innerHTML = results.map((u) => `
-          <a class="userSearchItem" href="${escapeHtml(u.profile_url)}">
-            <span class="userSearchAvatar">
-              ${u.avatar_url
-                ? `<img src="${escapeHtml(u.avatar_url)}" alt="avatar">`
-                : `<span></span>`}
-            </span>
-            <span>${escapeHtml(u.username)}</span>
-          </a>
-        `).join('');
-
-        dropdown.classList.add('open');
-      }
-
-      async function doSearch(q) {
-        const term = String(q || '').trim();
-        if (!term) {
-          closeDropdown();
-          return;
-        }
-
-        try {
-          const res = await fetch(`/api/users/search?q=${encodeURIComponent(term)}`, {
-            headers: { 'Accept': 'application/json' }
-          });
-
-          if (!res.ok) {
-            closeDropdown();
-            return;
-          }
-
-          const data = await res.json();
-          renderResults(data.results || []);
-        } catch (err) {
-          closeDropdown();
-        }
-      }
-
-      input.addEventListener('input', () => {
-        clearTimeout(timer);
-        const q = input.value;
-
-        timer = setTimeout(() => {
-          doSearch(q);
-        }, 180);
-      });
-
-      input.addEventListener('focus', () => {
-        if (input.value.trim()) doSearch(input.value);
-      });
-
-      dropdown.addEventListener('click', (e) => {
-        e.stopPropagation();
-      });
-
-      input.addEventListener('click', (e) => {
-        e.stopPropagation();
-      });
-
-      document.addEventListener('click', () => {
-        closeDropdown();
-      });
-
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeDropdown();
-      });
     })();
   </script>
 </body>
 </html>
-
