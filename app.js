@@ -211,11 +211,8 @@ function pfpUrlForUsername(username) {
 
 function posterUrlForShow(corps, year) {
   const key = slugify(corps);
-  const base = (process.env.R2_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
-
-  if (!base) return null;
-
-  return `${base}/posters/${key}${parseInt(year || 0, 10)}.png`;
+  const y = parseInt(year || 0, 10);
+  return `/poster/${encodeURIComponent(key)}/${encodeURIComponent(y)}`;
 }
 
 function normalizeRow(row) {
@@ -541,6 +538,44 @@ function createApp() {
     };
   }
 
+  app.get('/poster/:key/:year', async (req, res) => {
+    const key = String(req.params.key || '').trim();
+    const year = parseInt(req.params.year || 0, 10);
+    const base = String(process.env.R2_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
+  
+    if (!base || !key || !year) {
+      return res.redirect('/static/posters/placeholder.png');
+    }
+  
+    const candidates = [
+      `${base}/posters/${key}${year}.png`,
+      `${base}/posters/${key}${year}.jpg`,
+      `${base}/posters/${key}${year}.jpeg`,
+      `${base}/posters/${key}${year}.webp`,
+      `${base}/posters/${key}default.png`,
+      `${base}/posters/${key}default.jpg`,
+      `${base}/posters/${key}default.jpeg`,
+      `${base}/posters/${key}default.webp`,
+      `${base}/posters/default.png`,
+      `${base}/posters/default.jpg`,
+      `${base}/posters/default.jpeg`,
+      `${base}/posters/default.webp`,
+    ];
+  
+    try {
+      for (const url of candidates) {
+        const r = await fetch(url, { method: 'HEAD' });
+        if (r.ok) return res.redirect(url);
+      }
+    } catch (err) {
+      console.error('poster lookup failed:', err);
+    }
+  
+    return res.redirect('/static/posters/placeholder.png');
+  });
+
+
+  
   app.get('/forgot-password', (req, res) => {
     res.render('forgot_password');
   });
@@ -2379,4 +2414,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
