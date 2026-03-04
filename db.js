@@ -487,7 +487,7 @@ function listTopUsersByReviewUpvotes(conn, opts = {}) {
      AND br.rn = 1
     LEFT JOIN shows s
       ON s.id = br.show_id
-    ORDER BY ut.total_upvotes DESC, ut.total_net DESC, ut.total_downvotes ASC
+    ORDER BY ut.total_net DESC, ut.total_upvotes DESC, ut.total_downvotes ASC
     LIMIT ?
   `;
 
@@ -1535,6 +1535,7 @@ module.exports = {
   getVerifiedRatingHistogram,
   updateUserBio 
 };
+
 
 
 
