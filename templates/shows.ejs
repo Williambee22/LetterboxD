@@ -376,7 +376,7 @@
                    const sid = a?.show_id || null;
                    const corpsv = a?.corps || "";
                    const yearv = a?.year || "";
-                   const posterThumb = a?.poster_thumb || a?.poster_url || POSTER_FALLBACK;
+                   const posterThumb = a?.poster_thumb || POSTER_FALLBACK;
                    const ratingHalf = a?.rating_half;
                    const stars = ratingHalf != null ? Number(ratingHalf) / 2 : null;
               %>
@@ -483,7 +483,7 @@
              const titlev = row?.title || "Untitled";
              const cnt = row?.cnt != null ? Number(row.cnt) : 0;
              const avg = row?.avg_rating != null ? Number(row.avg_rating) : (row?.avg != null ? Number(row.avg) : 0);
-             const poster = row?.poster_url || POSTER_FALLBACK;
+             const posterThumb = a?.poster_thumb || POSTER_FALLBACK;
 
              let pct = avg / 5.0;
              if (pct < 0) pct = 0;
@@ -656,6 +656,7 @@
   </script>
 </body>
 </html>
+
 
 
 
