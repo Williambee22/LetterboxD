@@ -17,7 +17,6 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const BASE_DIR = __dirname;
 const STATIC_DIR = path.join(BASE_DIR, 'static');
 
-
 const DATA_DIR = process.env.DATA_DIR || '/data';
 const PFP_DIR = path.join(DATA_DIR, 'pfps');
 
@@ -58,11 +57,6 @@ const BAD_WORDS = new Set([
   'dogshit', 'cuntface', 'cuntfaces', 'pisshead', 'pissheads', 'twatface', 'twatfaces', 'twink', 'twinks'
 ]);
 
-/**
- * Middleware to restrict routes to admin users only.
- * This relies on req.session.user, which we keep synchronized from DB
- * in a later middleware on every request.
- */
 function adminRequired(handler) {
   return async (req, res, next) => {
     try {
@@ -80,8 +74,6 @@ function adminRequired(handler) {
     }
   };
 }
-
-
 
 function compileBadRegex(words) {
   const parts = [...words]
@@ -139,7 +131,6 @@ function staticFileExists(relPath) {
   return fs.existsSync(path.join(STATIC_DIR, relPath));
 }
 
-
 function r2KeyFromPublicUrl(url) {
   const base = String(process.env.R2_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
   const full = String(url || '').trim();
@@ -149,7 +140,6 @@ function r2KeyFromPublicUrl(url) {
 
   return full.slice(base.length + 1);
 }
-
 
 function deleteLocalFileIfExists(absPath) {
   try {
@@ -282,13 +272,8 @@ function wantsJson(req) {
     || req.accepts(['html', 'json']) === 'json';
 }
 
-
 /* =========================
    HASH COMPATIBILITY
-   Supports:
-   - bcrypt ($2a$ / $2b$ / $2y$)
-   - Werkzeug pbkdf2
-   - Werkzeug scrypt
 ========================= */
 
 function safeEqualHex(a, b) {
@@ -351,12 +336,7 @@ function verifyWerkzeugHash(password, storedHash) {
       String(password),
       salt,
       keylen,
-      {
-        N,
-        r,
-        p,
-        maxmem: estimatedMaxmem
-      }
+      { N, r, p, maxmem: estimatedMaxmem }
     ).toString('hex');
 
     return safeEqualHex(derived, expectedHex);
@@ -474,18 +454,17 @@ function createApp() {
   app.use('/static', express.static(path.join(__dirname, 'static'), {
     maxAge: '30d',
     immutable: true,
-    setHeaders: (res, filePath) => {
+    setHeaders: (res) => {
       res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
     }
   }));
-  
+
   app.use('/uploads/pfps', express.static(PFP_DIR, {
     maxAge: '7d',
     setHeaders: (res) => {
       res.setHeader('Cache-Control', 'public, max-age=604800');
     }
   }));
-
 
   app.use((req, res, next) => {
     const uncachedPrefixes = [
@@ -498,15 +477,14 @@ function createApp() {
       '/admin',
       '/api'
     ];
-  
+
     if (uncachedPrefixes.some(prefix => req.path === prefix || req.path.startsWith(prefix + '/'))) {
       res.setHeader('Cache-Control', 'private, no-store');
     }
-  
+
     next();
   });
 
-  
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json({ limit: `${MAX_UPLOAD_MB}mb` }));
 
@@ -690,7 +668,7 @@ function createApp() {
       return cb(null, true);
     },
   });
-  
+
   const uploadPoster = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 },
@@ -711,7 +689,6 @@ function createApp() {
     },
   });
 
-  
   app.use(async (req, res, next) => {
     if (!['POST', 'PUT', 'PATCH'].includes(req.method)) return next();
 
@@ -743,13 +720,6 @@ function createApp() {
     return next();
   });
 
-  /**
-   * Sync current DB user into:
-   * - res.locals.me
-   * - req.session.user
-   *
-   * This is what makes adminRequired work consistently.
-   */
   app.use(async (req, res, next) => {
     try {
       const me = await currentUser(req);
@@ -828,7 +798,7 @@ function createApp() {
         conn,
         username,
         await hashPassword(password),
-        { make, email }
+        { makeAdmin: make, email }
       );
 
       req.session.uid = Number(uid);
@@ -926,19 +896,19 @@ function createApp() {
 
   app.post('/me/update_bio', loginRequired(async (req, res) => {
     const bio = String(req.body.bio || '').trim();
-  
+
     let conn;
     try {
       conn = getConn();
-  
+
       if (typeof dbx.updateUserBio !== 'function') {
         req.flash('error', 'updateUserBio() is missing in db.js');
         return res.redirect('/me');
       }
-  
+
       await dbx.updateUserBio(conn, Number(req.session.uid), bio);
       await dbx.commit(conn);
-  
+
       req.flash('ok', 'Bio updated.');
       return res.redirect('/me');
     } catch (err) {
@@ -949,7 +919,6 @@ function createApp() {
     }
   }));
 
-  
   app.get('/shows', async (req, res, next) => {
     const sort = String(req.query.sort || 'year_desc').trim();
     const year = String(req.query.year || '').trim();
@@ -985,40 +954,40 @@ function createApp() {
   app.get('/show/:show_id', async (req, res, next) => {
     const showId = Number(req.params.show_id);
     const viewerUid = req.session.uid ? Number(req.session.uid) : null;
-  
+
     let conn;
     try {
       conn = getConn();
-  
+
       let row = normalizeRow(await dbx.getShowById(conn, showId));
       if (!row) return res.sendStatus(404);
       if (!row.poster_url) row.poster_url = posterUrlForShow(row.corps || '', row.year || 0);
-  
+
       let me = viewerUid ? normalizeRow(await dbx.userById(conn, viewerUid)) : null;
       const myRating = viewerUid ? await dbx.userRatingForShow(conn, showId, viewerUid) : null;
       const myReview = viewerUid ? await dbx.myReviewForShow(conn, showId, viewerUid) : null;
-  
+
       if (me && !me.avatar_url) me.avatar_url = pfpUrlForUsername(me.username || '');
-  
+
       const reviews = (await dbx.listReviewsForShow(conn, showId, { viewerUserId: viewerUid, limit: 30 }) || []).map((rv) => {
         const d = normalizeRow(rv);
         if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
         return d;
       });
-  
+
       const comments = (await dbx.listReviewCommentsForShow(conn, showId, { limitTotal: 500 }) || []).map((c) => {
         const d = normalizeRow(c);
         if (!d.commenter_avatar_url) d.commenter_avatar_url = pfpUrlForUsername(d.commenter_username || '');
         return d;
       });
-  
+
       const commentsMap = new Map();
       for (const c of comments) {
         const key = Number(c.review_user_id);
         if (!commentsMap.has(key)) commentsMap.set(key, []);
         commentsMap.get(key).push(c);
       }
-  
+
       const reviewsWithComments = reviews.map((rv) => {
         const items = commentsMap.get(Number(rv.user_id)) || [];
         return {
@@ -1027,10 +996,10 @@ function createApp() {
           comment_count: items.length,
         };
       });
-  
+
       const rating_histogram = dbx.getRatingHistogram(conn, showId);
       const verified_rating_histogram = dbx.getVerifiedRatingHistogram(conn, showId);
-  
+
       res.render('show_detail', {
         row,
         me,
@@ -1066,72 +1035,6 @@ function createApp() {
     return res.redirect(`/show/${showId}`);
   }));
 
-  app.post('/me/upload_banner', loginRequired((req, res, next) => {
-    uploadBanner.single('banner_file')(req, res, async (err) => {
-      if (err) {
-        req.flash('error', `Upload failed: ${err.message}`);
-        return res.redirect('/me');
-      }
-  
-      if (!req.file) {
-        req.flash('error', 'No file selected.');
-        return res.redirect('/me');
-      }
-  
-      let conn;
-      try {
-        conn = getConn();
-        const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
-        if (!me) return res.sendStatus(404);
-  
-        let ext = path.extname(req.file.originalname || '').toLowerCase();
-        if (!ALLOWED_IMAGE_EXTS.has(ext)) {
-          req.flash('error', 'Invalid file type.');
-          return res.redirect('/me');
-        }
-        if (ext === '.jpeg') ext = '.jpg';
-  
-        const oldBannerUrl = String(me.banner_url || '').trim();
-  
-        const fileName = `banner_${slugify(me.username)}_${crypto.randomUUID()}${ext}`;
-        const key = `banners/${fileName}`;
-  
-        const bannerUrl = await uploadBufferToR2({
-          key,
-          buffer: req.file.buffer,
-          contentType: req.file.mimetype || 'application/octet-stream',
-          cacheControl: 'public, max-age=604800',
-        });
-  
-        await dbx.updateUserProfileStyle(
-          conn,
-          Number(req.session.uid),
-          me.avatar_url || null,
-          bannerUrl,
-          me.theme_color || null
-        );
-        await dbx.commit(conn);
-  
-        try {
-          if (oldBannerUrl && oldBannerUrl !== bannerUrl) {
-            await deleteStoredImageByUrl(oldBannerUrl, 'banner');
-          }
-        } catch (cleanupErr) {
-          console.error('Failed to delete old banner asset:', cleanupErr);
-        }
-  
-        req.flash('ok', 'Banner updated.');
-        return res.redirect('/me');
-      } catch (e) {
-        return next(e);
-      } finally {
-        if (conn) dbx.close(conn);
-      }
-    });
-  }));
-
-
-  
   app.post('/show/:show_id/review/:review_user_id/delete', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const reviewUserId = Number(req.params.review_user_id);
@@ -1203,46 +1106,110 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
-  app.post('/me/upload_pfp', loginRequired((req, res, next) => {
-    uploadPfp.single('pfp_file')(req, res, async (err) => {
+  app.post('/me/upload_banner', loginRequired((req, res, next) => {
+    uploadBanner.single('banner_file')(req, res, async (err) => {
       if (err) {
         req.flash('error', `Upload failed: ${err.message}`);
-        return res.redirect('/me');
+        return res.redirect('/me/customize');
       }
-  
+
       if (!req.file) {
         req.flash('error', 'No file selected.');
-        return res.redirect('/me');
+        return res.redirect('/me/customize');
       }
-  
+
       let conn;
       try {
         conn = getConn();
         const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
         if (!me) return res.sendStatus(404);
-  
+
         let ext = path.extname(req.file.originalname || '').toLowerCase();
         if (!ALLOWED_IMAGE_EXTS.has(ext)) {
           req.flash('error', 'Invalid file type.');
-          return res.redirect('/me');
+          return res.redirect('/me/customize');
         }
         if (ext === '.jpeg') ext = '.jpg';
-  
+
+        const oldBannerUrl = String(me.banner_url || '').trim();
+
+        const fileName = `banner_${slugify(me.username)}_${crypto.randomUUID()}${ext}`;
+        const key = `banners/${fileName}`;
+
+        const bannerUrl = await uploadBufferToR2({
+          key,
+          buffer: req.file.buffer,
+          contentType: req.file.mimetype || 'application/octet-stream',
+          cacheControl: 'public, max-age=604800',
+        });
+
+        await dbx.updateUserProfileStyle(
+          conn,
+          Number(req.session.uid),
+          me.avatar_url || null,
+          bannerUrl,
+          me.theme_color || null
+        );
+        await dbx.commit(conn);
+
+        try {
+          if (oldBannerUrl && oldBannerUrl !== bannerUrl) {
+            await deleteStoredImageByUrl(oldBannerUrl, 'banner');
+          }
+        } catch (cleanupErr) {
+          console.error('Failed to delete old banner asset:', cleanupErr);
+        }
+
+        req.flash('ok', 'Banner updated.');
+        return res.redirect('/me/customize');
+      } catch (e) {
+        return next(e);
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+    });
+  }));
+
+  app.post('/me/upload_pfp', loginRequired((req, res, next) => {
+    uploadPfp.single('pfp_file')(req, res, async (err) => {
+      if (err) {
+        req.flash('error', `Upload failed: ${err.message}`);
+        return res.redirect('/me/customize');
+      }
+
+      if (!req.file) {
+        req.flash('error', 'No file selected.');
+        return res.redirect('/me/customize');
+      }
+
+      let conn;
+      try {
+        conn = getConn();
+        const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
+        if (!me) return res.sendStatus(404);
+
+        let ext = path.extname(req.file.originalname || '').toLowerCase();
+        if (!ALLOWED_IMAGE_EXTS.has(ext)) {
+          req.flash('error', 'Invalid file type.');
+          return res.redirect('/me/customize');
+        }
+        if (ext === '.jpeg') ext = '.jpg';
+
         const oldAvatarUrl = String(me.avatar_url || '').trim();
-  
+
         const fileName = `pfp_${slugify(me.username)}_${crypto.randomUUID()}${ext}`;
         const key = `pfps/${fileName}`;
-  
+
         const avatarUrl = await uploadBufferToR2({
           key,
           buffer: req.file.buffer,
           contentType: req.file.mimetype || 'application/octet-stream',
           cacheControl: 'public, max-age=604800',
         });
-  
+
         await dbx.updateUserAvatarUrl(conn, Number(req.session.uid), avatarUrl);
         await dbx.commit(conn);
-  
+
         req.session.user = {
           ...(req.session.user || {}),
           id: Number(me.id),
@@ -1251,7 +1218,7 @@ function createApp() {
           is_admin: Number(me.is_admin || 0),
           avatar_url: avatarUrl,
         };
-  
+
         try {
           if (oldAvatarUrl && oldAvatarUrl !== avatarUrl) {
             await deleteStoredImageByUrl(oldAvatarUrl, 'pfp');
@@ -1259,9 +1226,9 @@ function createApp() {
         } catch (cleanupErr) {
           console.error('Failed to delete old avatar asset:', cleanupErr);
         }
-  
+
         req.flash('ok', 'Profile picture updated.');
-        return res.redirect('/me');
+        return res.redirect('/me/customize');
       } catch (e) {
         return next(e);
       } finally {
@@ -1354,32 +1321,32 @@ function createApp() {
     const userId = Number(req.params.user_id);
     let conn;
     let redirectTo = `/u/${userId}`;
-  
+
     try {
       conn = getConn();
       const u = normalizeRow(await dbx.userById(conn, userId));
       if (!u) return res.status(404).send('User not found');
-  
+
       redirectTo = `/u/${encodeURIComponent(u.username)}`;
-  
+
       const avatarUrl = String(u.avatar_url || '').trim();
-  
+
       try {
         await deleteStoredImageByUrl(avatarUrl, 'pfp');
       } catch (err) {
         console.error('Failed to delete profile picture asset:', err);
       }
-  
+
       await dbx.updateUserAvatarUrl(conn, userId, null);
       await dbx.commit(conn);
-  
+
       req.flash('ok', `Profile picture for ${u.username} has been removed.`);
     } catch (err) {
       req.flash('error', `Failed to delete PFP: ${err.message}`);
     } finally {
       if (conn) dbx.close(conn);
     }
-  
+
     res.redirect(redirectTo);
   }));
 
@@ -1455,45 +1422,45 @@ function createApp() {
   app.post('/admin/show/:show_id/upload_poster', adminRequired((req, res, next) => {
     uploadPoster.single('poster_file')(req, res, async (err) => {
       const showId = Number(req.params.show_id);
-  
+
       if (err) {
         req.flash('error', `Upload failed: ${err.message}`);
         return res.redirect(`/admin/show/${showId}/edit`);
       }
-  
+
       if (!req.file) {
         req.flash('error', 'No file selected.');
         return res.redirect(`/admin/show/${showId}/edit`);
       }
-  
+
       let conn;
       try {
         conn = getConn();
         const row = normalizeRow(await dbx.getShowById(conn, showId));
         if (!row) return res.sendStatus(404);
-  
+
         let ext = path.extname(req.file.originalname || '').toLowerCase();
         if (!ALLOWED_IMAGE_EXTS.has(ext)) {
           req.flash('error', 'Invalid file type.');
           return res.redirect(`/admin/show/${showId}/edit`);
         }
         if (ext === '.jpeg') ext = '.jpg';
-  
+
         const oldPosterUrl = String(row.poster_url || '').trim();
-  
+
         const fileName = `${slugify(row.corps)}${parseInt(row.year, 10)}_${crypto.randomUUID()}${ext}`;
         const key = `posters/${fileName}`;
-  
+
         const posterUrl = await uploadBufferToR2({
           key,
           buffer: req.file.buffer,
           contentType: req.file.mimetype || 'application/octet-stream',
           cacheControl: 'public, max-age=31536000, immutable',
         });
-  
+
         await dbx.updateShowPosterUrl(conn, showId, posterUrl);
         await dbx.commit(conn);
-  
+
         try {
           if (oldPosterUrl && oldPosterUrl !== posterUrl) {
             await deleteStoredImageByUrl(oldPosterUrl, 'poster');
@@ -1501,7 +1468,7 @@ function createApp() {
         } catch (cleanupErr) {
           console.error('Failed to delete old poster asset:', cleanupErr);
         }
-  
+
         req.flash('ok', 'Poster uploaded.');
         return res.redirect(`/admin/show/${showId}/edit`);
       } catch (e) {
@@ -1511,7 +1478,7 @@ function createApp() {
       }
     });
   }));
-  
+
   app.get('/u/:username/ratings', async (req, res, next) => {
     const username = req.params.username;
     const sort = String(req.query.sort || 'high').trim().toLowerCase();
@@ -1787,9 +1754,9 @@ function createApp() {
   function searchUsers(conn, q, opts = {}) {
     const limit = Math.max(1, Math.min(Number(opts.limit || 8), 20));
     const term = String(q || '').trim();
-  
+
     if (!term) return [];
-  
+
     return conn.prepare(`
       SELECT id, username, avatar_url
       FROM users
@@ -1802,24 +1769,24 @@ function createApp() {
   app.get('/api/users/search', async (req, res, next) => {
     const q = String(req.query.q || '').trim();
     if (!q) return res.json({ results: [] });
-  
+
     let conn;
     try {
       conn = getConn();
-  
+
       const rows = dbx.searchUsers(conn, q.slice(0, 50), { limit: 8 }) || [];
-  
+
       const results = rows.map((r) => {
         const d = normalizeRow(r);
         if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
-  
+
         return {
           username: d.username || '',
           avatar_url: d.avatar_url || '',
           profile_url: `/u/${encodeURIComponent(d.username || '')}`,
         };
       });
-  
+
       return res.json({ results });
     } catch (err) {
       return next(err);
@@ -1827,7 +1794,7 @@ function createApp() {
       if (conn) dbx.close(conn);
     }
   });
-  
+
   app.get('/me', loginRequired(async (req, res) => {
     let conn;
     try {
@@ -1927,30 +1894,39 @@ function createApp() {
     let conn;
     try {
       conn = getConn();
-      const u = await dbx.userById(conn, Number(req.session.uid));
+      const u = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
       if (!u) return res.sendStatus(404);
-      res.render('profile_customize', { u: normalizeRow(u) });
+      res.render('profile_customize', { u, me: res.locals.me });
     } finally {
       if (conn) dbx.close(conn);
     }
   }));
 
   app.post('/me/customize', loginRequired(async (req, res) => {
-    const avatarUrl = String(req.body.avatar_url || '').trim();
-    const bannerUrl = String(req.body.banner_url || '').trim();
     const themeColor = String(req.body.theme_color || '').trim();
 
     let conn;
     try {
       conn = getConn();
-      await dbx.updateUserProfileStyle(conn, Number(req.session.uid), avatarUrl, bannerUrl, themeColor);
+
+      const current = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
+      if (!current) return res.sendStatus(404);
+
+      await dbx.updateUserProfileStyle(
+        conn,
+        Number(req.session.uid),
+        current.avatar_url || null,
+        current.banner_url || null,
+        themeColor
+      );
+
       await dbx.commit(conn);
-      req.flash('ok', 'Profile updated.');
+      req.flash('ok', 'Theme color updated.');
     } finally {
       if (conn) dbx.close(conn);
     }
 
-    res.redirect('/me');
+    res.redirect('/me/customize');
   }));
 
   app.get('/admin/users', adminRequired(async (req, res, next) => {
@@ -2246,30 +2222,30 @@ function createApp() {
   app.post('/admin/show/:show_id/delete', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     let conn;
-  
+
     try {
       conn = getConn();
       const s = normalizeRow(await dbx.getShowById(conn, showId));
       if (!s) return res.sendStatus(404);
-  
+
       const posterUrl = String(s.poster_url || '').trim();
-  
+
       try {
         await deleteStoredImageByUrl(posterUrl, 'poster');
       } catch (err) {
         console.error('Failed to delete poster asset:', err);
       }
-  
+
       await dbx.adminDeleteShow(conn, showId);
       await dbx.commit(conn);
       req.flash('ok', 'Show deleted permanently.');
     } finally {
       if (conn) dbx.close(conn);
     }
-  
+
     res.redirect('/shows');
   }));
-  
+
   app.post('/me/change_username', loginRequired(async (req, res) => {
     const uid = Number(req.session.uid);
     const newUsername = String(req.body.new_username || '').trim();
@@ -2415,10 +2391,3 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
-
-
-
-
-
-
-
