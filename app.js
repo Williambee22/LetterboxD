@@ -959,39 +959,39 @@ function createApp() {
       const rows2 = (rows || []).map((r) => {
         const d = normalizeRow(r);
   
-        // always rebuild from corps/year
         d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
   
         if (!d.poster_url) {
-          d.poster_url = '/static/posters/placeholder.png';
+          d.poster_url = 'https://media.pressboxd.com/static/posters/default.png';
         }
   
         return d;
       });
   
       let friendActivity = [];
-        if (req.session.uid) {
-          friendActivity = (await dbx.listFriendActivity(conn, Number(req.session.uid), { limit: 5 }) || []).map((x) => {
-            const d = normalizeRow(x);
-          
-            const key = String(d.corps || '')
-              .trim()
-              .toLowerCase()
-              .replace(/&/g, 'and')
-              .replace(/[^a-z0-9]+/g, '_')
-              .replace(/^_+|_+$/g, '');
-          
-            const y = parseInt(d.year || 0, 10);
-          
-            const posterThumb = (key && y)
-              ? `https://media.pressboxd.com/static/posters/${key}${y}.png`
-              : 'https://media.pressboxd.com/static/posters/default.png';
-          
-            return {
-              ...d,
-              poster_thumb: posterThumb,
-            };
-          });
+      if (req.session.uid) {
+        friendActivity = (await dbx.listFriendActivity(conn, Number(req.session.uid), { limit: 5 }) || []).map((x) => {
+          const d = normalizeRow(x);
+  
+          const key = String(d.corps || '')
+            .trim()
+            .toLowerCase()
+            .replace(/&/g, 'and')
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '');
+  
+          const y = parseInt(d.year || 0, 10);
+  
+          const posterThumb = (key && y)
+            ? `https://media.pressboxd.com/posters/${key}${y}.png`
+            : 'https://media.pressboxd.com/posters/default.png';
+  
+          return {
+            ...d,
+            poster_thumb: posterThumb,
+          };
+        });
+      }
   
       res.render('shows', {
         rows: rows2,
@@ -2447,6 +2447,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
