@@ -262,7 +262,17 @@
   const avgRating = pu.avg_rating != null ? Number(pu.avg_rating) : 0;
 %>
 
-<body class="app" <%= pu && pu.theme_color ? `style="--accent: ${pu.theme_color};"` : "" %>>
+<body
+  class="app"
+  <%= pu && pu.theme_color
+    ? `style="
+        --accent: ${pu.theme_color};
+        --accent2: ${pu.theme_color};
+        --accentSoft: color-mix(in srgb, ${pu.theme_color} 55%, transparent);
+        --accentFaint: color-mix(in srgb, ${pu.theme_color} 22%, transparent);
+      "`
+    : ""
+  %>>
   <header class="topbar">
     <div class="wrap row between">
       <a class="brand" href="/shows">
@@ -668,4 +678,5 @@
   </script>
 </body>
 </html>
+
 
