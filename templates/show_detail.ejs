@@ -664,9 +664,9 @@
                           <input type="hidden" name="vote" value="1">
                           <button class="vote_btn up <%= Number(rv.my_vote) === 1 ? 'on' : '' %>" type="submit">▲</button>
                         </form>
-
+                    
                         <div class="vote_score"><%= Number(rv.vote_score || 0) %></div>
-
+                    
                         <form method="post"
                               action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote"
                               style="margin:0;">
@@ -676,7 +676,7 @@
                       <% } else { %>
                         <div class="vote_score"><%= Number(rv.vote_score || 0) %></div>
                       <% } %>
-
+                    
                       <% if (meUser && Number(meUser.is_admin) === 1) { %>
                         <form method="post"
                               action="/admin/show/<%= showRow.id %>/review/<%= rv.user_id %>/delete"
@@ -770,6 +770,7 @@
   </script>
 </body>
 </html>
+
 
 
 
