@@ -85,11 +85,13 @@ a:hover{
   gap:10px;
 }
 
-.brand .dot{
+.brand_logo{
   width:10px;
   height:10px;
-  background:var(--accent);
-  box-shadow:0 0 0 4px var(--accentFaint);
+  object-fit:cover;
+  display:block;
+  flex:0 0 auto;
+  box-shadow: 0 0 0 4px var(--accentFaint);
 }
 
 .nav a,
@@ -1098,11 +1100,6 @@ img[src^="/static/posters/"]{
   padding-left: 10px;
 }
 
-.brand_logo{
-  width:10px;
-  height:10px;
-  object-fit:cover;
-  display:block;
-  flex:0 0 auto;
-}
+
+
 
