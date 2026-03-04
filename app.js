@@ -961,7 +961,15 @@ function createApp() {
       if (req.session.uid) {
         friendActivity = (await dbx.listFriendActivity(conn, Number(req.session.uid), { limit: 5 }) || []).map((x) => {
           const d = normalizeRow(x);
-          if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+        
+          if (!d.poster_url && d.corps && d.year) {
+            d.poster_url = posterUrlForShow(d.corps, d.year);
+          }
+        
+          if (!d.poster_url) {
+            d.poster_url = "/static/posters/placeholder.png";
+          }
+        
           return d;
         });
       }
@@ -2414,5 +2422,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
