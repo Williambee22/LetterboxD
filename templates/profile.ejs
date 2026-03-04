@@ -437,7 +437,7 @@
           </div>
 
           <div style="min-width:0; flex: 1;">
-            <div class="kicker profile_section_title">Profile</div>
+            <div class="kicker" style="color: var(--accent);">Profile</div>
             <h1 style="margin:6px 0 0;"><%= pu.username || "User" %></h1>
 
             <% if (roles.length > 0) { %>
@@ -467,7 +467,7 @@
           </div>
 
           <div class="profile_avg_box">
-            <div class="kicker">Avg rating</div>
+            <div class="kicker" style="color: var(--accent);">Avg rating</div>
             <% if (avgRatingCnt > 0) { %>
               <div class="profile_avg_value">
                 <span class="profile_avg_star">★</span>
@@ -485,7 +485,7 @@
     <div class="profile_layout" style="margin-top:16px;">
       <aside class="profile_side">
         <div class="panel profile_stats">
-          <div class="kicker">Stats</div>
+          <div class="kicker" style="color: var(--accent);">Stats</div>
           <div class="muted small" style="margin-top:10px;">
             Ratings shown: <%= recentRatings.length %><br/>
             Reviews shown: <%= recentReviews.length %>
@@ -575,7 +575,7 @@
         <% } %>
 
         <div class="panel profile_ratings_panel">
-          <div class="kicker">Recent ratings</div>
+          <div class="kicker" style="color: var(--accent);">Recent ratings</div>
 
           <% if (recentRatings.length > 0) { %>
             <div class="postergrid" style="margin-top:12px;">
@@ -612,7 +612,7 @@
         </div>
 
         <div class="panel profile_reviews_panel">
-          <div class="kicker">Recent reviews</div>
+          <div class="kicker" style="color: var(--accent);">Recent reviews</div>
 
           <% if (recentReviews.length > 0) { %>
             <div class="reviewlist" style="margin-top:12px;">
@@ -668,3 +668,4 @@
   </script>
 </body>
 </html>
+
