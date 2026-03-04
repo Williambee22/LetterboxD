@@ -483,7 +483,7 @@
              const titlev = row?.title || "Untitled";
              const cnt = row?.cnt != null ? Number(row.cnt) : 0;
              const avg = row?.avg_rating != null ? Number(row.avg_rating) : (row?.avg != null ? Number(row.avg) : 0);
-             const posterThumb = a?.poster_thumb || POSTER_FALLBACK;
+             const poster = row?.poster_url || POSTER_FALLBACK;
 
              let pct = avg / 5.0;
              if (pct < 0) pct = 0;
@@ -656,6 +656,7 @@
   </script>
 </body>
 </html>
+
 
 
 
