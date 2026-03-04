@@ -211,7 +211,7 @@
   </style>
 </head>
 <%
-  const POSTER_FALLBACK = "https://media.pressboxd.com/posters/default.png";
+  const POSTER_FALLBACK = "/static/posters/placeholder.png";
   const safeRows = Array.isArray(rows) ? rows : [];
   const safeFriendActivity = Array.isArray(friend_activity) ? friend_activity : [];
   const meUser = typeof me !== "undefined" ? me : null;
@@ -656,6 +656,7 @@
   </script>
 </body>
 </html>
+
 
 
 
