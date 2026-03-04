@@ -11,12 +11,12 @@
 
   --accent:#7c7c7c;
   --accent2: color-mix(in srgb, var(--accent) 55%, transparent);
-  --accentSoft: color-mix(in srgb, var(--accent) 28%, transparent);
-  --accentFaint: color-mix(in srgb, var(--accent) 14%, transparent);
+  --accentSoft: color-mix(in srgb, var(--accent) 45%, transparent);
+  --accentFaint: color-mix(in srgb, var(--accent) 22%, transparent);
 
   --good:#068818;
-  --radius:0px;
-  --radius2:0px;
+  --radius:10px;
+  --radius2:12px;
   --shadow:0 10px 30px rgba(0,0,0,.35);
 }
 
@@ -1045,3 +1045,4 @@ img[src^="/static/posters/"]{
 .notifItem::after{
   pointer-events:none;
 }
+
