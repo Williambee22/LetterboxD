@@ -414,34 +414,6 @@
       <section class="stack">
         <% if (isMe) { %>
           <div class="panel">
-            <div class="kicker">Edit Profile</div>
-
-            <div class="field" style="margin-top:16px;">
-              <label>Profile Picture</label>
-              <div class="dropzone" id="pfpDrop">
-                <div class="dropzone_inner">
-                  <div class="muted">Drag & drop image or click</div>
-                  <div class="muted small">PNG/JPG/WEBP</div>
-                </div>
-              </div>
-              <form id="pfpUploadForm" method="post" action="/me/upload_pfp" enctype="multipart/form-data">
-                <input type="file" id="pfpFileReal" name="pfp_file" accept="image/*" hidden>
-              </form>
-            </div>
-
-            <div class="field" style="margin-top:16px;">
-              <label>Banner Image</label>
-              <div class="dropzone" id="bannerDrop">
-                <div class="dropzone_inner">
-                  <div class="muted">Drag & drop banner or click</div>
-                  <div class="muted small">Recommended: 1200x300</div>
-                </div>
-              </div>
-              <form id="bannerUploadForm" method="post" action="/me/upload_banner" enctype="multipart/form-data">
-                <input type="file" id="bannerFileReal" name="banner_file" accept="image/*" hidden>
-              </form>
-            </div>
-
             <div class="field" style="margin-top:16px;">
                 <label>Bio</label>
                 <form method="post" action="/me/update_bio">
@@ -580,4 +552,5 @@
   </script>
 </body>
 </html>
+
 
