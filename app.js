@@ -220,7 +220,7 @@ function posterUrlForShow(corps, year) {
   const y = parseInt(year || 0, 10);
   if (!key || !y) return '/static/posters/placeholder.png';
 
-  return `/posters/${encodeURIComponent(`${key}${y}`)}`;
+  return `/static/posters/${key}${y}.png`;
 }
 
 function normalizeRow(row) {
@@ -2425,6 +2425,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
