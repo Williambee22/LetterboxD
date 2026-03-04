@@ -220,7 +220,7 @@ function posterUrlForShow(corps, year) {
   const y = parseInt(year || 0, 10);
   if (!key || !y) return '/static/posters/placeholder.png';
 
-  return `/poster/${encodeURIComponent(`${key}${y}`)}`;
+  return `/posters/${encodeURIComponent(`${key}${y}`)}`;
 }
 
 function normalizeRow(row) {
@@ -546,7 +546,7 @@ function createApp() {
     };
   }
 
-  app.get('/poster/:name', async (req, res) => {
+  app.get('/posters/:name', async (req, res) => {
     const name = String(req.params.name || '').trim();
     const base = String(process.env.R2_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
   
@@ -2439,6 +2439,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
