@@ -273,10 +273,9 @@
 
                 <div class="ts_review">
                   <% if (r.top_review_text) { %>
-
-                    <div style="display:flex; gap:14px; align-items:flex-start;">
-
-                      <div style="display:flex; gap:10px; align-items:flex-start;">
+                    <div class="ts_review_inner">
+                
+                      <div class="ts_review_head">
                         <span class="avatar_sm">
                           <% if (r.top_review_avatar_url) { %>
                             <img src="<%= r.top_review_avatar_url %>" alt="avatar">
@@ -284,14 +283,14 @@
                             <span class="avatar_fallback"></span>
                           <% } %>
                         </span>
-
-                        <div style="min-width:0;">
+                
+                        <div class="ts_review_userblock">
                           <a class="reviewuser"
                              href="/u/<%= encodeURIComponent(r.top_review_username) %>"
                              style="text-decoration:none;">
                             <%= r.top_review_username %>
                           </a>
-
+                
                           <% if (r.top_review_rating_half != null) { %>
                             <span class="badge good" style="margin-left:8px;">
                               ★ <%= (Number(r.top_review_rating_half) / 2).toFixed(1) %>
@@ -301,19 +300,18 @@
                           <% } %>
                         </div>
                       </div>
-
-                      <div class="ts_quote_row" style="flex:1; min-width:0; margin-top:0;">
+                
+                      <div class="ts_quote_row">
                         <div class="ts_vote <%= vs > 0 ? 'pos' : vs < 0 ? 'neg' : 'zero' %>">
                           <%= vs > 0 ? '+' : '' %><%= vs %>
                         </div>
-
-                        <div class="muted small ts_quote" style="margin-top:0;">
+                
+                        <div class="muted small ts_quote">
                           “<%= r.top_review_text %>”
                         </div>
                       </div>
-
+                
                     </div>
-
                   <% } else { %>
                     <div class="muted small">No reviews yet.</div>
                   <% } %>
@@ -361,3 +359,4 @@
   </script>
 </body>
 </html>
+
