@@ -64,7 +64,7 @@ a:hover{
   font-size:12px;
   letter-spacing:.16em;
   text-transform:uppercase;
-  color:var(--muted);
+  color: color-mix(in srgb, var(--accent) 72%, white 28%);
 }
 
 .topbar{
@@ -170,14 +170,28 @@ a:hover{
 }
 
 .panel{
-  background:rgba(0, 0, 0, 0.92);
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--accent) 10%, rgba(0,0,0,.92)),
+      rgba(0,0,0,.92)
+    );
   border:1px solid var(--accentSoft);
+  border-radius: var(--radius2);
   padding:16px;
-  box-shadow:var(--shadow);
+  box-shadow: var(--shadow);
 }
 
 .panel:hover,
-.poster:hover,
+.poster:hover{
+  border-color: var(--accent);
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--accent) 14%, rgba(17,21,28,.78)),
+      rgba(17,21,28,.78)
+    );
+  transform:none;
+  box-shadow: 0 0 0 1px var(--accentFaint);
+}
 .reviewcard:hover,
 .ts_card:hover,
 .dropzone.hover{
@@ -316,10 +330,15 @@ a:focus{
 
 .poster{
   text-decoration:none;
+  border-radius:12px;
   overflow:hidden;
   border:1px solid var(--accentSoft);
-  background:rgba(17,21,28,.65);
-  transition:border-color .12s ease, background .12s ease;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--accent) 8%, rgba(17,21,28,.65)),
+      rgba(17,21,28,.65)
+    );
+  transition: border-color .12s ease, background .12s ease, box-shadow .12s ease;
 }
 
 .poster:hover{
@@ -615,7 +634,12 @@ img[src^="/static/posters/"]{
 
 .reviewcard{
   border:1px solid var(--accentSoft);
-  background:rgba(7,10,16,.35);
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--accent) 10%, rgba(7,10,16,.35)),
+      rgba(7,10,16,.35)
+    );
+  border-radius:18px;
   padding:12px 14px;
 }
 
@@ -686,7 +710,13 @@ img[src^="/static/posters/"]{
 
 .profile_stats{
   padding:12px;
+  border-radius:18px;
   border:1px solid var(--accentSoft);
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--accent) 8%, rgba(0,0,0,.72)),
+      rgba(0,0,0,.72)
+    );
 }
 
 .avatar_sm{
@@ -815,10 +845,12 @@ img[src^="/static/posters/"]{
 .profile_avg_box{
   margin-left:auto;
   text-align:right;
-  border:1px solid var(--accentSoft);
-  background:var(--accentFaint);
+  border:1px solid color-mix(in srgb, var(--pAccent, var(--accent)) 55%, transparent);
+  background: color-mix(in srgb, var(--pAccent, var(--accent)) 10%, rgba(0,0,0,.32));
   padding:10px 12px;
+  border-radius:0;
   min-width:160px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--pAccent, var(--accent)) 14%, transparent);
 }
 
 .profile_avg_value{
@@ -826,13 +858,14 @@ img[src^="/static/posters/"]{
   font-size:26px;
   font-weight:800;
   line-height:1.0;
+  color: color-mix(in srgb, var(--pAccent, var(--accent)) 78%, white 22%);
 }
 
 .profile_avg_star{
   font-size:30px;
   font-weight:900;
   margin-right:6px;
-  color:var(--accent);
+  color: var(--pAccent, var(--accent));
 }
 
 .friend_thumb_img{
@@ -1046,4 +1079,28 @@ img[src^="/static/posters/"]{
   pointer-events:none;
 }
 
+
+.profile_hero_inner h1{
+  color: color-mix(in srgb, var(--pAccent, var(--accent)) 82%, white 18%);
+}
+
+.profile_hero_inner .role_tag{
+  border-color: color-mix(in srgb, var(--pAccent, var(--accent)) 45%, rgba(255,255,255,.14));
+  background: color-mix(in srgb, var(--pAccent, var(--accent)) 12%, rgba(255,255,255,.03));
+}
+
+.profile_hero_inner .btn.ghost{
+  border-color: color-mix(in srgb, var(--pAccent, var(--accent)) 38%, rgba(255,255,255,.12));
+  background: color-mix(in srgb, var(--pAccent, var(--accent)) 10%, rgba(255,255,255,.02));
+}
+
+.profile_hero_inner .btn.ghost:hover{
+  border-color: var(--pAccent, var(--accent));
+  background: color-mix(in srgb, var(--pAccent, var(--accent)) 18%, rgba(255,255,255,.03));
+}
+
+.profile_bio{
+  border-left: 3px solid color-mix(in srgb, var(--pAccent, var(--accent)) 45%, transparent);
+  padding-left: 10px;
+}
 
