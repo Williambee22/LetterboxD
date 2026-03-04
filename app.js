@@ -218,9 +218,29 @@ function posterUrlForShow(corps, year) {
     .replace(/^_+|_+$/g, '');
 
   const y = parseInt(year || 0, 10);
+  const exts = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.avif'];
+
   if (!key || !y) return '/static/posters/placeholder.png';
 
-  return `/static/posters/${key}${y}.png`;
+  for (const ext of exts) {
+    const rel = `posters/${key}${y}${ext}`;
+    const abs = path.join(__dirname, 'static', rel);
+    if (fs.existsSync(abs)) return `/static/${rel}`;
+  }
+
+  for (const ext of exts) {
+    const rel = `posters/${key}default${ext}`;
+    const abs = path.join(__dirname, 'static', rel);
+    if (fs.existsSync(abs)) return `/static/${rel}`;
+  }
+
+  for (const ext of exts) {
+    const rel = `posters/default${ext}`;
+    const abs = path.join(__dirname, 'static', rel);
+    if (fs.existsSync(abs)) return `/static/${rel}`;
+  }
+
+  return '/static/posters/placeholder.png';
 }
 
 function normalizeRow(row) {
@@ -2425,6 +2445,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
