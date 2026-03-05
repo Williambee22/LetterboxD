@@ -428,57 +428,27 @@ function markNotificationsRead(conn, userId) {
   return markAllNotificationsRead(conn, userId);
 }
 
-function listTopShowsWithTopReview(conn, opts = {}) {
-  const limit = Number(opts.limit || 25);
-  const mode = String(opts.mode || 'top').trim().toLowerCase();
-  const textCol = reviewsTextCol(conn); 
-  
-  // Since we are filtering for >= 5 ratings, we don't need the (cnt = 0) logic anymore
-  const orderSql = mode === 'bottom'
-    ? 'ss.avg_rating ASC, ss.cnt DESC, ss.year DESC'
-    : 'ss.avg_rating DESC, ss.cnt DESC, ss.year DESC';
-
+function listTopUsersByReviewUpvotes(conn, limit = 25) {
+  // This query sums up all 'vote' values from review_votes 
+  // tied to a specific user's reviews.
   const sql = `
-    WITH show_stats AS (
-      SELECT
-        s.id, s.title, s.corps, s.year,
-        COALESCE(s.poster_url, '') AS poster_url,
-        COUNT(r.rating_half) AS cnt,
-        COALESCE(ROUND(AVG(r.rating_half) / 2.0, 2), 0) AS avg_rating
-      FROM shows s
-      LEFT JOIN ratings r ON r.show_id = s.id
-      GROUP BY s.id
-      /* This line enforces the 5-rating minimum */
-      HAVING cnt >= 5
-    ),
-    review_scores AS (
-      SELECT 
-        rv.show_id, 
-        rv.${textCol} AS review_text, 
-        u.username,
-        COALESCE(SUM(v.vote), 0) AS vote_score
-      FROM reviews rv
-      JOIN users u ON u.id = rv.user_id
-      LEFT JOIN review_votes v ON v.show_id = rv.show_id AND v.review_user_id = rv.user_id
-      GROUP BY rv.show_id, rv.user_id
-    ),
-    top_review_per_show AS (
-      SELECT 
-        *,
-        ROW_NUMBER() OVER (PARTITION BY show_id ORDER BY vote_score DESC) as rn
-      FROM review_scores
-    )
-    SELECT
-      ss.*,
-      tr.username AS top_review_username,
-      tr.review_text AS top_review_text,
-      tr.vote_score AS top_review_score
-    FROM show_stats ss
-    LEFT JOIN top_review_per_show tr ON tr.show_id = ss.id AND tr.rn = 1
-    ORDER BY ${orderSql}
+    SELECT 
+      u.id, 
+      u.username, 
+      u.avatar_url,
+      r.name as role_name,
+      r.color as role_color,
+      COALESCE(SUM(v.vote), 0) as total_upvotes,
+      COUNT(DISTINCT rv.show_id) as reviews_count
+    FROM users u
+    JOIN reviews rv ON rv.user_id = u.id
+    LEFT JOIN review_votes v ON v.show_id = rv.show_id AND v.review_user_id = rv.user_id
+    LEFT JOIN roles r ON u.role_id = r.id
+    GROUP BY u.id
+    ORDER BY total_upvotes DESC, reviews_count DESC
     LIMIT ?
   `;
-
+  
   return conn.prepare(sql).all(limit);
 }
 
@@ -1509,6 +1479,7 @@ module.exports = {
   getVerifiedRatingHistogram,
   updateUserBio 
 };
+
 
 
 
