@@ -540,7 +540,7 @@ function createApp() {
     dbx.ensureAuthColumns(conn);
     return conn;
   }
-  const  = multer({
+  const uploadPfp = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
       
@@ -2403,6 +2403,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
