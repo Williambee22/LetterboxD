@@ -972,9 +972,8 @@ function listUsers(conn) {
 function listTopShowsWithTopReview(conn, opts = {}) {
   const limit = Number(opts.limit || 25);
   const mode = String(opts.mode || 'top').trim().toLowerCase();
+  const textCol = reviewsTextCol(conn); // Ensure we get the right text column name
   
-  // Logic: If mode is 'bottom', we still want shows with 0 ratings at the absolute end.
-  // We use the same (ss.cnt = 0) ASC trick.
   const orderSql = mode === 'bottom'
     ? '(ss.cnt = 0) ASC, ss.avg_rating ASC, ss.cnt DESC, ss.year DESC'
     : '(ss.cnt = 0) ASC, ss.avg_rating DESC, ss.cnt DESC, ss.year DESC';
@@ -990,7 +989,23 @@ function listTopShowsWithTopReview(conn, opts = {}) {
       LEFT JOIN ratings r ON r.show_id = s.id
       GROUP BY s.id
     ),
-    /* ... rest of your CTEs (review_scores, top_review_per_show) remain the same ... */
+    review_scores AS (
+      SELECT 
+        rv.show_id, 
+        rv.${textCol} AS review_text, 
+        u.username,
+        COALESCE(SUM(v.vote), 0) AS vote_score
+      FROM reviews rv
+      JOIN users u ON u.id = rv.user_id
+      LEFT JOIN review_votes v ON v.show_id = rv.show_id AND v.review_user_id = rv.user_id
+      GROUP BY rv.show_id, rv.user_id
+    ),
+    top_review_per_show AS (
+      SELECT 
+        *,
+        ROW_NUMBER() OVER (PARTITION BY show_id ORDER BY vote_score DESC) as rn
+      FROM review_scores
+    )
     SELECT
       ss.*,
       tr.username AS top_review_username,
