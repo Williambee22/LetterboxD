@@ -540,7 +540,7 @@ function createApp() {
     dbx.ensureAuthColumns(conn);
     return conn;
   }
-  const uploadPfp = multer({
+  const  = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
       
@@ -1185,70 +1185,69 @@ function createApp() {
 
   app.post('/me/upload_pfp', loginRequired((req, res, next) => {
     uploadPfp.single('pfp_file')(req, res, async (err) => {
-      if (err) {
-        req.flash('error', `Upload failed: ${err.message}`);
-        return res.redirect('/me/customize');
-      }
-
-      if (!req.file) {
-        req.flash('error', 'No file selected.');
-        return res.redirect('/me/customize');
-      }
-
-      let conn;
-      try {
-        conn = getConn();
-        const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
-        if (!me) return res.sendStatus(404);
-
-        let ext = path.extname(req.file.originalname || '').toLowerCase();
-        if (!ALLOWED_IMAGE_EXTS.has(ext)) {
-          req.flash('error', 'Invalid file type.');
-          return res.redirect('/me/customize');
+        if (err) {
+            req.flash('error', `Upload failed: ${err.message}`);
+            return res.redirect('/me/customize');
         }
-        if (ext === '.jpeg') ext = '.jpg';
 
-        const oldAvatarUrl = String(me.avatar_url || '').trim();
+        if (!req.file) {
+            req.flash('error', 'No file selected.');
+            return res.redirect('/me/customize');
+        }
 
-        const fileName = `pfp_${slugify(me.username)}_${crypto.randomUUID()}${ext}`;
-        const key = `pfps/${fileName}`;
-
-        const avatarUrl = await uploadBufferToR2({
-          key,
-          buffer: req.file.buffer,
-          contentType: req.file.mimetype || 'application/octet-stream',
-          cacheControl: 'public, max-age=604800',
-        });
-
-        await dbx.updateUserAvatarUrl(conn, Number(req.session.uid), avatarUrl);
-        await dbx.commit(conn);
-
-        req.session.user = {
-          ...(req.session.user || {}),
-          id: Number(me.id),
-          username: me.username,
-          email: me.email || null,
-          is_admin: Number(me.is_admin || 0),
-          avatar_url: avatarUrl,
-        };
-
+        let conn;
         try {
-          if (oldAvatarUrl && oldAvatarUrl !== avatarUrl) {
-            await deleteStoredImageByUrl(oldAvatarUrl, 'pfp');
-          }
-        } catch (cleanupErr) {
-          console.error('Failed to delete old avatar asset:', cleanupErr);
-        }
+            conn = getConn();
+            const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
+            if (!me) return res.sendStatus(404);
 
-        req.flash('ok', 'Profile picture updated.');
-        return res.redirect('/me/customize');
-      } catch (e) {
-        return next(e);
-      } finally {
-        if (conn) dbx.close(conn);
-      }
-    });
-  }));
+            let ext = path.extname(req.file.originalname || '').toLowerCase();
+            if (!ALLOWED_IMAGE_EXTS.has(ext)) {
+                req.flash('error', 'Invalid file type.');
+                return res.redirect('/me/customize');
+            }
+            if (ext === '.jpeg') ext = '.jpg';
+
+            const oldAvatarUrl = String(me.avatar_url || '').trim();
+            const fileName = `pfp_${slugify(me.username)}_${crypto.randomUUID()}${ext}`;
+            const key = `pfps/${fileName}`;
+
+            const avatarUrl = await uploadBufferToR2({
+                key,
+                buffer: req.file.buffer,
+                contentType: req.file.mimetype || 'application/octet-stream',
+                cacheControl: 'public, max-age=604800',
+            });
+
+            await dbx.updateUserAvatarUrl(conn, Number(req.session.uid), avatarUrl);
+            await dbx.commit(conn);
+
+            req.session.user = {
+                ...(req.session.user || {}),
+                id: Number(me.id),
+                username: me.username,
+                email: me.email || null,
+                is_admin: Number(me.is_admin || 0),
+                avatar_url: avatarUrl,
+            };
+
+            try {
+                if (oldAvatarUrl && oldAvatarUrl !== avatarUrl) {
+                    await deleteStoredImageByUrl(oldAvatarUrl, 'pfp');
+                }
+            } catch (cleanupErr) {
+                console.error('Failed to delete old avatar asset:', cleanupErr);
+            }
+
+            req.flash('ok', 'Profile picture updated.');
+            return res.redirect('/me/customize');
+        } catch (e) {
+            return next(e);
+        } finally {
+            if (conn) dbx.close(conn);
+        }
+    }); // <--- CHECK THIS
+})); // <--- AND THIS
 
   app.post('/show/:show_id/rate', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
@@ -2404,6 +2403,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
