@@ -1070,6 +1070,11 @@ function createApp() {
     }
   });
 
+  app.get('/force-change-password', (req, res) => {
+    if (!req.session.uid) return res.redirect('/login');
+    res.render('force_change_password'); // This matches your error message name
+  });
+  
   app.post('/show/:show_id/comment/:comment_id/delete', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const commentId = Number(req.params.comment_id);
@@ -2445,6 +2450,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
