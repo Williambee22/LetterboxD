@@ -179,35 +179,25 @@
   </style>
 </head>
 <body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
-<%
-  const POSTER_FALLBACK = "/static/posters/placeholder.png";
-  const meUser = typeof me !== "undefined" ? me : null;
-  const showRow = row || {};
-  const reviewList = Array.isArray(reviews) ? [...reviews] : [];
-  reviewList.sort((a, b) => Number((b && b.vote_score) || 0) - Number((a && a.vote_score) || 0));
-  const myReviewText = typeof my_review !== "undefined" ? (my_review || "") : "";
-  const myRatingVal = typeof my_rating !== "undefined" ? my_rating : null;
-  const loginNext = "/login?next=" + encodeURIComponent("/show/" + (showRow.id || ""));
-  const notifCountSafe = typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
-  const notifItemsSafe = (typeof notif_items !== "undefined" && Array.isArray(notif_items)) ? notif_items : [];
-
-  const distLabels = ["5.0","4.5","4.0","3.5","3.0","2.5","2.0","1.5","1.0","0.5","0.0"];
-
   <%
+  // 1. Core Variables & Fallbacks
   const POSTER_FALLBACK = "/static/posters/placeholder.png";
   const meUser = typeof me !== "undefined" ? me : null;
   const showRow = row || {};
+  
+  // 2. Review Processing
   const reviewList = Array.isArray(reviews) ? [...reviews] : [];
   reviewList.sort((a, b) => Number((b && b.vote_score) || 0) - Number((a && a.vote_score) || 0));
+  
+  // 3. User-specific ratings/notifs
   const myReviewText = typeof my_review !== "undefined" ? (my_review || "") : "";
   const myRatingVal = typeof my_rating !== "undefined" ? my_rating : null;
   const loginNext = "/login?next=" + encodeURIComponent("/show/" + (showRow.id || ""));
   const notifCountSafe = typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
   const notifItemsSafe = (typeof notif_items !== "undefined" && Array.isArray(notif_items)) ? notif_items : [];
 
+  // 4. Histogram & Critic Score Logic
   const distLabels = ["5.0","4.5","4.0","3.5","3.0","2.5","2.0","1.5","1.0","0.5","0.0"];
-
-  // Removed the extra <% that was here
   const ratingHistogramRaw = (typeof rating_histogram !== "undefined" && rating_histogram) ? rating_histogram : {};
   const verifiedHistogramRaw = (typeof verified_rating_histogram !== "undefined" && verified_rating_histogram) ? verified_rating_histogram : {};
 
@@ -233,13 +223,12 @@
   const ratingDistMax = ratingDistRows.reduce((m, r) => Math.max(m, r.count), 0);
   const verifiedDistMax = verifiedDistRows.reduce((m, r) => Math.max(m, r.count), 0);
 
-  // --- NEW CRITIC SCORE CALCULATION ---
+  // 5. Critic Score Calculation
   let verifiedSum = 0;
   verifiedDistRows.forEach(r => {
     verifiedSum += (parseFloat(r.label) * r.count);
   });
   
-  // Only calculate average if there are at least 5 ratings
   const criticAvg = verifiedDistTotal >= 5 
     ? (verifiedSum / verifiedDistTotal).toFixed(2) 
     : null;
@@ -799,6 +788,7 @@
   </script>
 </body>
 </html>
+
 
 
 
