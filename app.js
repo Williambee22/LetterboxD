@@ -1089,7 +1089,7 @@ function createApp() {
     return res.redirect(`/show/${showId}`);
   }));
 
-  app.post('/show/:show_id/review/:review_user_id/delete', adminRequired(async (req, res) => {
+  app.post('/admin/show/:show_id/review/:review_user_id/delete', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const reviewUserId = Number(req.params.review_user_id);
     let conn;
@@ -2445,6 +2445,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
