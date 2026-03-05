@@ -98,6 +98,50 @@
     .notifDropdown * {
       pointer-events: auto !important;
     }
+
+
+    /* 1. Create the container for the review section */
+    .ts_review {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding-left: 20px; /* Space between the meta info and the review */
+        border-left: 1px solid var(--line); /* The missing vertical border */
+        margin-left: 20px;
+    }
+    
+    /* 2. Fix the inner layout so things aren't "too far right" */
+    .ts_review_inner {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+    }
+    
+    /* 3. Fix the "first line indented" issue */
+    .ts_quote {
+        text-indent: 0; /* Forces the first line to align with the rest */
+        margin-top: 4px;
+        line-height: 1.4;
+        font-style: italic;
+        display: block; /* Ensures it behaves as a block element */
+    }
+    
+    /* 4. Align the vote count and the text on the same horizontal plane */
+    .ts_quote_row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    /* 5. Ensure the user block (avatar + name) is tight against the border */
+    .ts_review_head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+    
   </style>
 </head>
 <body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
@@ -359,4 +403,5 @@
   </script>
 </body>
 </html>
+
 
