@@ -349,96 +349,75 @@
           <div class="muted small">Browse, sort, and click a show to rate and review.</div>
         </div>
 
-        <div style="position: absolute; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; text-align: center; padding: 20px 0; z-index: 10;">
+        <div style="width: 100%; text-align: center; padding: 20px 0; display: block; margin-left: -40px;">
   
-          <div style="font-weight: 900; font-size: 42px; line-height: 1.1; letter-spacing: -1px; margin-bottom: 10px; color: #ffffff;">
-            Welcome to <span style="color: #00ce6a;">Pressboxd</span>
-          </div>
-        
-          <div style="margin-top: 10px; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); color: #ffffff;">
-            
-            <p style="margin-bottom: 8px; opacity: 0.9; font-size: 14px;">
-              <strong>Early Development:</strong> Customization options are coming soon!
-            </p>
-            
-            <p style="margin-bottom: 10px; font-style: italic; color: #ffcc00; font-weight: 500; font-size: 14px; line-height: 1.4;">
-              If the site feels down or you are logged out, we are likely pushing live fixes. We apologize for the inconvenience!
-            </p>
-        
-            <p style="opacity: 0.8; font-size: 14px; margin-bottom: 0;">
-              Suggestions? Reach out at 
-              <a href="mailto:PressboxdContact@gmail.com" style="color: #00ce6a; text-decoration: none; font-weight: bold;">
-                PressboxdContact@gmail.com
-              </a>
-            </p>
-          </div>
-        </div>
-        
-        <div style="height: 180px;"></div>
-      <% if (meUser) { %>
-        <div class="panel" style="margin-top:12px; padding:12px;">
-          <div class="row between" style="align-items:center; margin-bottom:-10px;">
-            <div style="font-weight:900;">Friend activity</div>
-            <a class="muted small" href="/me/friends" style="text-decoration:none;">Friends</a>
-          </div>
-
-         <% if (safeFriendActivity.length > 0) { %>
-            <div style="
-              display:flex;
-              flex-wrap:wrap;
-              gap:10px;
-              margin-top:14px;
-              align-items:stretch;
-            ">
-              <% for (const a of safeFriendActivity) {
-                   const kind = a?.kind || "";
-                   const who = a?.actor_username || "Someone";
-                   const sid = a?.show_id || null;
-                   const corpsv = a?.corps || "";
-                   const yearv = a?.year || "";
-                   const ratingHalf = a?.rating_half;
-                   const stars = ratingHalf != null ? Number(ratingHalf) / 2 : null;
-              %>
-                <div style="
-                  flex: 1 1 240px;
-                  max-width: 360px;
-                  padding:10px;
-                  border-radius:12px;
-                  background: rgba(255,255,255,0.04);
-                  border:1px solid rgba(255,255,255,0.10);
-                  overflow:hidden;
-                ">
-                  <div class="small" style="line-height:1.35; min-width:0;">
-                    <b><%= who %></b>
-                    <% if (kind === "rating") { %>
-                      rated
-                    <% } else if (kind === "review") { %>
-                      reviewed
-                    <% } else { %>
-                      did something on
-                    <% } %>
+            <div style="font-weight: 900; font-size: 42px; line-height: 1.1; letter-spacing: -1px; margin-bottom: 10px; color: #ffffff;">
+              Welcome to <span style="color: #00ce6a;">Pressboxd</span>
+            </div>
           
-                    <% if (sid) { %>
-                      <a href="/show/<%= sid %>" style="text-decoration:none;">
-                        <%= corpsv %><% if (yearv) { %> <%= yearv %><% } %>
-                      </a>
-                    <% } else { %>
-                      <%= corpsv %><% if (yearv) { %> <%= yearv %><% } %>
-                    <% } %>
+            <div style="max-width: 600px; margin: 10px auto 0; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); color: #ffffff;">
+              <p style="margin-bottom: 8px; opacity: 0.9; font-size: 14px;">
+                <strong>Early Development:</strong> Customization options are coming soon!
+              </p>
+              
+              <p style="margin-bottom: 10px; font-style: italic; color: #ffcc00; font-weight: 500; font-size: 14px; line-height: 1.4;">
+                If the site feels down or you are logged out, we are likely pushing live fixes. We apologize for the inconvenience!
+              </p>
           
-                    <% if (kind === "rating" && ratingHalf != null) { %>
-                      <span class="muted">(<%= stars %>★)</span>
-                    <% } %>
-                  </div>
+              <p style="opacity: 0.8; font-size: 14px; margin-bottom: 0;">
+                Suggestions? Reach out at 
+                <a href="mailto:PressboxdContact@gmail.com" style="color: #00ce6a; text-decoration: none; font-weight: bold;">
+                  PressboxdContact@gmail.com
+                </a>
+              </p>
+            </div>
+          </div>
+          
+          <% if (meUser) { %>
+            <div class="panel" style="margin-top:12px; padding:12px;">
+              <div class="row between" style="align-items:center; margin-bottom:-10px;">
+                <div style="font-weight:900;">Friend activity</div>
+                <a class="muted small" href="/me/friends" style="text-decoration:none;">Friends</a>
+              </div>
+          
+              <% if (safeFriendActivity.length > 0) { %>
+                <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; align-items:stretch;">
+                  <% for (const a of safeFriendActivity) { 
+                       const kind = a?.kind || "";
+                       const who = a?.actor_username || "Someone";
+                       const sid = a?.show_id || null;
+                       const corpsv = a?.corps || "";
+                       const yearv = a?.year || "";
+                       const ratingHalf = a?.rating_half;
+                       const stars = ratingHalf != null ? Number(ratingHalf) / 2 : null;
+                  %>
+                    <div style="flex: 1 1 240px; max-width: 360px; padding:10px; border-radius:12px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); overflow:hidden;">
+                      <div class="small" style="line-height:1.35; min-width:0;">
+                        <b><%= who %></b>
+                        <% if (kind === "rating") { %> rated 
+                        <% } else if (kind === "review") { %> reviewed 
+                        <% } else { %> did something on <% } %>
+          
+                        <% if (sid) { %>
+                          <a href="/show/<%= sid %>" style="text-decoration:none;">
+                            <%= corpsv %><% if (yearv) { %> <%= yearv %><% } %>
+                          </a>
+                        <% } else { %>
+                          <%= corpsv %><% if (yearv) { %> <%= yearv %><% } %>
+                        <% } %>
+          
+                        <% if (kind === "rating" && ratingHalf != null) { %>
+                          <span class="muted">(<%= stars %>★)</span>
+                        <% } %>
+                      </div>
+                    </div>
+                  <% } %>
                 </div>
+              <% } else { %>
+                <div class="muted small" style="margin-top:20px;">No recent friend activity.</div>
               <% } %>
             </div>
-          <% } else { %>
-            <div class="muted small">No recent friend activity.</div>
           <% } %>
-        </div>
-      <% } %>
-    </div>
 
     <div class="panel" style="margin-top:14px;">
       <form method="get" action="/shows" class="row gap" style="flex-wrap:wrap; align-items:flex-end;">
@@ -652,6 +631,7 @@
   </script>
 </body>
 </html>
+
 
 
 
