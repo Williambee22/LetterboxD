@@ -434,7 +434,7 @@ async function sendTempPasswordEmail(toEmail, username, tempPassword) {
       <p>After logging in, you will be required to change your password.</p>
       <p>
         Login here:
-        <a href="${APP_BASE_URL}/login">${APP_BASE_URL}/login</a>
+        <a href="${APP_BASE_URL}">${APP_BASE_URL}</a>
       </p>
 
       <p style="color:#666;font-size:12px;margin-top:20px;">
@@ -481,7 +481,7 @@ function createApp() {
 
   app.use((req, res, next) => {
     const uncachedPrefixes = [
-      '/login',
+      '',
       '/register',
       '/logout',
       '/me',
@@ -556,7 +556,7 @@ function createApp() {
     return async (req, res, next) => {
       if (!req.session.uid) {
         req.flash('warn', 'Please log in to do that.');
-        return res.redirect(`/login?next=${encodeURIComponent(req.path)}`);
+        return res.redirect(`?next=${encodeURIComponent(req.path)}`);
       }
       try {
         return await handler(req, res, next);
@@ -620,7 +620,7 @@ function createApp() {
 
       if (!u) {
         req.flash('ok', 'If that email exists, a temporary password has been sent.');
-        return res.redirect('/login');
+        return res.redirect('');
       }
 
       const tempPassword = makeTempPassword(12);
@@ -633,7 +633,7 @@ function createApp() {
       await sendTempPasswordEmail(email, u.username, tempPassword);
 
       req.flash('ok', 'If that email exists, a temporary password has been sent.');
-      return res.redirect('/login');
+      return res.redirect('');
     } catch (err) {
       return next(err);
     } finally {
@@ -646,7 +646,7 @@ function createApp() {
     try {
       conn = getConn();
       const u = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
-      if (!u) return res.redirect('/login');
+      if (!u) return res.redirect('');
 
       if (Number(u.must_change_password || 0) !== 1) {
         return res.redirect('/shows');
@@ -681,7 +681,7 @@ function createApp() {
 
         req.flash('ok', 'Password updated! Please log in again.');
         req.session.destroy(); // Clear session
-        res.redirect('/login');
+        res.redirect('');
     } catch (err) {
         if (conn) dbx.rollback(conn);
         next(err);
@@ -868,13 +868,9 @@ function createApp() {
         avatar_url: u.avatar_url || null,
       };
 
-      if (Number(u.must_change_password || 0) === 1) {
-        req.flash('warn', 'You must change your password before continuing.');
-        return req.session.save((err) => {
-          if (err) return next(err);
-          return res.redirect('/force-change-password');
-        });
-      }
+      // --- LOGIC REMOVED START ---
+      // We no longer check (Number(u.must_change_password || 0) === 1) here
+      // --- LOGIC REMOVED END ---
 
       req.flash('ok', 'Logged in.');
 
@@ -887,7 +883,7 @@ function createApp() {
     } finally {
       if (conn) dbx.close(conn);
     }
-  });
+});
 
   app.get('/logout', (req, res) => {
     req.session.destroy(() => {
@@ -2405,6 +2401,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
