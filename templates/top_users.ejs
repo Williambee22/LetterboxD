@@ -99,29 +99,30 @@
       pointer-events: auto !important;
     }
 
-    /* 1. Make the User Profile Thumbnails Square */
+    /* 1. Make the User Profile Thumbnails Square (80px) */
     .topusers_page .ts_thumb {
-        width: 60px;  /* Set a fixed width */
-        height: 60px; /* Match the width for a 1:1 square */
-        flex: 0 0 60px;
+        width: 80px;  /* Increased from 60px */
+        height: 80px; /* Match the width for a 1:1 square */
+        flex: 0 0 80px;
         overflow: hidden;
         border: 1px solid var(--accentSoft);
+        background: var(--panel2);
     }
     
     .topusers_page .ts_thumb img {
         width: 100%;
         height: 100%;
-        object-fit: cover; /* Prevents stretching */
+        object-fit: cover; /* Ensures images fill the square without stretching */
     }
     
-    /* 2. Fix the alignment and the clashing text */
+    /* 2. Fix the alignment and the clashing text with a vertical divider */
     .topusers_page .ts_review {
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding-left: 20px;
-        margin-left: 20px;
-        border-left: 1px solid var(--line); /* The vertical divider */
+        padding-left: 24px; /* Slightly more padding for the larger layout */
+        margin-left: 24px;
+        border-left: 1px solid var(--line); /* Separation from the stats column */
     }
     
     /* 3. Remove indentation and clean up the quote */
@@ -142,14 +143,24 @@
         margin-bottom: 4px;
     }
     
-    /* 4. Ensure the card layout handles the square thumb well */
+    /* 4. Layout Grid: Adjusted for the 80px thumb + better spacing */
     .topusers_page .ts_card {
         display: grid;
-        grid-template-columns: 40px 60px 220px 1fr; /* Rank, Square Thumb, Stats, Review */
+        /* Columns: Rank(40px) | Thumb(80px) | Stats(220px) | Review(flexible) */
+        grid-template-columns: 40px 80px 220px 1fr; 
+        gap: 16px; 
         align-items: center;
         background: var(--panel);
         padding: 16px;
         border: 1px solid var(--line2);
+    }
+    
+    /* Vertical centering for the rank number */
+    .ts_rank {
+        text-align: center;
+        font-weight: 950;
+        font-size: 18px;
+        color: var(--muted);
     }
 
   </style>
@@ -377,4 +388,5 @@
   </script>
 </body>
 </html>
+
 
