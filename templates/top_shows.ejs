@@ -14,19 +14,17 @@
       .notifDropdown { display: none; position: absolute; right: 0; top: 40px; width: 340px; max-height: 420px; overflow: auto; background: rgba(15, 23, 42, 0.98); border: 1px solid rgba(255,255,255,0.12); z-index: 9999; }
       .notifDropdown.open { display:block; }
   
-      /* --- THE FIX: UNIFORM CARD SIZES --- */
+      /* --- THE CARD LAYOUT --- */
   
       .ts_card {
           display: grid !important;
-          /* Fixed Column Widths: Rank | Poster | Info | Review */
-          grid-template-columns: 40px 70px 200px 1fr !important;
+          /* Increased Meta column to 260px to push review further right */
+          grid-template-columns: 40px 70px 260px 1fr !important;
           align-items: center !important;
           gap: 20px !important;
           padding: 16px !important;
           background: var(--panel) !important;
           border-bottom: 1px solid var(--line) !important;
-          
-          /* THIS LOCKS THE HEIGHT */
           height: 130px !important; 
           max-height: 130px !important;
           overflow: hidden !important;
@@ -45,6 +43,7 @@
           flex: 0 0 70px !important;
           background: var(--panel2);
           overflow: hidden;
+          border-radius: 4px;
       }
   
       .ts_thumb img {
@@ -57,7 +56,7 @@
           display: flex;
           flex-direction: column;
           gap: 4px;
-          min-width: 0; /* Allows text truncation to work */
+          min-width: 0;
       }
   
       .ts_title {
@@ -68,46 +67,64 @@
           text-overflow: ellipsis;
       }
   
-      /* --- REVIEW SECTION: FIXED HEIGHT & TRUNCATION --- */
+      /* --- REVIEW SECTION: ALIGNMENT & INDENT FIX --- */
   
       .ts_review {
           display: flex !important;
           flex-direction: column !important;
           justify-content: center !important;
-          padding-left: 20px !important;
+          padding-left: 25px !important; 
           border-left: 1px solid var(--line) !important;
-          height: 100px !important; /* Matches thumb height */
+          height: 100px !important;
           overflow: hidden !important;
       }
-  
-      .ts_quote {
-          display: -webkit-box !important;
-          -webkit-line-clamp: 2; /* Shows exactly 2 lines */
-          -webkit-box-orient: vertical;
-          overflow: hidden !important;
-          text-overflow: ellipsis;
-          
-          font-style: italic;
-          line-height: 1.5;
-          margin-top: 5px !important;
-          color: var(--muted);
-          text-indent: 0 !important;
-      }
-  
+
       .ts_review_head {
           display: flex;
           align-items: center;
           gap: 8px;
-          margin-bottom: 4px;
+          margin-bottom: 6px;
+      }
+
+      /* Fixed Indentation: Using Flex for the Quote Row */
+      .ts_quote_row {
+          display: flex !important;
+          align-items: flex-start !important;
+          gap: 12px !important;
+          margin-top: 0 !important;
       }
   
       .ts_vote {
-          min-width: 35px;
+          flex-shrink: 0;
+          min-width: 38px;
           font-weight: 800;
-          font-size: 12px;
+          font-size: 11px;
           text-align: center;
-          color: var(--accent);
+          padding: 2px 4px;
+          border-radius: 4px;
+          background: rgba(255,255,255,0.06);
       }
+
+      /* Vote Colors */
+      .ts_vote.pos { color: #22c55e; }
+      .ts_vote.neg { color: #ef4444; }
+  
+      .ts_quote {
+          flex: 1;
+          display: -webkit-box !important;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden !important;
+          text-overflow: ellipsis;
+          font-style: italic;
+          line-height: 1.4;
+          color: var(--muted);
+          text-indent: 0 !important; /* Forces no indentation */
+          margin: 0 !important;
+      }
+
+      .ts_avg { font-weight: 800; color: var(--accent); }
+      .ts_badges { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
     </style>
 </head>
 <body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
@@ -123,23 +140,12 @@
   <header class="topbar">
     <div class="wrap row between">
       <div style="display: flex; align-items: center; gap: 10px;">
-        
         <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display: flex; align-items: center; text-decoration: none;">
           <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <img 
-              src="/static/logo.png" 
-              alt="Logo" 
-              style="max-width: 35px; max-height: 35px; width: auto; height: auto; object-fit: contain; transition: transform 0.6s ease-in-out;"
-              onmouseover="this.style.transform='rotate(360deg)'" 
-              onmouseout="this.style.transform='rotate(0deg)'"
-            >
+            <img src="/static/logo.png" alt="Logo" style="max-width: 35px; max-height: 35px; width: auto; height: auto; transition: transform 0.6s ease-in-out;" onmouseover="this.style.transform='rotate(360deg)'" onmouseout="this.style.transform='rotate(0deg)'">
           </div>
         </a>
-  
-        <a class="brand" href="/shows">
-          <span>Pressboxd</span>
-        </a>
-  
+        <a class="brand" href="/shows"><span>Pressboxd</span></a>
       </div>
 
       <nav class="nav row">
@@ -157,74 +163,29 @@
         <% if (safeMe) { %>
           <div class="authBellSlot">
             <div class="notifWrap">
-              <button class="bellBtn" id="bellBtn" aria-label="Notifications" title="Notifications">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/>
-                  <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
-                </svg>
-
-                <% if (safeNotifCount > 0) { %>
-                  <span class="badgeDot"><%= safeNotifCount %></span>
-                <% } %>
+              <button class="bellBtn" id="bellBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/><path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+                <% if (safeNotifCount > 0) { %><span class="badgeDot"><%= safeNotifCount %></span><% } %>
               </button>
-
               <div class="notifDropdown" id="notifDropdown">
                 <div class="notifHeader">
                   <div class="notifTitle">Notifications</div>
-                  <form method="post" action="/me/notifications/read">
-                    <button class="markReadBtn" type="submit">Mark all read</button>
-                  </form>
+                  <form method="post" action="/me/notifications/read"><button class="markReadBtn" type="submit">Mark all read</button></form>
                 </div>
-
-                <% if (safeNotifItems.length > 0) { %>
-                  <div class="notifList">
-                    <% for (const n of safeNotifItems) {
-                      const kind = n.kind || "";
-                      const actor = n.actor_username || "Someone";
-                      const created = n.created_at || "";
-                      const unread = Number(n.is_read || 0) === 0;
-                      const sid = n.show_id || null;
-                    %>
-                      <div class="notifItem <%= unread ? 'unread' : '' %>">
-                        <% if (kind === "friend_request") { %>
-                          <div><b><%= actor %></b> sent you a friend request.</div>
-                        <% } else if (kind === "follow") { %>
-                          <div><b><%= actor %></b> followed you.</div>
-                        <% } else if (kind === "review_upvote") { %>
-                          <div>
-                            <b><%= actor %></b> upvoted your review
-                            <% if (sid) { %>
-                              — <a href="/show/<%= sid %>">View show</a>
-                            <% } %>
-                          </div>
-                        <% } else { %>
-                          <div>New activity.</div>
-                        <% } %>
-
-                        <% if (created) { %>
-                          <div class="notifTime"><%= created %></div>
-                        <% } %>
-                      </div>
-                    <% } %>
-                  </div>
-                <% } else { %>
-                  <div class="notifEmpty">No notifications.</div>
-                <% } %>
+                <div class="notifList">
+                  <% for (const n of safeNotifItems) { %>
+                    <div class="notifItem <%= Number(n.is_read) === 0 ? 'unread' : '' %>">
+                      <div><b><%= n.actor_username %></b> <%= n.kind === 'review_upvote' ? 'upvoted your review' : 'interacted with you' %></div>
+                    </div>
+                  <% } %>
+                </div>
               </div>
             </div>
           </div>
-
           <a class="nav_user" href="/me">
-            <span class="avatar_sm">
-              <% if (safeMe.avatar_url) { %>
-                <img src="<%= safeMe.avatar_url %>" alt="avatar">
-              <% } else { %>
-                <span class="avatar_fallback"></span>
-              <% } %>
-            </span>
+            <span class="avatar_sm"><% if (safeMe.avatar_url) { %><img src="<%= safeMe.avatar_url %>"><% } else { %><span class="avatar_fallback"></span><% } %></span>
             <span class="muted small"><%= safeMe.username %></span>
           </a>
-
           <a href="/logout">Logout</a>
         <% } else { %>
           <a href="/login">Login</a>
@@ -235,29 +196,13 @@
   </header>
 
   <main class="wrap">
-    <% if (safeFlashes.length > 0) { %>
-      <div class="flashes">
-        <% for (const f of safeFlashes) { %>
-          <div class="flash <%= f.category %>"><%= f.message %></div>
-        <% } %>
-      </div>
-    <% } %>
-
     <div class="topshows_page">
-
       <div class="row between" style="margin-top:10px; align-items:flex-end;">
         <div>
           <div class="kicker">Rankings</div>
-          <h1 style="margin:6px 0 0;">
-            <%= safeMode === "bottom" ? "Lowest Rated Shows" : "Top Shows" %>
-          </h1>
-          <div class="muted small">
-            <%= safeMode === "bottom"
-              ? "Sorted by lowest average rating (tie-break: most ratings)."
-              : "Sorted by highest average rating (tie-break: most ratings)." %>
-          </div>
+          <h1 style="margin:6px 0 0;"><%= safeMode === "bottom" ? "Lowest Rated Shows" : "Top Shows" %></h1>
+          <div class="muted small">Sorted by average rating.</div>
         </div>
-
         <div class="seg" style="display:flex; gap:8px;">
           <a class="btn ghost <%= safeMode !== 'bottom' ? 'on' : '' %>" href="/top?mode=top">Top rated</a>
           <a class="btn ghost <%= safeMode === 'bottom' ? 'on' : '' %>" href="/top?mode=bottom">Lowest rated</a>
@@ -267,125 +212,61 @@
       <% if (safeRows.length > 0) { %>
         <div class="panel" style="margin-top:14px;">
           <div class="stack">
-            <% safeRows.forEach((r, i) => {
+            <% safeRows.forEach((r, i) => { 
                  const vs = r.top_review_score != null ? Number(r.top_review_score) : 0;
             %>
               <div class="ts_card">
-
                 <div class="ts_rank">#<%= i + 1 %></div>
 
                 <a class="ts_thumb" href="/show/<%= r.id %>">
-                  <% if (r.poster_url) { %>
-                    <img src="<%= r.poster_url %>" alt="<%= r.title %> poster">
-                  <% } else { %>
-                    <div class="ts_thumb_fallback"></div>
-                  <% } %>
+                  <% if (r.poster_url) { %><img src="<%= r.poster_url %>"><% } else { %><div class="ts_thumb_fallback"></div><% } %>
                 </a>
 
                 <div class="ts_meta">
-                  <div class="ts_title">
-                    <a href="/show/<%= r.id %>"><%= r.title %></a>
-                  </div>
+                  <div class="ts_title"><a href="/show/<%= r.id %>"><%= r.title %></a></div>
                   <div class="muted small"><%= r.corps %> — <%= r.year %></div>
-
                   <div class="ts_badges">
-                    <div class="ts_avg">
-                      ★ <%= Number(r.avg_rating || 0).toFixed(2) %>
-                    </div>
+                    <div class="ts_avg">★ <%= Number(r.avg_rating || 0).toFixed(2) %></div>
                     <span class="badge muted"><%= r.cnt %> ratings</span>
                   </div>
                 </div>
 
                 <div class="ts_review">
                   <% if (r.top_review_text) { %>
-                    <div class="ts_review_inner">
-                
-                      <div class="ts_review_head">
-                        <span class="avatar_sm">
-                          <% if (r.top_review_avatar_url) { %>
-                            <img src="<%= r.top_review_avatar_url %>" alt="avatar">
-                          <% } else { %>
-                            <span class="avatar_fallback"></span>
-                          <% } %>
-                        </span>
-                
-                        <div class="ts_review_userblock">
-                          <a class="reviewuser"
-                             href="/u/<%= encodeURIComponent(r.top_review_username) %>"
-                             style="text-decoration:none;">
-                            <%= r.top_review_username %>
-                          </a>
-                
-                          <% if (r.top_review_rating_half != null) { %>
-                            <span class="badge good" style="margin-left:8px;">
-                              ★ <%= (Number(r.top_review_rating_half) / 2).toFixed(1) %>
-                            </span>
-                          <% } else { %>
-                            <span class="badge muted" style="margin-left:8px;">No rating</span>
-                          <% } %>
-                        </div>
+                    <div class="ts_review_head">
+                      <span class="avatar_sm"><% if (r.top_review_avatar_url) { %><img src="<%= r.top_review_avatar_url %>"><% } else { %><span class="avatar_fallback"></span><% } %></span>
+                      <a class="reviewuser" href="/u/<%= encodeURIComponent(r.top_review_username) %>" style="text-decoration:none; font-size:13px; font-weight:700;">
+                        <%= r.top_review_username %>
+                      </a>
+                    </div>
+                    <div class="ts_quote_row">
+                      <div class="ts_vote <%= vs > 0 ? 'pos' : vs < 0 ? 'neg' : 'zero' %>">
+                        <%= vs > 0 ? '+' : '' %><%= vs %>
                       </div>
-                
-                      <div class="ts_quote_row">
-                        <div class="ts_vote <%= vs > 0 ? 'pos' : vs < 0 ? 'neg' : 'zero' %>">
-                          <%= vs > 0 ? '+' : '' %><%= vs %>
-                        </div>
-                
-                        <div class="muted small ts_quote">
-                          “<%= r.top_review_text %>”
-                        </div>
-                      </div>
-                
+                      <div class="ts_quote">“<%= r.top_review_text %>”</div>
                     </div>
                   <% } else { %>
                     <div class="muted small">No reviews yet.</div>
                   <% } %>
                 </div>
-
               </div>
             <% }) %>
           </div>
         </div>
-      <% } else { %>
-        <div class="panel" style="margin-top:14px;">
-          <div class="muted">No rated shows yet.</div>
-        </div>
       <% } %>
-
     </div>
   </main>
 
-  <footer class="wrap footer">
-    <div class="small">Rate drum corps shows.</div>
-  </footer>
+  <footer class="wrap footer"><div class="small">Pressboxd &copy; 2026</div></footer>
 
   <script>
     (() => {
       const btn = document.getElementById("bellBtn");
       const dd  = document.getElementById("notifDropdown");
       if (!btn || !dd) return;
-
-      dd.addEventListener("click", (e) => e.stopPropagation());
-
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dd.classList.toggle("open");
-      });
-
-      document.addEventListener("click", () => {
-        dd.classList.remove("open");
-      });
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") dd.classList.remove("open");
-      });
+      btn.addEventListener("click", (e) => { e.stopPropagation(); dd.classList.toggle("open"); });
+      document.addEventListener("click", () => dd.classList.remove("open"));
     })();
   </script>
 </body>
 </html>
-
-
-
-
-
