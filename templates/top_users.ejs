@@ -13,21 +13,20 @@
       .bellBtn { position: relative; border: none; background: transparent; cursor: pointer; color: inherit; padding: 6px; display: inline-flex; align-items: center; justify-content: center; }
       .notifDropdown { display: none; position: absolute; right: 0; top: 40px; width: 340px; max-height: 420px; overflow: auto; background: rgba(15, 23, 42, 0.98); border: 1px solid rgba(255,255,255,0.12); z-index: 9999; }
       .notifDropdown.open { display:block; }
-      .authBellSlot { display:inline-flex; align-items:center; }
   
       /* --- TOP USERS CARD LAYOUT --- */
       
       .topusers_page .ts_card {
           display: grid !important;
           /* Increased Meta column to 260px to push review section right */
-          grid-template-columns: 40px 80px 260px 1fr !important; 
+          grid-template-columns: 60px 90px 260px 1fr !important; 
           gap: 24px !important;
           align-items: center !important;
           background: var(--panel) !important;
           padding: 20px !important;
           border-bottom: 1px solid var(--line2) !important;
-          height: 140px !important; 
-          max-height: 140px !important;
+          /* FIX: Changed height to min-height to prevent text cutoff */
+          min-height: 140px !important; 
           width: 100% !important;
           overflow: hidden !important;
       }
@@ -39,11 +38,12 @@
           text-align: center;
       }
   
+      /* FIX: Increased PFP by 10px (from 80px to 90px) */
       .topusers_page .ts_thumb {
-          width: 80px !important;
-          height: 80px !important;
-          flex: 0 0 80px !important;
-          border-radius: 50%; /* Circle profile pictures */
+          width: 90px !important;
+          height: 90px !important;
+          flex: 0 0 90px !important;
+          border-radius: 50%; 
           border: 1px solid var(--line);
           background: var(--panel2);
           overflow: hidden;
@@ -70,7 +70,7 @@
   
       .topusers_page .ts_title {
           font-weight: 950;
-          font-size: 1.2rem;
+          font-size: 1.3rem;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -79,13 +79,20 @@
       .ts_badges {
           display: flex;
           flex-wrap: wrap;
-          gap: 6px;
+          gap: 8px;
+      }
+
+      /* Badge styling for Downvotes */
+      .badge.neg_score {
+          color: #ef4444 !important;
+          background: rgba(239, 68, 68, 0.1) !important;
       }
 
       .badge.good_score {
           color: #22c55e !important;
           background: rgba(34, 197, 94, 0.1) !important;
           border-color: rgba(34, 197, 94, 0.2) !important;
+          font-weight: 800;
       }
   
       /* --- THE REVIEW SECTION --- */
@@ -95,8 +102,7 @@
           justify-content: center !important;
           padding-left: 24px !important;
           border-left: 1px solid var(--line) !important;
-          height: 80px !important;
-          overflow: hidden !important;
+          min-height: 80px !important; /* Changed from fixed height */
       }
   
       .tu_label {
@@ -108,11 +114,10 @@
       }
 
       .tu_label a { color: var(--accent); font-weight: 800; text-decoration: none; }
-      .tu_label a:hover { text-decoration: underline; }
   
       .tu_quote {
           display: -webkit-box !important;
-          -webkit-line-clamp: 2; /* Keeps card height uniform */
+          -webkit-line-clamp: 3; /* Increased slightly to allow more text */
           -webkit-box-orient: vertical;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -121,13 +126,11 @@
           color: var(--text);
           opacity: 0.8;
           font-size: 14px;
-          text-indent: 0 !important; /* Ensures no indentation */
       }
     </style>
 </head>
 
 <%
-  /* --- INITIALIZATION BLOCK: FIXES "safeMe is not defined" --- */
   const safeMe = (typeof me !== "undefined" && me) ? me : null;
   const safeRows = (typeof rows !== "undefined" && Array.isArray(rows)) ? rows : [];
   const safeNotifCount = (typeof notif_count !== "undefined" && notif_count) ? notif_count : 0;
@@ -140,9 +143,7 @@
     <div class="wrap row between">
       <div style="display: flex; align-items: center; gap: 10px;">
         <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display: flex; align-items: center;">
-          <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;">
-            <img src="/static/logo.png" alt="Logo" style="max-width: 35px; max-height: 35px; width: auto; height: auto; transition: transform 0.6s ease-in-out;" onmouseover="this.style.transform='rotate(360deg)'" onmouseout="this.style.transform='rotate(0deg)'">
-          </div>
+            <img src="/static/logo.png" alt="Logo" style="max-width: 35px; max-height: 35px; width: auto; height: auto;">
         </a>
         <a class="brand" href="/shows"><span>Pressboxd</span></a>
       </div>
@@ -151,49 +152,15 @@
         <a href="/shows">Shows</a>
         <a href="/top">Top Shows</a>
         <a href="/top_users">Top Users</a>
-        <% if (safeMe && Number(safeMe.is_admin) === 1) { %>
-          <a href="/admin/bulk_add">Mass Add</a>
-          <a href="/admin/roles">Roles</a>
-          <a href="/admin/users">Users</a>
-        <% } %>
       </nav>
 
       <div class="auth row">
         <% if (safeMe) { %>
-          <div class="authBellSlot">
-            <div class="notifWrap">
-              <button class="bellBtn" id="bellBtn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/>
-                  <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
-                </svg>
-                <% if (safeNotifCount > 0) { %><span class="badgeDot"><%= safeNotifCount %></span><% } %>
-              </button>
-              <div class="notifDropdown" id="notifDropdown">
-                <div class="notifHeader">
-                  <div class="notifTitle">Notifications</div>
-                  <form method="post" action="/me/notifications/read"><button class="markReadBtn" type="submit">Mark all read</button></form>
-                </div>
-                <div class="notifList">
-                  <% if (safeNotifItems.length > 0) { %>
-                    <% safeNotifItems.forEach(n => { %>
-                       <div class="notifItem"><%= n.actor_username %> interacted with you.</div>
-                    <% }) %>
-                  <% } else { %>
-                    <div class="notifEmpty">No notifications.</div>
-                  <% } %>
-                </div>
-              </div>
-            </div>
-          </div>
           <a class="nav_user" href="/me">
             <span class="avatar_sm"><% if (safeMe.avatar_url) { %><img src="<%= safeMe.avatar_url %>"><% } else { %><span class="avatar_fallback"></span><% } %></span>
             <span class="muted small"><%= safeMe.username %></span>
           </a>
           <a href="/logout">Logout</a>
-        <% } else { %>
-          <a href="/login">Login</a>
-          <a class="btn" href="/register">Register</a>
         <% } %>
       </div>
     </div>
@@ -227,6 +194,7 @@
                 </div>
                 <div class="ts_badges">
                   <span class="badge small">▲ <%= r.upvotes || 0 %></span>
+                  <span class="badge small neg_score">▼ <%= r.downvotes || 0 %></span>
                   <span class="badge small good_score">★ <%= r.net_score || 0 %></span>
                 </div>
               </div>
@@ -246,29 +214,8 @@
             </div>
           <% }) %>
         </div>
-      <% } else { %>
-        <div class="panel" style="margin-top:20px; padding:20px;">
-           <div class="muted">No users found.</div>
-        </div>
       <% } %>
     </div>
   </main>
-
-  <footer class="wrap footer">
-    <div class="small">Pressboxd &copy; 2026</div>
-  </footer>
-
-  <script>
-    (() => {
-      const btn = document.getElementById("bellBtn");
-      const dd  = document.getElementById("notifDropdown");
-      if (!btn || !dd) return;
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        dd.classList.toggle("open");
-      });
-      document.addEventListener("click", () => dd.classList.remove("open"));
-    })();
-  </script>
 </body>
 </html>
