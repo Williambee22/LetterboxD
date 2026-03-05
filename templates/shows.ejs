@@ -217,9 +217,8 @@
   const meUser = typeof me !== "undefined" ? me : null;
   const notifCountSafe = typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
   const notifItemsSafe = Array.isArray(typeof notif_items !== "undefined" ? notif_items : []) ? notif_items : [];
-  const bodyStyle = meUser && meUser.theme_color ? `--accent: ${meUser.theme_color};` : "";
 %>
-<body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
+<body class="app" <%= meUser && meUser.theme_color ? `style="--accent: ${meUser.theme_color};"` : "" %>>
   <header class="topbar">
     <div class="wrap row between">
       <a class="brand" href="/shows">
@@ -241,13 +240,7 @@
       <div class="auth row">
         <% if (meUser) { %>
           <div class="userSearchWrap">
-            <input
-              id="userSearchInput"
-              class="userSearchInput"
-              type="text"
-              placeholder="Search users..."
-              autocomplete="off"
-            >
+            <input id="userSearchInput" class="userSearchInput" type="text" placeholder="Search users..." autocomplete="off">
             <div id="userSearchDropdown" class="userSearchDropdown"></div>
           </div>
 
@@ -258,12 +251,10 @@
                   <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/>
                   <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
                 </svg>
-
                 <% if (notifCountSafe > 0) { %>
                   <span class="badgeDot"><%= notifCountSafe %></span>
                 <% } %>
               </button>
-
               <div class="notifDropdown" id="notifDropdown">
                 <div class="notifHeader">
                   <div class="notifTitle">Notifications</div>
@@ -271,7 +262,6 @@
                     <button class="markReadBtn" type="submit">Mark all read</button>
                   </form>
                 </div>
-
                 <% if (notifItemsSafe.length > 0) { %>
                   <div class="notifList">
                     <% for (const n of notifItemsSafe) {
@@ -287,26 +277,13 @@
                         <% } else if (kind === "follow") { %>
                           <div><b><%= actor %></b> followed you.</div>
                         <% } else if (kind === "review_upvote") { %>
-                          <div>
-                            <b><%= actor %></b> upvoted your review
-                            <% if (sid) { %>
-                              — <a href="/show/<%= sid %>">View show</a>
-                            <% } %>
-                          </div>
+                          <div><b><%= actor %></b> upvoted your review <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %></div>
                         <% } else if (kind === "review_comment") { %>
-                          <div>
-                            <b><%= actor %></b> commented on your review
-                            <% if (sid) { %>
-                              — <a href="/show/<%= sid %>">View show</a>
-                            <% } %>
-                          </div>
+                          <div><b><%= actor %></b> commented on your review <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %></div>
                         <% } else { %>
                           <div>New activity.</div>
                         <% } %>
-
-                        <% if (created) { %>
-                          <div class="notifTime"><%= created %></div>
-                        <% } %>
+                        <% if (created) { %> <div class="notifTime"><%= created %></div> <% } %>
                       </div>
                     <% } %>
                   </div>
@@ -319,18 +296,10 @@
 
           <a class="nav_user" href="/me">
             <span class="avatar_sm">
-              <% if (meUser.avatar_url) { %>
-                <img src="<%= meUser.avatar_url %>" alt="avatar">
-              <% } else { %>
-                <span class="avatar_fallback"></span>
-              <% } %>
+              <% if (meUser.avatar_url) { %> <img src="<%= meUser.avatar_url %>" alt="avatar"> <% } else { %> <span class="avatar_fallback"></span> <% } %>
             </span>
-
-            <span class="muted small">
-              <%= meUser.username || "me" %>
-            </span>
+            <span class="muted small"><%= meUser.username || "me" %></span>
           </a>
-
           <a href="/logout">Logout</a>
         <% } else { %>
           <a href="/login">Login</a>
@@ -341,108 +310,85 @@
   </header>
 
   <main class="wrap">
-    <div style="margin-top:10px;">
+    <div style="width: 100%; text-align: center; padding: 20px 0; display: block;">
+      <div style="font-weight: 900; font-size: 42px; line-height: 1.1; letter-spacing: -1px; margin-bottom: 10px; color: #ffffff;">
+        Welcome to <span style="color: #00ce6a;">Pressboxd</span>
+      </div>
+      <div style="max-width: 600px; margin: 10px auto 0; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); color: #ffffff;">
+        <p style="margin-bottom: 8px; opacity: 0.9; font-size: 14px;">
+          <strong>Early Development:</strong> Customization options are coming soon!
+        </p>
+        <p style="margin-bottom: 10px; font-style: italic; color: #ffcc00; font-weight: 500; font-size: 14px; line-height: 1.4;">
+          If the site feels down or you are logged out, we are likely pushing live fixes. We apologize for the inconvenience!
+        </p>
+        <p style="opacity: 0.8; font-size: 14px; margin-bottom: 0;">
+          Suggestions? Reach out at 
+          <a href="mailto:PressboxdContact@gmail.com" style="color: #00ce6a; text-decoration: none; font-weight: bold;">PressboxdContact@gmail.com</a>
+        </p>
+      </div>
+    </div>
+    <% if (meUser) { %>
+      <div class="panel" style="margin-top:12px; padding:12px;">
+        <div class="row between" style="align-items:center; margin-bottom:-10px;">
+          <div style="font-weight:900;">Friend activity</div>
+          <a class="muted small" href="/me/friends" style="text-decoration:none;">Friends</a>
+        </div>
+        <% if (safeFriendActivity.length > 0) { %>
+          <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; align-items:stretch;">
+            <% for (const a of safeFriendActivity) { 
+                 const kind = a?.kind || "";
+                 const who = a?.actor_username || "Someone";
+                 const sid = a?.show_id || null;
+                 const corpsv = a?.corps || "";
+                 const yearv = a?.year || "";
+                 const stars = a?.rating_half != null ? Number(a.rating_half) / 2 : null;
+            %>
+              <div style="flex: 1 1 240px; max-width: 360px; padding:10px; border-radius:12px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); overflow:hidden;">
+                <div class="small" style="line-height:1.35; min-width:0;">
+                  <b><%= who %></b>
+                  <%= kind === "rating" ? "rated" : (kind === "review" ? "reviewed" : "did something on") %>
+                  <% if (sid) { %> <a href="/show/<%= sid %>" style="text-decoration:none;"><%= corpsv %><%= yearv ? ' ' + yearv : '' %></a> <% } else { %> <%= corpsv %><%= yearv ? ' ' + yearv : '' %> <% } %>
+                  <% if (kind === "rating" && stars != null) { %> <span class="muted">(<%= stars %>★)</span> <% } %>
+                </div>
+              </div>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="muted small" style="margin-top:20px;">No recent friend activity.</div>
+        <% } %>
+      </div>
+    <% } %>
+
+    <div style="margin-top:40px;">
       <div class="row between" style="align-items:flex-end; gap:12px;">
         <div>
-          <div class="kicker"></div>
-          <h1 style="margin:6px 0 0; margin-top: 140px;">All Shows</h1>
+          <h1 style="margin:6px 0 0;">All Shows</h1>
           <div class="muted small">Browse, sort, and click a show to rate and review.</div>
         </div>
-
-        <div style="width: 100%; text-align: center; padding: 20px 0; display: block;">
-  
-            <div style="font-weight: 900; font-size: 42px; line-height: 1.1; letter-spacing: -1px; margin-bottom: 10px; color: #ffffff;">
-              Welcome to <span style="color: #00ce6a;">Pressboxd</span>
-            </div>
-          
-            <div style="max-width: 600px; margin: 10px auto 0; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); color: #ffffff;">
-              <p style="margin-bottom: 8px; opacity: 0.9; font-size: 14px;">
-                <strong>Early Development:</strong> Customization options are coming soon!
-              </p>
-              
-              <p style="margin-bottom: 10px; font-style: italic; color: #ffcc00; font-weight: 500; font-size: 14px; line-height: 1.4;">
-                If the site feels down or you are logged out, we are likely pushing live fixes. We apologize for the inconvenience!
-              </p>
-          
-              <p style="opacity: 0.8; font-size: 14px; margin-bottom: 0;">
-                Suggestions? Reach out at 
-                <a href="mailto:PressboxdContact@gmail.com" style="color: #00ce6a; text-decoration: none; font-weight: bold;">
-                  PressboxdContact@gmail.com
-                </a>
-              </p>
-            </div>
-          </div>
-          
-          <% if (meUser) { %>
-            <div class="panel" style="margin-top:12px; padding:12px;">
-              <div class="row between" style="align-items:center; margin-bottom:-10px;">
-                <div style="font-weight:900;">Friend activity</div>
-                <a class="muted small" href="/me/friends" style="text-decoration:none;">Friends</a>
-              </div>
-          
-              <% if (safeFriendActivity.length > 0) { %>
-                <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; align-items:stretch;">
-                  <% for (const a of safeFriendActivity) { 
-                       const kind = a?.kind || "";
-                       const who = a?.actor_username || "Someone";
-                       const sid = a?.show_id || null;
-                       const corpsv = a?.corps || "";
-                       const yearv = a?.year || "";
-                       const ratingHalf = a?.rating_half;
-                       const stars = ratingHalf != null ? Number(ratingHalf) / 2 : null;
-                  %>
-                    <div style="flex: 1 1 240px; max-width: 360px; padding:10px; border-radius:12px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); overflow:hidden;">
-                      <div class="small" style="line-height:1.35; min-width:0;">
-                        <b><%= who %></b>
-                        <% if (kind === "rating") { %> rated 
-                        <% } else if (kind === "review") { %> reviewed 
-                        <% } else { %> did something on <% } %>
-          
-                        <% if (sid) { %>
-                          <a href="/show/<%= sid %>" style="text-decoration:none;">
-                            <%= corpsv %><% if (yearv) { %> <%= yearv %><% } %>
-                          </a>
-                        <% } else { %>
-                          <%= corpsv %><% if (yearv) { %> <%= yearv %><% } %>
-                        <% } %>
-          
-                        <% if (kind === "rating" && ratingHalf != null) { %>
-                          <span class="muted">(<%= stars %>★)</span>
-                        <% } %>
-                      </div>
-                    </div>
-                  <% } %>
-                </div>
-              <% } else { %>
-                <div class="muted small" style="margin-top:20px;">No recent friend activity.</div>
-              <% } %>
-            </div>
-          <% } %>
+      </div>
+    </div>
 
     <div class="panel" style="margin-top:14px;">
       <form method="get" action="/shows" class="row gap" style="flex-wrap:wrap; align-items:flex-end;">
         <div class="field" style="min-width:220px;">
           <label>Sort</label>
           <select name="sort">
-            <option value="" <%= !sort ? "selected" : "" %>>Default</option>
-            <option value="year_desc" <%= sort === "year_desc" ? "selected" : "" %>>Year (New → Old)</option>
-            <option value="year_asc" <%= sort === "year_asc" ? "selected" : "" %>>Year (Old → New)</option>
-            <option value="top" <%= sort === "top" ? "selected" : "" %>>Top Average Rating</option>
-            <option value="bottom" <%= sort === "bottom" ? "selected" : "" %>>Lowest Average Rating</option>
-            <option value="corps" <%= sort === "corps" ? "selected" : "" %>>Corps (A → Z)</option>
+            <option value="" <%= !typeof sort !== 'undefined' ? "selected" : "" %>>Default</option>
+            <option value="year_desc" <%= typeof sort !== 'undefined' && sort === "year_desc" ? "selected" : "" %>>Year (New → Old)</option>
+            <option value="year_asc" <%= typeof sort !== 'undefined' && sort === "year_asc" ? "selected" : "" %>>Year (Old → New)</option>
+            <option value="top" <%= typeof sort !== 'undefined' && sort === "top" ? "selected" : "" %>>Top Average Rating</option>
+            <option value="bottom" <%= typeof sort !== 'undefined' && sort === "bottom" ? "selected" : "" %>>Lowest Average Rating</option>
+            <option value="corps" <%= typeof sort !== 'undefined' && sort === "corps" ? "selected" : "" %>>Corps (A → Z)</option>
           </select>
         </div>
-
         <div class="field" style="width:140px;">
           <label>Year</label>
-          <input name="year" value="<%= year || '' %>" placeholder="2014">
+          <input name="year" value="<%= typeof year !== 'undefined' ? year : '' %>" placeholder="2014">
         </div>
-
         <div class="field" style="min-width:240px;">
           <label>Corps</label>
-          <input name="corps" value="<%= corps || '' %>" placeholder="Blue Devils">
+          <input name="corps" value="<%= typeof corps !== 'undefined' ? corps : '' %>" placeholder="Blue Devils">
         </div>
-
         <div class="actions">
           <button class="btn green" type="submit">Apply</button>
           <a class="btn ghost" href="/shows">Reset</a>
@@ -453,198 +399,41 @@
     <% if (safeRows.length > 0) { %>
       <div class="postergrid" style="margin-top:14px;">
         <% for (const row of safeRows) {
-             const yearv = row?.year || "";
-             const corpsv = row?.corps || "";
-             const titlev = row?.title || "Untitled";
-             const cnt = row?.cnt != null ? Number(row.cnt) : 0;
-             const avg = row?.avg_rating != null ? Number(row.avg_rating) : (row?.avg != null ? Number(row.avg) : 0);
              const poster = row?.poster_url || POSTER_FALLBACK;
-
-             let pct = avg / 5.0;
-             if (pct < 0) pct = 0;
-             if (pct > 1) pct = 1;
-             const curve = Math.pow(pct, 2.6);
-             const hue = 60 * curve;
+             const avg = row?.avg_rating != null ? Number(row.avg_rating) : (row?.avg != null ? Number(row.avg) : 0);
+             let pct = Math.min(Math.max(avg / 5.0, 0), 1);
+             const hue = 60 * Math.pow(pct, 2.6);
         %>
           <a class="poster" href="/show/<%= row.id %>">
             <div class="poster_art">
-              <img
-                class="poster_img"
-                src="<%= poster %>"
-                alt="<%= titlev %> poster"
-                loading="lazy"
-                onerror="this.onerror=null;this.src='<%= POSTER_FALLBACK %>';"
-              >
-
-              <% if (yearv) { %>
-                <div class="tile_year"><%= yearv %></div>
-              <% } %>
-
-              <% if (cnt > 0) { %>
-                <div class="tile_rating" style="color: hsl(<%= hue %>, 98%, 62%);">
-                  <span class="tile_star">★</span> <%= avg.toFixed(2) %>
-                </div>
-                <div class="tile_count"><%= cnt %> ratings</div>
-              <% } else { %>
-                <span class="badge unrated bottom_left">Unrated</span>
-              <% } %>
+              <img class="poster_img" src="<%= poster %>" alt="poster" loading="lazy" onerror="this.src='<%= POSTER_FALLBACK %>';">
+              <% if (row.year) { %> <div class="tile_year"><%= row.year %></div> <% } %>
+              <% if (row.cnt > 0) { %>
+                <div class="tile_rating" style="color: hsl(<%= hue %>, 98%, 62%);"><span class="tile_star">★</span> <%= avg.toFixed(2) %></div>
+                <div class="tile_count"><%= row.cnt %> ratings</div>
+              <% } else { %> <span class="badge unrated bottom_left">Unrated</span> <% } %>
             </div>
-
             <div class="poster_meta">
-              <div class="poster_title"><%= titlev %></div>
-              <div class="poster_sub"><%= corpsv %></div>
+              <div class="poster_title"><%= row.title || 'Untitled' %></div>
+              <div class="poster_sub"><%= row.corps || '' %></div>
             </div>
           </a>
         <% } %>
       </div>
     <% } else { %>
-      <div class="panel" style="margin-top:14px;">
-        <div class="muted">No shows found.</div>
-      </div>
+      <div class="panel" style="margin-top:14px;"> <div class="muted">No shows found.</div> </div>
     <% } %>
   </main>
 
-  <footer class="wrap footer">
-    <div class="small">Rate drum corps shows.</div>
-  </footer>
+  <footer class="wrap footer"> <div class="small">Rate drum corps shows.</div> </footer>
 
   <script>
     (() => {
-      const btn = document.getElementById("bellBtn");
-      const dd  = document.getElementById("notifDropdown");
+      const btn = document.getElementById("bellBtn"), dd = document.getElementById("notifDropdown");
       if (!btn || !dd) return;
-
-      dd.addEventListener("click", (e) => e.stopPropagation());
-
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dd.classList.toggle("open");
-      });
-
-      document.addEventListener("click", () => {
-        dd.classList.remove("open");
-      });
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") dd.classList.remove("open");
-      });
-    })();
-  </script>
-
-  <script>
-    (() => {
-      const input = document.getElementById('userSearchInput');
-      const dropdown = document.getElementById('userSearchDropdown');
-      if (!input || !dropdown) return;
-
-      let timer = null;
-
-      function closeDropdown() {
-        dropdown.classList.remove('open');
-        dropdown.innerHTML = '';
-      }
-
-      function escapeHtml(str) {
-        return String(str || '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#39;');
-      }
-
-      function renderResults(results) {
-        if (!Array.isArray(results) || results.length === 0) {
-          dropdown.innerHTML = '<div class="userSearchEmpty">No users found.</div>';
-          dropdown.classList.add('open');
-          return;
-        }
-
-        dropdown.innerHTML = results.map((u) => `
-          <a class="userSearchItem" href="${escapeHtml(u.profile_url)}">
-            <span class="userSearchAvatar">
-              ${u.avatar_url
-                ? `<img src="${escapeHtml(u.avatar_url)}" alt="avatar">`
-                : `<span></span>`}
-            </span>
-            <span>${escapeHtml(u.username)}</span>
-          </a>
-        `).join('');
-
-        dropdown.classList.add('open');
-      }
-
-      async function doSearch(q) {
-        const term = String(q || '').trim();
-        if (!term) {
-          closeDropdown();
-          return;
-        }
-
-        try {
-          const res = await fetch(`/api/users/search?q=${encodeURIComponent(term)}`, {
-            headers: { 'Accept': 'application/json' }
-          });
-
-          if (!res.ok) {
-            closeDropdown();
-            return;
-          }
-
-          const data = await res.json();
-          renderResults(data.results || []);
-        } catch (err) {
-          closeDropdown();
-        }
-      }
-
-      input.addEventListener('input', () => {
-        clearTimeout(timer);
-        const q = input.value;
-
-        timer = setTimeout(() => {
-          doSearch(q);
-        }, 180);
-      });
-
-      input.addEventListener('focus', () => {
-        if (input.value.trim()) doSearch(input.value);
-      });
-
-      dropdown.addEventListener('click', (e) => {
-        e.stopPropagation();
-      });
-
-      input.addEventListener('click', (e) => {
-        e.stopPropagation();
-      });
-
-      document.addEventListener('click', () => {
-        closeDropdown();
-      });
-
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeDropdown();
-      });
+      btn.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); dd.classList.toggle("open"); });
+      document.addEventListener("click", () => dd.classList.remove("open"));
     })();
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
