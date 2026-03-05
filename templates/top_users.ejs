@@ -98,6 +98,60 @@
     .notifDropdown * {
       pointer-events: auto !important;
     }
+
+    /* 1. Make the User Profile Thumbnails Square */
+    .topusers_page .ts_thumb {
+        width: 60px;  /* Set a fixed width */
+        height: 60px; /* Match the width for a 1:1 square */
+        flex: 0 0 60px;
+        overflow: hidden;
+        border: 1px solid var(--accentSoft);
+    }
+    
+    .topusers_page .ts_thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Prevents stretching */
+    }
+    
+    /* 2. Fix the alignment and the clashing text */
+    .topusers_page .ts_review {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding-left: 20px;
+        margin-left: 20px;
+        border-left: 1px solid var(--line); /* The vertical divider */
+    }
+    
+    /* 3. Remove indentation and clean up the quote */
+    .tu_quote {
+        text-indent: 0;
+        margin-top: 6px;
+        line-height: 1.5;
+        color: var(--text);
+        font-style: italic;
+        opacity: 0.9;
+    }
+    
+    .tu_label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+        margin-bottom: 4px;
+    }
+    
+    /* 4. Ensure the card layout handles the square thumb well */
+    .topusers_page .ts_card {
+        display: grid;
+        grid-template-columns: 40px 60px 220px 1fr; /* Rank, Square Thumb, Stats, Review */
+        align-items: center;
+        background: var(--panel);
+        padding: 16px;
+        border: 1px solid var(--line2);
+    }
+
   </style>
 </head>
 <body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
@@ -323,3 +377,4 @@
   </script>
 </body>
 </html>
+
