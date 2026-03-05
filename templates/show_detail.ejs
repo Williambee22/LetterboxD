@@ -193,6 +193,7 @@
 
   const distLabels = ["5.0","4.5","4.0","3.5","3.0","2.5","2.0","1.5","1.0","0.5","0.0"];
 
+  <%
   const ratingHistogramRaw = (typeof rating_histogram !== "undefined" && rating_histogram) ? rating_histogram : {};
   const verifiedHistogramRaw = (typeof verified_rating_histogram !== "undefined" && verified_rating_histogram) ? verified_rating_histogram : {};
 
@@ -217,6 +218,18 @@
   const verifiedDistTotal = verifiedDistRows.reduce((sum, r) => sum + r.count, 0);
   const ratingDistMax = ratingDistRows.reduce((m, r) => Math.max(m, r.count), 0);
   const verifiedDistMax = verifiedDistRows.reduce((m, r) => Math.max(m, r.count), 0);
+
+  // --- NEW CRITIC SCORE CALCULATION ---
+  let verifiedSum = 0;
+  verifiedDistRows.forEach(r => {
+    verifiedSum += (parseFloat(r.label) * r.count);
+  });
+  
+  // Only calculate average if there are at least 5 ratings (per your requirement)
+  // Otherwise, we keep it null to avoid showing a score based on too few reviews
+  const criticAvg = verifiedDistTotal >= 5 
+    ? (verifiedSum / verifiedDistTotal).toFixed(2) 
+    : null;
 %>
 
   <header class="topbar">
