@@ -428,66 +428,54 @@ function markNotificationsRead(conn, userId) {
   return markAllNotificationsRead(conn, userId);
 }
 
-function listTopUsersByReviewUpvotes(conn, opts = {}) {
+function listTopShowsWithTopReview(conn, opts = {}) {
   const limit = Number(opts.limit || 25);
-  const textCol = reviewsTextCol(conn);
+  const mode = String(opts.mode || 'top').trim().toLowerCase();
+  const textCol = reviewsTextCol(conn); 
+  
+  // Since we are filtering for >= 5 ratings, we don't need the (cnt = 0) logic anymore
+  const orderSql = mode === 'bottom'
+    ? 'ss.avg_rating ASC, ss.cnt DESC, ss.year DESC'
+    : 'ss.avg_rating DESC, ss.cnt DESC, ss.year DESC';
 
   const sql = `
-    WITH review_vote_totals AS (
+    WITH show_stats AS (
       SELECT
-        r.user_id AS review_user_id,
-        r.show_id AS show_id,
-        r.${textCol} AS review_text,
-        SUM(CASE WHEN rv.vote = 1 THEN 1 ELSE 0 END) AS upvotes,
-        SUM(CASE WHEN rv.vote = -1 THEN 1 ELSE 0 END) AS downvotes,
-        SUM(CASE WHEN rv.vote = 1 THEN 1 WHEN rv.vote = -1 THEN -1 ELSE 0 END) AS net_score
-      FROM reviews r
-      LEFT JOIN review_votes rv
-        ON rv.show_id = r.show_id
-       AND rv.review_user_id = r.user_id
-      WHERE TRIM(COALESCE(r.${textCol}, '')) <> ''
-      GROUP BY r.user_id, r.show_id, r.${textCol}
+        s.id, s.title, s.corps, s.year,
+        COALESCE(s.poster_url, '') AS poster_url,
+        COUNT(r.rating_half) AS cnt,
+        COALESCE(ROUND(AVG(r.rating_half) / 2.0, 2), 0) AS avg_rating
+      FROM shows s
+      LEFT JOIN ratings r ON r.show_id = s.id
+      GROUP BY s.id
+      /* This line enforces the 5-rating minimum */
+      HAVING cnt >= 5
     ),
-    user_totals AS (
-      SELECT
-        review_user_id,
-        SUM(upvotes) AS total_upvotes,
-        SUM(downvotes) AS total_downvotes,
-        SUM(net_score) AS total_net
-      FROM review_vote_totals
-      GROUP BY review_user_id
+    review_scores AS (
+      SELECT 
+        rv.show_id, 
+        rv.${textCol} AS review_text, 
+        u.username,
+        COALESCE(SUM(v.vote), 0) AS vote_score
+      FROM reviews rv
+      JOIN users u ON u.id = rv.user_id
+      LEFT JOIN review_votes v ON v.show_id = rv.show_id AND v.review_user_id = rv.user_id
+      GROUP BY rv.show_id, rv.user_id
     ),
-    best_review AS (
-      SELECT
-        rvt.*,
-        ROW_NUMBER() OVER (
-          PARTITION BY rvt.review_user_id
-          ORDER BY rvt.net_score DESC, rvt.upvotes DESC, LENGTH(rvt.review_text) DESC
-        ) AS rn
-      FROM review_vote_totals rvt
+    top_review_per_show AS (
+      SELECT 
+        *,
+        ROW_NUMBER() OVER (PARTITION BY show_id ORDER BY vote_score DESC) as rn
+      FROM review_scores
     )
     SELECT
-      u.id AS user_id,
-      u.username AS username,
-      u.avatar_url AS avatar_url,
-      ut.total_upvotes AS upvotes,
-      ut.total_downvotes AS downvotes,
-      ut.total_net AS net_score,
-      br.show_id AS top_show_id,
-      br.review_text AS top_review_text,
-      br.net_score AS top_review_score,
-      s.year AS top_year,
-      s.corps AS top_corps,
-      s.title AS top_title,
-      s.poster_url AS top_poster_url
-    FROM user_totals ut
-    JOIN users u ON u.id = ut.review_user_id
-    LEFT JOIN best_review br
-      ON br.review_user_id = ut.review_user_id
-     AND br.rn = 1
-    LEFT JOIN shows s
-      ON s.id = br.show_id
-    ORDER BY ut.total_net DESC, ut.total_upvotes DESC, ut.total_downvotes ASC
+      ss.*,
+      tr.username AS top_review_username,
+      tr.review_text AS top_review_text,
+      tr.vote_score AS top_review_score
+    FROM show_stats ss
+    LEFT JOIN top_review_per_show tr ON tr.show_id = ss.id AND tr.rn = 1
+    ORDER BY ${orderSql}
     LIMIT ?
   `;
 
@@ -1521,6 +1509,7 @@ module.exports = {
   getVerifiedRatingHistogram,
   updateUserBio 
 };
+
 
 
 
