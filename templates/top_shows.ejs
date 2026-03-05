@@ -11,21 +11,18 @@
       .auth { align-items:center; gap: 12px; }
       .notifWrap { position: relative; display: inline-flex; align-items:center; }
       .bellBtn { position: relative; border: none; background: transparent; cursor: pointer; color: inherit; padding: 6px; display: inline-flex; align-items: center; justify-content: center; }
-      .notifDropdown { display: none; position: absolute; right: 0; top: 40px; width: 340px; max-height: 420px; overflow: auto; background: rgba(15, 23, 42, 0.98); border: 1px solid rgba(255,255,255,0.12); z-index: 9999; }
-      .notifDropdown.open { display:block; }
   
       /* --- THE CARD LAYOUT --- */
   
       .ts_card {
           display: grid !important;
-          /* Matches your request: Rank(100) | Poster(180) | Meta(780) | Review(Rest) */
           grid-template-columns: 100px 180px 780px 1fr !important;
           align-items: center !important;
           gap: 20px !important;
           padding: 20px !important;
           background: var(--panel) !important;
           border-bottom: 1px solid var(--line) !important;
-          min-height: 220px !important; /* Changed from fixed height to min-height to prevent cutoff */
+          min-height: 220px !important; 
           overflow: hidden !important;
       }
   
@@ -33,12 +30,12 @@
           font-weight: 800;
           opacity: 0.5;
           text-align: center;
-          font-size: 24px; /* Increased size to match larger card */
+          font-size: 24px;
       }
   
       .ts_thumb {
-          width: 180px !important; /* Updated to match grid column width */
-          height: 250px !important; /* Increased height for better aspect ratio */
+          width: 180px !important; 
+          height: 250px !important; 
           flex: 0 0 180px !important;
           background: var(--panel2);
           overflow: hidden;
@@ -61,7 +58,7 @@
   
       .ts_title {
           font-weight: 800;
-          font-size: 22px; /* Bigger title for bigger card */
+          font-size: 22px; 
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -85,7 +82,6 @@
           margin-bottom: 12px;
       }
 
-      /* Fixed Indentation Logic */
       .ts_quote_row {
           display: flex !important;
           align-items: flex-start !important;
@@ -109,7 +105,7 @@
       .ts_quote {
           flex: 1;
           display: -webkit-box !important;
-          -webkit-line-clamp: 4; /* Allowed more lines since card is taller */
+          -webkit-line-clamp: 4; 
           -webkit-box-orient: vertical;
           overflow: hidden !important;
           text-overflow: ellipsis;
@@ -122,10 +118,25 @@
       .ts_avg { font-weight: 800; color: var(--accent); font-size: 18px; }
       .ts_badges { display: flex; align-items: center; gap: 15px; margin-top: 8px; }
 
-      /* Larger Avatar for bigger cards */
       .avatar_sm img, .avatar_fallback {
           width: 32px;
           height: 32px;
+      }
+
+      /* TOGGLE BUTTON STYLES */
+      .btn.ghost {
+          padding: 6px 14px;
+          border-radius: 6px;
+          text-decoration: none;
+          font-size: 13px;
+          font-weight: 700;
+          color: var(--muted);
+          background: rgba(255,255,255,0.05);
+          transition: all 0.2s;
+      }
+      .btn.ghost.on {
+          color: #fff;
+          background: var(--accent);
       }
     </style>
 </head>
@@ -134,8 +145,6 @@
   const safeMe = (typeof me !== "undefined" && me) ? me : null;
   const safeRows = (typeof rows !== "undefined" && Array.isArray(rows)) ? rows : [];
   const safeMode = (typeof mode !== "undefined" && mode) ? mode : "top";
-  const safeNotifCount = (typeof notif_count !== "undefined" && notif_count) ? notif_count : 0;
-  const safeNotifItems = (typeof notif_items !== "undefined" && Array.isArray(notif_items)) ? notif_items : [];
 %>
 
   <header class="topbar">
@@ -157,14 +166,6 @@
 
       <div class="auth row">
         <% if (safeMe) { %>
-          <div class="authBellSlot">
-            <div class="notifWrap">
-              <button class="bellBtn" id="bellBtn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/><path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
-                <% if (safeNotifCount > 0) { %><span class="badgeDot"><%= safeNotifCount %></span><% } %>
-              </button>
-            </div>
-          </div>
           <a class="nav_user" href="/me">
             <span class="avatar_sm"><% if (safeMe.avatar_url) { %><img src="<%= safeMe.avatar_url %>"><% } else { %><span class="avatar_fallback"></span><% } %></span>
             <span class="muted small"><%= safeMe.username %></span>
@@ -176,10 +177,14 @@
 
   <main class="wrap">
     <div class="topshows_page">
-      <div class="row between" style="margin-top:20px; align-items:flex-end;">
+      <div class="row between" style="margin-top:20px; align-items:flex-end; border-bottom: 1px solid var(--line2); padding-bottom: 15px;">
         <div>
           <div class="kicker">Rankings</div>
           <h1 style="margin:6px 0 0;"><%= safeMode === "bottom" ? "Lowest Rated Shows" : "Top Shows" %></h1>
+        </div>
+        <div class="seg" style="display:flex; gap:8px;">
+          <a class="btn ghost <%= safeMode !== 'bottom' ? 'on' : '' %>" href="/top?mode=top">Top rated</a>
+          <a class="btn ghost <%= safeMode === 'bottom' ? 'on' : '' %>" href="/top?mode=bottom">Lowest rated</a>
         </div>
       </div>
 
