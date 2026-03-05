@@ -13,7 +13,6 @@
       .bellBtn { position: relative; border: none; background: transparent; cursor: pointer; color: inherit; padding: 6px; display: inline-flex; align-items: center; justify-content: center; }
   
       /* --- THE CARD LAYOUT --- */
-  
       .ts_card {
           display: grid !important;
           grid-template-columns: 100px 180px 780px 1fr !important;
@@ -65,7 +64,6 @@
       }
   
       /* --- REVIEW SECTION --- */
-  
       .ts_review {
           display: flex !important;
           flex-direction: column !important;
@@ -140,11 +138,14 @@
       }
     </style>
 </head>
-<body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
+<body class="app" <%= (typeof me !== "undefined" && me && me.theme_color) ? `style="--accent: ${me.theme_color};"` : "" %>>
 <%
   const safeMe = (typeof me !== "undefined" && me) ? me : null;
-  const safeRows = (typeof rows !== "undefined" && Array.isArray(rows)) ? rows : [];
+  const rawRows = (typeof rows !== "undefined" && Array.isArray(rows)) ? rows : [];
   const safeMode = (typeof mode !== "undefined" && mode) ? mode : "top";
+
+  // FILTER: Only include shows with 5 or more ratings to ensure quality rankings
+  const safeRows = rawRows.filter(r => Number(r.cnt || 0) >= 5);
 %>
 
   <header class="topbar">
@@ -181,6 +182,7 @@
         <div>
           <div class="kicker">Rankings</div>
           <h1 style="margin:6px 0 0;"><%= safeMode === "bottom" ? "Lowest Rated Shows" : "Top Shows" %></h1>
+          <p class="muted small" style="margin-top: 4px;">Minimum 5 ratings required to rank</p>
         </div>
         <div class="seg" style="display:flex; gap:8px;">
           <a class="btn ghost <%= safeMode !== 'bottom' ? 'on' : '' %>" href="/top?mode=top">Top rated</a>
@@ -232,9 +234,13 @@
             <% }) %>
           </div>
         </div>
+      <% } else { %>
+        <div class="panel" style="margin-top:20px; padding: 60px 20px; text-align: center; border: 1px dashed var(--line);">
+           <div class="muted" style="font-size: 1.1rem; margin-bottom: 12px;">No shows currently meet the minimum requirement of 5 ratings.</div>
+           <a href="/shows" class="btn primary">Discover Shows to Rate</a>
+        </div>
       <% } %>
     </div>
   </main>
 </body>
 </html>
-
