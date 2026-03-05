@@ -658,73 +658,37 @@ function createApp() {
     }
   }));
 
-  app.post('/force-change-password', loginRequired(async (req, res) => {
-    const uid = Number(req.session.uid);
-    const currentPassword = String(req.body.current_password || '').trim();
-    const newPassword = String(req.body.new_password || '').trim();
-    const newPassword2 = String(req.body.new_password2 || '').trim();
+  app.post('/force-change-password', async (req, res, next) => {
+    const { new_password, confirm_password } = req.body;
+    const userId = req.session.uid;
 
-    if (!currentPassword) {
-      req.flash('error', 'Enter your current password.');
-      return res.redirect('/force-change-password');
-    }
-
-    if (newPassword.length < 6) {
-      req.flash('error', 'New password must be at least 6 characters.');
-      return res.redirect('/force-change-password');
-    }
-
-    if (newPassword !== newPassword2) {
-      req.flash('error', 'New passwords do not match.');
-      return res.redirect('/force-change-password');
+    if (new_password !== confirm_password) {
+        req.flash('error', 'Passwords do not match.');
+        return res.redirect('/force-change-password');
     }
 
     let conn;
     try {
-      conn = getConn();
-      const u = normalizeRow(await dbx.userById(conn, uid));
-      if (!u) return res.redirect('/login');
+        conn = getConn();
+        const hashed = await hashPassword(new_password); // Use your existing hash function
 
-      const passCol = dbx.usersPasswordCol(conn);
-      const storedHash = u[passCol];
-      const ok = await verifyPassword(currentPassword, storedHash);
+        // 1. Update the password
+        await dbx.updateUserPasswordHash(conn, userId, hashed);
+        // 2. IMPORTANT: Set the flag to 0 so they aren't stuck in a loop
+        await dbx.updateUserMustChangePassword(conn, userId, 0); 
+        
+        await dbx.commit(conn);
 
-      if (!ok) {
-        req.flash('error', 'Current password is incorrect.');
-        return res.redirect('/force-change-password');
-      }
-
-      const newHash = await hashPassword(newPassword);
-      await dbx.updateUserPasswordHash(conn, uid, newHash);
-      await dbx.setUserMustChangePassword(conn, uid, 0);
-      await dbx.commit(conn);
-
-      req.flash('ok', 'Password updated.');
-      return res.redirect('/shows');
+        req.flash('ok', 'Password updated! Please log in again.');
+        req.session.destroy(); // Clear session
+        res.redirect('/login');
+    } catch (err) {
+        if (conn) dbx.rollback(conn);
+        next(err);
     } finally {
-      if (conn) dbx.close(conn);
+        if (conn) dbx.close(conn);
     }
-  }));
-
-  const uploadPfp = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 },
-    fileFilter: (_req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase();
-      if (!ALLOWED_IMAGE_EXTS.has(ext)) return cb(new Error('Invalid file type'));
-      return cb(null, true);
-    },
-  });
-
-  const uploadPoster = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 },
-    fileFilter: (_req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase();
-      if (!ALLOWED_IMAGE_EXTS.has(ext)) return cb(new Error('Invalid file type'));
-      return cb(null, true);
-    },
-  });
+});
 
   const uploadBanner = multer({
     storage: multer.memoryStorage(),
@@ -2450,6 +2414,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
