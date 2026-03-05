@@ -141,7 +141,84 @@
         gap: 8px;
         margin-bottom: 4px;
     }
+
+    /* 1. Define the Card Layout (CRITICAL FIX) */
+    .ts_card {
+        display: grid;
+        /* Columns: Rank(40px) | Poster(80px) | Meta(240px) | Review(the rest) */
+        grid-template-columns: 40px 80px 240px 1fr;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
     
+    /* 2. Create the container for the review section */
+    .ts_review {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding-left: 20px; 
+        /* This border creates the visual wall you wanted */
+        border-left: 1px solid rgba(255,255,255,0.15); 
+        margin-left: 10px;
+        min-height: 60px;
+    }
+    
+    /* 3. Fix the inner layout */
+    .ts_review_inner {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 100%;
+    }
+    
+    /* 4. Fix the "first line indented" and alignment issues */
+    .ts_quote {
+        text-indent: 0 !important; /* Force removal of any inherited indentation */
+        margin: 0;
+        line-height: 1.4;
+        font-style: italic;
+        display: block;
+    }
+    
+    /* 5. Align the vote count and the text */
+    .ts_quote_row {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    /* 6. Fix the avatar and username block */
+    .ts_review_head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 2px;
+    }
+    
+    .ts_review_userblock {
+        display: flex;
+        align-items: center;
+    }
+    
+    /* Vertical centering for the rank */
+    .ts_rank {
+        font-weight: 800;
+        opacity: 0.5;
+        text-align: center;
+    }
+    
+    /* Thumbnail sizing */
+    .ts_thumb img {
+        width: 70px;
+        height: auto;
+        border-radius: 4px;
+        display: block;
+    }
+
+
+
   </style>
 </head>
 <body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
@@ -156,10 +233,19 @@
 
   <header class="topbar">
     <div class="wrap row between">
-      <a class="brand" href="/shows">
-        <span class="dot"></span>
-        <span>Pressboxd</span>
-      </a>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        
+        <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display: flex; align-items: center; text-decoration: none;">
+          <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <img 
+              src="/static/logo.png" 
+              alt="Logo" 
+              style="max-width: 35px; max-height: 35px; width: auto; height: auto; object-fit: contain; transition: transform 0.6s ease-in-out;"
+              onmouseover="this.style.transform='rotate(360deg)'" 
+              onmouseout="this.style.transform='rotate(0deg)'"
+            >
+          </div>
+        </a>
 
       <nav class="nav row">
         <a href="/shows">Shows</a>
@@ -403,5 +489,6 @@
   </script>
 </body>
 </html>
+
 
 
