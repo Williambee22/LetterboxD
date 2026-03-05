@@ -218,14 +218,28 @@
   const notifCountSafe = typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
   const notifItemsSafe = Array.isArray(typeof notif_items !== "undefined" ? notif_items : []) ? notif_items : [];
 %>
-<body class="app" <%= meUser && meUser.theme_color ? `style="--accent: ${meUser.theme_color};"` : "" %>>
-  <header class="topbar">
-    <div class="wrap row between">
-      <a class="brand" href="/shows" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
-        <img src="/static/logo.png" alt="logo" style="width: 30px; height: 30px; object-fit: contain; flex-shrink: 0;">
-        <span>Pressboxd</span>
-      </a>
-
+  <body class="app" <%= meUser && meUser.theme_color ? `style="--accent: ${meUser.theme_color};"` : "" %>>
+    <header class="topbar">
+      <div class="wrap row between">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          
+          <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display: flex; align-items: center; text-decoration: none;">
+            <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <img 
+                src="/static/logo.png" 
+                alt="Logo" 
+                style="max-width: 35px; max-height: 35px; width: auto; height: auto; object-fit: contain; transition: transform 0.6s ease-in-out;"
+                onmouseover="this.style.transform='rotate(360deg)'" 
+                onmouseout="this.style.transform='rotate(0deg)'"
+              >
+            </div>
+          </a>
+    
+          <a class="brand" href="/shows">
+            <span>Pressboxd</span>
+          </a>
+    
+        </div>
       <nav class="nav row">
         <a href="/shows">Shows</a>
         <a href="/top">Top Shows</a>
@@ -437,6 +451,7 @@
   </script>
 </body>
 </html>
+
 
 
 
