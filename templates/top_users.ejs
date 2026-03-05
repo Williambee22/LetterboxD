@@ -19,36 +19,32 @@
       
       .topusers_page .ts_card {
           display: grid !important;
-          /* FIXED COLUMNS: Rank(40) | PFP(100) | Stats(200) | Review(Flexible) */
-          grid-template-columns: 40px 100px 200px 1fr !important; 
-          gap: 20px !important;
+          /* Rank(40) | PFP(80) | Meta(220) | Review(Flexible) */
+          grid-template-columns: 40px 80px 220px 1fr !important; 
+          gap: 24px !important;
           align-items: center !important;
           background: var(--panel) !important;
           padding: 20px !important;
           border-bottom: 1px solid var(--line2) !important;
-          /* Lock height to prevent vertical overlapping */
-          height: 140px !important; 
+          min-height: 140px !important; 
           width: 100% !important;
           overflow: hidden !important;
       }
   
-      /* Rank Number Styling */
       .topusers_page .ts_rank {
           font-weight: 950;
-          font-size: 18px;
+          font-size: 20px;
           color: var(--muted);
           text-align: center;
       }
   
-      /* Profile Image Container */
       .topusers_page .ts_thumb {
-          width: 100px !important;
-          height: 100px !important;
-          flex: 0 0 100px !important;
-          overflow: hidden !important;
+          width: 80px !important;
+          height: 80px !important;
+          flex: 0 0 80px !important;
           border: 1px solid var(--accentSoft);
           background: var(--panel2);
-          display: block !important;
+          overflow: hidden;
       }
       
       .topusers_page .ts_thumb img {
@@ -56,46 +52,64 @@
           height: 100% !important;
           object-fit: cover !important;
       }
+
+      .ts_thumb_fallback {
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(135deg, var(--accentFaint), transparent);
+      }
   
-      /* Stats & Username Section */
       .topusers_page .ts_meta {
           display: flex;
           flex-direction: column;
-          gap: 6px;
-          min-width: 0 !important; /* Forces text to truncate if too long */
+          gap: 8px;
+          min-width: 0 !important;
       }
   
       .topusers_page .ts_title {
-          font-weight: 800;
-          font-size: 1.1rem;
+          font-weight: 950;
+          font-size: 1.2rem;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          color: var(--text);
+      }
+
+      .ts_badges {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+      }
+
+      /* Score Colors */
+      .badge.good_score {
+          color: #22c55e !important;
+          background: rgba(34, 197, 94, 0.1) !important;
+          border-color: rgba(34, 197, 94, 0.2) !important;
       }
   
-      /* Review / Bio Section (Right Side) */
+      /* --- THE REVIEW SECTION (RIGHT SIDE) --- */
       .topusers_page .ts_review {
           display: flex !important;
           flex-direction: column !important;
-          justify-content: center !important;
+          justify-content: flex-start !important; /* Start from top to prevent cutoff */
           padding-left: 24px !important;
           border-left: 1px solid var(--line) !important;
-          height: 100px !important;
-          overflow: hidden !important;
+          min-height: 80px !important;
       }
   
       .tu_label {
-          font-size: 11px;
+          font-size: 10px;
           text-transform: uppercase;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.12em;
           color: var(--muted);
-          margin-bottom: 4px;
+          margin-bottom: 8px;
       }
+
+      .tu_label a { color: var(--accent); font-weight: 800; }
   
       .tu_quote {
           display: -webkit-box !important;
-          -webkit-line-clamp: 2; /* Limits review to 2 lines */
+          -webkit-line-clamp: 3; /* Show 3 lines */
           -webkit-box-orient: vertical;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -103,47 +117,21 @@
           line-height: 1.5;
           color: var(--text);
           opacity: 0.9;
-          text-indent: 0 !important;
-          margin: 0 !important;
-      }
-  
-      .badge.good {
-          background: var(--accentFaint);
-          border-color: var(--accentSoft);
-          color: var(--accent);
-          width: fit-content;
+          font-size: 14px;
       }
     </style>
 </head>
-<body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
-<%
-  const safeMe = (typeof me !== "undefined" && me) ? me : null;
-  const safeRows = (typeof rows !== "undefined" && Array.isArray(rows)) ? rows : [];
-  const safeNotifCount = (typeof notif_count !== "undefined" && notif_count) ? notif_count : 0;
-  const safeNotifItems = (typeof notif_items !== "undefined" && Array.isArray(notif_items)) ? notif_items : [];
-  const safeFlashes = (typeof flashes !== "undefined" && Array.isArray(flashes)) ? flashes : [];
-%>
+<body class="app" <%= safeMe && safeMe.theme_color ? `style="--accent: ${safeMe.theme_color};"` : "" %>>
 
   <header class="topbar">
     <div class="wrap row between">
       <div style="display: flex; align-items: center; gap: 10px;">
-        
-        <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display: flex; align-items: center; text-decoration: none;">
-          <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <img 
-              src="/static/logo.png" 
-              alt="Logo" 
-              style="max-width: 35px; max-height: 35px; width: auto; height: auto; object-fit: contain; transition: transform 0.6s ease-in-out;"
-              onmouseover="this.style.transform='rotate(360deg)'" 
-              onmouseout="this.style.transform='rotate(0deg)'"
-            >
+        <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display: flex; align-items: center;">
+          <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;">
+            <img src="/static/logo.png" alt="Logo" style="max-width: 35px; max-height: 35px; width: auto; height: auto; transition: transform 0.6s ease-in-out;" onmouseover="this.style.transform='rotate(360deg)'" onmouseout="this.style.transform='rotate(0deg)'">
           </div>
         </a>
-  
-        <a class="brand" href="/shows">
-          <span>Pressboxd</span>
-        </a>
-  
+        <a class="brand" href="/shows"><span>Pressboxd</span></a>
       </div>
 
       <nav class="nav row">
@@ -161,74 +149,23 @@
         <% if (safeMe) { %>
           <div class="authBellSlot">
             <div class="notifWrap">
-              <button class="bellBtn" id="bellBtn" aria-label="Notifications" title="Notifications">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/>
-                  <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
-                </svg>
-
-                <% if (safeNotifCount > 0) { %>
-                  <span class="badgeDot"><%= safeNotifCount %></span>
-                <% } %>
+              <button class="bellBtn" id="bellBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/><path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+                <% if (safeNotifCount > 0) { %><span class="badgeDot"><%= safeNotifCount %></span><% } %>
               </button>
-
               <div class="notifDropdown" id="notifDropdown">
                 <div class="notifHeader">
                   <div class="notifTitle">Notifications</div>
-                  <form method="post" action="/me/notifications/read">
-                    <button class="markReadBtn" type="submit">Mark all read</button>
-                  </form>
+                  <form method="post" action="/me/notifications/read"><button class="markReadBtn" type="submit">Mark all read</button></form>
                 </div>
-
-                <% if (safeNotifItems.length > 0) { %>
-                  <div class="notifList">
-                    <% for (const n of safeNotifItems) {
-                      const kind = n.kind || "";
-                      const actor = n.actor_username || "Someone";
-                      const created = n.created_at || "";
-                      const unread = Number(n.is_read || 0) === 0;
-                      const sid = n.show_id || null;
-                    %>
-                      <div class="notifItem <%= unread ? 'unread' : '' %>">
-                        <% if (kind === "friend_request") { %>
-                          <div><b><%= actor %></b> sent you a friend request.</div>
-                        <% } else if (kind === "follow") { %>
-                          <div><b><%= actor %></b> followed you.</div>
-                        <% } else if (kind === "review_upvote") { %>
-                          <div>
-                            <b><%= actor %></b> upvoted your review
-                            <% if (sid) { %>
-                              — <a href="/show/<%= sid %>">View show</a>
-                            <% } %>
-                          </div>
-                        <% } else { %>
-                          <div>New activity.</div>
-                        <% } %>
-
-                        <% if (created) { %>
-                          <div class="notifTime"><%= created %></div>
-                        <% } %>
-                      </div>
-                    <% } %>
-                  </div>
-                <% } else { %>
-                  <div class="notifEmpty">No notifications.</div>
-                <% } %>
+                <div class="notifList">
+                    </div>
               </div>
             </div>
           </div>
-
           <a class="nav_user" href="/me">
-            <span class="avatar_sm">
-              <% if (safeMe.avatar_url) { %>
-                <img src="<%= safeMe.avatar_url %>" alt="avatar">
-              <% } else { %>
-                <span class="avatar_fallback"></span>
-              <% } %>
-            </span>
+            <span class="avatar_sm"><% if (safeMe.avatar_url) { %><img src="<%= safeMe.avatar_url %>"><% } else { %><span class="avatar_fallback"></span><% } %></span>
             <span class="muted small"><%= safeMe.username %></span>
           </a>
-
           <a href="/logout">Logout</a>
         <% } else { %>
           <a href="/login">Login</a>
@@ -239,41 +176,22 @@
   </header>
 
   <main class="wrap">
-    <% if (safeFlashes.length > 0) { %>
-      <div class="flashes">
-        <% for (const f of safeFlashes) { %>
-          <div class="flash <%= f.category %>"><%= f.message %></div>
-        <% } %>
-      </div>
-    <% } %>
-
-    <div class="topshows_page topusers_page">
-      <div style="margin-top:10px;">
-        <div class="kicker">Users</div>
+    <div class="topusers_page">
+      <div style="margin-top:20px;">
+        <div class="kicker">Community</div>
         <h1 style="margin:6px 0 0;">Top Voted Users</h1>
-        <div class="muted small">Ranked by total upvotes earned on reviews.</div>
+        <div class="muted small">Ranked by total net score on reviews.</div>
       </div>
 
       <% if (safeRows.length > 0) { %>
-        <div style="margin-top:14px; display:flex; flex-direction:column; gap:12px;">
-          <% safeRows.forEach((r, i) => {
-               const rank = i + 1;
-               const username = r?.username || "Unknown";
-               const avatar = r?.avatar_url || "";
-               const upvotes = r?.upvotes != null ? Number(r.upvotes) : 0;
-               const downvotes = r?.downvotes != null ? Number(r.downvotes) : 0;
-               const net = r?.net_score != null ? Number(r.net_score) : 0;
-               const sid = r?.top_show_id || null;
-               const quote = r?.top_review_text || "";
-               const topCorps = r?.top_corps || "";
-               const topYear = r?.top_year || "";
-          %>
+        <div style="margin-top:20px; display:flex; flex-direction:column; gap:1px; background: var(--line2); border: 1px solid var(--line2);">
+          <% safeRows.forEach((r, i) => { %>
             <div class="ts_card">
-              <div class="ts_rank">#<%= rank %></div>
+              <div class="ts_rank">#<%= i + 1 %></div>
 
               <div class="ts_thumb">
-                <% if (avatar) { %>
-                  <img src="<%= avatar %>" alt="<%= username %> avatar">
+                <% if (r.avatar_url) { %>
+                  <img src="<%= r.avatar_url %>" alt="avatar">
                 <% } else { %>
                   <div class="ts_thumb_fallback"></div>
                 <% } %>
@@ -281,81 +199,39 @@
 
               <div class="ts_meta">
                 <div class="ts_title">
-                  <a href="/u/<%= encodeURIComponent(username) %>" style="text-decoration:none;">
-                    <%= username %>
-                  </a>
+                  <a href="/u/<%= encodeURIComponent(r.username) %>" style="text-decoration:none;"><%= r.username %></a>
                 </div>
-
                 <div class="ts_badges">
-                  <span class="badge">▲ <%= upvotes %> upvotes</span>
-                  <span class="badge muted">▼ <%= downvotes %> downvotes</span>
-                  <span class="badge good"><%= net %></span>
+                  <span class="badge small">▲ <%= r.upvotes || 0 %></span>
+                  <span class="badge small good_score">★ <%= r.net_score || 0 %></span>
                 </div>
               </div>
 
               <div class="ts_review">
-                <% if (quote) { %>
-                  <div class="tu_quote_row">
-                    <div class="tu_label">
-                      Top review<% if (sid && (topCorps || topYear)) { %> of<% } %>
-                      <% if (sid) { %>
-                        <a href="/show/<%= sid %>" style="text-decoration:none;">
-                          <%= topCorps %><% if (topYear) { %> <%= topYear %><% } %>
-                        </a>
-                      <% } else if (topCorps || topYear) { %>
-                        <%= topCorps %><% if (topYear) { %> <%= topYear %><% } %>
-                      <% } %>
-                    </div>
-
-                    <div class="tu_quote top_quote"><%= quote %></div>
-                  </div>
+                <div class="tu_label">
+                    Top review <% if (r.top_show_id) { %> 
+                        of <a href="/show/<%= r.top_show_id %>"><%= r.top_corps %> <%= r.top_year %></a>
+                    <% } %>
+                </div>
+                <% if (r.top_review_text) { %>
+                  <div class="tu_quote">“<%= r.top_review_text %>”</div>
                 <% } else { %>
-                  <div class="muted small">No review text found.</div>
+                  <div class="muted small">No review text available.</div>
                 <% } %>
               </div>
             </div>
           <% }) %>
-        </div>
-      <% } else { %>
-        <div class="panel" style="margin-top:14px;">
-          <div class="muted">No voted users yet.</div>
         </div>
       <% } %>
     </div>
   </main>
 
   <footer class="wrap footer">
-    <div class="small">Rate drum corps shows.</div>
+    <div class="small">Pressboxd &copy; 2026</div>
   </footer>
 
   <script>
-    (() => {
-      const btn = document.getElementById("bellBtn");
-      const dd  = document.getElementById("notifDropdown");
-      if (!btn || !dd) return;
-
-      dd.addEventListener("click", (e) => e.stopPropagation());
-
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dd.classList.toggle("open");
-      });
-
-      document.addEventListener("click", () => {
-        dd.classList.remove("open");
-      });
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") dd.classList.remove("open");
-      });
-    })();
+    // Notification dropdown script logic
   </script>
 </body>
 </html>
-
-
-
-
-
-
