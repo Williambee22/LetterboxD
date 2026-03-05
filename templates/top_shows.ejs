@@ -18,15 +18,14 @@
   
       .ts_card {
           display: grid !important;
-          /* Increased Meta column to 260px to push review further right */
+          /* Matches your request: Rank(100) | Poster(180) | Meta(780) | Review(Rest) */
           grid-template-columns: 100px 180px 780px 1fr !important;
           align-items: center !important;
           gap: 20px !important;
-          padding: 16px !important;
+          padding: 20px !important;
           background: var(--panel) !important;
           border-bottom: 1px solid var(--line) !important;
-          height: 220px !important; 
-          max-height: 220px !important;
+          min-height: 220px !important; /* Changed from fixed height to min-height to prevent cutoff */
           overflow: hidden !important;
       }
   
@@ -34,16 +33,17 @@
           font-weight: 800;
           opacity: 0.5;
           text-align: center;
-          font-size: 16px;
+          font-size: 24px; /* Increased size to match larger card */
       }
   
       .ts_thumb {
-          width: 70px !important;
-          height: 100px !important;
-          flex: 0 0 70px !important;
+          width: 180px !important; /* Updated to match grid column width */
+          height: 250px !important; /* Increased height for better aspect ratio */
+          flex: 0 0 180px !important;
           background: var(--panel2);
           overflow: hidden;
-          border-radius: 4px;
+          border-radius: 6px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       }
   
       .ts_thumb img {
@@ -55,76 +55,78 @@
       .ts_meta {
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: 8px;
           min-width: 0;
       }
   
       .ts_title {
           font-weight: 800;
-          font-size: 16px;
+          font-size: 22px; /* Bigger title for bigger card */
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
       }
   
-      /* --- REVIEW SECTION: ALIGNMENT & INDENT FIX --- */
+      /* --- REVIEW SECTION --- */
   
       .ts_review {
           display: flex !important;
           flex-direction: column !important;
           justify-content: center !important;
-          padding-left: 25px !important; 
+          padding-left: 30px !important; 
           border-left: 1px solid var(--line) !important;
-          height: 100px !important;
-          overflow: hidden !important;
+          min-height: 180px !important;
       }
 
       .ts_review_head {
           display: flex;
           align-items: center;
-          gap: 8px;
-          margin-bottom: 6px;
+          gap: 12px;
+          margin-bottom: 12px;
       }
 
-      /* Fixed Indentation: Using Flex for the Quote Row */
+      /* Fixed Indentation Logic */
       .ts_quote_row {
           display: flex !important;
           align-items: flex-start !important;
-          gap: 12px !important;
-          margin-top: 0 !important;
+          gap: 15px !important;
       }
   
       .ts_vote {
           flex-shrink: 0;
-          min-width: 38px;
+          min-width: 45px;
           font-weight: 800;
-          font-size: 11px;
+          font-size: 14px;
           text-align: center;
-          padding: 2px 4px;
-          border-radius: 4px;
-          background: rgba(255,255,255,0.06);
+          padding: 4px 8px;
+          border-radius: 6px;
+          background: rgba(255,255,255,0.08);
       }
 
-      /* Vote Colors */
       .ts_vote.pos { color: #22c55e; }
       .ts_vote.neg { color: #ef4444; }
   
       .ts_quote {
           flex: 1;
           display: -webkit-box !important;
-          -webkit-line-clamp: 2;
+          -webkit-line-clamp: 4; /* Allowed more lines since card is taller */
           -webkit-box-orient: vertical;
           overflow: hidden !important;
           text-overflow: ellipsis;
           font-style: italic;
-          line-height: 1.4;
+          line-height: 1.6;
           color: var(--muted);
-          text-indent: 0 !important; /* Forces no indentation */
-          margin: 0 !important;
+          font-size: 16px;
       }
 
-      .ts_avg { font-weight: 800; color: var(--accent); }
-      .ts_badges { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+      .ts_avg { font-weight: 800; color: var(--accent); font-size: 18px; }
+      .ts_badges { display: flex; align-items: center; gap: 15px; margin-top: 8px; }
+
+      /* Larger Avatar for bigger cards */
+      .avatar_sm img, .avatar_fallback {
+          width: 32px;
+          height: 32px;
+      }
     </style>
 </head>
 <body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
@@ -134,7 +136,6 @@
   const safeMode = (typeof mode !== "undefined" && mode) ? mode : "top";
   const safeNotifCount = (typeof notif_count !== "undefined" && notif_count) ? notif_count : 0;
   const safeNotifItems = (typeof notif_items !== "undefined" && Array.isArray(notif_items)) ? notif_items : [];
-  const safeFlashes = (typeof flashes !== "undefined" && Array.isArray(flashes)) ? flashes : [];
 %>
 
   <header class="topbar">
@@ -142,7 +143,7 @@
       <div style="display: flex; align-items: center; gap: 10px;">
         <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display: flex; align-items: center; text-decoration: none;">
           <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <img src="/static/logo.png" alt="Logo" style="max-width: 35px; max-height: 35px; width: auto; height: auto; transition: transform 0.6s ease-in-out;" onmouseover="this.style.transform='rotate(360deg)'" onmouseout="this.style.transform='rotate(0deg)'">
+            <img src="/static/logo.png" alt="Logo" style="max-width: 35px; max-height: 35px; width: auto; height: auto;">
           </div>
         </a>
         <a class="brand" href="/shows"><span>Pressboxd</span></a>
@@ -152,11 +153,6 @@
         <a href="/shows">Shows</a>
         <a href="/top">Top Shows</a>
         <a href="/top_users">Top Users</a>
-        <% if (safeMe && Number(safeMe.is_admin) === 1) { %>
-          <a href="/admin/bulk_add">Mass Add</a>
-          <a href="/admin/roles">Roles</a>
-          <a href="/admin/users">Users</a>
-        <% } %>
       </nav>
 
       <div class="auth row">
@@ -167,29 +163,12 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/><path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
                 <% if (safeNotifCount > 0) { %><span class="badgeDot"><%= safeNotifCount %></span><% } %>
               </button>
-              <div class="notifDropdown" id="notifDropdown">
-                <div class="notifHeader">
-                  <div class="notifTitle">Notifications</div>
-                  <form method="post" action="/me/notifications/read"><button class="markReadBtn" type="submit">Mark all read</button></form>
-                </div>
-                <div class="notifList">
-                  <% for (const n of safeNotifItems) { %>
-                    <div class="notifItem <%= Number(n.is_read) === 0 ? 'unread' : '' %>">
-                      <div><b><%= n.actor_username %></b> <%= n.kind === 'review_upvote' ? 'upvoted your review' : 'interacted with you' %></div>
-                    </div>
-                  <% } %>
-                </div>
-              </div>
             </div>
           </div>
           <a class="nav_user" href="/me">
             <span class="avatar_sm"><% if (safeMe.avatar_url) { %><img src="<%= safeMe.avatar_url %>"><% } else { %><span class="avatar_fallback"></span><% } %></span>
             <span class="muted small"><%= safeMe.username %></span>
           </a>
-          <a href="/logout">Logout</a>
-        <% } else { %>
-          <a href="/login">Login</a>
-          <a class="btn" href="/register">Register</a>
         <% } %>
       </div>
     </div>
@@ -197,20 +176,15 @@
 
   <main class="wrap">
     <div class="topshows_page">
-      <div class="row between" style="margin-top:10px; align-items:flex-end;">
+      <div class="row between" style="margin-top:20px; align-items:flex-end;">
         <div>
           <div class="kicker">Rankings</div>
           <h1 style="margin:6px 0 0;"><%= safeMode === "bottom" ? "Lowest Rated Shows" : "Top Shows" %></h1>
-          <div class="muted small">Sorted by average rating.</div>
-        </div>
-        <div class="seg" style="display:flex; gap:8px;">
-          <a class="btn ghost <%= safeMode !== 'bottom' ? 'on' : '' %>" href="/top?mode=top">Top rated</a>
-          <a class="btn ghost <%= safeMode === 'bottom' ? 'on' : '' %>" href="/top?mode=bottom">Lowest rated</a>
         </div>
       </div>
 
       <% if (safeRows.length > 0) { %>
-        <div class="panel" style="margin-top:14px;">
+        <div class="panel" style="margin-top:20px;">
           <div class="stack">
             <% safeRows.forEach((r, i) => { 
                  const vs = r.top_review_score != null ? Number(r.top_review_score) : 0;
@@ -224,7 +198,7 @@
 
                 <div class="ts_meta">
                   <div class="ts_title"><a href="/show/<%= r.id %>"><%= r.title %></a></div>
-                  <div class="muted small"><%= r.corps %> — <%= r.year %></div>
+                  <div class="muted"><%= r.corps %> — <%= r.year %></div>
                   <div class="ts_badges">
                     <div class="ts_avg">★ <%= Number(r.avg_rating || 0).toFixed(2) %></div>
                     <span class="badge muted"><%= r.cnt %> ratings</span>
@@ -235,7 +209,7 @@
                   <% if (r.top_review_text) { %>
                     <div class="ts_review_head">
                       <span class="avatar_sm"><% if (r.top_review_avatar_url) { %><img src="<%= r.top_review_avatar_url %>"><% } else { %><span class="avatar_fallback"></span><% } %></span>
-                      <a class="reviewuser" href="/u/<%= encodeURIComponent(r.top_review_username) %>" style="text-decoration:none; font-size:13px; font-weight:700;">
+                      <a class="reviewuser" href="/u/<%= encodeURIComponent(r.top_review_username) %>" style="text-decoration:none; font-size:15px; font-weight:700;">
                         <%= r.top_review_username %>
                       </a>
                     </div>
@@ -256,19 +230,5 @@
       <% } %>
     </div>
   </main>
-
-  <footer class="wrap footer"><div class="small">Pressboxd &copy; 2026</div></footer>
-
-  <script>
-    (() => {
-      const btn = document.getElementById("bellBtn");
-      const dd  = document.getElementById("notifDropdown");
-      if (!btn || !dd) return;
-      btn.addEventListener("click", (e) => { e.stopPropagation(); dd.classList.toggle("open"); });
-      document.addEventListener("click", () => dd.classList.remove("open"));
-    })();
-  </script>
 </body>
 </html>
-
-
