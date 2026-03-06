@@ -237,6 +237,9 @@
                     onerror="this.src='<%= POSTER_FALLBACK %>';"
                   >
                 </a>
+                <div style="font-size:10px; color:#888; word-break:break-all; margin-top:4px;">
+                  <%= poster %>
+                </div>
 
                 <div class="ts_meta">
                   <div class="ts_title"><a href="/show/<%= r.id %>"><%= r.title %></a></div>
@@ -289,3 +292,4 @@
   </main>
 </body>
 </html>
+
