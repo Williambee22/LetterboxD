@@ -433,7 +433,7 @@ function listTopUsersByReviewUpvotes(conn, limit = 25) {
   
   const sql = `
     WITH vote_counts AS (
-      /* Pre-calculate total votes per user review to avoid multiplying rows */
+      /* Pre-calculate votes per review */
       SELECT 
         review_user_id,
         show_id,
@@ -444,20 +444,21 @@ function listTopUsersByReviewUpvotes(conn, limit = 25) {
       GROUP BY review_user_id, show_id
     ),
     user_totals AS (
-      /* Sum up the pre-calculated totals for each user */
+      /* Get user basics and aggregate their vote totals */
       SELECT 
         u.id as user_id,
         u.username,
         u.avatar_url,
         COALESCE(SUM(vc.review_upvotes), 0) as upvotes,
         COALESCE(SUM(vc.review_downvotes), 0) as downvotes,
-        COALESCE(SUM(vc.review_net_score), 0) as net_score
+        COALESCE(SUM(vc.review_net_score), 0) as net_score,
+        (SELECT COUNT(*) FROM reviews WHERE user_id = u.id) as reviews_count
       FROM users u
       LEFT JOIN vote_counts vc ON vc.review_user_id = u.id
       GROUP BY u.id
     ),
     review_ranking AS (
-      /* Rank reviews based on their net score */
+      /* Find each user's single most-upvoted review */
       SELECT 
         rv.user_id,
         rv.show_id as top_show_id,
@@ -480,8 +481,8 @@ function listTopUsersByReviewUpvotes(conn, limit = 25) {
       rr.top_year
     FROM user_totals ut
     LEFT JOIN review_ranking rr ON rr.user_id = ut.user_id AND rr.rn = 1
-    WHERE ut.upvotes > 0 OR ut.downvotes > 0 OR ut.net_score <> 0
-    ORDER BY ut.net_score DESC, ut.upvotes DESC
+    /* REMOVED: The strict WHERE clause that required votes */
+    ORDER BY ut.net_score DESC, ut.upvotes DESC, ut.reviews_count DESC
     LIMIT ?
   `;
   
@@ -489,7 +490,6 @@ function listTopUsersByReviewUpvotes(conn, limit = 25) {
     return conn.prepare(sql).all(limit);
   } catch (err) {
     console.error("SQL Error in listTopUsersByReviewUpvotes:", err);
-    // Return empty array so the page doesn't 502 Bad Gateway
     return [];
   }
 }
@@ -1521,6 +1521,7 @@ module.exports = {
   getVerifiedRatingHistogram,
   updateUserBio 
 };
+
 
 
 
