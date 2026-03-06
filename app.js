@@ -2054,10 +2054,26 @@ function createApp() {
     try {
       conn = getConn();
   
-      const rows = dbx.listTopShowsWithTopReview(conn, {
+      let rows = dbx.listTopShowsWithTopReview(conn, {
         mode: safeMode,
         limit: 100
       }) || [];
+  
+      rows = rows.map((r) => {
+        if (r && r.poster_url && String(r.poster_url).trim()) return r;
+  
+        const show = conn.prepare(`
+          SELECT poster_url
+          FROM shows
+          WHERE id = ?
+          LIMIT 1
+        `).get(Number(r.id));
+  
+        return {
+          ...r,
+          poster_url: show && show.poster_url ? String(show.poster_url).trim() : ''
+        };
+      });
   
       console.log('TOP ROWS DEBUG:', rows.slice(0, 10).map(r => ({
         id: r.id,
@@ -2076,7 +2092,6 @@ function createApp() {
       if (conn) dbx.close(conn);
     }
   });
-
   app.get('/top_users', async (req, res, next) => {
     let conn;
     try {
@@ -2427,6 +2442,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
