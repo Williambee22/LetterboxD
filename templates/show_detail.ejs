@@ -395,8 +395,8 @@
             <div class="notifWrap">
               <button class="bellBtn" id="bellBtn" aria-label="Notifications" title="Notifications">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/>
-                  <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
+                  <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="Color" stroke-width="1"/>
+                  <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="Color" stroke-width="1" stroke-linejoin="round"/>
                 </svg>
 
                 <% if (notifCountSafe > 0) { %>
@@ -536,7 +536,7 @@
                   <div class="starwrap" style="justify-content:flex-end;">
                     <div class="stars"
                          id="stars"
-                         data-current="<%= myRatingVal != null ? myRatingVal : 0 %>"
+                         data-="<%= myRatingVal != null ? myRatingVal : 0 %>"
                          aria-label="Rate this show from 0 to 5 stars in half-star steps"
                          role="slider"
                          tabindex="0">
@@ -563,8 +563,8 @@
                     const form  = document.getElementById("rateForm");
                     if (!stars || !fill || !input || !label || !form) return;
 
-                    const current = parseInt(stars.dataset.current || "0", 10);
-                    setDisplay(current);
+                    const  = parseInt(stars.dataset. || "0", 10);
+                    setDisplay();
 
                     function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
                     function halfToText(rh){
@@ -706,7 +706,7 @@
                          
                          <% for (const c of commentList) { %>
                            <div class="comment-item">
-                             <% if (currentUserId && (currentUserId === Number(c.commenter_user_id))) { %>
+                             <% if (UserId && (UserId === Number(c.commenter_user_id))) { %>
                                <form method="post" action="/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete">
                                  <button class="btn ghost" type="submit">Delete</button>
                                </form>
@@ -715,7 +715,7 @@
                            </div>
                          <% } %>
       
-                         <% if (currentUserId) { %>
+                         <% if (userId) { %>
                            <form method="post" action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment">
                              <div class="row gap">
                                <textarea name="comment_text" placeholder="Add a comment…"></textarea>
@@ -737,7 +737,7 @@
             <div class="kicker">Share your thoughts</div>
             <h3 style="margin: 6px 0 16px;">Write a Review</h3>
       
-            <% if (currentUserId) { %>
+            <% if (userId) { %>
               <form action="/show/<%= showRow.id %>/review" method="POST">
                 <button type="submit" class="btn primary" style="width:100%;">Submit Review</button>
               </form>
@@ -782,6 +782,7 @@
   </script>
 </body>
 </html>
+
 
 
 
