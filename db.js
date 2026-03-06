@@ -975,7 +975,7 @@ function listTopShowsWithTopReview(conn, opts = {}) {
         s.title,
         s.corps,
         s.year,
-        s.poster_url AS poster_url
+        s.poster_url AS poster_url,
         COUNT(r.rating_half) AS cnt,
         COALESCE(ROUND(AVG(r.rating_half) / 2.0, 2), 0) AS avg_rating
       FROM shows s
@@ -1576,6 +1576,7 @@ module.exports = {
   getVerifiedRatingHistogram,
   updateUserBio 
 };
+
 
 
 
