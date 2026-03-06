@@ -2064,17 +2064,27 @@ function createApp() {
     }
   });
 
-  app.get('/top_users', async (_req, res) => {
+  app.get('/top_users', async (req, res, next) => {
     let conn;
     try {
       conn = getConn();
-      const rows = (await dbx.listTopUsersByReviewUpvotes(conn, { limit: 25 }) || []).map((r) => {
+      // Pass the number 25 directly, not an object { limit: 25 }
+      const rawRows = dbx.listTopUsersByReviewUpvotes(conn, 25) || [];
+      
+      const rows = rawRows.map((r) => {
         const d = normalizeRow(r);
         if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
-        if (d.top_show_id && !d.top_poster_url) d.top_poster_url = posterUrlForShow(d.top_corps || '', d.top_year || 0);
+        // Ensure the top poster is generated if missing
+        if (d.top_show_id && !d.top_poster_url) {
+          d.top_poster_url = posterUrlForShow(d.top_corps || '', d.top_year || 0);
+        }
         return d;
       });
+  
       res.render('top_users', { rows });
+    } catch (err) {
+      console.error("Top Users Route Error:", err);
+      next(err); // This sends the error to Express instead of crashing
     } finally {
       if (conn) dbx.close(conn);
     }
@@ -2404,6 +2414,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
