@@ -153,6 +153,80 @@
           color: #fff;
           background: var(--accent);
       }
+      /* Mobile Optimization */
+      @media (max-width: 768px) {
+          /* 1. Change the grid to a simpler 2-column layout */
+          .ts_card {
+              grid-template-columns: 80px 1fr !important; 
+              grid-template-rows: auto auto !important;
+              gap: 15px !important;
+              padding: 15px !important;
+              align-items: start !important;
+          }
+      
+          /* 2. Position the Rank (#1) and Thumbnail */
+          .ts_rank {
+              grid-column: 1;
+              grid-row: 1;
+              font-size: 18px;
+              text-align: left;
+          }
+      
+          .ts_thumb {
+              grid-column: 1;
+              grid-row: 2;
+              width: 70px !important; /* Smaller poster for mobile */
+              height: 105px !important;
+          }
+      
+          /* 3. Position the Meta (Title/Year/Stars) */
+          .ts_meta {
+              grid-column: 2;
+              grid-row: 1 / span 2; /* Let title info sit next to the rank and poster */
+          }
+      
+          .ts_title {
+              white-space: normal; /* Allow titles to wrap on mobile */
+              font-size: 18px;
+              line-height: 1.2;
+          }
+      
+          /* 4. Make the Review section span the full width at the bottom */
+          .ts_review {
+              grid-column: 1 / -1; /* Span across both columns */
+              border-left: none !important; /* Remove the vertical line */
+              border-top: 1px solid var(--line) !important; /* Add a horizontal divider instead */
+              padding-left: 0 !important;
+              padding-top: 15px !important;
+              min-height: 0 !important;
+              margin-top: 5px;
+          }
+      
+          /* 5. Adjust navigation and headers for small screens */
+          .topbar .wrap {
+              flex-direction: column;
+              gap: 10px;
+              padding: 10px;
+          }
+      
+          .topshows_page .row.between {
+              flex-direction: column;
+              align-items: flex-start !important;
+              gap: 15px;
+          }
+      
+          .seg {
+              width: 100%;
+              justify-content: flex-start;
+          }
+      
+          .btn.ghost {
+              flex: 1 1 auto; /* Make buttons grow to fill space */
+              text-align: center;
+          }
+      }
+
+
   </style>
 </head>
 <body class="app" <%= (typeof me !== "undefined" && me && me.theme_color) ? 'style="--accent: ' + me.theme_color + ';"' : '' %>>
@@ -308,5 +382,6 @@
   </main>
 </body>
 </html>
+
 
 
