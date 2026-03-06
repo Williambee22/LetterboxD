@@ -489,13 +489,108 @@
         if (shouldRestore === "1" && corpsInput) {
           sessionStorage.removeItem("restoreCorpsFocus");
           corpsInput.focus();
-  
           const len = corpsInput.value.length;
           corpsInput.setSelectionRange(len, len);
+        }
+      });
+    })();
+  
+    (() => {
+      const input = document.getElementById("userSearchInput");
+      const dropdown = document.getElementById("userSearchDropdown");
+      if (!input || !dropdown) return;
+  
+      let timer = null;
+      let requestId = 0;
+  
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+  
+      function renderUsers(users) {
+        if (!Array.isArray(users) || users.length === 0) {
+          dropdown.innerHTML = '<div class="userSearchEmpty">No users found.</div>';
+          dropdown.classList.add("open");
+          return;
+        }
+  
+        dropdown.innerHTML = users.map(u => {
+          const avatar = u.avatar_url
+            ? `<img src="${escapeHtml(u.avatar_url)}" alt="${escapeHtml(u.username)}">`
+            : `<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;opacity:.7;">👤</span>`;
+  
+          return `
+            <a class="userSearchItem" href="/user/${encodeURIComponent(u.username)}">
+              <div class="userSearchAvatar">${avatar}</div>
+              <div style="min-width:0;">
+                <div style="font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                  ${escapeHtml(u.username)}
+                </div>
+              </div>
+            </a>
+          `;
+        }).join("");
+  
+        dropdown.classList.add("open");
+      }
+  
+      function clearDropdown() {
+        dropdown.innerHTML = "";
+        dropdown.classList.remove("open");
+      }
+  
+      input.addEventListener("input", () => {
+        const q = input.value.trim();
+        clearTimeout(timer);
+  
+        if (!q) {
+          clearDropdown();
+          return;
+        }
+  
+        timer = setTimeout(async () => {
+          const currentRequest = ++requestId;
+  
+          try {
+            const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`, {
+              headers: { "Accept": "application/json" }
+            });
+  
+            if (!res.ok) throw new Error("search request failed");
+  
+            const data = await res.json();
+  
+            if (currentRequest !== requestId) return;
+  
+            renderUsers(Array.isArray(data.users) ? data.users : []);
+          } catch (err) {
+            console.error("user search failed:", err);
+            if (currentRequest !== requestId) return;
+            dropdown.innerHTML = '<div class="userSearchEmpty">Search failed.</div>';
+            dropdown.classList.add("open");
+          }
+        }, 200);
+      });
+  
+      input.addEventListener("focus", () => {
+        if (dropdown.innerHTML.trim()) {
+          dropdown.classList.add("open");
+        }
+      });
+  
+      document.addEventListener("click", (e) => {
+        if (!dropdown.contains(e.target) && e.target !== input) {
+          dropdown.classList.remove("open");
         }
       });
     })();
   </script>
 </body>
 </html>
+
 
