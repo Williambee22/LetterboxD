@@ -49,7 +49,7 @@ const BAD_WORDS = new Set([
   'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'dick', 'pussy',
   'faggot', 'nigger', 'slut', 'whore', 'douchebag', 'motherfucker', 'twat',
   'cock', 'piss', 'fucker', 'shitter', 'bitchass', 'asshat', 'bullshit',
-  'chink', 'cocks', 'niggers', 'faggots', 'sluts', 'whores', 'douchebags',
+  'chink', 'cocks', 'niggers', 'faggots', 'sluts', 'douchebags',
   'motherfuckers', 'pussylicker', 'pussylicking', 'pussylicked', 'nigglet', 'nigglets',
   'nigga', 'niggas', 'faggotry', 'fag', 'fags', 'jiggaboo', 'jiggaboos',
   'spic', 'spics', 'gook', 'gooks', 'beaner', 'beaners', 'horseshit',
@@ -2437,6 +2437,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
