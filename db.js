@@ -1021,7 +1021,7 @@ function listTopShowsWithTopReview(conn, opts = {}) {
         ON v.show_id = rv.show_id
        AND v.review_user_id = rv.user_id
       WHERE ro.name = 'Verified Critic'
-      GROUP BY rv.show_id, rv.user_id
+      GROUP BY rv.show_id, rv.user_id, rv.${textCol}, u.username, u.avatar_url
     `
     : `
       SELECT
@@ -1036,7 +1036,7 @@ function listTopShowsWithTopReview(conn, opts = {}) {
       LEFT JOIN review_votes v
         ON v.show_id = rv.show_id
        AND v.review_user_id = rv.user_id
-      GROUP BY rv.show_id, rv.user_id
+      GROUP BY rv.show_id, rv.user_id, rv.${textCol}, u.username, u.avatar_url
     `;
 
   const orderSql = isBottomMode
@@ -1075,6 +1075,7 @@ function listTopShowsWithTopReview(conn, opts = {}) {
 
   return conn.prepare(sql).all(limit);
 }
+
 function ensureSocialTables(conn) {
   conn.exec(`
     CREATE TABLE IF NOT EXISTS follows (
@@ -1576,6 +1577,7 @@ module.exports = {
   getVerifiedRatingHistogram,
   updateUserBio 
 };
+
 
 
 
