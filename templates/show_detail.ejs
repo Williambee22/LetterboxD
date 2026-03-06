@@ -469,6 +469,61 @@
         padding-top: 8px;
       }
     }
+
+    .reviewsLayout {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      width: 100%;
+    }
+    
+    .reviewsMain {
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+    }
+    
+    .reviewsSide {
+      flex: 0 0 340px !important;
+      width: 340px !important;
+      min-width: 340px !important;
+      margin-left: auto !important;
+      align-self: flex-start !important;
+    }
+    
+    .reviewlist {
+      width: 100%;
+    }
+    
+    .reviewcard {
+      width: 100%;
+      max-width: none;
+    }
+    
+    @media (min-width: 769px) {
+      .reviewsMain {
+        max-width: calc(100% - 358px);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .reviewsLayout {
+        display: block !important;
+      }
+    
+      .reviewsMain,
+      .reviewsSide {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+      }
+    
+      .reviewsSide {
+        margin-left: 0 !important;
+        margin-top: 16px !important;
+      }
+    }
+
+
   </style>
 </head>
 <body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
@@ -809,9 +864,9 @@
     </div>
 
     <div class="layout" style="margin-top:8px;">
-      <section style="width:100%;">
-        <div style="display:grid; grid-template-columns: minmax(0, 1fr) 360px; gap:18px; align-items:start; width:100%;">
-          <div class="panel" style="min-width:0; width:100%;">
+      <section>
+        <div class="row gap reviewsLayout" style="align-items:flex-start;">
+          <div class="panel reviewsMain" style="flex:1 1 0; min-width:0;">
             <div class="row between" style="margin-bottom:14px; align-items: flex-end;">
               <div>
                 <div class="kicker">Reviews</div>
@@ -944,7 +999,7 @@
             <% } %>
           </div>
 
-          <div class="panel" style="width:360px; min-width:360px; justify-self:end; align-self:start; position:sticky; top:90px;">
+         <div class="panel reviewsSide" style="flex:0 0 340px; min-width:340px; margin-left:auto;">
             <div class="kicker">Share your thoughts</div>
             <h3 style="margin: 6px 0 16px;">Write a Review</h3>
 
@@ -1011,5 +1066,6 @@
   </script>
 </body>
 </html>
+
 
 
