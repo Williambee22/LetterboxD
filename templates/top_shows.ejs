@@ -219,14 +219,12 @@
                 <div class="ts_rank">#<%= i + 1 %></div>
 
                 <a class="ts_thumb" href="/show/<%= r.id %>">
-                  <% if (r.poster_url) { %>
-                    <% const posterSrc =
-                      (String(r.poster_url).startsWith('/static/') ||
-                       String(r.poster_url).startsWith('http://') ||
-                       String(r.poster_url).startsWith('https://'))
-                        ? r.poster_url
-                        : '/static/posters/' + r.poster_url;
-                    %>
+                  <% if (r.poster_url && String(r.poster_url).trim()) { %>
+                    <img src="<%= r.poster_url %>" alt="<%= r.title %> poster">
+                  <% } else { %>
+                    <div class="ts_thumb_fallback"></div>
+                  <% } %>
+                </a>
                     <img src="<%= posterSrc %>" alt="<%= r.title %> poster">
                     <div style="font-size:10px; color:#888; margin-top:4px; word-break:break-all;">
                       <%= posterSrc %>
@@ -282,3 +280,4 @@
   </main>
 </body>
 </html>
+
