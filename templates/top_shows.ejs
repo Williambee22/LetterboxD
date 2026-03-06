@@ -223,12 +223,12 @@
         <div class="panel" style="margin-top:20px;">
           <div class="stack">
             <% safeRows.forEach((r, i) => { 
-                 const vs = r.top_review_score != null ? Number(r.top_review_score) : 0;
-                 const rawPoster = (r && r.poster_url && String(r.poster_url).trim()) ? String(r.poster_url).trim() : "";
-                 const poster =
-                  rawPoster
-                    ? (rawPoster.startsWith("/static/") ? rawPoster : "/static/posters/" + rawPoster)
-                    : POSTER_FALLBACK;
+                const vs = r.top_review_score != null ? Number(r.top_review_score) : 0;
+                
+                // Use the same simple logic as shows.ejs
+                const poster = (r.poster_url && String(r.poster_url).trim()) 
+                               ? r.poster_url 
+                               : POSTER_FALLBACK;
             %>
               <div class="ts_card">
                 <div class="ts_rank">#<%= i + 1 %></div>
@@ -293,3 +293,4 @@
   </main>
 </body>
 </html>
+
