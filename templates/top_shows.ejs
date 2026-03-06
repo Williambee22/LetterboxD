@@ -225,19 +225,15 @@
             <% safeRows.forEach((r, i) => { 
                 const vs = r.top_review_score != null ? Number(r.top_review_score) : 0;
                 
-                // THE SAFETY NET LOGIC
+                // --- POSTER SAFETY LOGIC ---
                 let poster = POSTER_FALLBACK;
                 if (r.poster_url && String(r.poster_url).trim() !== "") {
                     const raw = String(r.poster_url).trim();
-                    
                     if (raw.startsWith('http') || raw.startsWith('/static/')) {
-                        // It's already a full valid path or URL
                         poster = raw;
                     } else if (raw.startsWith('posters/')) {
-                        // It's missing the /static/ prefix
                         poster = '/static/' + raw;
                     } else {
-                        // It's just the filename, add the full path
                         poster = '/static/posters/' + raw;
                     }
                 }
@@ -246,8 +242,8 @@
                 <div class="ts_rank">#<%= i + 1 %></div>
 
                 <a class="ts_thumb" href="/show/<%= r.id %>">
-                  <img
-                    src="<%= poster %>"
+                  <img 
+                    src="<%= poster %>" 
                     alt="<%= r.title %> poster"
                     loading="lazy"
                     onerror="this.src='<%= POSTER_FALLBACK %>';"
@@ -294,8 +290,8 @@
       <% } else { %>
         <div class="panel" style="margin-top:20px; padding: 60px 20px; text-align: center; border: 1px dashed var(--line);">
           <div class="muted" style="font-size: 1.1rem; margin-bottom: 12px;">
-            <%= isCriticMode
-              ? "No shows currently meet the minimum requirement of 5 Verified Critic ratings."
+            <%= isCriticMode 
+              ? "No shows currently meet the minimum requirement of 5 Verified Critic ratings." 
               : "No shows currently meet the minimum requirement of 5 ratings." %>
           </div>
           <a href="/shows" class="btn primary">Discover Shows to Rate</a>
@@ -305,6 +301,3 @@
   </main>
 </body>
 </html>
-
-
-
