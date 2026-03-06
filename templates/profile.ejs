@@ -223,8 +223,15 @@
       color: var(--accent);
     }
 
-    .profile_stats{
-      background: color-mix(in srgb, var(--accent) 5%, rgba(0,0,0,.92));
+    .profile_stats {
+        position: relative !important;
+        background-attachment: scroll !important; /* Forces background to move with the box */
+        width: 100% !important;
+        margin: 10px 0 !important;
+        display: flex !important;
+        flex-wrap: wrap !important; /* Ensures stats don't squeeze too tight */
+        justify-content: center !important;
+        gap: 15px !important;
     }
 
     .profile_hero_inner h1{
@@ -232,10 +239,11 @@
       text-shadow: 0 2px 18px rgba(0,0,0,.45);
     }
 
-    .profile_avg_box{
-      background: color-mix(in srgb, var(--accent) 10%, rgba(0,0,0,.35));
-      border-color: var(--accentSoft) !important;
-      box-shadow: 0 0 0 1px var(--accentFaint);
+    /* Ensure the average rating box inside stats also flows */
+    .profile_avg_box {
+        position: relative !important;
+        transform: none !important;
+        margin: 0 auto !important;
     }
 
     .profile_avg_value{
@@ -803,6 +811,7 @@
   </script>
 </body>
 </html>
+
 
 
 
