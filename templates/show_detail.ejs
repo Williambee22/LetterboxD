@@ -695,11 +695,7 @@
       
                 <form method="get" action="/show/<%= showRow.id %>" style="margin:0;">
                   <% const currentSort = typeof sort !== 'undefined' ? sort : 'popular'; %>
-                  <select 
-                    name="sort" 
-                    onchange="this.form.submit()" 
-                    style="padding: 6px 28px 6px 12px; border-radius: 10px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.12); font-size: 13px; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 8px center; background-size: 14px;"
-                  >
+                  <select name="sort" onchange="this.form.submit()" style="padding: 6px 28px 6px 12px; border-radius: 10px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.12); font-size: 13px; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 8px center; background-size: 14px;">
                     <option value="popular" <%= currentSort === 'popular' ? 'selected' : '' %>>Popular</option>
                     <option value="newest" <%= currentSort === 'newest' ? 'selected' : '' %>>Newest</option>
                     <option value="oldest" <%= currentSort === 'oldest' ? 'selected' : '' %>>Oldest</option>
@@ -709,15 +705,13 @@
                 </form>
               </div>
       
-              <% if (reviewList.length > 0) { %>
+              <% if (reviewList && reviewList.length > 0) { %>
                 <div class="reviewlist">
                   <% for (const rv of reviewList) { 
                        const commentList = Array.isArray(rv.comments) ? rv.comments : [];
                        const ccount = Number(rv.comment_count || commentList.length || 0);
-                       const upStyle = Number(rv.my_vote) === 1 ? 'background: rgba(6,136,24,.18); border:1px solid rgba(6,136,24,.7); color:#06a31d; padding:4px 8px; border-radius:10px; cursor:pointer; line-height:1; opacity:.9;' : 'background: transparent; border:1px solid rgba(255,255,255,.18); color:inherit; padding:4px 8px; border-radius:10px; cursor:pointer; line-height:1; opacity:.9;';
-                       const downStyle = Number(rv.my_vote) === -1 ? 'background: rgba(220,38,38,.18); border:1px solid rgba(220,38,38,.7); color:#ef4444; padding:4px 8px; border-radius:10px; cursor:pointer; line-height:1; opacity:.9;' : 'background: transparent; border:1px solid rgba(255,255,255,.18); color:inherit; padding:4px 8px; border-radius:10px; cursor:pointer; line-height:1; opacity:.9;';
                   %>
-                    <div class="reviewcard">
+                    <div class="reviewcard" style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 12px;">
                       <div class="row between" style="gap:12px; align-items:flex-start;">
                           <div style="flex:1; min-width:0;">
                             <div class="row gap" style="align-items:center; flex-wrap:wrap;">
@@ -727,17 +721,12 @@
                               <a class="reviewuser" href="/u/<%= encodeURIComponent(rv.username) %>" <%= rv.role_color ? `style="color: ${rv.role_color};"` : "" %>>
                                 <%= rv.username %>
                               </a>
-                              <% if (rv.role_name) { %>
-                                <span class="role_tag tiny" <%= rv.role_color ? `style="border-color: ${rv.role_color}; color: ${rv.role_color};"` : "" %>>
-                                  <%= rv.role_name %>
-                                </span>
-                              <% } %>
                               <% if (rv.rating_half != null) { %>
                                 <span class="muted"> ★ <%= (Number(rv.rating_half) / 2).toFixed(1) %></span>
                               <% } %>
                             </div>
                             <div class="reviewtext" style="margin-top:8px;"><%= rv.review_text || "" %></div>
-                            </div>
+                          </div>
                       </div>
                     </div>
                   <% } %>
@@ -750,46 +739,43 @@
       
           <aside class="side" style="flex: 0 0 320px; position: sticky; top: 20px;">
             <div class="panel">
-              <% if (meUser) { %>
+              <% if (locals.meUser) { %>
                 <form method="post" action="/show/<%= showRow.id %>/review">
                   <div class="field">
                     <label style="display:block; margin-bottom:8px; font-weight:bold;">
-                      <%= myReviewText ? "Edit your review" : "Write a review" %>
+                      <%= locals.myReviewText ? "Edit your review" : "Write a review" %>
                     </label>
-                    <textarea name="review_text" rows="8" placeholder="What did you think?" style="width:100%; border-radius:8px; background:rgba(255,255,255,0.05); color:white; border:1px solid rgba(255,255,255,0.1); padding:10px;"><%= myReviewText %></textarea>
+                    <textarea name="review_text" rows="8" placeholder="What did you think?" style="width:100%; border-radius:8px; background:rgba(255,255,255,0.05); color:white; border:1px solid rgba(255,255,255,0.1); padding:10px;"><%= locals.myReviewText || '' %></textarea>
                   </div>
       
                   <div class="actions" style="margin-top:12px; display:flex; gap:8px;">
-                    <button class="btn green" type="submit" style="flex:1;"><%= myReviewText ? "Save" : "Post" %></button>
-                    <a class="btn ghost" href="/show/<%= showRow.id %>">Cancel</a>
+                    <button class="btn green" type="submit" style="flex:1;"><%= locals.myReviewText ? "Save" : "Post" %></button>
                   </div>
                 </form>
       
-                <% if (myReviewText) { %>
-                  <form method="post" action="/show/<%= showRow.id %>/review/delete" style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.05); pt:10px;">
-                    <button class="btn ghost" type="submit" style="width:100%; color:#ff3b30;">Delete Review</button>
+                <% if (locals.myReviewText) { %>
+                  <form method="post" action="/show/<%= showRow.id %>/review/delete" style="margin-top:10px;">
+                    <button class="btn ghost" type="submit" style="width:100%; color:#ff3b30; border: 1px solid rgba(255,59,48,0.2);">Delete Review</button>
                   </form>
                 <% } %>
+      
               <% } else { %>
-                <div class="muted" style="text-align:center; padding:20px;">
+                <div class="muted" style="text-align:center; padding:10px;">
                   <p>Want to share your thoughts?</p>
-                  <a href="<%= loginNext %>" class="btn green" style="display:block; margin-top:10px;">Log in to Review</a>
+                  <a href="/login?next=/show/<%= showRow.id %>" class="btn green" style="display:block; margin-top:10px; text-decoration:none;">Log in to Review</a>
                 </div>
               <% } %>
             </div>
-          </aside>
-      
+          </aside>   
         </div>
       </section>
 
-          <% } else { %>
-            <div class="muted">
-              <a href="<%= loginNext %>">Log in</a>
-              to post a review.
-            </div>
-          <% } %>
+      <% } else { %>
+        <div class="muted">
+           <a href="<%= loginNext %>">Log in</a>
+            to post a review.
         </div>
-      </aside>
+      <% } %>
 
     </div>
 
@@ -824,6 +810,7 @@
   </script>
 </body>
 </html>
+
 
 
 
