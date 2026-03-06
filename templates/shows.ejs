@@ -383,7 +383,7 @@
     </div>
 
     <div class="panel" style="margin-top:14px;">
-      <form method="get" action="/shows" class="row gap" style="flex-wrap:wrap; align-items:flex-end;">
+      <form id="showsFilterForm" method="get" action="/shows" class="row gap" style="flex-wrap:wrap; align-items:flex-end;">
         <div class="field" style="min-width:220px;">
           <label>Sort</label>
           <select name="sort">
@@ -401,7 +401,7 @@
         </div>
         <div class="field" style="min-width:240px;">
           <label>Corps</label>
-          <input name="corps" value="<%= typeof corps !== 'undefined' ? corps : '' %>" placeholder="Blue Devils">
+          <input id="corpsFilterInput" name="corps" value="<%= typeof corps !== 'undefined' ? corps : '' %>" placeholder="Blue Devils" autocomplete="off">
         </div>
         <div class="actions">
           <button class="btn green" type="submit">Apply</button>
@@ -422,8 +422,6 @@
             <div class="poster_art">
               <img class="poster_img" src="<%= poster %>" alt="poster" loading="lazy" onerror="this.src='<%= POSTER_FALLBACK %>';">
               
-              <%# REMOVED: tile_year div was here %>
-        
               <% if (row.cnt > 0) { %>
                 <div class="tile_rating" style="color: hsl(<%= hue %>, 98%, 62%);"><span class="tile_star">★</span> <%= avg.toFixed(2) %></div>
                 <div class="tile_count"><%= row.cnt %> ratings</div>
@@ -453,18 +451,39 @@
 
   <script>
     (() => {
-      const btn = document.getElementById("bellBtn"), dd = document.getElementById("notifDropdown");
+      const btn = document.getElementById("bellBtn");
+      const dd = document.getElementById("notifDropdown");
       if (!btn || !dd) return;
-      btn.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); dd.classList.toggle("open"); });
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dd.classList.toggle("open");
+      });
+
+      dd.addEventListener("click", (e) => e.stopPropagation());
       document.addEventListener("click", () => dd.classList.remove("open"));
+    })();
+
+    (() => {
+      const form = document.getElementById("showsFilterForm");
+      const corpsInput = document.getElementById("corpsFilterInput");
+      if (!form || !corpsInput) return;
+
+      let timer = null;
+      let lastValue = corpsInput.value;
+
+      corpsInput.addEventListener("input", () => {
+        const currentValue = corpsInput.value;
+        if (currentValue === lastValue) return;
+
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          lastValue = currentValue;
+          form.submit();
+        }, 300);
+      });
     })();
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
