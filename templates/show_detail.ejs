@@ -202,7 +202,38 @@
     .reviewSortForm {
       min-width: 220px;
     }
+
+    .review_footer {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 10px;
+    }
     
+    .review_posted_date {
+      margin-left: auto;
+      text-align: right;
+      font-size: 8px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    
+    @media (max-width: 720px) {
+      .review_footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    
+      .review_posted_date {
+        margin-left: 0;
+        text-align: left;
+        white-space: normal;
+      }
+    }
+
+
+
     .reviewSortSelect {
       width: 100%;
       min-width: 220px;
@@ -948,8 +979,8 @@
                   <option value="popular" <%= activeSort === 'popular' ? 'selected' : '' %>>Most Popular</option>
                   <option value="newest" <%= activeSort === 'newest' ? 'selected' : '' %>>Newest</option>
                   <option value="oldest" <%= activeSort === 'oldest' ? 'selected' : '' %>>Oldest</option>
-                  <option value="highest" <%= activeSort === 'highest' ? 'selected' : '' %>>Highest Reviewed</option>
-                  <option value="lowest" <%= activeSort === 'lowest' ? 'selected' : '' %>>Lowest Reviewed</option>
+                  <option value="highest" <%= activeSort === 'highest' ? 'selected' : '' %>>Lowest Reviewed</option>
+                  <option value="lowest" <%= activeSort === 'lowest' ? 'selected' : '' %>>Highest Reviewed</option>
                 </select>
               </form>
             </div>
@@ -998,30 +1029,28 @@
 
                     <div class="reviewtext"><%= rv.review_text || "" %></div>
 
-                   <div class="review_votes">
-                      <% if (meUser && !isOwner) { %>
-                        <form method="post" action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote" style="display:inline;">
-                          <input type="hidden" name="vote" value="1">
-                          <button
-                            class="vote_btn up <%= myVote === 1 ? 'on' : '' %>"
-                            type="submit"
-                            aria-label="Upvote review"
-                            title="Upvote"
-                          >▲</button>
-                        </form>
+                   <div class="review_footer">
+                      <div class="review_votes">
+                        <% if (meUser && !isOwner) { %>
+                          <form method="post" action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote" style="display:inline;">
+                            <input type="hidden" name="vote" value="1">
+                            <button class="vote_btn up <%= myVote === 1 ? 'on' : '' %>" type="submit" aria-label="Upvote review" title="Upvote">▲</button>
+                          </form>
                     
-                        <form method="post" action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote" style="display:inline;">
-                          <input type="hidden" name="vote" value="-1">
-                          <button
-                            class="vote_btn down <%= myVote === -1 ? 'on' : '' %>"
-                            type="submit"
-                            aria-label="Downvote review"
-                            title="Downvote"
-                          >▼</button>
-                        </form>
+                          <form method="post" action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote" style="display:inline;">
+                            <input type="hidden" name="vote" value="-1">
+                            <button class="vote_btn down <%= myVote === -1 ? 'on' : '' %>" type="submit" aria-label="Downvote review" title="Downvote">▼</button>
+                          </form>
+                        <% } %>
+                    
+                        <span class="vote_total"><%= rvVote > 0 ? '+' + rvVote : rvVote %></span>
+                      </div>
+                    
+                      <% if (rv.ts) { %>
+                        <div class="review_posted_date">
+                          Posted on <%= new Date(Number(rv.ts) * 1000).toLocaleDateString('en-US') %>
+                        </div>
                       <% } %>
-                    
-                      <span class="vote_total"><%= rvVote %></span>
                     </div>
 
                     <details style="margin-top:10px;">
@@ -1156,6 +1185,7 @@
   </script>
 </body>
 </html>
+
 
 
 
