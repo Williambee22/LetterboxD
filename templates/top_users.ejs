@@ -7,25 +7,20 @@
   <link rel="stylesheet" href="/static/styles.css"/>
 
   <style>
-      /* --- SHARED NAVIGATION & NOTIFICATIONS --- */
+      /* --- NAVIGATION & UTILS --- */
       .auth { align-items:center; gap: 12px; }
       .notifWrap { position: relative; display: inline-flex; align-items:center; }
       .bellBtn { position: relative; border: none; background: transparent; cursor: pointer; color: inherit; padding: 6px; display: inline-flex; align-items: center; justify-content: center; }
-      .notifDropdown { display: none; position: absolute; right: 0; top: 40px; width: 340px; max-height: 420px; overflow: auto; background: rgba(15, 23, 42, 0.98); border: 1px solid rgba(255,255,255,0.12); z-index: 9999; }
-      .notifDropdown.open { display:block; }
-  
-      /* --- TOP USERS CARD LAYOUT --- */
       
+      /* --- TOP USERS CARD LAYOUT --- */
       .topusers_page .ts_card {
           display: grid !important;
-          /* Increased Meta column to 260px to push review section right */
           grid-template-columns: 60px 90px 260px 1fr !important; 
           gap: 24px !important;
           align-items: center !important;
           background: var(--panel) !important;
           padding: 20px !important;
           border-bottom: 1px solid var(--line2) !important;
-          /* FIX: Changed height to min-height to prevent text cutoff */
           min-height: 140px !important; 
           width: 100% !important;
           overflow: hidden !important;
@@ -38,7 +33,6 @@
           text-align: center;
       }
   
-      /* FIX: Increased PFP by 10px (from 80px to 90px) */
       .topusers_page .ts_thumb {
           width: 90px !important;
           height: 90px !important;
@@ -82,7 +76,6 @@
           gap: 8px;
       }
 
-
       .badge.good_score {
           color: #22c55e !important;
           background: rgba(34, 197, 94, 0.1) !important;
@@ -90,14 +83,13 @@
           font-weight: 800;
       }
   
-      /* --- THE REVIEW SECTION --- */
       .topusers_page .ts_review {
           display: flex !important;
           flex-direction: column !important;
           justify-content: center !important;
           padding-left: 24px !important;
           border-left: 1px solid var(--line) !important;
-          min-height: 80px !important; /* Changed from fixed height */
+          min-height: 80px !important;
       }
   
       .tu_label {
@@ -112,7 +104,7 @@
   
       .tu_quote {
           display: -webkit-box !important;
-          -webkit-line-clamp: 3; /* Increased slightly to allow more text */
+          -webkit-line-clamp: 3;
           -webkit-box-orient: vertical;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -126,21 +118,21 @@
 </head>
 
 <%
-  const safeMe = (typeof me !== "undefined" && me) ? me : null;
-  const safeRows = (typeof rows !== "undefined" && Array.isArray(rows)) ? rows : [];
-  const safeNotifCount = (typeof notif_count !== "undefined" && notif_count) ? notif_count : 0;
-  const safeNotifItems = (typeof notif_items !== "undefined" && Array.isArray(notif_items)) ? notif_items : [];
+  // Centralized safety checks
+  const meUser = (typeof me !== "undefined" && me) ? me : null;
+  const userRows = (typeof rows !== "undefined" && Array.isArray(rows)) ? rows : [];
+  const nxt = "/login?next=" + encodeURIComponent("/top_users");
 %>
 
-<body class="app" <%= safeMe && safeMe.theme_color ? `style="--accent: ${safeMe.theme_color};"` : "" %>>
+<body class="app" <%= meUser && meUser.theme_color ? `style="--accent: ${meUser.theme_color};"` : "" %>>
 
   <header class="topbar">
     <div class="wrap row between">
       <div style="display: flex; align-items: center; gap: 10px;">
-        <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display: flex; align-items: center;">
-            <img src="/static/logo.png" alt="Logo" style="max-width: 35px; max-height: 35px; width: auto; height: auto;">
+        <a href="/" style="display: flex; align-items: center; text-decoration: none;">
+            <img src="/static/logo.png" alt="Logo" style="width: 35px; height: 35px; object-fit: contain;">
+            <span class="brand" style="margin-left: 8px;">Pressboxd</span>
         </a>
-        <a class="brand" href="/shows"><span>Pressboxd</span></a>
       </div>
 
       <nav class="nav row">
@@ -150,12 +142,21 @@
       </nav>
 
       <div class="auth row">
-        <% if (safeMe) { %>
+        <% if (meUser) { %>
           <a class="nav_user" href="/me">
-            <span class="avatar_sm"><% if (safeMe.avatar_url) { %><img src="<%= safeMe.avatar_url %>"><% } else { %><span class="avatar_fallback"></span><% } %></span>
-            <span class="muted small"><%= safeMe.username %></span>
+            <span class="avatar_sm">
+                <% if (meUser.avatar_url) { %>
+                    <img src="<%= meUser.avatar_url %>">
+                <% } else { %>
+                    <span class="avatar_fallback"></span>
+                <% } %>
+            </span>
+            <span class="muted small"><%= meUser.username %></span>
           </a>
           <a href="/logout">Logout</a>
+        <% } else { %>
+            <a href="/login">Login</a>
+            <a class="btn" href="/register">Register</a>
         <% } %>
       </div>
     </div>
@@ -166,12 +167,14 @@
       <div style="margin-top:20px;">
         <div class="kicker">Community</div>
         <h1 style="margin:6px 0 0;">Top Voted Users</h1>
-        <div class="muted small">Ranked by total net score on reviews.</div>
+        <div class="muted small">Ranked by total net score (Upvotes - Downvotes) on reviews.</div>
       </div>
 
-      <% if (safeRows.length > 0) { %>
+      <% if (userRows.length > 0) { %>
         <div style="margin-top:20px; display:flex; flex-direction:column; gap:1px; background: var(--line2); border: 1px solid var(--line2);">
-          <% safeRows.forEach((r, i) => { %>
+          <% userRows.forEach((r, i) => { 
+              if (!r) return; // Guard against null rows
+          %>
             <div class="ts_card">
               <div class="ts_rank">#<%= i + 1 %></div>
 
@@ -185,33 +188,37 @@
 
               <div class="ts_meta">
                 <div class="ts_title">
-                  <a href="/u/<%= encodeURIComponent(r.username) %>" style="text-decoration:none;"><%= r.username %></a>
+                  <a href="/u/<%= encodeURIComponent(r.username || '') %>" style="text-decoration:none;"><%= r.username || 'User' %></a>
                 </div>
                 <div class="ts_badges">
-                  <span class="badge small">▲ <%= r.upvotes || 0 %></span>
-                  <span class="badge small neg_score">▼ <%= r.downvotes || 0 %></span>
-                  <span class="badge small good_score">★ <%= r.net_score || 0 %></span>
+                  <span class="badge small" title="Upvotes">▲ <%= Number(r.upvotes || 0) %></span>
+                  <span class="badge small neg_score" title="Downvotes">▼ <%= Number(r.downvotes || 0) %></span>
+                  <span class="badge small good_score" title="Net Score">★ <%= Number(r.net_score || 0) %></span>
                 </div>
               </div>
 
               <div class="ts_review">
                 <div class="tu_label">
-                    Top review <% if (r.top_show_id) { %> 
-                        of <a href="/show/<%= r.top_show_id %>"><%= r.top_corps %> <%= r.top_year %></a>
+                    Top review 
+                    <% if (r.top_show_id) { %> 
+                        of <a href="/show/<%= r.top_show_id %>"><%= r.top_corps || '' %> <%= r.top_year || '' %></a>
                     <% } %>
                 </div>
                 <% if (r.top_review_text) { %>
                   <div class="tu_quote">“<%= r.top_review_text %>”</div>
                 <% } else { %>
-                  <div class="muted small">No review text available.</div>
+                  <div class="muted small">This user hasn't written any review text yet.</div>
                 <% } %>
               </div>
             </div>
           <% }) %>
+        </div>
+      <% } else { %>
+        <div class="panel" style="margin-top: 20px; text-align: center;">
+            <div class="muted">No users found with votes yet.</div>
         </div>
       <% } %>
     </div>
   </main>
 </body>
 </html>
-
