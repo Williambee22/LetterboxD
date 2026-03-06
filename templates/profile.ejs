@@ -280,97 +280,84 @@
     }
 
     @media (max-width: 768px) {
-        /* 1. Global Font Scaling */
+        /* 1. Global Scale Down */
         html {
-            font-size: 14px; /* Scaled down from default 16px */
+            font-size: 13px; /* Shrinks all text and relative spacing */
         }
     
-        .profile_layout {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+        .wrap {
+            padding: 0 8px !important; /* Reduces outer margin to give cards more room */
         }
     
-        /* 2. Hero Section Adjustments */
-        .profile_hero_inner {
-            padding: 15px !important;
+        /* 2. Tighten Panels */
+        .panel {
+            padding: 10px !important; /* Less internal padding for all cards/containers */
+            margin-bottom: 12px;
         }
     
-        .profile_hero_inner .row.gap {
-            flex-direction: column;
-            text-align: center;
-        }
-    
-        .profile_hero_inner .avatar_lg {
-            margin: 0 auto;
-            width: 80px; /* Smaller avatar */
-            height: 80px;
-        }
-    
-        .profile_hero_inner h1 {
-            font-size: 1.5rem; /* Smaller Title */
-        }
-    
-        /* Center and shrink the Avg Rating box */
-        .profile_avg_box {
-            margin-top: 15px;
-            width: 100%;
-            padding: 10px !important;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-    
-        /* 3. Smaller Action Buttons */
-        .profile_top_actions {
-            justify-content: center;
-            gap: 6px !important;
-        }
-        
-        .profile_top_actions .btn, 
-        .profile_top_actions .badge {
-            font-size: 11px;
-            padding: 6px 10px;
-        }
-    
-        /* 4. Notification Dropdown handling */
-        .notifDropdown {
-            position: fixed;
-            left: 10px;
-            right: 10px;
-            width: calc(100% - 20px);
-            top: 55px;
-        }
-    
-        /* 5. THE 3-COLUMN GRID FIX */
+        /* 3. The 3-Column Show Grid */
         .postergrid {
-            /* minmax 30% ensures 3 items fit comfortably with gaps */
+            display: grid !important;
+            /* Forces exactly 3 columns. Cards shrink to fit the width. */
             grid-template-columns: repeat(3, 1fr) !important; 
-            gap: 8px !important;
+            gap: 6px !important; /* Narrower gap for 3-up layout */
+        }
+    
+        /* 4. Shrink Show Card Text & Metadata */
+        .poster_meta {
+            padding: 4px !important;
         }
     
         .poster_title {
-            font-size: 11px !important;
-            line-height: 1.2;
+            font-size: 10px !important;
+            line-height: 1.1;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* Limits title to 2 lines to keep grid even */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
     
         .poster_sub {
-            font-size: 10px !important;
+            font-size: 9px !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     
-        .tile_rating {
-            font-size: 10px !important;
-            padding: 2px 4px !important;
+        /* 5. Hero & UI Adjustments */
+        .profile_hero_inner {
+            padding: 12px !important;
         }
     
-        /* 6. Forms and Inputs */
-        input, textarea {
-            font-size: 16px !important; /* Keep at 16px to stop iOS auto-zoom */
+        .avatar_lg {
+            width: 70px !important;
+            height: 70px !important;
+            margin-bottom: 8px;
+        }
+    
+        .profile_avg_box {
             padding: 8px !important;
+            margin-top: 10px;
         }
     
-        .panel {
-            padding: 12px !important; /* Smaller panel padding */
+        .profile_avg_value {
+            font-size: 1.2rem;
+        }
+    
+        /* 6. Notification & Navbar scaling */
+        .notifDropdown {
+            width: calc(100% - 16px);
+            left: 8px;
+            top: 50px;
+        }
+    
+        .auth {
+            gap: 6px !important;
+        }
+    
+        /* Keeps inputs readable for mobile browsers */
+        input, textarea {
+            font-size: 16px !important; 
         }
     }
 
@@ -828,6 +815,7 @@
   </script>
 </body>
 </html>
+
 
 
 
