@@ -2054,35 +2054,30 @@ function createApp() {
     try {
       conn = getConn();
   
-      let rows = dbx.listTopShowsWithTopReview(conn, {
+      let rawRows = dbx.listTopShowsWithTopReview(conn, {
         mode: safeMode,
         limit: 100
       }) || [];
   
-      rows = rows.map((r) => {
-        if (r && r.poster_url && String(r.poster_url).trim()) return r;
-  
-        const show = conn.prepare(`
-          SELECT poster_url
-          FROM shows
-          WHERE id = ?
-          LIMIT 1
-        `).get(Number(r.id));
-  
-        return {
-          ...r,
-          poster_url: show && show.poster_url ? String(show.poster_url).trim() : ''
-        };
+      // Transform rows to include auto-generated poster paths and avatars
+      const rows = rawRows.map((r) => {
+        const d = normalizeRow(r);
+
+        // 1. Logic: If DB has no poster_url, use the file-system lookup function
+        if (!d.poster_url || !String(d.poster_url).trim()) {
+            d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+        }
+
+        // 2. Logic: If the top reviewer has no avatar_url, try to find their PFP
+        if (d.top_review_username && !d.top_review_avatar_url) {
+            d.top_review_avatar_url = pfpUrlForUsername(d.top_review_username);
+        }
+
+        return d;
       });
   
-      console.log('TOP ROWS DEBUG:', rows.slice(0, 10).map(r => ({
-        id: r.id,
-        title: r.title,
-        poster_url: r.poster_url
-      })));
-  
       return res.render('top_shows', {
-        me: req.user || null,
+        me: res.locals.me || null, // Using res.locals.me to stay consistent with your middleware
         rows,
         mode: safeMode
       });
@@ -2442,6 +2437,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
