@@ -753,7 +753,7 @@
                   </div>
                 </form>
       
-                <% if (locals.myReviewText) { %>
+                <% if (myReviewText) { %>
                   <form method="post" action="/show/<%= showRow.id %>/review/delete" style="margin-top:10px;">
                     <button class="btn ghost" type="submit" style="width:100%; color:#ff3b30; border: 1px solid rgba(255,59,48,0.2);">Delete Review</button>
                   </form>
@@ -769,16 +769,7 @@
           </aside>   
         </div>
       </section>
-
-      <% } else { %>
-        <div class="muted">
-           <a href="<%= loginNext %>">Log in</a>
-            to post a review.
-        </div>
-      <% } %>
-
     </div>
-
   </main>
 
   <footer class="wrap footer">
@@ -810,6 +801,7 @@
   </script>
 </body>
 </html>
+
 
 
 
