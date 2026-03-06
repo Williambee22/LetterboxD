@@ -8,7 +8,7 @@
 
   <style>
     .auth { align-items:center; gap: 12px; }
-
+  
     .notifWrap { position: relative; display: inline-flex; align-items:center; }
     .bellBtn {
       position: relative;
@@ -24,6 +24,7 @@
       opacity: 0.95;
     }
     .bellBtn:hover { background: rgba(255,255,255,0.06); }
+  
     .badgeDot {
       position:absolute;
       top: 3px;
@@ -40,7 +41,7 @@
       font-weight: 800;
       box-shadow: 0 6px 18px rgba(0,0,0,0.35);
     }
-
+  
     .notifDropdown {
       display: none;
       position: absolute;
@@ -56,7 +57,7 @@
       z-index: 9999;
     }
     .notifDropdown.open { display:block; }
-
+  
     .notifHeader {
       display:flex;
       align-items:center;
@@ -68,7 +69,9 @@
       background: rgba(15, 23, 42, 0.98);
       backdrop-filter: blur(8px);
     }
+  
     .notifTitle { font-weight: 900; }
+  
     .markReadBtn {
       border: none;
       background: transparent;
@@ -80,30 +83,49 @@
       border-radius: 10px;
     }
     .markReadBtn:hover { background: rgba(255,255,255,0.06); opacity: 1; }
-
-    .notifList { padding: 8px; display:flex; flex-direction:column; gap: 8px; }
+  
+    .notifList {
+      padding: 8px;
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+    }
+  
     .notifItem {
       padding: 10px;
       border-radius: 12px;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.08);
     }
-    .notifItem.unread { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.25); }
-    .notifTime { font-size: 12px; opacity: 0.7; margin-top: 4px; }
-    .notifEmpty { padding: 12px; opacity: 0.8; }
-
+  
+    .notifItem.unread {
+      background: rgba(99,102,241,0.18);
+      border-color: rgba(99,102,241,0.25);
+    }
+  
+    .notifTime {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+  
+    .notifEmpty {
+      padding: 12px;
+      opacity: 0.8;
+    }
+  
     .authBellSlot { display:inline-flex; align-items:center; }
-
+  
     .notifDropdown,
     .notifDropdown * {
       pointer-events: auto !important;
     }
-
+  
     .ratingDistPanel {
       margin-top: 12px;
       box-shadow: none;
     }
-
+  
     .ratingDistHeader {
       display:flex;
       align-items:center;
@@ -111,38 +133,38 @@
       gap:12px;
       margin-bottom: 12px;
     }
-
+  
     .ratingDistTitle {
       font-weight: 900;
       line-height: 1.15;
     }
-
+  
     .ratingDistMeta {
       text-align:right;
       font-size: 12px;
       opacity: 0.8;
       white-space: nowrap;
     }
-
+  
     .ratingDistList {
       display:flex;
       flex-direction:column;
       gap:8px;
     }
-
+  
     .ratingDistRow {
       display:grid;
       grid-template-columns: 52px 1fr 42px;
       gap:10px;
       align-items:center;
     }
-
+  
     .ratingDistLabel {
       font-size: 13px;
       font-weight: 700;
       opacity: 0.95;
     }
-
+  
     .ratingDistTrack {
       position: relative;
       height: 10px;
@@ -151,7 +173,7 @@
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.06);
     }
-
+  
     .ratingDistFill {
       position: absolute;
       left: 0;
@@ -159,24 +181,25 @@
       bottom: 0;
       min-width: 0;
       border-radius: 999px;
-      background: linear-gradient(90deg,
+      background: linear-gradient(
+        90deg,
         color-mix(in srgb, var(--accent) 90%, #ffffff 0%),
         color-mix(in srgb, var(--accent) 60%, #ffffff 0%)
       );
     }
-
+  
     .ratingDistCount {
       text-align: right;
       font-size: 12px;
       opacity: 0.85;
       font-variant-numeric: tabular-nums;
     }
-
+  
     .ratingDistEmpty {
       font-size: 13px;
       opacity: 0.75;
     }
-
+  
     .reviewcard {
       padding: 14px;
       border: 1px solid rgba(255,255,255,0.08);
@@ -184,7 +207,7 @@
       background: rgba(255,255,255,0.03);
       margin-bottom: 14px;
     }
-
+  
     .reviewhead {
       display:flex;
       align-items:center;
@@ -192,14 +215,14 @@
       gap:12px;
       margin-bottom:10px;
     }
-
+  
     .reviewuser {
       display:flex;
       align-items:center;
       gap:10px;
       min-width:0;
     }
-
+  
     .reviewavatar {
       width:40px;
       height:40px;
@@ -208,18 +231,18 @@
       background: rgba(255,255,255,0.08);
       flex: 0 0 40px;
     }
-
+  
     .reviewavatar img {
       width:100%;
       height:100%;
       object-fit:cover;
       display:block;
     }
-
+  
     .reviewmeta {
       min-width:0;
     }
-
+  
     .reviewname {
       font-weight:800;
       display:flex;
@@ -227,7 +250,7 @@
       gap:8px;
       flex-wrap:wrap;
     }
-
+  
     .rolebadge {
       display:inline-flex;
       align-items:center;
@@ -237,18 +260,18 @@
       padding:3px 8px;
       color:#fff;
     }
-
+  
     .reviewsub {
       font-size:12px;
       opacity:0.8;
     }
-
+  
     .reviewtext {
       white-space: pre-wrap;
       line-height:1.5;
       margin-top: 10px;
     }
-
+  
     .review_votes {
       display:flex;
       align-items:center;
@@ -256,7 +279,7 @@
       margin-top: 12px;
       flex-wrap:wrap;
     }
-
+  
     .vote_btn {
       border: 1px solid rgba(255,255,255,0.10);
       background: rgba(255,255,255,0.03);
@@ -266,19 +289,19 @@
       cursor: pointer;
       font-weight: 700;
     }
-
+  
     .vote_btn.active {
       border-color: var(--accent);
       background: color-mix(in srgb, var(--accent) 18%, transparent);
     }
-
+  
     .comment-item {
       padding: 10px;
       border-radius: 10px;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.06);
     }
-
+  
     .comment-head {
       display:flex;
       align-items:center;
@@ -286,13 +309,13 @@
       gap:10px;
       margin-bottom:6px;
     }
-
+  
     .comment-user {
       display:flex;
       align-items:center;
       gap:8px;
     }
-
+  
     .comment-avatar {
       width:28px;
       height:28px;
@@ -301,14 +324,14 @@
       background: rgba(255,255,255,0.08);
       flex:0 0 28px;
     }
-
+  
     .comment-avatar img {
       width:100%;
       height:100%;
       object-fit:cover;
       display:block;
     }
-
+  
     .comment-form textarea,
     .write-review-form textarea {
       width:100%;
@@ -321,50 +344,56 @@
       padding: 12px;
       font: inherit;
     }
-
+  
     .comment-form textarea {
       min-height:72px;
     }
-
+  
     .review-actions {
       display:flex;
       gap:8px;
       flex-wrap:wrap;
       margin-top:12px;
     }
-
+  
+    .reviewsSection {
+      width: 100% !important;
+    }
+  
+    .reviewsLayout {
+      display: flex !important;
+      align-items: flex-start !important;
+      gap: 20px !important;
+      width: 100% !important;
+      flex-wrap: nowrap !important;
+    }
+  
+    .reviewsMain {
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+      width: auto !important;
+    }
+  
+    .reviewsSide {
+      flex: 0 0 320px !important;
+      width: 320px !important;
+      min-width: 320px !important;
+      align-self: flex-start !important;
+    }
+  
     .reviewlist,
     .reviewcard {
-      width: 100%;
-      max-width: none;
+      width: 100% !important;
+      max-width: none !important;
     }
-    
-    .layout section {
-      width: 100%;
-    }
-    
-    @media (max-width: 768px) {
-      .layout > section > div[style*="grid-template-columns"] {
-        display: block !important;
-      }
-    
-      .layout > section > div[style*="grid-template-columns"] > .panel:last-child {
-        width: 100% !important;
-        min-width: 0 !important;
-        justify-self: stretch !important;
-        position: static !important;
-        top: auto !important;
-        margin-top: 16px !important;
-      }
-    }
-
+  
     @media (max-width: 768px) {
       .panel > div[style*="display:flex"] {
         flex-direction: column !important;
         align-items: center !important;
         gap: 16px !important;
       }
-
+  
       .showposter {
         width: 160px !important;
         height: 240px !important;
@@ -373,82 +402,56 @@
         border-radius: 8px;
         box-shadow: 0 8px 24px rgba(0,0,0,0.4);
       }
-
+  
       .showmeta {
         text-align: center;
         width: 100%;
       }
-
+  
       .showmeta h1 {
         font-size: 1.6rem !important;
         line-height: 1.2;
       }
-
+  
       div[style*="flex:0 0 380px"] {
         flex: 1 1 auto !important;
         width: 100% !important;
         min-width: 0 !important;
         margin: 0 !important;
       }
-
-      .stars {
-        font-size: 38px !important;
-        justify-content: center !important;
-      }
-
-      .starwrap {
-        justify-content: center !important;
-        flex-direction: column;
-        gap: 8px;
-      }
-
+  
       div[style*="display:flex; gap:10px; margin-top:12px"] {
         flex-direction: column !important;
       }
-
+  
       .ratingDistPanel {
         width: 100% !important;
       }
-
-      .layout {
-        display: flex;
-        flex-direction: column-reverse;
-      }
-
-      aside.side {
-        position: static !important;
-        width: 100% !important;
-        margin-bottom: 24px;
-      }
-
-      .reviewcard {
-        padding: 12px !important;
-      }
-
+  
       .topbar {
         position: relative !important;
         height: auto !important;
         padding: 10px 0;
       }
-
+  
       .topbar .wrap.row.between {
         flex-direction: column !important;
         align-items: center !important;
         gap: 12px !important;
       }
-
+  
       .nav.row {
         display: flex !important;
         flex-wrap: wrap !important;
         justify-content: center !important;
         gap: 8px 15px !important;
       }
-
+  
       .nav.row a {
         font-size: 13px !important;
         padding: 4px 0;
       }
-
+  
       .auth.row {
         width: 100%;
         justify-content: center !important;
@@ -456,67 +459,50 @@
         padding-top: 10px;
         margin-top: 5px;
       }
-
+  
       main.wrap {
         margin-top: 10px !important;
       }
-
+  
+      .reviewcard {
+        padding: 12px !important;
+      }
+  
       .review_votes {
         margin-top: 12px;
         justify-content: flex-start;
         border-top: 1px solid rgba(255,255,255,0.05);
         padding-top: 8px;
       }
-    }
-
-    .reviewsLayout {
-    display: flex !important;
-    align-items: flex-start !important;
-    gap: 20px !important;
-    width: 100% !important;
-    flex-wrap: nowrap !important;
-  }
   
-  .reviewsMain {
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
-  }
+      .stars {
+        font-size: 38px !important;
+        justify-content: center !important;
+      }
   
-  .reviewsSide {
-    flex: 0 0 320px !important;
-    width: 320px !important;
-    min-width: 320px !important;
-    align-self: flex-start !important;
-  }
-  
-  .reviewlist,
-  .reviewcard {
-    width: 100% !important;
-    max-width: none !important;
-  }
-  
-  .layout section {
-    width: 100% !important;
-  }
-  
-  @media (max-width: 720px) {
-    .reviewsLayout {
-      display: block;
+      .starwrap {
+        justify-content: center !important;
+        flex-direction: column;
+        gap: 8px;
+      }
     }
   
-    .reviewsMain,
-    .reviewsSide {
-      width: 100%;
-      min-width: 0;
-      max-width: none;
-    }
+    @media (max-width: 720px) {
+      .reviewsLayout {
+        display: block !important;
+      }
   
-    .reviewsSide {
-      margin-top: 16px;
+      .reviewsMain,
+      .reviewsSide {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+      }
+  
+      .reviewsSide {
+        margin-top: 16px !important;
+      }
     }
-  }
-
-
   </style>
 </head>
 <body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
@@ -856,8 +842,8 @@
       </div>
     </div>
 
-    <div class="layout" style="margin-top:8px;">
-      <section>
+    <div style="margin-top:8px;">
+      <section class="reviewsSection">
         <div class="reviewsLayout">
           <div class="panel reviewsMain" style="flex:1 1 0; min-width:0;">
             <div class="row between" style="margin-bottom:14px; align-items: flex-end;">
@@ -924,8 +910,6 @@
                           <button class="vote_btn <%= myVote === -1 ? 'active' : '' %>" type="submit">▼ Downvote</button>
                         </form>
                       <% } %>
-
-                      <span class="muted small">Score: <%= rvVote %></span>
                     </div>
 
                     <details style="margin-top:10px;">
@@ -1060,6 +1044,7 @@
   </script>
 </body>
 </html>
+
 
 
 
