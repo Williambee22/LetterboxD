@@ -2059,6 +2059,12 @@ function createApp() {
         limit: 100
       }) || [];
   
+      console.log('TOP ROWS DEBUG:', rows.slice(0, 10).map(r => ({
+        id: r.id,
+        title: r.title,
+        poster_url: r.poster_url
+      })));
+  
       return res.render('top_shows', {
         me: req.user || null,
         rows,
@@ -2421,6 +2427,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
