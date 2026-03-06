@@ -429,9 +429,9 @@ function markNotificationsRead(conn, userId) {
 }
 
 function listTopUsersByReviewUpvotes(conn, limit = 25) {
-  // We use your 'reviews' table 'review_text' column
+  // Defensive query: Pre-aggregates counts to prevent row-multiplication crashes
   const sql = `
-    WITH vote_stats AS (
+    WITH user_vote_totals AS (
       SELECT 
         review_user_id,
         SUM(CASE WHEN vote > 0 THEN 1 ELSE 0 END) as upvotes,
@@ -440,10 +440,10 @@ function listTopUsersByReviewUpvotes(conn, limit = 25) {
       FROM review_votes
       GROUP BY review_user_id
     ),
-    review_counts AS (
-      SELECT user_id, COUNT(*) as cnt FROM reviews GROUP BY user_id
+    user_review_counts AS (
+      SELECT user_id, COUNT(*) as r_cnt FROM reviews GROUP BY user_id
     ),
-    top_rev AS (
+    best_review AS (
       SELECT 
         rv.user_id,
         rv.show_id,
@@ -452,32 +452,38 @@ function listTopUsersByReviewUpvotes(conn, limit = 25) {
         s.year,
         ROW_NUMBER() OVER (
           PARTITION BY rv.user_id 
-          ORDER BY (SELECT SUM(vote) FROM review_votes v2 WHERE v2.show_id = rv.show_id AND v2.review_user_id = rv.user_id) DESC, rv.ts DESC
+          ORDER BY (SELECT SUM(vote) FROM review_votes v2 WHERE v2.show_id = rv.show_id AND v2.review_user_id = rv.user_id) DESC
         ) as rn
       FROM reviews rv
       JOIN shows s ON s.id = rv.show_id
     )
     SELECT 
-      u.id, u.username, u.avatar_url,
-      COALESCE(vs.upvotes, 0) as upvotes,
-      COALESCE(vs.downvotes, 0) as downvotes,
-      COALESCE(vs.net_score, 0) as net_score,
-      COALESCE(rc.cnt, 0) as reviews_count,
-      tr.show_id as top_show_id,
-      tr.review_text as top_review_text,
-      tr.corps as top_corps,
-      tr.year as top_year
+      u.id, 
+      u.username, 
+      u.avatar_url,
+      COALESCE(vt.upvotes, 0) as upvotes,
+      COALESCE(vt.downvotes, 0) as downvotes,
+      COALESCE(vt.net_score, 0) as net_score,
+      COALESCE(rc.r_cnt, 0) as reviews_count,
+      br.show_id as top_show_id,
+      br.review_text as top_review_text,
+      br.corps as top_corps,
+      br.year as top_year
     FROM users u
-    LEFT JOIN vote_stats vs ON vs.review_user_id = u.id
-    LEFT JOIN review_counts rc ON rc.user_id = u.id
-    LEFT JOIN top_rev tr ON tr.user_id = u.id AND tr.rn = 1
-    /* Sort by net score, then by review count for active users with 0 votes */
-    ORDER BY net_score DESC, reviews_count DESC, u.username ASC
+    LEFT JOIN user_vote_totals vt ON vt.review_user_id = u.id
+    LEFT JOIN user_review_counts rc ON rc.user_id = u.id
+    LEFT JOIN best_review br ON br.user_id = u.id AND br.rn = 1
+    ORDER BY net_score DESC, upvotes DESC, reviews_count DESC
     LIMIT ?
   `;
-  return conn.prepare(sql).all(limit);
-}
 
+  try {
+    return conn.prepare(sql).all(limit);
+  } catch (err) {
+    console.error("CRITICAL SQL ERROR in Top Users:", err.message);
+    return []; // Return empty array to prevent 502 Bad Gateway
+  }
+}
 
 function listShows(conn, args = {}) {
   const sort = String(args.sort || 'year_desc').trim().toLowerCase();
@@ -1506,6 +1512,7 @@ module.exports = {
   getVerifiedRatingHistogram,
   updateUserBio 
 };
+
 
 
 
