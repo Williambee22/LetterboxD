@@ -470,56 +470,51 @@
     }
 
     .reviewsLayout {
-      display: flex !important;
-      align-items: flex-start !important;
-      gap: 20px !important;
-      width: 100% !important;
-      flex-wrap: nowrap !important;
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    width: 100%;
+    flex-wrap: nowrap;
+  }
+  
+  .reviewsMain {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  
+  .reviewsSide {
+    flex: 0 0 320px;
+    width: 320px;
+    min-width: 320px;
+    align-self: flex-start;
+  }
+  
+  .reviewlist,
+  .reviewcard {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .layout section {
+    width: 100%;
+  }
+  
+  @media (max-width: 720px) {
+    .reviewsLayout {
+      display: block;
     }
-    
-    .reviewsMain {
-      flex: 1 1 auto !important;
-      min-width: 0 !important;
-      width: auto !important;
-    }
-    
+  
+    .reviewsMain,
     .reviewsSide {
-      flex: 0 0 320px !important;
-      width: 320px !important;
-      min-width: 320px !important;
-      margin-left: 0 !important;
-      align-self: flex-start !important;
+      width: 100%;
+      min-width: 0;
+      max-width: none;
     }
-    
-    .reviewlist {
-      width: 100% !important;
+  
+    .reviewsSide {
+      margin-top: 16px;
     }
-    
-    .reviewcard {
-      width: 100% !important;
-      max-width: none !important;
-    }
-    
-    .layout section {
-      width: 100% !important;
-    }
-    
-    @media (max-width: 768px) {
-      .reviewsLayout {
-        display: block !important;
-      }
-    
-      .reviewsMain,
-      .reviewsSide {
-        width: 100% !important;
-        min-width: 0 !important;
-        max-width: none !important;
-      }
-    
-      .reviewsSide {
-        margin-top: 16px !important;
-      }
-    }
+  }
 
 
   </style>
@@ -863,8 +858,8 @@
 
     <div class="layout" style="margin-top:8px;">
       <section>
-        <div class="row gap reviewsLayout" style="align-items:flex-start;">
-          <div class="panel reviewsMain" style="flex:1 1 0; min-width:1000p;">
+        <div class="reviewsLayout">
+          <div class="panel reviewsMain" style="flex:1 1 0; min-width:0;">
             <div class="row between" style="margin-bottom:14px; align-items: flex-end;">
               <div>
                 <div class="kicker">Reviews</div>
@@ -998,7 +993,7 @@
             <% } %>
           </div>
 
-         <div class="panel reviewsSide" style="flex:0 0 320px; min-width:620px;">
+         <div class="panel reviewsSide">
             <div class="kicker">Share your thoughts</div>
             <h3 style="margin: 6px 0 16px;">Write a Review</h3>
 
@@ -1065,6 +1060,7 @@
   </script>
 </body>
 </html>
+
 
 
 
