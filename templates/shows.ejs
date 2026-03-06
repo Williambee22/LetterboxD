@@ -453,37 +453,49 @@
     (() => {
       const btn = document.getElementById("bellBtn");
       const dd = document.getElementById("notifDropdown");
-      if (!btn || !dd) return;
-
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dd.classList.toggle("open");
-      });
-
-      dd.addEventListener("click", (e) => e.stopPropagation());
-      document.addEventListener("click", () => dd.classList.remove("open"));
+      if (btn && dd) {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dd.classList.toggle("open");
+        });
+  
+        dd.addEventListener("click", (e) => e.stopPropagation());
+        document.addEventListener("click", () => dd.classList.remove("open"));
+      }
     })();
-
+  
     (() => {
       const form = document.getElementById("showsFilterForm");
       const corpsInput = document.getElementById("corpsFilterInput");
       if (!form || !corpsInput) return;
-
+  
       let timer = null;
-      let lastValue = corpsInput.value;
-
+      let isSubmitting = false;
+  
       corpsInput.addEventListener("input", () => {
-        const currentValue = corpsInput.value;
-        if (currentValue === lastValue) return;
-
+        if (isSubmitting) return;
+  
         clearTimeout(timer);
         timer = setTimeout(() => {
-          lastValue = currentValue;
+          isSubmitting = true;
+          sessionStorage.setItem("restoreCorpsFocus", "1");
           form.submit();
-        }, 300);
+        }, 400);
+      });
+  
+      window.addEventListener("load", () => {
+        const shouldRestore = sessionStorage.getItem("restoreCorpsFocus");
+        if (shouldRestore === "1" && corpsInput) {
+          sessionStorage.removeItem("restoreCorpsFocus");
+          corpsInput.focus();
+  
+          const len = corpsInput.value.length;
+          corpsInput.setSelectionRange(len, len);
+        }
       });
     })();
   </script>
 </body>
 </html>
+
