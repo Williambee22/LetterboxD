@@ -224,8 +224,23 @@
           <div class="stack">
             <% safeRows.forEach((r, i) => { 
                 const vs = r.top_review_score != null ? Number(r.top_review_score) : 0;
-                // Simple logic: if poster_url exists, use it exactly as is. Otherwise, fallback.
-                const poster = r.poster_url || POSTER_FALLBACK;
+                
+                // THE SAFETY NET LOGIC
+                let poster = POSTER_FALLBACK;
+                if (r.poster_url && String(r.poster_url).trim() !== "") {
+                    const raw = String(r.poster_url).trim();
+                    
+                    if (raw.startsWith('http') || raw.startsWith('/static/')) {
+                        // It's already a full valid path or URL
+                        poster = raw;
+                    } else if (raw.startsWith('posters/')) {
+                        // It's missing the /static/ prefix
+                        poster = '/static/' + raw;
+                    } else {
+                        // It's just the filename, add the full path
+                        poster = '/static/posters/' + raw;
+                    }
+                }
             %>
               <div class="ts_card">
                 <div class="ts_rank">#<%= i + 1 %></div>
@@ -290,5 +305,6 @@
   </main>
 </body>
 </html>
+
 
 
