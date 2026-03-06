@@ -963,41 +963,45 @@ function createApp() {
   app.get('/show/:show_id', async (req, res, next) => {
     const showId = Number(req.params.show_id);
     const viewerUid = req.session.uid ? Number(req.session.uid) : null;
-
+  
+    const sort = String(req.query.sort || 'popular').trim().toLowerCase();
+    const allowedSorts = new Set(['popular', 'newest', 'oldest', 'highest', 'lowest']);
+    const activeSort = allowedSorts.has(sort) ? sort : 'popular';
+  
     let conn;
     try {
       conn = getConn();
-
+  
       let row = normalizeRow(await dbx.getShowById(conn, showId));
       if (!row) return res.sendStatus(404);
       if (!row.poster_url) row.poster_url = posterUrlForShow(row.corps || '', row.year || 0);
-
+  
       let me = viewerUid ? normalizeRow(await dbx.userById(conn, viewerUid)) : null;
       const myRating = viewerUid ? await dbx.userRatingForShow(conn, showId, viewerUid) : null;
       const myReview = viewerUid ? await dbx.myReviewForShow(conn, showId, viewerUid) : null;
-
+  
       if (me && !me.avatar_url) me.avatar_url = pfpUrlForUsername(me.username || '');
-
-      const reviews = (await dbx.listReviewsForShow(conn, showId, { viewerUserId: viewerUid, limit: 30 }) || []).map((rv) => {
+  
+      const reviews = (await dbx.listReviewsForShow(conn, showId, { viewerUserId: viewerUid, limit: 300 }) || []).map((rv) => {
         const d = normalizeRow(rv);
         if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
         return d;
       });
-
+  
       const comments = (await dbx.listReviewCommentsForShow(conn, showId, { limitTotal: 500 }) || []).map((c) => {
         const d = normalizeRow(c);
         if (!d.commenter_avatar_url) d.commenter_avatar_url = pfpUrlForUsername(d.commenter_username || '');
         return d;
       });
-
+  
       const commentsMap = new Map();
       for (const c of comments) {
         const key = Number(c.review_user_id);
         if (!commentsMap.has(key)) commentsMap.set(key, []);
         commentsMap.get(key).push(c);
       }
-
-      const reviewsWithComments = reviews.map((rv) => {
+  
+      let reviewsWithComments = reviews.map((rv) => {
         const items = commentsMap.get(Number(rv.user_id)) || [];
         return {
           ...rv,
@@ -1005,10 +1009,32 @@ function createApp() {
           comment_count: items.length,
         };
       });
-
+  
+      reviewsWithComments.sort((a, b) => {
+        if (activeSort === 'newest') {
+          return Number(b.ts || 0) - Number(a.ts || 0);
+        }
+        if (activeSort === 'oldest') {
+          return Number(a.ts || 0) - Number(b.ts || 0);
+        }
+        if (activeSort === 'highest') {
+          return Number(b.rating_half || 0) - Number(a.rating_half || 0)
+            || Number(b.vote_score || 0) - Number(a.vote_score || 0)
+            || Number(b.ts || 0) - Number(a.ts || 0);
+        }
+        if (activeSort === 'lowest') {
+          return Number(a.rating_half || 0) - Number(b.rating_half || 0)
+            || Number(b.vote_score || 0) - Number(a.vote_score || 0)
+            || Number(b.ts || 0) - Number(a.ts || 0);
+        }
+  
+        return Number(b.vote_score || 0) - Number(a.vote_score || 0)
+          || Number(b.ts || 0) - Number(a.ts || 0);
+      });
+  
       const rating_histogram = dbx.getRatingHistogram(conn, showId);
       const verified_rating_histogram = dbx.getVerifiedRatingHistogram(conn, showId);
-
+  
       res.render('show_detail', {
         row,
         me,
@@ -1017,6 +1043,7 @@ function createApp() {
         rating_histogram,
         verified_rating_histogram,
         reviews: reviewsWithComments,
+        sort: activeSort,
       });
     } catch (err) {
       next(err);
@@ -2437,6 +2464,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
