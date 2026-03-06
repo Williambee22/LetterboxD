@@ -310,7 +310,22 @@
   
   // 2. Review Processing
   const reviewList = Array.isArray(reviews) ? [...reviews] : [];
-  reviewList.sort((a, b) => Number((b && b.vote_score) || 0) - Number((a && a.vote_score) || 0));
+  const activeSort = typeof sort !== "undefined" ? sort : "popular";
+  
+  reviewList.sort((a, b) => {
+    if (activeSort === 'newest') {
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    } else if (activeSort === 'oldest') {
+      return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+    } else if (activeSort === 'highest') {
+      return Number(b.rating_half || 0) - Number(a.rating_half || 0);
+    } else if (activeSort === 'lowest') {
+      return Number(a.rating_half || 0) - Number(b.rating_half || 0);
+    } else {
+      // Default: Popular (vote_score)
+      return Number(b.vote_score || 0) - Number(a.vote_score || 0);
+    }
+  });
   
   // 3. User-specific ratings/notifs
   const myReviewText = typeof my_review !== "undefined" ? (my_review || "") : "";
@@ -667,12 +682,27 @@
     <div class="layout" style="margin-top:8px;">
 
       <section>
-        <div class="panel">
-          <div class="row between" style="margin-bottom:10px;">
+        <section style="max-width: 600px; margin: 0 auto; width: 100%;">
+          <div class="row between" style="margin-bottom:14px; align-items: flex-end;">
             <div>
               <div class="kicker">Reviews</div>
               <h2 style="margin:6px 0 0;">Community</h2>
             </div>
+          
+            <form method="get" action="/show/<%= showRow.id %>" style="margin:0;">
+              <% const currentSort = typeof sort !== 'undefined' ? sort : 'popular'; %>
+              <select 
+                name="sort" 
+                onchange="this.form.submit()" 
+                style="padding: 6px 28px 6px 12px; border-radius: 10px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.12); font-size: 13px; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 8px center; background-size: 14px;"
+              >
+                <option value="popular" <%= currentSort === 'popular' ? 'selected' : '' %>>Popular</option>
+                <option value="newest" <%= currentSort === 'newest' ? 'selected' : '' %>>Newest</option>
+                <option value="oldest" <%= currentSort === 'oldest' ? 'selected' : '' %>>Oldest</option>
+                <option value="highest" <%= currentSort === 'highest' ? 'selected' : '' %>>Highest Rated</option>
+                <option value="lowest" <%= currentSort === 'lowest' ? 'selected' : '' %>>Lowest Rated</option>
+              </select>
+            </form>
           </div>
 
           <% if (reviewList.length > 0) { %>
@@ -911,6 +941,7 @@
   </script>
 </body>
 </html>
+
 
 
 
