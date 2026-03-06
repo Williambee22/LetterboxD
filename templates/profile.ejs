@@ -308,15 +308,19 @@
     
         /* 4. Ensure Poster Image fills its space correctly */
         .poster_art {
-            width: 100%;
-            aspect-ratio: 2 / 3; /* Standard movie/show poster ratio */
-            height: auto !important;
+          position: relative;
+          overflow: hidden;
+          background: #111; /* Dark background placeholder */
         }
-    
+        
+        /* 2. Force the image to the top layer */
         .poster_img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+          position: relative;
+          z-index: 2; /* Sits above the fallback/placeholder */
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
         }
     
         /* 5. Shrink text to prevent vertical stretching */
@@ -336,10 +340,11 @@
         }
     
         .tile_rating {
-            font-size: 9px !important;
-            padding: 1px 3px !important;
-            top: 4px !important;
-            right: 4px !important;
+          z-index: 3; /* Higher than the image */
+        }
+        
+        .tile_year {
+          z-index: 3; /* Higher than the image */
         }
     
         /* 6. UI scaling */
@@ -807,6 +812,7 @@
   </script>
 </body>
 </html>
+
 
 
 
