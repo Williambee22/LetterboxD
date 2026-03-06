@@ -150,6 +150,7 @@
 </head>
 <body class="app" <%= (typeof me !== "undefined" && me && me.theme_color) ? 'style="--accent: ' + me.theme_color + ';"' : '' %>>
 <%
+  const POSTER_FALLBACK = "/static/posters/placeholder.png";
   const safeMe = (typeof me !== "undefined" && me) ? me : null;
   const rawRows = (typeof rows !== "undefined" && Array.isArray(rows)) ? rows : [];
   const safeMode = (typeof mode !== "undefined" && mode) ? mode : "top";
@@ -223,12 +224,18 @@
           <div class="stack">
             <% safeRows.forEach((r, i) => { 
                  const vs = r.top_review_score != null ? Number(r.top_review_score) : 0;
+                 const poster = (r && r.poster_url && String(r.poster_url).trim()) ? r.poster_url : POSTER_FALLBACK;
             %>
               <div class="ts_card">
                 <div class="ts_rank">#<%= i + 1 %></div>
 
                 <a class="ts_thumb" href="/show/<%= r.id %>">
-                  <% if (r.poster_url) { %><img src="<%= r.poster_url %>"><% } else { %><div class="ts_thumb_fallback"></div><% } %>
+                  <img
+                    src="<%= poster %>"
+                    alt="<%= r.title %> poster"
+                    loading="lazy"
+                    onerror="this.src='<%= POSTER_FALLBACK %>';"
+                  >
                 </a>
 
                 <div class="ts_meta">
@@ -282,4 +289,3 @@
   </main>
 </body>
 </html>
-
