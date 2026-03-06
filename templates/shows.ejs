@@ -525,7 +525,7 @@
             : `<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;opacity:.7;">👤</span>`;
   
           return `
-            <a class="userSearchItem" href="/user/${encodeURIComponent(u.username)}">
+            <a class="userSearchItem" href="/u/${encodeURIComponent(u.username)}">
               <div class="userSearchAvatar">${avatar}</div>
               <div style="min-width:0;">
                 <div style="font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
@@ -592,5 +592,6 @@
   </script>
 </body>
 </html>
+
 
 
