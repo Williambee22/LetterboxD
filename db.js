@@ -975,7 +975,7 @@ function listTopShowsWithTopReview(conn, opts = {}) {
         s.title,
         s.corps,
         s.year,
-        s.poster_url AS poster_url,
+        s.poster_url,
         COUNT(r.rating_half) AS cnt,
         COALESCE(ROUND(AVG(r.rating_half) / 2.0, 2), 0) AS avg_rating
       FROM shows s
@@ -988,7 +988,7 @@ function listTopShowsWithTopReview(conn, opts = {}) {
          WHERE ur.user_id = r.user_id
            AND ro.name = 'Verified Critic'
        )
-      GROUP BY s.id
+      GROUP BY s.id, s.title, s.corps, s.year, s.poster_url
     `
     : `
       SELECT
@@ -996,12 +996,12 @@ function listTopShowsWithTopReview(conn, opts = {}) {
         s.title,
         s.corps,
         s.year,
-        s.poster_url AS poster_url,
+        s.poster_url,
         COUNT(r.rating_half) AS cnt,
         COALESCE(ROUND(AVG(r.rating_half) / 2.0, 2), 0) AS avg_rating
       FROM shows s
       LEFT JOIN ratings r ON r.show_id = s.id
-      GROUP BY s.id
+      GROUP BY s.id, s.title, s.corps, s.year, s.poster_url
     `;
 
   const reviewScoresSql = isCriticMode
@@ -1060,7 +1060,13 @@ function listTopShowsWithTopReview(conn, opts = {}) {
       FROM review_scores
     )
     SELECT
-      ss.*,
+      ss.id,
+      ss.title,
+      ss.corps,
+      ss.year,
+      ss.poster_url,
+      ss.cnt,
+      ss.avg_rating,
       tr.username AS top_review_username,
       tr.avatar_url AS top_review_avatar_url,
       tr.review_text AS top_review_text,
@@ -1577,6 +1583,7 @@ module.exports = {
   getVerifiedRatingHistogram,
   updateUserBio 
 };
+
 
 
 
