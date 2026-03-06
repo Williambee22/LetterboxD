@@ -280,71 +280,71 @@
     }
 
     @media (max-width: 768px) {
-      /* 1. Stack the Profile Layout */
-      .profile_layout {
-          display: flex;
-          flex-direction: column; /* Move sidebar above/below main content */
-          gap: 20px;
-      }
-  
-      /* 2. Hero Section Adjustments */
-      .profile_hero_inner .row.gap {
-          flex-direction: column;
-          text-align: center;
-      }
-  
-      .profile_hero_inner .avatar_lg {
-          margin: 0 auto;
-          width: 100px;
-          height: 100px;
-      }
-  
-      /* Center the Avg Rating box on mobile */
-      .profile_avg_box {
-          margin-top: 20px;
-          width: 100%;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-      }
-  
-      /* 3. Action Buttons (Follow/Friend) */
-      .profile_top_actions {
-          justify-content: center;
-          gap: 8px !important;
-      }
-      
-      .profile_top_actions .btn, 
-      .profile_top_actions .badge {
-          font-size: 12px;
-          padding: 8px 12px;
-      }
-  
-      /* 4. Notification Dropdown handling */
-      .notifDropdown {
-          position: fixed; /* Take up more space on mobile */
-          left: 10px;
-          right: 10px;
-          width: calc(100% - 20px);
-          top: 60px;
-      }
-  
-      /* 5. Recent Ratings Grid */
-      .postergrid {
-          grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
-          gap: 10px !important;
-      }
-  
-      /* 6. Forms and Inputs */
-      .acct_panel form {
-          display: flex;
-          flex-direction: column;
-      }
-      
-      input, textarea {
-          font-size: 16px !important; /* Prevents iOS from zooming in on focus */
-      }
-  }
+        /* 1. Stack the Profile Layout */
+        .profile_layout {
+            display: flex;
+            flex-direction: column; /* Move sidebar above/below main content */
+            gap: 20px;
+        }
+    
+        /* 2. Hero Section Adjustments */
+        .profile_hero_inner .row.gap {
+            flex-direction: column;
+            text-align: center;
+        }
+    
+        .profile_hero_inner .avatar_lg {
+            margin: 0 auto;
+            width: 100px;
+            height: 100px;
+        }
+    
+        /* Center the Avg Rating box on mobile */
+        .profile_avg_box {
+            margin-top: 20px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    
+        /* 3. Action Buttons (Follow/Friend) */
+        .profile_top_actions {
+            justify-content: center;
+            gap: 8px !important;
+        }
+        
+        .profile_top_actions .btn, 
+        .profile_top_actions .badge {
+            font-size: 12px;
+            padding: 8px 12px;
+        }
+    
+        /* 4. Notification Dropdown handling */
+        .notifDropdown {
+            position: fixed; /* Take up more space on mobile */
+            left: 10px;
+            right: 10px;
+            width: calc(100% - 20px);
+            top: 60px;
+        }
+    
+        /* 5. Recent Ratings Grid */
+        .postergrid {
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
+            gap: 10px !important;
+        }
+    
+        /* 6. Forms and Inputs */
+        .acct_panel form {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        input, textarea {
+            font-size: 16px !important; /* Prevents iOS from zooming in on focus */
+        }
+    }
 
   </style>
 </head>
@@ -800,6 +800,7 @@
   </script>
 </body>
 </html>
+
 
 
 
