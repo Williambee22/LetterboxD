@@ -429,29 +429,51 @@ function markNotificationsRead(conn, userId) {
 }
 
 function listTopUsersByReviewUpvotes(conn, limit = 25) {
-  // This query sums up all 'vote' values from review_votes 
-  // tied to a specific user's reviews.
+  const textCol = reviewsTextCol(conn); 
+  
   const sql = `
+    WITH user_stats AS (
+      SELECT 
+        u.id, 
+        u.username, 
+        u.avatar_url,
+        SUM(CASE WHEN v.vote > 0 THEN 1 ELSE 0 END) as upvotes,
+        SUM(CASE WHEN v.vote < 0 THEN 1 ELSE 0 END) as downvotes,
+        SUM(COALESCE(v.vote, 0)) as net_score
+      FROM users u
+      LEFT JOIN reviews rv ON rv.user_id = u.id
+      LEFT JOIN review_votes v ON v.show_id = rv.show_id AND v.review_user_id = rv.user_id
+      GROUP BY u.id
+    ),
+    review_ranking AS (
+      SELECT 
+        rv.user_id,
+        rv.show_id as top_show_id,
+        rv.${textCol} as top_review_text,
+        s.corps as top_corps,
+        s.year as top_year,
+        ROW_NUMBER() OVER (
+          PARTITION BY rv.user_id 
+          ORDER BY (SELECT SUM(vote) FROM review_votes v2 WHERE v2.show_id = rv.show_id AND v2.review_user_id = rv.user_id) DESC
+        ) as rn
+      FROM reviews rv
+      JOIN shows s ON s.id = rv.show_id
+    )
     SELECT 
-      u.id, 
-      u.username, 
-      u.avatar_url,
-      r.name as role_name,
-      r.color as role_color,
-      COALESCE(SUM(v.vote), 0) as total_upvotes,
-      COUNT(DISTINCT rv.show_id) as reviews_count
-    FROM users u
-    JOIN reviews rv ON rv.user_id = u.id
-    LEFT JOIN review_votes v ON v.show_id = rv.show_id AND v.review_user_id = rv.user_id
-    LEFT JOIN roles r ON u.role_id = r.id
-    GROUP BY u.id
-    ORDER BY total_upvotes DESC, reviews_count DESC
+      us.*,
+      rr.top_show_id,
+      rr.top_review_text,
+      rr.top_corps,
+      rr.top_year
+    FROM user_stats us
+    LEFT JOIN review_ranking rr ON rr.user_id = us.id AND rr.rn = 1
+    WHERE us.net_score IS NOT NULL OR us.upvotes > 0
+    ORDER BY us.net_score DESC, us.upvotes DESC
     LIMIT ?
   `;
   
   return conn.prepare(sql).all(limit);
 }
-
 function listShows(conn, args = {}) {
   const sort = String(args.sort || 'year_desc').trim().toLowerCase();
   const year = String(args.year || '').trim();
@@ -1479,6 +1501,7 @@ module.exports = {
   getVerifiedRatingHistogram,
   updateUserBio 
 };
+
 
 
 
