@@ -2044,20 +2044,28 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
-  app.get('/top', async (req, res) => {
-    let mode = String(req.query.mode || 'top').trim().toLowerCase();
-    if (!['top', 'bottom'].includes(mode)) mode = 'top';
-
+  app.get('/top', (req, res, next) => {
+    const mode = String(req.query.mode || 'top').trim().toLowerCase();
+  
+    const allowedModes = new Set(['top', 'bottom', 'critic_top', 'critic_bottom']);
+    const safeMode = allowedModes.has(mode) ? mode : 'top';
+  
     let conn;
     try {
       conn = getConn();
-      const rows = (await dbx.listTopShowsWithTopReview(conn, { limit: 50, mode }) || []).map((r) => {
-        const d = normalizeRow(r);
-        if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
-        if (d.top_review_username && !d.top_review_avatar_url) d.top_review_avatar_url = pfpUrlForUsername(d.top_review_username || '');
-        return d;
+  
+      const rows = dbx.listTopShowsWithTopReview(conn, {
+        mode: safeMode,
+        limit: 100
+      }) || [];
+  
+      return res.render('top', {
+        me: req.user || null,
+        rows,
+        mode: safeMode
       });
-      res.render('top_shows', { rows, mode });
+    } catch (err) {
+      return next(err);
     } finally {
       if (conn) dbx.close(conn);
     }
@@ -2413,6 +2421,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
