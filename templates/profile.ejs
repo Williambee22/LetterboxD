@@ -280,76 +280,72 @@
     }
 
     @media (max-width: 768px) {
-        /* 1. Fix the Header Overlap */
+        /* 1. Unlock the Header */
         .topbar {
-            position: relative !important; 
+            position: relative !important; /* Disables 'fixed' or 'sticky' */
+            top: 0 !important;
             height: auto !important;
-            padding: 15px 0 !important;
+            width: 100% !important;
+            padding: 10px 0 !important;
+            z-index: 100 !important;
         }
     
         .topbar .wrap {
             flex-direction: column !important;
-            gap: 15px !important;
+            height: auto !important;
+            gap: 12px !important;
         }
     
+        /* 2. Unlock the Sidebar/Review Form */
+        aside.side, .side {
+            position: relative !important; /* Unlocks it from the side of the screen */
+            top: 0 !important;             /* Removes the 'top: 86px' desktop offset */
+            width: 100% !important;
+            margin-top: 20px !important;
+            float: none !important;        /* Prevents wrapping issues */
+        }
+    
+        /* 3. Unlock the Profile Hero & Stats */
+        .profile_hero, .profile_hero_inner {
+            position: relative !important;
+            height: auto !important;
+            min-height: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            padding: 20px 10px !important;
+        }
+    
+        /* 4. Reset the Content Layout */
+        .layout, .wrap {
+            display: flex !important;
+            flex-direction: column !important; /* Forces a vertical stack */
+            width: 100% !important;
+            padding: 0 8px !important;
+        }
+    
+        /* 5. Ensure the "3-Wide" cards still fit perfectly */
+        .postergrid, .profile_grid {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 6px !important;
+            width: 100% !important;
+        }
+    
+        /* 6. Clean up the Navigation */
         .nav.row {
             justify-content: center !important;
             flex-wrap: wrap !important;
-            gap: 10px 15px !important;
+            gap: 8px 12px !important;
         }
     
-        /* 2. Profile Hero Adjustments */
-        .profile_hero_inner {
-            flex-direction: column !important;
-            align-items: center !important;
-            text-align: center !important;
-            padding: 20px 15px !important;
-        }
-    
-        .avatar_lg {
-            width: 100px !important;
-            height: 100px !important;
-            margin: 0 auto 15px auto !important;
-            border: 3px solid var(--accent);
-        }
-    
-        /* 3. Stats Bar (Followers, Following, etc.) */
-        .profile_stats {
-            justify-content: center !important;
-            width: 100% !important;
-            gap: 20px !important;
-        }
-    
-        /* 4. The Grid on Profile (Watched, Favorites) */
-        /* This ensures your profile "Watched" list also uses the 3-wide small cards */
-        .profile_grid, .postergrid {
-            display: grid !important;
-            grid-template-columns: repeat(3, 1fr) !important;
-            gap: 8px !important;
-            padding: 0 !important;
-        }
-    
-        /* 5. Bio/Info Section */
-        .profile_bio {
-            font-size: 14px !important;
-            line-height: 1.5;
-            margin-top: 10px;
-        }
-    
-        /* 6. Tabs (Watched, Diary, Reviews) */
-        .profile_tabs {
-            display: flex !important;
-            overflow-x: auto !important; /* Allows swiping through tabs if they're too wide */
-            white-space: nowrap !important;
-            padding-bottom: 5px;
-            -webkit-overflow-scrolling: touch;
-            justify-content: flex-start !important;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-    
-        .profile_tabs a {
-            padding: 10px 15px !important;
-            font-size: 13px !important;
+        /* 7. Dropdown adjustments (Notifications) */
+        .notifDropdown {
+            position: absolute !important; /* Keeps it attached to the bell icon */
+            width: calc(100vw - 20px) !important;
+            left: 10px !important;
+            right: 10px !important;
+            top: 50px !important;
         }
     }
 
@@ -807,6 +803,7 @@
   </script>
 </body>
 </html>
+
 
 
 
