@@ -6,6 +6,10 @@
   <title>Top Voted Users - Pressboxd</title>
   <link rel="stylesheet" href="/static/styles.css"/>
   <style>
+    /* Ensure the header displays correctly with your specific layout */
+    .topbar { background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 0; }
+    .nav_user { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+    
     .topusers_page .ts_card {
       display: grid;
       grid-template-columns: 50px 80px 1fr 1.5fr;
@@ -26,7 +30,50 @@
   </style>
 </head>
 
+<% 
+  // Safety check for user session data
+  const safeMe = (typeof me !== 'undefined' && me) ? me : null;
+  const userRows = (typeof rows !== 'undefined' && rows) ? rows : [];
+%>
+
 <body class="app">
+
+  <header class="topbar">
+    <div class="wrap row between">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display: flex; align-items: center; text-decoration: none;">
+          <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <img src="/static/logo.png" alt="Logo" style="max-width: 35px; max-height: 35px; width: auto; height: auto;">
+          </div>
+        </a>
+        <a class="brand" href="/shows"><span>Pressboxd</span></a>
+      </div>
+
+      <nav class="nav row">
+        <a href="/shows">Shows</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+      </nav>
+
+      <div class="auth row">
+        <% if (safeMe) { %>
+          <a class="nav_user" href="/me">
+            <span class="avatar_sm">
+              <% if (safeMe.avatar_url) { %>
+                <img src="<%= safeMe.avatar_url %>">
+              <% } else { %>
+                <span class="avatar_fallback"></span>
+              <% } %>
+            </span>
+            <span class="muted small"><%= safeMe.username %></span>
+          </a>
+        <% } else { %>
+          <a href="/login" class="muted small">Login</a>
+        <% } %>
+      </div>
+    </div>
+  </header>
+
   <main class="wrap">
     <div class="topusers_page">
       <header style="margin: 40px 0 20px;">
@@ -35,9 +82,9 @@
         <p class="muted">Ranked by review community impact.</p>
       </header>
 
-      <% if (typeof rows !== 'undefined' && rows.length > 0) { %>
+      <% if (userRows.length > 0) { %>
         <div style="border: 1px solid var(--line2); border-radius: 8px; overflow: hidden;">
-          <% rows.forEach((r, i) => { %>
+          <% userRows.forEach((r, i) => { %>
             <div class="ts_card">
               <div class="ts_rank">#<%= i + 1 %></div>
               
@@ -73,7 +120,7 @@
         </div>
       <% } else { %>
         <div class="panel" style="text-align: center; padding: 50px;">
-          <p class="muted">No users have received votes yet. Be the first to upvote a review!</p>
+          <p class="muted">No users found.</p>
         </div>
       <% } %>
     </div>
