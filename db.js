@@ -963,54 +963,118 @@ function listUsers(conn) {
 function listTopShowsWithTopReview(conn, opts = {}) {
   const limit = Number(opts.limit || 25);
   const mode = String(opts.mode || 'top').trim().toLowerCase();
-  const textCol = reviewsTextCol(conn); // Ensure we get the right text column name
-  
-  const orderSql = mode === 'bottom'
-    ? '(ss.cnt = 0) ASC, ss.avg_rating ASC, ss.cnt DESC, ss.year DESC'
-    : '(ss.cnt = 0) ASC, ss.avg_rating DESC, ss.cnt DESC, ss.year DESC';
+  const textCol = reviewsTextCol(conn);
 
-  const sql = `
-    WITH show_stats AS (
+  const isCriticMode = mode === 'critic_top' || mode === 'critic_bottom';
+  const isBottomMode = mode === 'bottom' || mode === 'critic_bottom';
+
+  const showStatsSql = isCriticMode
+    ? `
       SELECT
-        s.id, s.title, s.corps, s.year,
+        s.id,
+        s.title,
+        s.corps,
+        s.year,
+        COALESCE(s.poster_url, '') AS poster_url,
+        COUNT(r.rating_half) AS cnt,
+        COALESCE(ROUND(AVG(r.rating_half) / 2.0, 2), 0) AS avg_rating
+      FROM shows s
+      LEFT JOIN ratings r
+        ON r.show_id = s.id
+       AND EXISTS (
+         SELECT 1
+         FROM user_roles ur
+         JOIN roles ro ON ro.id = ur.role_id
+         WHERE ur.user_id = r.user_id
+           AND ro.name = 'Verified Critic'
+       )
+      GROUP BY s.id
+    `
+    : `
+      SELECT
+        s.id,
+        s.title,
+        s.corps,
+        s.year,
         COALESCE(s.poster_url, '') AS poster_url,
         COUNT(r.rating_half) AS cnt,
         COALESCE(ROUND(AVG(r.rating_half) / 2.0, 2), 0) AS avg_rating
       FROM shows s
       LEFT JOIN ratings r ON r.show_id = s.id
       GROUP BY s.id
-    ),
-    review_scores AS (
-      SELECT 
-        rv.show_id, 
-        rv.${textCol} AS review_text, 
+    `;
+
+  const reviewScoresSql = isCriticMode
+    ? `
+      SELECT
+        rv.show_id,
+        rv.user_id,
+        rv.${textCol} AS review_text,
         u.username,
+        u.avatar_url,
         COALESCE(SUM(v.vote), 0) AS vote_score
       FROM reviews rv
       JOIN users u ON u.id = rv.user_id
-      LEFT JOIN review_votes v ON v.show_id = rv.show_id AND v.review_user_id = rv.user_id
+      JOIN user_roles ur ON ur.user_id = u.id
+      JOIN roles ro ON ro.id = ur.role_id
+      LEFT JOIN review_votes v
+        ON v.show_id = rv.show_id
+       AND v.review_user_id = rv.user_id
+      WHERE ro.name = 'Verified Critic'
       GROUP BY rv.show_id, rv.user_id
+    `
+    : `
+      SELECT
+        rv.show_id,
+        rv.user_id,
+        rv.${textCol} AS review_text,
+        u.username,
+        u.avatar_url,
+        COALESCE(SUM(v.vote), 0) AS vote_score
+      FROM reviews rv
+      JOIN users u ON u.id = rv.user_id
+      LEFT JOIN review_votes v
+        ON v.show_id = rv.show_id
+       AND v.review_user_id = rv.user_id
+      GROUP BY rv.show_id, rv.user_id
+    `;
+
+  const orderSql = isBottomMode
+    ? '(ss.cnt = 0) ASC, ss.avg_rating ASC, ss.cnt DESC, ss.year DESC'
+    : '(ss.cnt = 0) ASC, ss.avg_rating DESC, ss.cnt DESC, ss.year DESC';
+
+  const sql = `
+    WITH show_stats AS (
+      ${showStatsSql}
+    ),
+    review_scores AS (
+      ${reviewScoresSql}
     ),
     top_review_per_show AS (
-      SELECT 
+      SELECT
         *,
-        ROW_NUMBER() OVER (PARTITION BY show_id ORDER BY vote_score DESC) as rn
+        ROW_NUMBER() OVER (
+          PARTITION BY show_id
+          ORDER BY vote_score DESC, user_id ASC
+        ) AS rn
       FROM review_scores
     )
     SELECT
       ss.*,
       tr.username AS top_review_username,
+      tr.avatar_url AS top_review_avatar_url,
       tr.review_text AS top_review_text,
       tr.vote_score AS top_review_score
     FROM show_stats ss
-    LEFT JOIN top_review_per_show tr ON tr.show_id = ss.id AND tr.rn = 1
+    LEFT JOIN top_review_per_show tr
+      ON tr.show_id = ss.id
+     AND tr.rn = 1
     ORDER BY ${orderSql}
     LIMIT ?
   `;
 
   return conn.prepare(sql).all(limit);
 }
-
 function ensureSocialTables(conn) {
   conn.exec(`
     CREATE TABLE IF NOT EXISTS follows (
@@ -1512,6 +1576,7 @@ module.exports = {
   getVerifiedRatingHistogram,
   updateUserBio 
 };
+
 
 
 
