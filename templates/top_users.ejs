@@ -6,27 +6,81 @@
   <title>Top Voted Users - Pressboxd</title>
   <link rel="stylesheet" href="/static/styles.css"/>
   <style>
-    /* Ensure the header displays correctly with your specific layout */
-    .topbar { background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 0; }
-    .nav_user { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-    
-    .topusers_page .ts_card {
-      display: grid;
-      grid-template-columns: 50px 80px 1fr 1.5fr;
-      gap: 20px;
-      align-items: center;
-      background: var(--panel);
-      padding: 15px;
-      border-bottom: 1px solid var(--line2);
-    }
-    .ts_rank { font-weight: 900; color: var(--muted); text-align: center; font-size: 1.1rem; }
-    .ts_thumb { width: 70px; height: 70px; border-radius: 50%; overflow: hidden; border: 1px solid var(--line); background: var(--panel2); }
-    .ts_thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .ts_meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-    .ts_username { font-weight: 900; font-size: 1.2rem; text-decoration: none; color: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .ts_review_box { padding-left: 15px; border-left: 1px solid var(--line); }
-    .tu_quote { font-style: italic; font-size: 13px; opacity: 0.8; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .badge.score { background: rgba(34, 197, 94, 0.1); color: #22c55e; font-weight: 800; }
+      /* ... existing topbar and nav_user styles ... */
+      .topbar { background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 0; }
+      .nav_user { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+  
+      /* The Container: ensures children can handle height correctly */
+      .topusers_list {
+        display: flex;
+        flex-direction: column;
+        gap: 1px; /* Creates the separator line effect if background is var(--line2) */
+        background: var(--line2);
+        border: 1px solid var(--line2);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+  
+      .topusers_page .ts_card {
+        display: grid;
+        grid-template-columns: 50px 80px 1fr 1.5fr;
+        gap: 20px;
+        align-items: center;
+        background: var(--panel);
+        padding: 15px;
+        
+        /* KEY CHANGES FOR UNIFORM HEIGHT */
+        height: 120px; /* Adjust this value to your liking */
+        box-sizing: border-box;
+      }
+  
+      .ts_rank { font-weight: 900; color: var(--muted); text-align: center; font-size: 1.1rem; }
+      
+      /* Fixed size for thumb container to keep grid stable */
+      .ts_thumb { 
+        width: 70px; 
+        height: 70px; 
+        border-radius: 50%; 
+        overflow: hidden; 
+        border: 1px solid var(--line); 
+        background: var(--panel2);
+        flex-shrink: 0;
+      }
+      .ts_thumb img { width: 100%; height: 100%; object-fit: cover; }
+  
+      .ts_meta { 
+        display: flex; 
+        flex-direction: column; 
+        gap: 4px; 
+        min-width: 0; 
+        justify-content: center; /* Centers text vertically if box is tall */
+      }
+  
+      .ts_username { font-weight: 900; font-size: 1.2rem; text-decoration: none; color: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      
+      .ts_review_box { 
+        padding-left: 15px; 
+        border-left: 1px solid var(--line); 
+        height: 100%; /* Spans the full height of the card */
+        display: flex;
+        flex-direction: column;
+        justify-content: center; /* Keeps review text centered vertically */
+        min-width: 0;
+      }
+  
+      .tu_quote { 
+        font-style: italic; 
+        font-size: 13px; 
+        opacity: 0.8; 
+        /* Strictly limit to 2 lines so it never breaks the box height */
+        display: -webkit-box; 
+        -webkit-line-clamp: 2; 
+        -webkit-box-orient: vertical; 
+        overflow: hidden; 
+        line-height: 1.4;
+      }
+  
+      .badge.score { background: rgba(34, 197, 94, 0.1); color: #22c55e; font-weight: 800; }
   </style>
 </head>
 
@@ -127,3 +181,4 @@
   </main>
 </body>
 </html>
+
