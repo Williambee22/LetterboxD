@@ -251,7 +251,46 @@
         .reviewcard {
             padding: 12px !important;
         }
+        .topbar {
+        position: relative !important; /* Changes from fixed/sticky to natural flow */
+        height: auto !important;
+        padding: 10px 0;
+    }
+
+        /* 2. Stack the Navigation Links so they don't overlap the logo */
+        .topbar .wrap.row.between {
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
     
+        .nav.row {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            justify-content: center !important;
+            gap: 8px 15px !important; /* Horizontal and Vertical spacing */
+        }
+    
+        .nav.row a {
+            font-size: 13px !important;
+            padding: 4px 0;
+        }
+    
+        /* 3. Handle the Auth/Bell section */
+        .auth.row {
+            width: 100%;
+            justify-content: center !important;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 10px;
+            margin-top: 5px;
+        }
+    
+        /* 4. Remove any forced margin-top on the main wrap that was 
+              trying to "guess" the header height */
+        main.wrap {
+            margin-top: 10px !important;
+        }
+
         .review_votes {
             margin-top: 12px;
             justify-content: flex-start;
@@ -872,6 +911,7 @@
   </script>
 </body>
 </html>
+
 
 
 
