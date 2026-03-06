@@ -219,7 +219,16 @@
                 <div class="ts_rank">#<%= i + 1 %></div>
 
                 <a class="ts_thumb" href="/show/<%= r.id %>">
-                  <% if (r.poster_url) { %><img src="<%= r.poster_url %>"><% } else { %><div class="ts_thumb_fallback"></div><% } %>
+                  <% if (r.poster_url) { %>
+                    <img
+                      src="<%= (String(r.poster_url).startsWith('/static/') || String(r.poster_url).startsWith('http://') || String(r.poster_url).startsWith('https://'))
+                        ? r.poster_url
+                        : '/static/posters/' + r.poster_url %>"
+                      alt="<%= r.title %> poster"
+                    >
+                  <% } else { %>
+                    <div class="ts_thumb_fallback"></div>
+                  <% } %>
                 </a>
 
                 <div class="ts_meta">
@@ -267,3 +276,4 @@
   </main>
 </body>
 </html>
+
