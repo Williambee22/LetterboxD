@@ -212,7 +212,7 @@
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:12px;
+      gap:8px;
       margin-bottom:10px;
     }
   
@@ -269,7 +269,7 @@
     .reviewtext {
       white-space: pre-wrap;
       line-height:1.5;
-      margin-top: 10px;
+      margin-top: 6px;
     }
   
     .review_votes {
@@ -288,6 +288,37 @@
       padding: 6px 10px;
       cursor: pointer;
       font-weight: 700;
+      min-width: 36px;
+      text-align: center;
+      transition: background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
+    }
+    
+    .vote_btn:hover {
+      background: rgba(255,255,255,0.06);
+    }
+    
+    .vote_btn.up.on {
+      background: rgba(34,197,94,0.18);
+      border-color: rgba(34,197,94,0.65);
+      color: #22c55e;
+    }
+    
+    .vote_btn.down.on {
+      background: rgba(239,68,68,0.18);
+      border-color: rgba(239,68,68,0.65);
+      color: #ef4444;
+    }
+    
+    .vote_total {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--muted);
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
     }
   
     .vote_btn.active {
@@ -375,9 +406,9 @@
     }
   
     .reviewsSide {
-      flex: 0 0 320px !important;
-      width: 320px !important;
-      min-width: 320px !important;
+      flex: 0 0 360px !important;
+      width: 360px !important;
+      min-width: 360px !important;
       align-self: flex-start !important;
     }
   
@@ -386,7 +417,16 @@
       width: 100% !important;
       max-width: none !important;
     }
-  
+    .review_rating_plain {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+
+
     @media (max-width: 768px) {
       .panel > div[style*="display:flex"] {
         flex-direction: column !important;
@@ -465,7 +505,7 @@
       }
   
       .reviewcard {
-        padding: 12px !important;
+        padding: 8px !important;
       }
   
       .review_votes {
@@ -883,7 +923,7 @@
                             <% } %>
                     
                             <% if (rv.rating_half != null) { %>
-                              <span class="badge good">★ <%= (Number(rv.rating_half) / 2).toFixed(Number(rv.rating_half) % 2 ? 1 : 0) %></span>
+                              <span class="review_rating_plain">★ <%= (Number(rv.rating_half) / 2).toFixed(Number(rv.rating_half) % 2 ? 1 : 0) %></span>
                             <% } %>
                           </div>
                         </div>
@@ -898,18 +938,30 @@
 
                     <div class="reviewtext"><%= rv.review_text || "" %></div>
 
-                    <div class="review_votes">
+                   <div class="review_votes">
                       <% if (meUser && !isOwner) { %>
                         <form method="post" action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote" style="display:inline;">
                           <input type="hidden" name="vote" value="1">
-                          <button class="vote_btn <%= myVote === 1 ? 'active' : '' %>" type="submit">▲ Upvote</button>
+                          <button
+                            class="vote_btn up <%= myVote === 1 ? 'on' : '' %>"
+                            type="submit"
+                            aria-label="Upvote review"
+                            title="Upvote"
+                          >▲</button>
                         </form>
-
+                    
                         <form method="post" action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote" style="display:inline;">
                           <input type="hidden" name="vote" value="-1">
-                          <button class="vote_btn <%= myVote === -1 ? 'active' : '' %>" type="submit">▼ Downvote</button>
+                          <button
+                            class="vote_btn down <%= myVote === -1 ? 'on' : '' %>"
+                            type="submit"
+                            aria-label="Downvote review"
+                            title="Downvote"
+                          >▼</button>
                         </form>
                       <% } %>
+                    
+                      <span class="vote_total"><%= rvVote %></span>
                     </div>
 
                     <details style="margin-top:10px;">
@@ -1044,6 +1096,7 @@
   </script>
 </body>
 </html>
+
 
 
 
