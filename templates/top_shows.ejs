@@ -3,7 +3,12 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title><%= mode === "bottom" ? "Lowest Rated Shows" : "Top Shows" %> - Pressboxd</title>
+  <title>
+    <%= mode === "bottom" ? "Lowest Rated Shows"
+      : mode === "critic_top" ? "Top Critic Shows"
+      : mode === "critic_bottom" ? "Lowest Critic Shows"
+      : "Top Shows" %> - Pressboxd
+  </title>
   <link rel="stylesheet" href="/static/styles.css"/>
 
   <style>
@@ -143,9 +148,21 @@
   const safeMe = (typeof me !== "undefined" && me) ? me : null;
   const rawRows = (typeof rows !== "undefined" && Array.isArray(rows)) ? rows : [];
   const safeMode = (typeof mode !== "undefined" && mode) ? mode : "top";
+  const isCriticMode = safeMode === "critic_top" || safeMode === "critic_bottom";
 
   // FILTER: Only include shows with 5 or more ratings to ensure quality rankings
+  // In critic mode, cnt should already represent critic-only ratings
   const safeRows = rawRows.filter(r => Number(r.cnt || 0) >= 5);
+
+  const pageTitle =
+    safeMode === "bottom" ? "Lowest Rated Shows" :
+    safeMode === "critic_top" ? "Top Critic Shows" :
+    safeMode === "critic_bottom" ? "Lowest Critic Shows" :
+    "Top Shows";
+
+  const subtitleText = isCriticMode
+    ? "Minimum 5 Verified Critic ratings required to rank"
+    : "Minimum 5 ratings required to rank";
 %>
 
   <header class="topbar">
@@ -181,12 +198,14 @@
       <div class="row between" style="margin-top:20px; align-items:flex-end; border-bottom: 1px solid var(--line2); padding-bottom: 15px;">
         <div>
           <div class="kicker">Rankings</div>
-          <h1 style="margin:6px 0 0;"><%= safeMode === "bottom" ? "Lowest Rated Shows" : "Top Shows" %></h1>
-          <p class="muted small" style="margin-top: 4px;">Minimum 5 ratings required to rank</p>
+          <h1 style="margin:6px 0 0;"><%= pageTitle %></h1>
+          <p class="muted small" style="margin-top: 4px;"><%= subtitleText %></p>
         </div>
-        <div class="seg" style="display:flex; gap:8px;">
-          <a class="btn ghost <%= safeMode !== 'bottom' ? 'on' : '' %>" href="/top?mode=top">Top rated</a>
+        <div class="seg" style="display:flex; gap:8px; flex-wrap:wrap;">
+          <a class="btn ghost <%= safeMode === 'top' ? 'on' : '' %>" href="/top?mode=top">Top rated</a>
           <a class="btn ghost <%= safeMode === 'bottom' ? 'on' : '' %>" href="/top?mode=bottom">Lowest rated</a>
+          <a class="btn ghost <%= safeMode === 'critic_top' ? 'on' : '' %>" href="/top?mode=critic_top">Top Critic Shows</a>
+          <a class="btn ghost <%= safeMode === 'critic_bottom' ? 'on' : '' %>" href="/top?mode=critic_bottom">Lowest Critic Shows</a>
         </div>
       </div>
 
@@ -208,7 +227,7 @@
                   <div class="muted"><%= r.corps %> — <%= r.year %></div>
                   <div class="ts_badges">
                     <div class="ts_avg">★ <%= Number(r.avg_rating || 0).toFixed(2) %></div>
-                    <span class="badge muted"><%= r.cnt %> ratings</span>
+                    <span class="badge muted"><%= r.cnt %> <%= isCriticMode ? 'critic ratings' : 'ratings' %></span>
                   </div>
                 </div>
 
@@ -236,7 +255,11 @@
         </div>
       <% } else { %>
         <div class="panel" style="margin-top:20px; padding: 60px 20px; text-align: center; border: 1px dashed var(--line);">
-           <div class="muted" style="font-size: 1.1rem; margin-bottom: 12px;">No shows currently meet the minimum requirement of 5 ratings.</div>
+           <div class="muted" style="font-size: 1.1rem; margin-bottom: 12px;">
+             <%= isCriticMode
+               ? "No shows currently meet the minimum requirement of 5 Verified Critic ratings."
+               : "No shows currently meet the minimum requirement of 5 ratings." %>
+           </div>
            <a href="/shows" class="btn primary">Discover Shows to Rate</a>
         </div>
       <% } %>
@@ -244,6 +267,3 @@
   </main>
 </body>
 </html>
-
-
-
