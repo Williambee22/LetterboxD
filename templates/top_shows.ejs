@@ -18,7 +18,7 @@
 
       .ts_card {
           display: grid !important;
-          grid-template-columns: 100px 180px 780px 1fr !important;
+          grid-template-columns: 100px 180px 480px minmax(0, 1fr) !important; /* Change 1 */
           align-items: center !important;
           gap: 20px !important;
           padding: 20px !important;
@@ -26,6 +26,13 @@
           border-bottom: 1px solid var(--line) !important;
           min-height: 160px !important;
           overflow: hidden !important;
+      }
+      
+      /* Ensure the text inside the last column wraps */
+      .ts_card > *:last-child {
+          word-break: break-word; /* Prevents long strings from breaking layout */
+          overflow-wrap: break-word; 
+          min-width: 0; /* Allows the item to be smaller than its content */
       }
 
       .ts_rank {
@@ -301,3 +308,4 @@
   </main>
 </body>
 </html>
+
