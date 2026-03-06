@@ -280,14 +280,22 @@
     }
 
     @media (max-width: 768px) {
-        /* 1. Stack the Profile Layout */
+        /* 1. Global Font Scaling */
+        html {
+            font-size: 14px; /* Scaled down from default 16px */
+        }
+    
         .profile_layout {
             display: flex;
-            flex-direction: column; /* Move sidebar above/below main content */
-            gap: 20px;
+            flex-direction: column;
+            gap: 15px;
         }
     
         /* 2. Hero Section Adjustments */
+        .profile_hero_inner {
+            padding: 15px !important;
+        }
+    
         .profile_hero_inner .row.gap {
             flex-direction: column;
             text-align: center;
@@ -295,54 +303,74 @@
     
         .profile_hero_inner .avatar_lg {
             margin: 0 auto;
-            width: 100px;
-            height: 100px;
+            width: 80px; /* Smaller avatar */
+            height: 80px;
         }
     
-        /* Center the Avg Rating box on mobile */
+        .profile_hero_inner h1 {
+            font-size: 1.5rem; /* Smaller Title */
+        }
+    
+        /* Center and shrink the Avg Rating box */
         .profile_avg_box {
-            margin-top: 20px;
+            margin-top: 15px;
             width: 100%;
+            padding: 10px !important;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
     
-        /* 3. Action Buttons (Follow/Friend) */
+        /* 3. Smaller Action Buttons */
         .profile_top_actions {
             justify-content: center;
-            gap: 8px !important;
+            gap: 6px !important;
         }
         
         .profile_top_actions .btn, 
         .profile_top_actions .badge {
-            font-size: 12px;
-            padding: 8px 12px;
+            font-size: 11px;
+            padding: 6px 10px;
         }
     
         /* 4. Notification Dropdown handling */
         .notifDropdown {
-            position: fixed; /* Take up more space on mobile */
+            position: fixed;
             left: 10px;
             right: 10px;
             width: calc(100% - 20px);
-            top: 60px;
+            top: 55px;
         }
     
-        /* 5. Recent Ratings Grid */
+        /* 5. THE 3-COLUMN GRID FIX */
         .postergrid {
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
-            gap: 10px !important;
+            /* minmax 30% ensures 3 items fit comfortably with gaps */
+            grid-template-columns: repeat(3, 1fr) !important; 
+            gap: 8px !important;
+        }
+    
+        .poster_title {
+            font-size: 11px !important;
+            line-height: 1.2;
+        }
+    
+        .poster_sub {
+            font-size: 10px !important;
+        }
+    
+        .tile_rating {
+            font-size: 10px !important;
+            padding: 2px 4px !important;
         }
     
         /* 6. Forms and Inputs */
-        .acct_panel form {
-            display: flex;
-            flex-direction: column;
-        }
-        
         input, textarea {
-            font-size: 16px !important; /* Prevents iOS from zooming in on focus */
+            font-size: 16px !important; /* Keep at 16px to stop iOS auto-zoom */
+            padding: 8px !important;
+        }
+    
+        .panel {
+            padding: 12px !important; /* Smaller panel padding */
         }
     }
 
@@ -800,6 +828,7 @@
   </script>
 </body>
 </html>
+
 
 
 
