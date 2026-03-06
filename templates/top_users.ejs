@@ -6,70 +6,75 @@
   <title>Top Voted Users - Pressboxd</title>
   <link rel="stylesheet" href="/static/styles.css"/>
   <style>
-      .topusers_page .ts_card {
-          display: grid;
-          grid-template-columns: 60px 90px 240px 1fr;
-          gap: 20px;
-          align-items: center;
-          background: var(--panel);
-          padding: 20px;
-          border-bottom: 1px solid var(--line2);
-          min-height: 120px;
-      }
-      .ts_rank { font-weight: 900; font-size: 1.2rem; color: var(--muted); text-align: center; }
-      .ts_thumb { width: 80px; height: 80px; border-radius: 50%; overflow: hidden; background: var(--panel2); border: 1px solid var(--line); }
-      .ts_thumb img { width: 100%; height: 100%; object-fit: cover; }
-      .ts_meta { display: flex; flex-direction: column; gap: 6px; }
-      .ts_title { font-weight: 900; font-size: 1.2rem; text-decoration: none; color: inherit; }
-      .ts_review { padding-left: 20px; border-left: 1px solid var(--line); }
-      .tu_label { font-size: 10px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
-      .tu_quote { font-style: italic; opacity: 0.8; font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-      .badge.score { background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2); font-weight: 800; }
+    .topusers_page .ts_card {
+      display: grid;
+      grid-template-columns: 50px 80px 1fr 1.5fr;
+      gap: 20px;
+      align-items: center;
+      background: var(--panel);
+      padding: 15px;
+      border-bottom: 1px solid var(--line2);
+    }
+    .ts_rank { font-weight: 900; color: var(--muted); text-align: center; font-size: 1.1rem; }
+    .ts_thumb { width: 70px; height: 70px; border-radius: 50%; overflow: hidden; border: 1px solid var(--line); background: var(--panel2); }
+    .ts_thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .ts_meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .ts_username { font-weight: 900; font-size: 1.2rem; text-decoration: none; color: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ts_review_box { padding-left: 15px; border-left: 1px solid var(--line); }
+    .tu_quote { font-style: italic; font-size: 13px; opacity: 0.8; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .badge.score { background: rgba(34, 197, 94, 0.1); color: #22c55e; font-weight: 800; }
   </style>
 </head>
-
-<% const userRows = (typeof rows !== "undefined") ? rows : []; %>
 
 <body class="app">
   <main class="wrap">
     <div class="topusers_page">
-      <div style="margin: 30px 0;">
-        <div class="kicker">Community</div>
-        <h1>Top Voted Users</h1>
-        <p class="muted">Ranked by total net score on reviews.</p>
-      </div>
+      <header style="margin: 40px 0 20px;">
+        <div class="kicker">Leaderboard</div>
+        <h1 style="margin:0;">Top Voted Users</h1>
+        <p class="muted">Ranked by review community impact.</p>
+      </header>
 
-      <% if (userRows.length > 0) { %>
-        <div style="border: 1px solid var(--line2); background: var(--line2);">
-          <% userRows.forEach((r, i) => { %>
+      <% if (typeof rows !== 'undefined' && rows.length > 0) { %>
+        <div style="border: 1px solid var(--line2); border-radius: 8px; overflow: hidden;">
+          <% rows.forEach((r, i) => { %>
             <div class="ts_card">
               <div class="ts_rank">#<%= i + 1 %></div>
+              
               <div class="ts_thumb">
-                <% if (r.avatar_url) { %><img src="<%= r.avatar_url %>"><% } %>
+                <% if (r.avatar_url) { %>
+                  <img src="<%= r.avatar_url %>" alt="avatar">
+                <% } %>
               </div>
+
               <div class="ts_meta">
-                <a class="ts_title" href="/u/<%= encodeURIComponent(r.username) %>"><%= r.username %></a>
-                <div class="row" style="gap:8px;">
-                  <span class="badge small">▲ <%= r.upvotes %></span>
-                  <span class="badge small score">★ <%= r.net_score %></span>
+                <a class="ts_username" href="/u/<%= encodeURIComponent(r.username || '') %>">
+                  <%= r.username || 'Anonymous' %>
+                </a>
+                <div class="row" style="gap: 10px;">
+                   <span class="badge small">▲ <%= r.upvotes || 0 %></span>
+                   <span class="badge small score">★ <%= r.net_score || 0 %></span>
                 </div>
-                <div class="muted small"><%= r.reviews_count %> reviews written</div>
+                <div class="muted small"><%= r.reviews_count || 0 %> reviews</div>
               </div>
-              <div class="ts_review">
-                <div class="tu_label">
-                  Top Review <% if (r.top_show_id) { %> 
-                    for <a href="/show/<%= r.top_show_id %>" style="color:var(--accent); text-decoration:none;"><%= r.top_corps %> <%= r.top_year %></a>
+
+              <div class="ts_review_box">
+                <div class="muted small" style="text-transform: uppercase; font-size: 9px; margin-bottom: 4px;">
+                  Top Review <% if (r.top_show_id) { %>
+                    of <a href="/show/<%= r.top_show_id %>" style="color:var(--accent);"><%= r.top_corps %> <%= r.top_year %></a>
                   <% } %>
                 </div>
                 <div class="tu_quote">
-                  <%= r.top_review_text ? `“${r.top_review_text}”` : "No review text provided." %>
+                  <%= r.top_review_text ? `“${r.top_review_text}”` : "User hasn't written any review text yet." %>
                 </div>
               </div>
             </div>
           <% }) %>
         </div>
       <% } else { %>
-        <p class="panel" style="text-align:center; padding:40px;">No users found.</p>
+        <div class="panel" style="text-align: center; padding: 50px;">
+          <p class="muted">No users have received votes yet. Be the first to upvote a review!</p>
+        </div>
       <% } %>
     </div>
   </main>
