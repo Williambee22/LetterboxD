@@ -429,70 +429,55 @@ function markNotificationsRead(conn, userId) {
 }
 
 function listTopUsersByReviewUpvotes(conn, limit = 25) {
-  const textCol = reviewsTextCol(conn); 
-  
+  // We use your 'reviews' table 'review_text' column
   const sql = `
-    WITH vote_counts AS (
-      /* Pre-calculate votes per review */
+    WITH vote_stats AS (
       SELECT 
         review_user_id,
-        show_id,
-        SUM(CASE WHEN vote > 0 THEN 1 ELSE 0 END) as review_upvotes,
-        SUM(CASE WHEN vote < 0 THEN 1 ELSE 0 END) as review_downvotes,
-        SUM(vote) as review_net_score
+        SUM(CASE WHEN vote > 0 THEN 1 ELSE 0 END) as upvotes,
+        SUM(CASE WHEN vote < 0 THEN 1 ELSE 0 END) as downvotes,
+        SUM(vote) as net_score
       FROM review_votes
-      GROUP BY review_user_id, show_id
+      GROUP BY review_user_id
     ),
-    user_totals AS (
-      /* Get user basics and aggregate their vote totals */
-      SELECT 
-        u.id as user_id,
-        u.username,
-        u.avatar_url,
-        COALESCE(SUM(vc.review_upvotes), 0) as upvotes,
-        COALESCE(SUM(vc.review_downvotes), 0) as downvotes,
-        COALESCE(SUM(vc.review_net_score), 0) as net_score,
-        (SELECT COUNT(*) FROM reviews WHERE user_id = u.id) as reviews_count
-      FROM users u
-      LEFT JOIN vote_counts vc ON vc.review_user_id = u.id
-      GROUP BY u.id
+    review_counts AS (
+      SELECT user_id, COUNT(*) as cnt FROM reviews GROUP BY user_id
     ),
-    review_ranking AS (
-      /* Find each user's single most-upvoted review */
+    top_rev AS (
       SELECT 
         rv.user_id,
-        rv.show_id as top_show_id,
-        rv.${textCol} as top_review_text,
-        s.corps as top_corps,
-        s.year as top_year,
+        rv.show_id,
+        rv.review_text,
+        s.corps,
+        s.year,
         ROW_NUMBER() OVER (
           PARTITION BY rv.user_id 
-          ORDER BY COALESCE(vc.review_net_score, 0) DESC, rv.ts DESC
+          ORDER BY (SELECT SUM(vote) FROM review_votes v2 WHERE v2.show_id = rv.show_id AND v2.review_user_id = rv.user_id) DESC, rv.ts DESC
         ) as rn
       FROM reviews rv
       JOIN shows s ON s.id = rv.show_id
-      LEFT JOIN vote_counts vc ON vc.show_id = rv.show_id AND vc.review_user_id = rv.user_id
     )
     SELECT 
-      ut.*,
-      rr.top_show_id,
-      rr.top_review_text,
-      rr.top_corps,
-      rr.top_year
-    FROM user_totals ut
-    LEFT JOIN review_ranking rr ON rr.user_id = ut.user_id AND rr.rn = 1
-    /* REMOVED: The strict WHERE clause that required votes */
-    ORDER BY ut.net_score DESC, ut.upvotes DESC, ut.reviews_count DESC
+      u.id, u.username, u.avatar_url,
+      COALESCE(vs.upvotes, 0) as upvotes,
+      COALESCE(vs.downvotes, 0) as downvotes,
+      COALESCE(vs.net_score, 0) as net_score,
+      COALESCE(rc.cnt, 0) as reviews_count,
+      tr.show_id as top_show_id,
+      tr.review_text as top_review_text,
+      tr.corps as top_corps,
+      tr.year as top_year
+    FROM users u
+    LEFT JOIN vote_stats vs ON vs.review_user_id = u.id
+    LEFT JOIN review_counts rc ON rc.user_id = u.id
+    LEFT JOIN top_rev tr ON tr.user_id = u.id AND tr.rn = 1
+    /* Sort by net score, then by review count for active users with 0 votes */
+    ORDER BY net_score DESC, reviews_count DESC, u.username ASC
     LIMIT ?
   `;
-  
-  try {
-    return conn.prepare(sql).all(limit);
-  } catch (err) {
-    console.error("SQL Error in listTopUsersByReviewUpvotes:", err);
-    return [];
-  }
+  return conn.prepare(sql).all(limit);
 }
+
 
 function listShows(conn, args = {}) {
   const sort = String(args.sort || 'year_desc').trim().toLowerCase();
@@ -1521,6 +1506,7 @@ module.exports = {
   getVerifiedRatingHistogram,
   updateUserBio 
 };
+
 
 
 
