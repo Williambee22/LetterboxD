@@ -1779,32 +1779,31 @@ function createApp() {
     `).all(`%${term}%`, limit);
   }
 
-  app.get('/api/users/search', async (req, res, next) => {
-    const q = String(req.query.q || '').trim();
-    if (!q) return res.json({ results: [] });
-
-    let conn;
+  app.get('/api/users/search', (req, res) => {
     try {
-      conn = getConn();
-
-      const rows = dbx.searchUsers(conn, q.slice(0, 50), { limit: 8 }) || [];
-
-      const results = rows.map((r) => {
-        const d = normalizeRow(r);
-        if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
-
-        return {
-          username: d.username || '',
-          avatar_url: d.avatar_url || '',
-          profile_url: `/u/${encodeURIComponent(d.username || '')}`,
-        };
-      });
-
-      return res.json({ results });
+      const q = String(req.query.q || '').trim();
+  
+      if (!q) {
+        return res.json({ ok: true, users: [] });
+      }
+  
+      const conn = dbx.connect(process.env.DB_PATH || '/data/site.db');
+      try {
+        const users = dbx.searchUsers(conn, q, { limit: 8 }) || [];
+        return res.json({
+          ok: true,
+          users: users.map(u => ({
+            id: Number(u.id),
+            username: u.username || '',
+            avatar_url: u.avatar_url || ''
+          }))
+        });
+      } finally {
+        dbx.close(conn);
+      }
     } catch (err) {
-      return next(err);
-    } finally {
-      if (conn) dbx.close(conn);
+      console.error('user search error:', err);
+      return res.status(500).json({ ok: false, users: [], error: 'search_failed' });
     }
   });
 
@@ -2414,6 +2413,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
