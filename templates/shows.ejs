@@ -413,23 +413,33 @@
     <% if (safeRows.length > 0) { %>
       <div class="postergrid" style="margin-top:14px;">
         <% for (const row of safeRows) {
-             const poster = row?.poster_url || POSTER_FALLBACK;
-             const avg = row?.avg_rating != null ? Number(row.avg_rating) : (row?.avg != null ? Number(row.avg) : 0);
-             let pct = Math.min(Math.max(avg / 5.0, 0), 1);
-             const hue = 60 * Math.pow(pct, 2.6);
+              const poster = row?.poster_url || POSTER_FALLBACK;
+              const avg = row?.avg_rating != null ? Number(row.avg_rating) : (row?.avg != null ? Number(row.avg) : 0);
+              let pct = Math.min(Math.max(avg / 5.0, 0), 1);
+              const hue = 60 * Math.pow(pct, 2.6);
         %>
           <a class="poster" href="/show/<%= row.id %>">
             <div class="poster_art">
               <img class="poster_img" src="<%= poster %>" alt="poster" loading="lazy" onerror="this.src='<%= POSTER_FALLBACK %>';">
-              <% if (row.year) { %> <div class="tile_year"><%= row.year %></div> <% } %>
+              
+              <%# REMOVED: tile_year div was here %>
+        
               <% if (row.cnt > 0) { %>
                 <div class="tile_rating" style="color: hsl(<%= hue %>, 98%, 62%);"><span class="tile_star">★</span> <%= avg.toFixed(2) %></div>
                 <div class="tile_count"><%= row.cnt %> ratings</div>
-              <% } else { %> <span class="badge unrated bottom_left">Unrated</span> <% } %>
+              <% } else { %> 
+                <span class="badge unrated bottom_left">Unrated</span> 
+              <% } %>
             </div>
             <div class="poster_meta">
               <div class="poster_title"><%= row.title || 'Untitled' %></div>
-              <div class="poster_sub"><%= row.corps || '' %></div>
+              <div class="poster_sub">
+                <%= row.corps || '' %> 
+                <% if (row.year) { %> 
+                  <span style="opacity: 0.5; margin: 0 4px;">&bull;</span> 
+                  <span><%= row.year %></span> 
+                <% } %>
+              </div>
             </div>
           </a>
         <% } %>
@@ -451,6 +461,7 @@
   </script>
 </body>
 </html>
+
 
 
 
