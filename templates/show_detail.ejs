@@ -176,6 +176,90 @@
       font-size: 13px;
       opacity: 0.75;
     }
+
+    @media (max-width: 768px) {
+        /* 1. Reset the Top Panel layout from Side-by-Side to Vertical */
+        .panel > div[style*="display:flex"] {
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 16px !important;
+        }
+    
+        /* 2. Fix the Poster size so it's not a giant wall */
+        .showposter {
+            width: 160px !important; 
+            height: 240px !important;
+            flex: 0 0 160px !important;
+            margin: 0 auto;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+    
+        /* 3. Center the Meta text */
+        .showmeta {
+            text-align: center;
+            width: 100%;
+        }
+        
+        .showmeta h1 {
+            font-size: 1.6rem !important;
+            line-height: 1.2;
+        }
+    
+        /* 4. Fix the 380px Rating Box that causes overflow */
+        div[style*="flex:0 0 380px"] {
+            flex: 1 1 auto !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+        }
+    
+        /* 5. Make the Star Rating huge and easy to tap */
+        .stars {
+            font-size: 38px !important; /* Bigger for thumbs */
+            justify-content: center !important;
+        }
+        
+        .starwrap {
+            justify-content: center !important;
+            flex-direction: column;
+            gap: 8px;
+        }
+    
+        /* 6. Stack the Histogram Panels (Critic vs All) */
+        div[style*="display:flex; gap:10px; margin-top:12px"] {
+            flex-direction: column !important;
+        }
+    
+        .ratingDistPanel {
+            width: 100% !important;
+        }
+    
+        /* 7. Review Section: Move 'Write Review' above 'Community' on mobile */
+        .layout {
+            display: flex;
+            flex-direction: column-reverse; /* Puts the review form on top */
+        }
+    
+        aside.side {
+            position: static !important;
+            width: 100% !important;
+            margin-bottom: 24px;
+        }
+    
+        /* 8. Fix the Review Cards */
+        .reviewcard {
+            padding: 12px !important;
+        }
+    
+        .review_votes {
+            margin-top: 12px;
+            justify-content: flex-start;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 8px;
+        }
+    }
+
   </style>
 </head>
 <body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
@@ -788,6 +872,7 @@
   </script>
 </body>
 </html>
+
 
 
 
