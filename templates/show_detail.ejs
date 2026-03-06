@@ -358,7 +358,6 @@
       }
     }
 
-
     @media (max-width: 768px) {
       .panel > div[style*="display:flex"] {
         flex-direction: column !important;
@@ -471,38 +470,38 @@
     }
 
     .reviewsLayout {
-      display: flex;
-      align-items: flex-start;
-      gap: 18px;
-      width: 100%;
+      display: flex !important;
+      align-items: flex-start !important;
+      gap: 20px !important;
+      width: 100% !important;
+      flex-wrap: nowrap !important;
     }
     
     .reviewsMain {
       flex: 1 1 auto !important;
       min-width: 0 !important;
+      width: auto !important;
     }
     
     .reviewsSide {
-      flex: 0 0 340px !important;
-      width: 340px !important;
-      min-width: 340px !important;
-      margin-left: auto !important;
+      flex: 0 0 320px !important;
+      width: 320px !important;
+      min-width: 320px !important;
+      margin-left: 0 !important;
       align-self: flex-start !important;
     }
     
     .reviewlist {
-      width: 100%;
+      width: 100% !important;
     }
     
     .reviewcard {
-      width: 100%;
-      max-width: none;
+      width: 100% !important;
+      max-width: none !important;
     }
     
-    @media (min-width: 769px) {
-      .reviewsMain {
-        max-width: calc(100% - 358px);
-      }
+    .layout section {
+      width: 100% !important;
     }
     
     @media (max-width: 768px) {
@@ -518,7 +517,6 @@
       }
     
       .reviewsSide {
-        margin-left: 0 !important;
         margin-top: 16px !important;
       }
     }
@@ -892,23 +890,24 @@
                             <img src="<%= rv.avatar_url %>" alt="<%= rv.username || 'user' %>">
                           <% } %>
                         </a>
-
+                    
                         <div class="reviewmeta">
                           <div class="reviewname">
                             <a href="/u/<%= encodeURIComponent(rv.username || '') %>"><%= rv.username || "User" %></a>
-
+                    
                             <% if (rv.role_name) { %>
                               <span class="rolebadge" style="background:<%= rv.role_color || '#666666' %>;">
                                 <%= rv.role_name %>
                               </span>
                             <% } %>
-
+                    
                             <% if (rv.rating_half != null) { %>
                               <span class="badge good">★ <%= (Number(rv.rating_half) / 2).toFixed(Number(rv.rating_half) % 2 ? 1 : 0) %></span>
                             <% } %>
                           </div>
                         </div>
-
+                      </div>
+                    
                       <% if (canAdminDelete) { %>
                         <form method="post" action="/admin/show/<%= showRow.id %>/review/<%= rv.user_id %>/delete">
                           <button class="btn ghost" type="submit">Delete review</button>
@@ -999,7 +998,7 @@
             <% } %>
           </div>
 
-         <div class="panel reviewsSide" style="flex:0 0 340px; min-width:340px; margin-left:auto;">
+         <div class="panel reviewsSide" style="flex:0 0 320px; min-width:320px;">
             <div class="kicker">Share your thoughts</div>
             <h3 style="margin: 6px 0 16px;">Write a Review</h3>
 
@@ -1066,6 +1065,7 @@
   </script>
 </body>
 </html>
+
 
 
 
