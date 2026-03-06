@@ -194,7 +194,53 @@
       opacity: 0.85;
       font-variant-numeric: tabular-nums;
     }
-  
+
+    .reviewToolbar {
+      gap: 16px;
+    }
+    
+    .reviewSortForm {
+      min-width: 220px;
+    }
+    
+    .reviewSortSelect {
+      width: 100%;
+      min-width: 220px;
+      padding: 10px 12px;
+      background: #000 !important;
+      color: #fff !important;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 10px;
+      outline: none;
+      box-shadow: none;
+    }
+    
+    .reviewSortSelect:focus {
+      border-color: var(--accent);
+    }
+    
+    .reviewSortSelect option {
+      background: #000 !important;
+      color: #fff !important;
+    }
+    
+    @media (max-width: 720px) {
+      .reviewToolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+      }
+    
+      .reviewSortForm {
+        width: 100%;
+        min-width: 0;
+      }
+    
+      .reviewSortSelect {
+        min-width: 0;
+        width: 100%;
+      }
+    }
+
     .ratingDistEmpty {
       font-size: 13px;
       opacity: 0.75;
@@ -551,6 +597,7 @@
     const meUser = typeof me !== "undefined" ? me : null;
     const showRow = row || {};
     const reviewList = Array.isArray(reviews) ? [...reviews] : [];
+    const activeSort = typeof sort !== "undefined" ? sort : "popular";
     const myReviewText = typeof my_review !== "undefined" ? (my_review || "") : "";
     const myRatingVal = typeof my_rating !== "undefined" ? my_rating : null;
     const loginNext = "/login?next=" + encodeURIComponent("/show/" + (showRow.id || ""));
@@ -886,12 +933,25 @@
       <section class="reviewsSection">
         <div class="reviewsLayout">
           <div class="panel reviewsMain" style="flex:1 1 0; min-width:0;">
-            <div class="row between" style="margin-bottom:14px; align-items: flex-end;">
+            <div class="row between reviewToolbar" style="margin-bottom:14px; align-items: flex-end;">
               <div>
                 <div class="kicker">Reviews</div>
                 <h2 style="margin:6px 0 0;">Community</h2>
+                <div class="muted small" style="margin-top:4px;">
+                  <%= reviewList.length %> review<%= reviewList.length === 1 ? '' : 's' %>
+                </div>
               </div>
-              <div class="muted small"><%= reviewList.length %> review<%= reviewList.length === 1 ? '' : 's' %></div>
+            
+              <form method="get" action="/show/<%= showRow.id %>" class="reviewSortForm">
+                <label for="reviewSort" class="muted small" style="display:block; margin-bottom:6px;">Sort by</label>
+                <select id="reviewSort" name="sort" class="reviewSortSelect" onchange="this.form.submit()">
+                  <option value="popular" <%= activeSort === 'popular' ? 'selected' : '' %>>Most Popular</option>
+                  <option value="newest" <%= activeSort === 'newest' ? 'selected' : '' %>>Newest</option>
+                  <option value="oldest" <%= activeSort === 'oldest' ? 'selected' : '' %>>Oldest</option>
+                  <option value="highest" <%= activeSort === 'highest' ? 'selected' : '' %>>Highest Reviewed</option>
+                  <option value="lowest" <%= activeSort === 'lowest' ? 'selected' : '' %>>Lowest Reviewed</option>
+                </select>
+              </form>
             </div>
 
             <% if (reviewList.length > 0) { %>
@@ -1096,6 +1156,7 @@
   </script>
 </body>
 </html>
+
 
 
 
