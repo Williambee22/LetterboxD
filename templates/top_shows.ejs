@@ -12,12 +12,10 @@
   <link rel="stylesheet" href="/static/styles.css"/>
 
   <style>
-      /* --- SHARED AUTH/NOTIF STYLES --- */
       .auth { align-items:center; gap: 12px; }
       .notifWrap { position: relative; display: inline-flex; align-items:center; }
       .bellBtn { position: relative; border: none; background: transparent; cursor: pointer; color: inherit; padding: 6px; display: inline-flex; align-items: center; justify-content: center; }
-  
-      /* --- THE CARD LAYOUT --- */
+
       .ts_card {
           display: grid !important;
           grid-template-columns: 100px 180px 780px 1fr !important;
@@ -26,54 +24,61 @@
           padding: 20px !important;
           background: var(--panel) !important;
           border-bottom: 1px solid var(--line) !important;
-          min-height: 160px !important; 
+          min-height: 160px !important;
           overflow: hidden !important;
       }
-  
+
       .ts_rank {
           font-weight: 800;
           opacity: 0.5;
           text-align: center;
           font-size: 24px;
       }
-  
+
       .ts_thumb {
-          width: 130px !important; 
-          height: 200px !important; 
+          width: 130px !important;
+          height: 200px !important;
           flex: 0 0 180px !important;
           background: var(--panel2);
           overflow: hidden;
           border-radius: 6px;
           box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          display: block;
       }
-  
+
       .ts_thumb img {
           width: 100%;
           height: 100%;
           object-fit: cover !important;
+          display: block;
       }
-  
+
+      .ts_thumb_fallback {
+          width: 100%;
+          height: 100%;
+          background: rgba(255,255,255,0.04);
+      }
+
       .ts_meta {
           display: flex;
           flex-direction: column;
           gap: 8px;
           min-width: 0;
       }
-  
+
       .ts_title {
           font-weight: 800;
-          font-size: 22px; 
+          font-size: 22px;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
       }
-  
-      /* --- REVIEW SECTION --- */
+
       .ts_review {
           display: flex !important;
           flex-direction: column !important;
           justify-content: center !important;
-          padding-left: 30px !important; 
+          padding-left: 30px !important;
           border-left: 1px solid var(--line) !important;
           min-height: 180px !important;
       }
@@ -90,7 +95,7 @@
           align-items: flex-start !important;
           gap: 15px !important;
       }
-  
+
       .ts_vote {
           flex-shrink: 0;
           min-width: 45px;
@@ -104,11 +109,11 @@
 
       .ts_vote.pos { color: #22c55e; }
       .ts_vote.neg { color: #ef4444; }
-  
+
       .ts_quote {
           flex: 1;
           display: -webkit-box !important;
-          -webkit-line-clamp: 4; 
+          -webkit-line-clamp: 4;
           -webkit-box-orient: vertical;
           overflow: hidden !important;
           text-overflow: ellipsis;
@@ -126,7 +131,6 @@
           height: 32px;
       }
 
-      /* TOGGLE BUTTON STYLES */
       .btn.ghost {
           padding: 6px 14px;
           border-radius: 6px;
@@ -137,21 +141,19 @@
           background: rgba(255,255,255,0.05);
           transition: all 0.2s;
       }
+
       .btn.ghost.on {
           color: #fff;
           background: var(--accent);
       }
-    </style>
+  </style>
 </head>
-<body class="app" <%= (typeof me !== "undefined" && me && me.theme_color) ? `style="--accent: ${me.theme_color};"` : "" %>>
+<body class="app" <%= (typeof me !== "undefined" && me && me.theme_color) ? 'style="--accent: ' + me.theme_color + ';"' : '' %>>
 <%
   const safeMe = (typeof me !== "undefined" && me) ? me : null;
   const rawRows = (typeof rows !== "undefined" && Array.isArray(rows)) ? rows : [];
   const safeMode = (typeof mode !== "undefined" && mode) ? mode : "top";
   const isCriticMode = safeMode === "critic_top" || safeMode === "critic_bottom";
-
-  // FILTER: Only include shows with 5 or more ratings to ensure quality rankings
-  // In critic mode, cnt should already represent critic-only ratings
   const safeRows = rawRows.filter(r => Number(r.cnt || 0) >= 5);
 
   const pageTitle =
@@ -185,7 +187,13 @@
       <div class="auth row">
         <% if (safeMe) { %>
           <a class="nav_user" href="/me">
-            <span class="avatar_sm"><% if (safeMe.avatar_url) { %><img src="<%= safeMe.avatar_url %>"><% } else { %><span class="avatar_fallback"></span><% } %></span>
+            <span class="avatar_sm">
+              <% if (safeMe.avatar_url) { %>
+                <img src="<%= safeMe.avatar_url %>">
+              <% } else { %>
+                <span class="avatar_fallback"></span>
+              <% } %>
+            </span>
             <span class="muted small"><%= safeMe.username %></span>
           </a>
         <% } %>
@@ -201,6 +209,7 @@
           <h1 style="margin:6px 0 0;"><%= pageTitle %></h1>
           <p class="muted small" style="margin-top: 4px;"><%= subtitleText %></p>
         </div>
+
         <div class="seg" style="display:flex; gap:8px; flex-wrap:wrap;">
           <a class="btn ghost <%= safeMode === 'top' ? 'on' : '' %>" href="/top?mode=top">Top rated</a>
           <a class="btn ghost <%= safeMode === 'bottom' ? 'on' : '' %>" href="/top?mode=bottom">Lowest rated</a>
@@ -225,15 +234,6 @@
                     <div class="ts_thumb_fallback"></div>
                   <% } %>
                 </a>
-                    <img src="<%= posterSrc %>" alt="<%= r.title %> poster">
-                    <div style="font-size:10px; color:#888; margin-top:4px; word-break:break-all;">
-                      <%= posterSrc %>
-                    </div>
-                  <% } else { %>
-                    <div class="ts_thumb_fallback"></div>
-                    <div style="font-size:10px; color:#888;">NO POSTER URL</div>
-                  <% } %>
-                </a>
 
                 <div class="ts_meta">
                   <div class="ts_title"><a href="/show/<%= r.id %>"><%= r.title %></a></div>
@@ -247,7 +247,13 @@
                 <div class="ts_review">
                   <% if (r.top_review_text) { %>
                     <div class="ts_review_head">
-                      <span class="avatar_sm"><% if (r.top_review_avatar_url) { %><img src="<%= r.top_review_avatar_url %>"><% } else { %><span class="avatar_fallback"></span><% } %></span>
+                      <span class="avatar_sm">
+                        <% if (r.top_review_avatar_url) { %>
+                          <img src="<%= r.top_review_avatar_url %>">
+                        <% } else { %>
+                          <span class="avatar_fallback"></span>
+                        <% } %>
+                      </span>
                       <a class="reviewuser" href="/u/<%= encodeURIComponent(r.top_review_username) %>" style="text-decoration:none; font-size:15px; font-weight:700;">
                         <%= r.top_review_username %>
                       </a>
@@ -268,16 +274,15 @@
         </div>
       <% } else { %>
         <div class="panel" style="margin-top:20px; padding: 60px 20px; text-align: center; border: 1px dashed var(--line);">
-           <div class="muted" style="font-size: 1.1rem; margin-bottom: 12px;">
-             <%= isCriticMode
-               ? "No shows currently meet the minimum requirement of 5 Verified Critic ratings."
-               : "No shows currently meet the minimum requirement of 5 ratings." %>
-           </div>
-           <a href="/shows" class="btn primary">Discover Shows to Rate</a>
+          <div class="muted" style="font-size: 1.1rem; margin-bottom: 12px;">
+            <%= isCriticMode
+              ? "No shows currently meet the minimum requirement of 5 Verified Critic ratings."
+              : "No shows currently meet the minimum requirement of 5 ratings." %>
+          </div>
+          <a href="/shows" class="btn primary">Discover Shows to Rate</a>
         </div>
       <% } %>
     </div>
   </main>
 </body>
 </html>
-
