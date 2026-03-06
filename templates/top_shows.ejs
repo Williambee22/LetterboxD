@@ -224,11 +224,8 @@
           <div class="stack">
             <% safeRows.forEach((r, i) => { 
                 const vs = r.top_review_score != null ? Number(r.top_review_score) : 0;
-                
-                // Use the same simple logic as shows.ejs
-                const poster = (r.poster_url && String(r.poster_url).trim()) 
-                               ? r.poster_url 
-                               : POSTER_FALLBACK;
+                // Simple logic: if poster_url exists, use it exactly as is. Otherwise, fallback.
+                const poster = r.poster_url || POSTER_FALLBACK;
             %>
               <div class="ts_card">
                 <div class="ts_rank">#<%= i + 1 %></div>
@@ -293,4 +290,5 @@
   </main>
 </body>
 </html>
+
 
