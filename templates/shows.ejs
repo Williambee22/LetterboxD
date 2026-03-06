@@ -208,6 +208,97 @@
       padding: 12px;
       opacity: 0.8;
     }
+
+    /* Mobile Optimization for Pressboxd */
+    @media (max-width: 768px) {
+        /* 1. Header & Navigation */
+        .topbar .wrap {
+            flex-direction: column !important;
+            gap: 15px;
+            padding: 15px 10px !important;
+        }
+    
+        .nav.row {
+            width: 100%;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+    
+        .auth.row {
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+    
+        /* 2. User Search Input */
+        .userSearchInput {
+            width: 100% !important; /* Grow to fill screen width */
+            min-width: 280px;
+        }
+    
+        .userSearchDropdown {
+            width: 100%;
+            right: 0;
+            left: 0;
+        }
+    
+        /* 3. Hero / Welcome Section */
+        main.wrap > div:first-child div[style*="font-size: 42px"] {
+            font-size: 28px !important; /* Shrink "Welcome to Pressboxd" */
+        }
+    
+        /* 4. Friend Activity Cards */
+        div[style*="flex: 1 1 240px"] {
+            flex: 1 1 100% !important; /* Stack friend activity full width */
+            max-width: none !important;
+        }
+    
+        /* 5. Filter Form */
+        #showsFilterForm {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+    
+        #showsFilterForm .field {
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+    
+        #showsFilterForm .actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+    
+        #showsFilterForm .actions .btn {
+            flex: 1;
+            text-align: center;
+        }
+    
+        /* 6. Notifications Dropdown */
+        .notifDropdown {
+            width: 90vw; /* Almost full width of screen */
+            position: fixed;
+            left: 5vw;
+            right: 5vw;
+            top: 60px;
+        }
+    }
+    
+    /* Extra small screens (Phones) */
+    @media (max-width: 480px) {
+        .postergrid {
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+            gap: 10px !important;
+        }
+    
+        .poster_title {
+            font-size: 14px !important;
+        }
+    }
+
   </style>
 </head>
 <%
@@ -592,6 +683,7 @@
   </script>
 </body>
 </html>
+
 
 
 
