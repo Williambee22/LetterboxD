@@ -280,82 +280,77 @@
     }
 
     @media (max-width: 768px) {
-        /* 1. Global tight layout */
-        .app { 
-            padding: 0 !important; 
-        }
-        .wrap { 
-            padding: 0 6px !important; /* Minimal side margins for the whole page */
-            width: 100% !important;
-            max-width: 100% !important;
+        /* 1. Fix the Header Overlap */
+        .topbar {
+            position: relative !important; 
+            height: auto !important;
+            padding: 15px 0 !important;
         }
     
-        /* 2. Expand the Panel to the edges */
-        .panel {
-            padding: 8px !important; /* Shrink panel padding so content can be wider */
-            margin-left: -4px; 
-            margin-right: -4px;
-            border-radius: 8px;
+        .topbar .wrap {
+            flex-direction: column !important;
+            gap: 15px !important;
         }
     
-        /* 3. The 3-Column Grid Fix */
-        .postergrid {
-            display: grid !important;
-            grid-template-columns: repeat(3, 1fr) !important; 
-            gap: 6px !important; /* Very tight gap to maximize card width */
-            width: 100%;
+        .nav.row {
+            justify-content: center !important;
+            flex-wrap: wrap !important;
+            gap: 10px 15px !important;
         }
     
-        /* 4. Ensure Poster Image fills its space correctly */
-        .poster_art {
-          position: relative;
-          overflow: hidden;
-          background: #111; /* Dark background placeholder */
-        }
-        
-        /* 2. Force the image to the top layer */
-        .poster_img {
-          position: relative;
-          z-index: 2; /* Sits above the fallback/placeholder */
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-        }
-    
-        /* 5. Shrink text to prevent vertical stretching */
-        .poster_title {
-            font-size: 10px !important;
-            line-height: 1.1;
-            margin-top: 4px;
-            /* Truncate to 1 line to keep card height consistent and short */
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-    
-        .poster_sub {
-            font-size: 9px !important;
-            opacity: 0.7;
-        }
-    
-        .tile_rating {
-          z-index: 3; /* Higher than the image */
-        }
-        
-        .tile_year {
-          z-index: 3; /* Higher than the image */
-        }
-    
-        /* 6. UI scaling */
+        /* 2. Profile Hero Adjustments */
         .profile_hero_inner {
-            padding: 10px !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            padding: 20px 15px !important;
         }
+    
         .avatar_lg {
-            width: 60px !important;
-            height: 60px !important;
+            width: 100px !important;
+            height: 100px !important;
+            margin: 0 auto 15px auto !important;
+            border: 3px solid var(--accent);
         }
-        h1 { font-size: 1.3rem !important; }
+    
+        /* 3. Stats Bar (Followers, Following, etc.) */
+        .profile_stats {
+            justify-content: center !important;
+            width: 100% !important;
+            gap: 20px !important;
+        }
+    
+        /* 4. The Grid on Profile (Watched, Favorites) */
+        /* This ensures your profile "Watched" list also uses the 3-wide small cards */
+        .profile_grid, .postergrid {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 8px !important;
+            padding: 0 !important;
+        }
+    
+        /* 5. Bio/Info Section */
+        .profile_bio {
+            font-size: 14px !important;
+            line-height: 1.5;
+            margin-top: 10px;
+        }
+    
+        /* 6. Tabs (Watched, Diary, Reviews) */
+        .profile_tabs {
+            display: flex !important;
+            overflow-x: auto !important; /* Allows swiping through tabs if they're too wide */
+            white-space: nowrap !important;
+            padding-bottom: 5px;
+            -webkit-overflow-scrolling: touch;
+            justify-content: flex-start !important;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+    
+        .profile_tabs a {
+            padding: 10px 15px !important;
+            font-size: 13px !important;
+        }
     }
 
   </style>
@@ -812,6 +807,7 @@
   </script>
 </body>
 </html>
+
 
 
 
