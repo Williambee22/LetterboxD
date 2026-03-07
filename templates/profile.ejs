@@ -9,97 +9,97 @@
   <style>
     .auth { align-items:center; gap: 12px; }
 
-.notifWrap { position: relative; display: inline-flex; align-items:center; }
-  .bellBtn {
-    position: relative;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    color: inherit;
-    padding: 6px;
-    border-radius: 10px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0.95;
-  }
-  .bellBtn:hover { background: rgba(255,255,255,0.06); }
-  
-  .badgeDot {
-    position:absolute;
-    top: 3px;
-    right: 3px;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 6px;
-    border-radius: 999px;
-    background: #ff3b30;
-    color: #fff;
-    font-size: 11px;
-    line-height: 18px;
-    text-align: center;
-    font-weight: 800;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-  }
-  
-  .notifDropdown {
-    display: none;
-    position: absolute;
-    right: 0;
-    top: 40px;
-    width: 340px;
-    max-height: 420px;
-    overflow: auto;
-    background: rgba(15, 23, 42, 0.98);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 14px;
-    box-shadow: 0 14px 40px rgba(0,0,0,0.45);
-    z-index: 9999;
-  }
-  .notifDropdown.open { display:block; }
-  
-  .notifHeader {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.10);
-    position: sticky;
-    top: 0;
-    background: rgba(15, 23, 42, 0.98);
-    backdrop-filter: blur(8px);
-  }
-  .notifTitle { font-weight: 900; }
-  
-  .markReadBtn {
-    border: none;
-    background: transparent;
-    color: inherit;
-    cursor: pointer;
-    opacity: 0.85;
-    font-size: 12px;
-    padding: 6px 8px;
-    border-radius: 10px;
-  }
-  .markReadBtn:hover { background: rgba(255,255,255,0.06); opacity: 1; }
-  
-  .notifList { padding: 8px; display:flex; flex-direction:column; gap: 8px; }
-  .notifItem {
-    padding: 10px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-  }
-  .notifItem.unread { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.25); }
-  .notifTime { font-size: 12px; opacity: 0.7; margin-top: 4px; }
-  .notifEmpty { padding: 12px; opacity: 0.8; }
-  
-  .authBellSlot { display:inline-flex; align-items:center; }
-  
-  .notifDropdown,
-  .notifDropdown * {
-    pointer-events: auto !important;
-  }
+    .notifWrap { position: relative; display: inline-flex; align-items:center; }
+    .bellBtn {
+      position: relative;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: inherit;
+      padding: 6px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.95;
+    }
+    .bellBtn:hover { background: rgba(255,255,255,0.06); }
+
+    .badgeDot {
+      position:absolute;
+      top: 3px;
+      right: 3px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #ff3b30;
+      color: #fff;
+      font-size: 11px;
+      line-height: 18px;
+      text-align: center;
+      font-weight: 800;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    }
+
+    .notifDropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 40px;
+      width: 340px;
+      max-height: 420px;
+      overflow: auto;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.45);
+      z-index: 9999;
+    }
+    .notifDropdown.open { display:block; }
+
+    .notifHeader {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      position: sticky;
+      top: 0;
+      background: rgba(15, 23, 42, 0.98);
+      backdrop-filter: blur(8px);
+    }
+    .notifTitle { font-weight: 900; }
+
+    .markReadBtn {
+      border: none;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      opacity: 0.85;
+      font-size: 12px;
+      padding: 6px 8px;
+      border-radius: 10px;
+    }
+    .markReadBtn:hover { background: rgba(255,255,255,0.06); opacity: 1; }
+
+    .notifList { padding: 8px; display:flex; flex-direction:column; gap: 8px; }
+    .notifItem {
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .notifItem.unread { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.25); }
+    .notifTime { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+    .notifEmpty { padding: 12px; opacity: 0.8; }
+
+    .authBellSlot { display:inline-flex; align-items:center; }
+
+    .notifDropdown,
+    .notifDropdown * {
+      pointer-events: auto !important;
+    }
 
     .notifHeader {
       display:flex;
@@ -224,14 +224,14 @@
     }
 
     .profile_stats {
-        position: relative !important;
-        background-attachment: scroll !important; /* Forces background to move with the box */
-        width: 100% !important;
-        margin: 10px 0 !important;
-        display: flex !important;
-        flex-wrap: wrap !important; /* Ensures stats don't squeeze too tight */
-        justify-content: center !important;
-        gap: 15px !important;
+      position: relative !important;
+      background-attachment: scroll !important;
+      width: 100% !important;
+      margin: 10px 0 !important;
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      gap: 15px !important;
     }
 
     .profile_hero_inner h1{
@@ -239,11 +239,10 @@
       text-shadow: 0 2px 18px rgba(0,0,0,.45);
     }
 
-    /* Ensure the average rating box inside stats also flows */
     .profile_avg_box {
-        position: relative !important;
-        transform: none !important;
-        margin: 0 auto !important;
+      position: relative !important;
+      transform: none !important;
+      margin: 0 auto !important;
     }
 
     .profile_avg_value{
@@ -256,6 +255,18 @@
 
     .role_tag{
       box-shadow: 0 0 0 1px rgba(0,0,0,.15) inset;
+    }
+
+    .rolebadge {
+      display:inline-flex;
+      align-items:center;
+      font-size:11px;
+      font-weight:800;
+      border-radius:999px;
+      padding:4px 9px;
+      color:#fff;
+      line-height:1;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.18) inset;
     }
 
     .poster_meta{
@@ -287,79 +298,69 @@
       padding-top: 12px;
     }
 
-    /* ... keep all your existing notification and desktop styles ... */
-
-    /* ADD OR UPDATE THIS SECTION */
     @media (max-width: 768px) {
-        /* 1. Force the Header to be part of the scroll, not staying at the top */
-        .topbar {
-            position: relative !important;
-            height: auto !important;
-            padding: 15px 0 !important;
-        }
-        
-        .topbar .wrap {
-            flex-direction: column !important;
-            gap: 15px !important;
-        }
-    
-        /* 2. NEUTRALIZE THE SIDEBAR (This is likely what's 'locking' the stats) */
-        .profile_layout {
-            display: flex !important;
-            flex-direction: column !important; /* Stack sidebar on top of content */
-        }
-    
-        aside.profile_side, .profile_side {
-            position: relative !important;
-            top: 0 !important;
-            width: 100% !important;
-            margin-bottom: 20px !important;
-            display: block !important;
-        }
-    
-        /* 3. FIX THE STATS BOX */
-        .profile_stats {
-            position: relative !important;
-            display: block !important; /* Back to standard block flow */
-            width: 100% !important;
-            background-attachment: scroll !important; /* Fixes "frozen" background issues */
-            margin: 0 0 20px 0 !important;
-            box-shadow: none !important;
-            transform: none !important;
-        }
-    
-        /* 4. Fix Hero/Avatar for Mobile */
-        .profile_hero_inner {
-            padding: 20px 10px !important;
-        }
-    
-        .profile_hero_inner .row.gap {
-            flex-direction: column !important;
-            text-align: center !important;
-        }
-    
-        .avatar_lg {
-            margin: 0 auto 15px auto !important;
-        }
-    
-        /* 5. Force the 3-column grid for posters */
-        .postergrid {
-            display: grid !important;
-            grid-template-columns: repeat(3, 1fr) !important;
-            gap: 8px !important;
-        }
-    
-        /* 6. Fix the 'Stats' section internals so they don't look squished */
-        .profile_stats .kicker {
-            text-align: center;
-        }
-        
-        .profile_stats .muted.small {
-            text-align: center;
-            display: block;
-        }
-    }
+      .topbar {
+        position: relative !important;
+        height: auto !important;
+        padding: 15px 0 !important;
+      }
 
+      .topbar .wrap {
+        flex-direction: column !important;
+        gap: 15px !important;
+      }
+
+      .profile_layout {
+        display: flex !important;
+        flex-direction: column !important;
+      }
+
+      aside.profile_side, .profile_side {
+        position: relative !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin-bottom: 20px !important;
+        display: block !important;
+      }
+
+      .profile_stats {
+        position: relative !important;
+        display: block !important;
+        width: 100% !important;
+        background-attachment: scroll !important;
+        margin: 0 0 20px 0 !important;
+        box-shadow: none !important;
+        transform: none !important;
+      }
+
+      .profile_hero_inner {
+        padding: 20px 10px !important;
+      }
+
+      .profile_hero_inner .row.gap {
+        flex-direction: column !important;
+        text-align: center !important;
+      }
+
+      .avatar_lg {
+        margin: 0 auto 15px auto !important;
+      }
+
+      .postergrid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 8px !important;
+      }
+
+      .profile_stats .kicker {
+        text-align: center;
+      }
+
+      .profile_stats .muted.small {
+        text-align: center;
+        display: block;
+      }
+    }
   </style>
 </head>
 
@@ -397,7 +398,6 @@
   <header class="topbar">
     <div class="wrap row between">
       <div style="display: flex; align-items: center; gap: 10px;">
-        
         <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display: flex; align-items: center; text-decoration: none;">
           <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             <img 
@@ -409,11 +409,10 @@
             >
           </div>
         </a>
-  
+
         <a class="brand" href="/shows">
           <span>Pressboxd</span>
         </a>
-  
       </div>
 
       <nav class="nav row">
@@ -589,7 +588,7 @@
             <% if (roles.length > 0) { %>
               <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
                 <% for (const r of roles) { %>
-                  <span class="role_tag" <%= r && r.color ? `style="border-color:${r.color}; color:${r.color}; background:${r.color}22;"` : "" %>>
+                  <span class="rolebadge" style="background:<%= (r && r.color) ? r.color : '#666666' %>;">
                     <%= r && r.name ? r.name : "" %>
                   </span>
                 <% } %>
@@ -814,28 +813,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
