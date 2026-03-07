@@ -589,7 +589,7 @@ function updateShowPosterUrl(conn, showId, posterUrl) {
 function upsertReview(conn, showId, userId, reviewText) {
   const text = String(reviewText || '').trim();
   if (!text) throw new Error('Review cannot be empty.');
-  if (text.length > 5000) throw new Error('Review is too long (max 5000 chars).');
+  if (text.length > 6000) throw new Error('Review is too long (max 6000 chars).');
 
   const textCol = tableColumns(conn, 'reviews').has('review_text') ? 'review_text' : reviewsTextCol(conn);
   conn.prepare(`
@@ -1583,6 +1583,7 @@ module.exports = {
   getVerifiedRatingHistogram,
   updateUserBio 
 };
+
 
 
 
