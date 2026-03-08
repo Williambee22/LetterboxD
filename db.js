@@ -245,15 +245,15 @@ function getHotShows(conn, limit = 3) {
     WITH recent_ratings AS (
       SELECT
         r.show_id,
-        COUNT(*) AS ratings_24h
+        COUNT(*) AS ratings_2d
       FROM ratings r
-      WHERE CAST(COALESCE(r.ts, 0) AS INTEGER) >= strftime('%s','now','-1 day')
+      WHERE CAST(COALESCE(r.ts, 0) AS INTEGER) >= strftime('%s','now','-2 days')
       GROUP BY r.show_id
     ),
     recent_reviews AS (
       SELECT
         rv.show_id,
-        COUNT(*) AS reviews_24h
+        COUNT(*) AS reviews_2d
       FROM reviews rv
       WHERE CAST(COALESCE(rv.ts, 0) AS INTEGER) >= strftime('%s','now','-2 days')
       GROUP BY rv.show_id
@@ -264,9 +264,9 @@ function getHotShows(conn, limit = 3) {
       s.corps,
       s.year,
       s.poster_url,
-      COALESCE(rrt.ratings_24h, 0) AS ratings_24h,
-      COALESCE(rrv.reviews_24h, 0) AS reviews_24h,
-      COALESCE(rrt.ratings_24h, 0) + COALESCE(rrv.reviews_24h, 0) AS activity_count,
+      COALESCE(rrt.ratings_2d, 0) AS ratings_2d,
+      COALESCE(rrv.reviews_2d, 0) AS reviews_2d,
+      COALESCE(rrt.ratings_2d, 0) + COALESCE(rrv.reviews_2d, 0) AS activity_count,
       COALESCE((
         SELECT ROUND(AVG(r2.rating_half / 2.0), 2)
         FROM ratings r2
@@ -275,11 +275,11 @@ function getHotShows(conn, limit = 3) {
     FROM shows s
     LEFT JOIN recent_ratings rrt ON rrt.show_id = s.id
     LEFT JOIN recent_reviews rrv ON rrv.show_id = s.id
-    WHERE COALESCE(rrt.ratings_24h, 0) + COALESCE(rrv.reviews_24h, 0) > 0
+    WHERE COALESCE(rrt.ratings_2d, 0) + COALESCE(rrv.reviews_2d, 0) > 0
     ORDER BY
       activity_count DESC,
-      COALESCE(rrv.reviews_24h, 0) DESC,
-      COALESCE(rrt.ratings_24h, 0) DESC,
+      COALESCE(rrv.reviews_2d, 0) DESC,
+      COALESCE(rrt.ratings_2d, 0) DESC,
       avg_rating DESC,
       s.year DESC,
       s.id DESC
@@ -1630,6 +1630,7 @@ module.exports = {
   getHotShows,
   updateUserBio 
 };
+
 
 
 
