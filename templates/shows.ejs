@@ -541,7 +541,7 @@
       <div class="accentCard accentBorderSoft hotCard">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
           <div>
-            <div style="font-weight:900; font-size:18px; line-height:1.1;">🔥 Hot</div>
+            <div style="font-weight:900; font-size:18px; line-height:1.1;">Hot Shows</div>
             <div class="muted small">Top 3 most active shows in the last 24 hours</div>
           </div>
         </div>
@@ -569,7 +569,17 @@
                   <div class="hotSub muted small">
                     <%= hs.corps || '' %><% if (hs.year) { %> • <%= hs.year %><% } %>
                   </div>
+                
                   <div class="hotActivity">
+                    <% const hotAvg = Number(hs.avg_rating || 0); %>
+                    <% if (hotAvg > 0) { %>
+                      <span style="font-weight:800;">★ <%= hotAvg.toFixed(2) %></span>
+                      <span style="opacity:.5; margin:0 6px;">•</span>
+                    <% } else { %>
+                      <span class="muted">Unrated</span>
+                      <span style="opacity:.5; margin:0 6px;">•</span>
+                    <% } %>
+                
                     <span><%= Number(hs.activity_count || 0) %> activity</span>
                     <% if (Number(hs.reviews_24h || 0) > 0) { %>
                       <span style="opacity:.5; margin:0 6px;">•</span>
@@ -836,4 +846,5 @@
   </script>
 </body>
 </html>
+
 
