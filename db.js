@@ -242,12 +242,20 @@ function updateUserBio(conn, userId, bio) {
 
 function getHotShows(conn, limit = 3) {
   return conn.prepare(`
-    WITH recent_reviews AS (
+    WITH recent_ratings AS (
+      SELECT
+        r.show_id,
+        COUNT(*) AS ratings_24h
+      FROM ratings r
+      WHERE CAST(COALESCE(r.ts, 0) AS INTEGER) >= strftime('%s','now','-1 day')
+      GROUP BY r.show_id
+    ),
+    recent_reviews AS (
       SELECT
         rv.show_id,
         COUNT(*) AS reviews_24h
       FROM reviews rv
-      WHERE CAST(COALESCE(rv.ts, 0) AS INTEGER) >= strftime('%s','now','-1 day')
+      WHERE CAST(COALESCE(rv.ts, 0) AS INTEGER) >= strftime('%s','now','-2 days')
       GROUP BY rv.show_id
     )
     SELECT
@@ -256,19 +264,22 @@ function getHotShows(conn, limit = 3) {
       s.corps,
       s.year,
       s.poster_url,
-      0 AS ratings_24h,
-      COALESCE(rr.reviews_24h, 0) AS reviews_24h,
-      COALESCE(rr.reviews_24h, 0) AS activity_count,
+      COALESCE(rrt.ratings_24h, 0) AS ratings_24h,
+      COALESCE(rrv.reviews_24h, 0) AS reviews_24h,
+      COALESCE(rrt.ratings_24h, 0) + COALESCE(rrv.reviews_24h, 0) AS activity_count,
       COALESCE((
         SELECT ROUND(AVG(r2.rating_half / 2.0), 2)
         FROM ratings r2
         WHERE r2.show_id = s.id
       ), 0) AS avg_rating
     FROM shows s
-    INNER JOIN recent_reviews rr
-      ON rr.show_id = s.id
+    LEFT JOIN recent_ratings rrt ON rrt.show_id = s.id
+    LEFT JOIN recent_reviews rrv ON rrv.show_id = s.id
+    WHERE COALESCE(rrt.ratings_24h, 0) + COALESCE(rrv.reviews_24h, 0) > 0
     ORDER BY
       activity_count DESC,
+      COALESCE(rrv.reviews_24h, 0) DESC,
+      COALESCE(rrt.ratings_24h, 0) DESC,
       avg_rating DESC,
       s.year DESC,
       s.id DESC
@@ -341,14 +352,14 @@ function addShow(conn, year, corps, title, opts = {}) {
 }
 
 function upsertRating(conn, showId, userId, ratingHalf) {
-  const rh = Math.max(0, Math.min(10, Number(ratingHalf)));
-  conn.prepare(`
-    INSERT INTO ratings(show_id, user_id, rating_half, ts)
-    VALUES (?,?,?,?)
-    ON CONFLICT(show_id, user_id) DO UPDATE SET
-      rating_half=excluded.rating_half,
-      ts=excluded.ts
-  `).run(Number(showId), Number(userId), rh, nowTs());
+  return conn.prepare(`
+    INSERT INTO ratings (show_id, user_id, rating_half, ts)
+    VALUES (?, ?, ?, strftime('%s','now'))
+    ON CONFLICT(show_id, user_id)
+    DO UPDATE SET
+      rating_half = excluded.rating_half,
+      ts = strftime('%s','now')
+  `).run(showId, userId, ratingHalf);
 }
 
 function deleteRating(conn, showId, userId) {
@@ -1619,6 +1630,7 @@ module.exports = {
   getHotShows,
   updateUserBio 
 };
+
 
 
 
