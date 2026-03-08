@@ -946,12 +946,22 @@ function createApp() {
         });
       }
   
+      let hotShows = [];
+      if (typeof dbx.getHotShows === 'function') {
+        hotShows = (await dbx.getHotShows(conn, 3) || []).map((x) => {
+          const d = normalizeRow(x);
+          if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+          return d;
+        });
+      }
+  
       res.render('shows', {
         rows: rows2,
         sort,
         year,
         corps,
         friend_activity: friendActivity,
+        hot_shows: hotShows,
       });
     } catch (err) {
       next(err);
