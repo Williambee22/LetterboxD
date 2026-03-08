@@ -240,6 +240,51 @@ function updateUserBio(conn, userId, bio) {
   `).run(String(bio || '').trim(), Number(userId));
 }
 
+function getHotShows(conn, limit = 3) {
+  return conn.prepare(`
+    WITH recent_ratings AS (
+      SELECT
+        r.show_id,
+        COUNT(*) AS ratings_24h
+      FROM ratings r
+      WHERE datetime(r.created_at) >= datetime('now', '-1 day')
+      GROUP BY r.show_id
+    ),
+    recent_reviews AS (
+      SELECT
+        rv.show_id,
+        COUNT(*) AS reviews_24h
+      FROM reviews rv
+      WHERE datetime(rv.created_at) >= datetime('now', '-1 day')
+      GROUP BY rv.show_id
+    )
+    SELECT
+      s.id,
+      s.title,
+      s.corps,
+      s.year,
+      s.poster_url,
+      COALESCE(rr.ratings_24h, 0) AS ratings_24h,
+      COALESCE(rv.reviews_24h, 0) AS reviews_24h,
+      COALESCE(rr.ratings_24h, 0) + COALESCE(rv.reviews_24h, 0) AS activity_count,
+      (
+        SELECT AVG(r2.rating_half / 2.0)
+        FROM ratings r2
+        WHERE r2.show_id = s.id
+      ) AS avg_rating
+    FROM shows s
+    LEFT JOIN recent_ratings rr ON rr.show_id = s.id
+    LEFT JOIN recent_reviews rv ON rv.show_id = s.id
+    WHERE COALESCE(rr.ratings_24h, 0) + COALESCE(rv.reviews_24h, 0) > 0
+    ORDER BY
+      activity_count DESC,
+      reviews_24h DESC,
+      ratings_24h DESC,
+      s.year DESC,
+      s.id DESC
+    LIMIT ?
+  `).all(limit);
+}
 
 function userByResetToken(conn, token) {
   return conn.prepare(`
@@ -1581,8 +1626,10 @@ module.exports = {
   updateUserEmail,
   getRatingHistogram,
   getVerifiedRatingHistogram,
+  getHotShows,
   updateUserBio 
 };
+
 
 
 
