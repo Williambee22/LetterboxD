@@ -47,7 +47,9 @@
       opacity: 0.95;
     }
     .bellBtn:hover { background: rgba(255,255,255,0.06); }
-    .badge {
+
+    .badge,
+    .badgeDot {
       position:absolute;
       top: 3px;
       right: 3px;
@@ -209,91 +211,93 @@
       opacity: 0.8;
     }
 
-    /* Mobile Optimization for Pressboxd */
     @media (max-width: 768px) {
-        /* 1. Header & Navigation */
         .topbar .wrap {
             flex-direction: column !important;
             gap: 15px;
             padding: 15px 10px !important;
         }
-    
+
         .nav.row {
             width: 100%;
             justify-content: center;
             gap: 12px;
             flex-wrap: wrap;
         }
-    
+
         .auth.row {
             width: 100%;
             justify-content: center;
             flex-wrap: wrap;
             gap: 10px;
         }
-    
-        /* 2. User Search Input */
+
         .userSearchInput {
-            width: 100% !important; /* Grow to fill screen width */
+            width: 100% !important;
             min-width: 280px;
         }
-    
+
         .userSearchDropdown {
             width: 100%;
             right: 0;
             left: 0;
         }
-    
-        /* 3. Hero / Welcome Section */
+
         main.wrap > div:first-child div[style*="font-size: 42px"] {
-            font-size: 28px !important; /* Shrink "Welcome to Pressboxd" */
+            font-size: 28px !important;
         }
-    
-        /* 4. Friend Activity Cards */
+
         div[style*="flex: 1 1 240px"] {
-            flex: 1 1 100% !important; /* Stack friend activity full width */
+            flex: 1 1 100% !important;
             max-width: none !important;
         }
-    
-        /* 5. Filter Form */
+
         #showsFilterForm {
             flex-direction: column !important;
             align-items: stretch !important;
         }
-    
+
         #showsFilterForm .field {
             width: 100% !important;
             min-width: 0 !important;
         }
-    
+
         #showsFilterForm .actions {
             display: flex;
             gap: 8px;
             margin-top: 10px;
         }
-    
+
         #showsFilterForm .actions .btn {
             flex: 1;
             text-align: center;
         }
-    
-        /* 6. Notifications Dropdown */
+
         .notifDropdown {
-            width: 90vw; /* Almost full width of screen */
+            width: 90vw;
             position: fixed;
             left: 5vw;
             right: 5vw;
             top: 60px;
         }
+
+        main.wrap > div[style*="justify-content: center"] {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+
+        main.wrap > div[style*="justify-content: center"] > div {
+            max-width: none !important;
+            width: 100% !important;
+        }
     }
-    
-    /* Extra small screens (Phones) */
+
     @media (max-width: 480px) {
         .postergrid {
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
             gap: 10px !important;
         }
-    
+
         .poster_title {
             font-size: 14px !important;
         }
@@ -305,6 +309,7 @@
   const POSTER_FALLBACK = "/static/posters/placeholder.png";
   const safeRows = Array.isArray(rows) ? rows : [];
   const safeFriendActivity = Array.isArray(friend_activity) ? friend_activity : [];
+  const safeHotShows = Array.isArray(hot_shows) ? hot_shows : [];
   const meUser = typeof me !== "undefined" ? me : null;
   const notifCountSafe = typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
   const notifItemsSafe = Array.isArray(typeof notif_items !== "undefined" ? notif_items : []) ? notif_items : [];
@@ -313,7 +318,6 @@
     <header class="topbar">
       <div class="wrap row between">
         <div style="display: flex; align-items: center; gap: 10px;">
-          
           <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display: flex; align-items: center; text-decoration: none;">
             <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
               <img 
@@ -325,12 +329,12 @@
               >
             </div>
           </a>
-    
+
           <a class="brand" href="/shows">
             <span>Pressboxd</span>
           </a>
-    
         </div>
+
       <nav class="nav row">
         <a href="/shows">Shows</a>
         <a href="/top">Top Shows</a>
@@ -415,23 +419,136 @@
   </header>
 
   <main class="wrap">
-    <div style="width: 100%; text-align: center; padding: 20px 0; display: block;">
-      <div style="font-weight: 900; font-size: 42px; line-height: 1.1; letter-spacing: -1px; margin-bottom: 10px; color: #ffffff;">
-        Welcome to <span style="color: #3252b3;">Pressboxd</span>
+    <div
+      style="
+        width: 100%;
+        padding: 20px 0;
+        display: flex;
+        gap: 18px;
+        align-items: flex-start;
+        justify-content: center;
+        flex-wrap: wrap;
+      "
+    >
+      <div
+        style="
+          flex: 1 1 560px;
+          min-width: 320px;
+          text-align: center;
+          display: block;
+        "
+      >
+        <div style="font-weight: 900; font-size: 42px; line-height: 1.1; letter-spacing: -1px; margin-bottom: 10px; color: #ffffff;">
+          Welcome to <span style="color: #3252b3;">Pressboxd</span>
+        </div>
+        <div style="max-width: 600px; margin: 10px auto 0; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); color: #ffffff;">
+          <p style="margin-bottom: 8px; opacity: 0.9; font-size: 14px;">
+            <strong>Early Development:</strong> Customization options and UI optimization are coming soon!
+          </p>
+          <p style="margin-bottom: 10px; font-style: italic; color: #ffcc00; font-weight: 500; font-size: 14px; line-height: 1.4;">
+            If the site feels down or you are logged out, we are likely pushing live fixes. We apologize for the inconvenience! (likely development window times: 8am-9:30am, 9pm-10pm)
+          </p>
+          <p style="opacity: 0.8; font-size: 14px; margin-bottom: 0;">
+            Suggestions? Reach out at 
+            <a href="mailto:PressboxdContact@gmail.com" style="color: #3252b3; text-decoration: none; font-weight: bold;">PressboxdContact@gmail.com</a>
+          </p>
+        </div>
       </div>
-      <div style="max-width: 600px; margin: 10px auto 0; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); color: #ffffff;">
-        <p style="margin-bottom: 8px; opacity: 0.9; font-size: 14px;">
-          <strong>Early Development:</strong> Customization options and UI optimization are coming soon!
-        </p>
-        <p style="margin-bottom: 10px; font-style: italic; color: #ffcc00; font-weight: 500; font-size: 14px; line-height: 1.4;">
-          If the site feels down or you are logged out, we are likely pushing live fixes. We apologize for the inconvenience! (likely development window times: 8am-9:30am, 9pm-10pm)
-        </p>
-        <p style="opacity: 0.8; font-size: 14px; margin-bottom: 0;">
-          Suggestions? Reach out at 
-          <a href="mailto:PressboxdContact@gmail.com" style="color: #3252b3; text-decoration: none; font-weight: bold;">PressboxdContact@gmail.com</a>
-        </p>
+
+      <div
+        class="accentCard accentBorderSoft"
+        style="
+          flex: 0 1 360px;
+          min-width: 300px;
+          max-width: 380px;
+          padding: 14px;
+          text-align: left;
+        "
+      >
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+          <div>
+            <div style="font-weight:900; font-size:18px; line-height:1.1;">🔥 Hot</div>
+            <div class="muted small">Top 3 most active shows in the last 24 hours</div>
+          </div>
+        </div>
+
+        <% if (safeHotShows.length > 0) { %>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <% for (let i = 0; i < safeHotShows.length; i++) {
+                 const hs = safeHotShows[i] || {};
+                 const hotPoster = hs.poster_url || POSTER_FALLBACK;
+                 const hotAvg = hs.avg_rating != null ? Number(hs.avg_rating) : 0;
+            %>
+              <a
+                href="/show/<%= hs.id %>"
+                style="
+                  display:flex;
+                  gap:12px;
+                  align-items:center;
+                  text-decoration:none;
+                  color:inherit;
+                  padding:10px;
+                  border-radius:12px;
+                  background: rgba(255,255,255,0.04);
+                  border:1px solid rgba(255,255,255,0.08);
+                "
+              >
+                <div style="width:32px; flex:0 0 32px; text-align:center; font-weight:900; font-size:20px; opacity:.92;">
+                  <%= i + 1 %>
+                </div>
+
+                <div
+                  class="accentThumb"
+                  style="
+                    width:50px;
+                    height:74px;
+                    border-radius:10px;
+                    overflow:hidden;
+                    flex:0 0 50px;
+                  "
+                >
+                  <img
+                    src="<%= hotPoster %>"
+                    alt="poster"
+                    style="width:100%; height:100%; object-fit:cover; display:block;"
+                    onerror="this.src='<%= POSTER_FALLBACK %>';"
+                  >
+                </div>
+
+                <div style="min-width:0; flex:1;">
+                  <div style="font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    <%= hs.title || 'Untitled' %>
+                  </div>
+                  <div class="muted small" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    <%= hs.corps || '' %><% if (hs.year) { %> • <%= hs.year %><% } %>
+                  </div>
+                  <div style="margin-top:4px; font-size:12px; opacity:.9;">
+                    <span><%= Number(hs.activity_count || 0) %> activity</span>
+                    <% if (Number(hs.ratings_24h || 0) > 0 || Number(hs.reviews_24h || 0) > 0) { %>
+                      <span style="opacity:.5; margin:0 6px;">•</span>
+                      <span><%= Number(hs.ratings_24h || 0) %> ratings</span>
+                      <span style="opacity:.5; margin:0 4px;">/</span>
+                      <span><%= Number(hs.reviews_24h || 0) %> reviews</span>
+                    <% } %>
+                  </div>
+                </div>
+
+                <div style="flex:0 0 auto; text-align:right;">
+                  <% if (hotAvg > 0) { %>
+                    <div style="font-weight:800;">★ <%= hotAvg.toFixed(2) %></div>
+                  <% } else { %>
+                    <div class="muted small">Unrated</div>
+                  <% } %>
+                </div>
+              </a>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="muted small" style="padding:8px 2px;">No trending shows in the last 24 hours yet.</div>
+        <% } %>
       </div>
     </div>
+
     <% if (meUser) { %>
       <div class="panel" style="margin-top:12px; padding:12px;">
         <div class="row between" style="align-items:center; margin-bottom:-10px;">
@@ -550,23 +667,23 @@
           e.stopPropagation();
           dd.classList.toggle("open");
         });
-  
+
         dd.addEventListener("click", (e) => e.stopPropagation());
         document.addEventListener("click", () => dd.classList.remove("open"));
       }
     })();
-  
+
     (() => {
       const form = document.getElementById("showsFilterForm");
       const corpsInput = document.getElementById("corpsFilterInput");
       if (!form || !corpsInput) return;
-  
+
       let timer = null;
       let isSubmitting = false;
-  
+
       corpsInput.addEventListener("input", () => {
         if (isSubmitting) return;
-  
+
         clearTimeout(timer);
         timer = setTimeout(() => {
           isSubmitting = true;
@@ -574,7 +691,7 @@
           form.submit();
         }, 400);
       });
-  
+
       window.addEventListener("load", () => {
         const shouldRestore = sessionStorage.getItem("restoreCorpsFocus");
         if (shouldRestore === "1" && corpsInput) {
@@ -585,15 +702,15 @@
         }
       });
     })();
-  
+
     (() => {
       const input = document.getElementById("userSearchInput");
       const dropdown = document.getElementById("userSearchDropdown");
       if (!input || !dropdown) return;
-  
+
       let timer = null;
       let requestId = 0;
-  
+
       function escapeHtml(str) {
         return String(str || "")
           .replace(/&/g, "&amp;")
@@ -602,19 +719,19 @@
           .replace(/"/g, "&quot;")
           .replace(/'/g, "&#039;");
       }
-  
+
       function renderUsers(users) {
         if (!Array.isArray(users) || users.length === 0) {
           dropdown.innerHTML = '<div class="userSearchEmpty">No users found.</div>';
           dropdown.classList.add("open");
           return;
         }
-  
+
         dropdown.innerHTML = users.map(u => {
           const avatar = u.avatar_url
             ? `<img src="${escapeHtml(u.avatar_url)}" alt="${escapeHtml(u.username)}">`
             : `<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;opacity:.7;">👤</span>`;
-  
+
           return `
             <a class="userSearchItem" href="/u/${encodeURIComponent(u.username)}">
               <div class="userSearchAvatar">${avatar}</div>
@@ -626,39 +743,39 @@
             </a>
           `;
         }).join("");
-  
+
         dropdown.classList.add("open");
       }
-  
+
       function clearDropdown() {
         dropdown.innerHTML = "";
         dropdown.classList.remove("open");
       }
-  
+
       input.addEventListener("input", () => {
         const q = input.value.trim();
         clearTimeout(timer);
-  
+
         if (!q) {
           clearDropdown();
           return;
         }
-  
+
         timer = setTimeout(async () => {
           const currentRequest = ++requestId;
-  
+
           try {
             const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`, {
               headers: { "Accept": "application/json" }
             });
-  
+
             if (!res.ok) throw new Error("search request failed");
-  
+
             const data = await res.json();
-  
+
             if (currentRequest !== requestId) return;
-  
-            renderUsers(Array.isArray(data.users) ? data.users : []);
+
+            renderUsers(Array.isArray(data.results) ? data.results : []);
           } catch (err) {
             console.error("user search failed:", err);
             if (currentRequest !== requestId) return;
@@ -667,13 +784,13 @@
           }
         }, 200);
       });
-  
+
       input.addEventListener("focus", () => {
         if (dropdown.innerHTML.trim()) {
           dropdown.classList.add("open");
         }
       });
-  
+
       document.addEventListener("click", (e) => {
         if (!dropdown.contains(e.target) && e.target !== input) {
           dropdown.classList.remove("open");
@@ -683,7 +800,3 @@
   </script>
 </body>
 </html>
-
-
-
-
