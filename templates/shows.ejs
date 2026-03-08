@@ -579,8 +579,12 @@
                       <span class="muted">Unrated</span>
                       <span style="opacity:.5; margin:0 6px;">•</span>
                     <% } %>
-                
+                  
                     <span><%= Number(hs.activity_count || 0) %> activity</span>
+                  
+                    <span style="opacity:.5; margin:0 6px;">•</span>
+                    <span><%= Number(hs.ratings_24h || 0) %> ratings</span>
+                  
                     <% if (Number(hs.reviews_24h || 0) > 0) { %>
                       <span style="opacity:.5; margin:0 6px;">•</span>
                       <span><%= Number(hs.reviews_24h || 0) %> reviews</span>
@@ -846,5 +850,6 @@
   </script>
 </body>
 </html>
+
 
 
