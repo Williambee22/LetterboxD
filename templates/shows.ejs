@@ -542,7 +542,7 @@
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
           <div>
             <div style="font-weight:900; font-size:18px; line-height:1.1;">Hot Shows</div>
-            <div class="muted small">Top 3 most active shows in the last 24 hours</div>
+            <div class="muted small">Top 3 most active shows in the last week.</div>
           </div>
         </div>
 
@@ -580,16 +580,16 @@
                       <span style="opacity:.5; margin:0 6px;">•</span>
                     <% } %>
                   
-                    <span><%= Number(hs.ratings_24h || 0) %> ratings</span>
+                    <span><%= Number(hs.ratings_2d || 0) %> ratings</span>
                     <span style="opacity:.5; margin:0 6px;">•</span>
-                    <span><%= Number(hs.reviews_24h || 0) %> reviews</span>
+                    <span><%= Number(hs.reviews_2d || 0) %> reviews</span>
                   </div>
                 </div>
               </a>
             <% } %>
           </div>
         <% } else { %>
-          <div class="muted small" style="padding:8px 2px;">No trending shows in the last 24 hours yet.</div>
+          <div class="muted small" style="padding:8px 2px;">No trending shows in the last week yet.</div>
         <% } %>
       </div>
     </div>
@@ -844,6 +844,7 @@
   </script>
 </body>
 </html>
+
 
 
 
