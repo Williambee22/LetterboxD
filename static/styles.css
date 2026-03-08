@@ -1,13 +1,13 @@
 :root{
-  --bg:#090909;
+  --bg:#000000;
   --bg2:#000000;
   --panel:#0b0b0b;
   --panel2:#101010;
   --card:#0f0f0f;
-  --line:rgba(255,255,255,.10);
-  --line2:rgba(255,255,255,.06);
   --text:#e7ebf2;
   --muted:#a3adbb;
+  --line:rgba(255,255,255,.10);
+  --line2:rgba(255,255,255,.06);
 
   --accent:#7c7c7c;
   --accentSoft:color-mix(in srgb, var(--accent) 35%, transparent);
@@ -998,6 +998,7 @@ textarea:focus{
   border-color: rgba(220, 38, 38, .7);
   color: #ef4444; /* red */
 }
+
 
 
 
