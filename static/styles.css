@@ -39,9 +39,7 @@ body{
   margin:0;
   font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   color:var(--text);
-  background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--accent) 10%, transparent), transparent 30%),
-    linear-gradient(180deg, var(--bg2), var(--bg));
+  background:var(--bg);
 }
 
 img{
@@ -998,6 +996,7 @@ textarea:focus{
   border-color: rgba(220, 38, 38, .7);
   color: #ef4444; /* red */
 }
+
 
 
 
