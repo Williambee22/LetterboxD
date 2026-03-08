@@ -14,7 +14,7 @@
     .accentBorderSoft { border: 1px solid color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,0.10)); }
 
     .accentCard {
-      background: #000;
+      background: #000000;
       border: 1px solid color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,0.10));
       border-radius: 12px;
     }
@@ -697,10 +697,10 @@
                   class="muted small"
                   style="
                     position:absolute;
-                    right:1;
+                    right:0;
                     bottom:0;
-                    font-size:10px;
-                    line-height:1.1;
+                    font-size:9px;
+                    line-height:1.2;
                   "
                 >
                   <%= Number(row.cnt || 0) %> ratings
@@ -860,6 +860,7 @@
   </script>
 </body>
 </html>
+
 
 
 
