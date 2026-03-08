@@ -669,14 +669,12 @@
         <% for (const row of safeRows) {
               const poster = row?.poster_url || POSTER_FALLBACK;
               const avg = row?.avg_rating != null ? Number(row.avg_rating) : (row?.avg != null ? Number(row.avg) : 0);
-              let pct = Math.min(Math.max(avg / 5.0, 0), 1);
-              const hue = 60 * Math.pow(pct, 2.6);
         %>
           <a class="poster" href="/show/<%= row.id %>">
             <div class="poster_art">
               <img class="poster_img" src="<%= poster %>" alt="poster" loading="lazy" onerror="this.src='<%= POSTER_FALLBACK %>';">
               <% if (row.cnt > 0) { %>
-                <div class="tile_rating" style="color: hsl(<%= hue %>, 98%, 62%);"><span class="tile_star">★</span> <%= avg.toFixed(2) %></div>
+                <div class="tile_rating" style="color: #ffffff;"><span class="tile_star">★</span> <%= avg.toFixed(2) %></div>
                 <div class="tile_count"><%= row.cnt %> ratings</div>
               <% } else { %>
                 <span class="badge unrated bottom_left">Unrated</span>
@@ -845,6 +843,7 @@
   </script>
 </body>
 </html>
+
 
 
 
