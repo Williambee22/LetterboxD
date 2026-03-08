@@ -684,7 +684,7 @@
             <div class="poster_art" style="position:relative;">
               <img class="poster_img" src="<%= poster %>" alt="poster" loading="lazy" onerror="this.src='<%= POSTER_FALLBACK %>';">
               <% if (row.cnt > 0) { %>
-                <div class="tile_rating" style="color: hsl(<%= hue %>, 99%, 52%); text-shadow: -0.5px -0.5px 0 #fff, 0.5px -0.5px 0 #fff, -0.5px 0.5px 0 #fff, 0.5px 0.5px 0 #fff, 0 0 4px rgba(0,0,0,0.9);"><span class="tile_star">★</span> <%= avg.toFixed(2) %></div>
+                <div class="tile_rating" style="color: hsl(<%= hue %>, 99%, 52%); text-shadow: -0.1px -0.1px 0 #fff, 0.1px -0.1px 0 #fff, -0.1px 0.1px 0 #fff, 0.1px 0.1px 0 #fff, 0 0 4px rgba(0,0,0,0.9);"><span class="tile_star">★</span> <%= avg.toFixed(2) %></div>
             
                 <div
                   class="muted small"
@@ -872,6 +872,7 @@
   </script>
 </body>
 </html>
+
 
 
 
