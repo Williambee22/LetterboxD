@@ -10,6 +10,14 @@
   <link rel="stylesheet" href="/static/styles.css"/>
 
   <style>
+
+    html,
+    body,
+    body.app {
+      background: #000000 !important;
+      background-image: none !important;
+    }
+
     .accentBorder { border: 1px solid color-mix(in srgb, var(--accent) 28%, rgba(255,255,255,0.10)); }
     .accentBorderSoft { border: 1px solid color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,0.10)); }
 
@@ -673,16 +681,35 @@
               const hue = 60 * Math.pow(pct, 2.6);
         %>
           <a class="poster" href="/show/<%= row.id %>">
-            <div class="poster_art">
+            <div class="poster_art" style="position:relative;">
               <img class="poster_img" src="<%= poster %>" alt="poster" loading="lazy" onerror="this.src='<%= POSTER_FALLBACK %>';">
               <% if (row.cnt > 0) { %>
-                <div class="tile_rating" style="color: hsl(<%= hue %>, 98%, 52%);"><span class="tile_star">★</span> <%= avg.toFixed(2) %></div>
-                <div class="tile_count"><%= row.cnt %> ratings</div>
+                <div class="tile_rating" style="color: #ffffff;"><span class="tile_star">★</span> <%= avg.toFixed(2) %></div>
+            
+                <div
+                  class="muted small"
+                  style="
+                    position:absolute;
+                    left:8px;
+                    bottom:8px;
+                    z-index:3;
+                    background: rgba(0,0,0,0.78);
+                    color:#ffffff;
+                    padding:4px 7px;
+                    border-radius:999px;
+                    font-size:10px;
+                    line-height:1;
+                    border:1px solid rgba(255,255,255,0.10);
+                  "
+                >
+                  <%= Number(row.cnt || 0) %> ratings
+                </div>
               <% } else { %>
                 <span class="badge unrated bottom_left">Unrated</span>
               <% } %>
             </div>
-            <div class="poster_meta" style="position:relative;">
+            
+            <div class="poster_meta">
               <div class="poster_title"><%= row.title || 'Untitled' %></div>
               <div class="poster_sub">
                 <%= row.corps || '' %>
@@ -691,21 +718,6 @@
                   <span><%= row.year %></span>
                 <% } %>
               </div>
-            
-              <% if (Number(row.cnt || 0) > 0) { %>
-                <div
-                  class="muted small"
-                  style="
-                    position:absolute;
-                    right:0;
-                    bottom:0;
-                    font-size:9px;
-                    line-height:1.2;
-                  "
-                >
-                  <%= Number(row.cnt || 0) %> ratings
-                </div>
-              <% } %>
             </div>
           </a>
         <% } %>
@@ -860,6 +872,7 @@
   </script>
 </body>
 </html>
+
 
 
 
