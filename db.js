@@ -247,7 +247,7 @@ function getHotShows(conn, limit = 3) {
         r.show_id,
         COUNT(*) AS ratings_24h
       FROM ratings r
-      WHERE datetime(r.created_at) >= datetime('now', '-1 day')
+      WHERE CAST(r.created_ts AS INTEGER) >= strftime('%s','now','-1 day')
       GROUP BY r.show_id
     ),
     recent_reviews AS (
@@ -255,7 +255,7 @@ function getHotShows(conn, limit = 3) {
         rv.show_id,
         COUNT(*) AS reviews_24h
       FROM reviews rv
-      WHERE datetime(rv.created_at) >= datetime('now', '-1 day')
+      WHERE CAST(rv.created_ts AS INTEGER) >= strftime('%s','now','-1 day')
       GROUP BY rv.show_id
     )
     SELECT
@@ -1629,6 +1629,7 @@ module.exports = {
   getHotShows,
   updateUserBio 
 };
+
 
 
 
