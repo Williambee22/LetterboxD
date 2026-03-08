@@ -242,20 +242,12 @@ function updateUserBio(conn, userId, bio) {
 
 function getHotShows(conn, limit = 3) {
   return conn.prepare(`
-    WITH recent_ratings AS (
-      SELECT
-        r.show_id,
-        COUNT(*) AS ratings_24h
-      FROM ratings r
-      WHERE CAST(r.created_ts AS INTEGER) >= strftime('%s','now','-1 day')
-      GROUP BY r.show_id
-    ),
-    recent_reviews AS (
+    WITH recent_reviews AS (
       SELECT
         rv.show_id,
         COUNT(*) AS reviews_24h
       FROM reviews rv
-      WHERE CAST(rv.ts AS INTEGER) >= strftime('%s','now','-1 day')
+      WHERE CAST(COALESCE(rv.ts, 0) AS INTEGER) >= strftime('%s','now','-1 day')
       GROUP BY rv.show_id
     )
     SELECT
@@ -264,26 +256,24 @@ function getHotShows(conn, limit = 3) {
       s.corps,
       s.year,
       s.poster_url,
-      COALESCE(rr.ratings_24h, 0) AS ratings_24h,
-      COALESCE(rv.reviews_24h, 0) AS reviews_24h,
-      COALESCE(rr.ratings_24h, 0) + COALESCE(rv.reviews_24h, 0) AS activity_count,
-      (
-        SELECT AVG(r2.rating_half / 2.0)
+      0 AS ratings_24h,
+      COALESCE(rr.reviews_24h, 0) AS reviews_24h,
+      COALESCE(rr.reviews_24h, 0) AS activity_count,
+      COALESCE((
+        SELECT ROUND(AVG(r2.rating_half / 2.0), 2)
         FROM ratings r2
         WHERE r2.show_id = s.id
-      ) AS avg_rating
+      ), 0) AS avg_rating
     FROM shows s
-    LEFT JOIN recent_ratings rr ON rr.show_id = s.id
-    LEFT JOIN recent_reviews rv ON rv.show_id = s.id
-    WHERE COALESCE(rr.ratings_24h, 0) + COALESCE(rv.reviews_24h, 0) > 0
+    INNER JOIN recent_reviews rr
+      ON rr.show_id = s.id
     ORDER BY
       activity_count DESC,
-      reviews_24h DESC,
-      ratings_24h DESC,
+      avg_rating DESC,
       s.year DESC,
       s.id DESC
     LIMIT ?
-  `).all(limit);
+  `).all(Number(limit || 3));
 }
 
 function userByResetToken(conn, token) {
@@ -1629,6 +1619,7 @@ module.exports = {
   getHotShows,
   updateUserBio 
 };
+
 
 
 
