@@ -211,6 +211,104 @@
       opacity: 0.8;
     }
 
+    .hotWrap {
+      width: 100%;
+      padding: 20px 0;
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .hotIntro {
+      flex: 1 1 560px;
+      min-width: 320px;
+      text-align: center;
+      display: block;
+    }
+    
+    .hotCard {
+      flex: 0 1 360px;
+      min-width: 300px;
+      max-width: 380px;
+      padding: 14px;
+      text-align: left;
+    }
+    
+    .hotList {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .hotItem {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .hotRank {
+      width: 32px;
+      flex: 0 0 32px;
+      text-align: center;
+      font-weight: 900;
+      font-size: 20px;
+      opacity: .92;
+    }
+    
+    .hotPosterBox {
+      width: 58px;
+      height: 82px;
+      border-radius: 10px;
+      overflow: hidden;
+      flex: 0 0 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .hotPosterImg {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: rgba(0,0,0,0.18);
+    }
+    
+    .hotMeta {
+      min-width: 0;
+      flex: 1;
+    }
+    
+    .hotTitle {
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .hotSub {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .hotActivity {
+      margin-top: 4px;
+      font-size: 12px;
+      opacity: .9;
+    }
+
+
     @media (max-width: 768px) {
         .topbar .wrap {
             flex-direction: column !important;
@@ -298,6 +396,19 @@
             gap: 10px !important;
         }
 
+        .hotWrap {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+
+        .hotIntro,
+        .hotCard {
+            max-width: none !important;
+            width: 100% !important;
+        }
+
+
+
         .poster_title {
             font-size: 14px !important;
         }
@@ -361,7 +472,7 @@
                   <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
                 </svg>
                 <% if (notifCountSafe > 0) { %>
-                  <span class="badgeDot"><%= notifCountSafe %></span>
+                  <span class="badge"><%= notifCountSafe %></span>
                 <% } %>
               </button>
               <div class="notifDropdown" id="notifDropdown">
@@ -438,23 +549,72 @@
           display: block;
         "
       >
-        <div style="font-weight: 900; font-size: 42px; line-height: 1.1; letter-spacing: -1px; margin-bottom: 10px; color: #ffffff;">
-          Welcome to <span style="color: #3252b3;">Pressboxd</span>
+        <div class="hotWrap">
+          <div class="hotIntro">
+            <div style="font-weight: 900; font-size: 42px; line-height: 1.1; letter-spacing: -1px; margin-bottom: 10px; color: #ffffff;">
+              Welcome to <span style="color: #3252b3;">Pressboxd</span>
+            </div>
+            <div style="max-width: 600px; margin: 10px auto 0; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); color: #ffffff;">
+              <p style="margin-bottom: 8px; opacity: 0.9; font-size: 14px;">
+                <strong>Early Development:</strong> Customization options and UI optimization are coming soon!
+              </p>
+              <p style="margin-bottom: 10px; font-style: italic; color: #ffcc00; font-weight: 500; font-size: 14px; line-height: 1.4;">
+                If the site feels down or you are logged out, we are likely pushing live fixes. We apologize for the inconvenience! (likely development window times: 8am-9:30am, 9pm-10pm)
+              </p>
+              <p style="opacity: 0.8; font-size: 14px; margin-bottom: 0;">
+                Suggestions? Reach out at
+                <a href="mailto:PressboxdContact@gmail.com" style="color: #3252b3; text-decoration: none; font-weight: bold;">PressboxdContact@gmail.com</a>
+              </p>
+            </div>
+          </div>
+        
+          <div class="accentCard accentBorderSoft hotCard">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+              <div>
+                <div style="font-weight:900; font-size:18px; line-height:1.1;">🔥 Hot</div>
+                <div class="muted small">Top 3 most active shows in the last 24 hours</div>
+              </div>
+            </div>
+        
+            <% if (safeHotShows.length > 0) { %>
+              <div class="hotList">
+                <% for (let i = 0; i < safeHotShows.length; i++) {
+                     const hs = safeHotShows[i] || {};
+                     const hotPoster = hs.poster_url || POSTER_FALLBACK;
+                %>
+                  <a class="hotItem" href="/show/<%= hs.id %>">
+                    <div class="hotRank"><%= i + 1 %></div>
+        
+                    <div class="hotPosterBox accentThumb">
+                      <img
+                        class="hotPosterImg"
+                        src="<%= hotPoster %>"
+                        alt="poster"
+                        onerror="this.src='<%= POSTER_FALLBACK %>';"
+                      >
+                    </div>
+        
+                    <div class="hotMeta">
+                      <div class="hotTitle"><%= hs.title || 'Untitled' %></div>
+                      <div class="hotSub muted small">
+                        <%= hs.corps || '' %><% if (hs.year) { %> • <%= hs.year %><% } %>
+                      </div>
+                      <div class="hotActivity">
+                        <span><%= Number(hs.activity_count || 0) %> activity</span>
+                        <% if (Number(hs.reviews_24h || 0) > 0) { %>
+                          <span style="opacity:.5; margin:0 6px;">•</span>
+                          <span><%= Number(hs.reviews_24h || 0) %> reviews</span>
+                        <% } %>
+                      </div>
+                    </div>
+                  </a>
+                <% } %>
+              </div>
+            <% } else { %>
+              <div class="muted small" style="padding:8px 2px;">No trending shows in the last 24 hours yet.</div>
+            <% } %>
+          </div>
         </div>
-        <div style="max-width: 600px; margin: 10px auto 0; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); color: #ffffff;">
-          <p style="margin-bottom: 8px; opacity: 0.9; font-size: 14px;">
-            <strong>Early Development:</strong> Customization options and UI optimization are coming soon!
-          </p>
-          <p style="margin-bottom: 10px; font-style: italic; color: #ffcc00; font-weight: 500; font-size: 14px; line-height: 1.4;">
-            If the site feels down or you are logged out, we are likely pushing live fixes. We apologize for the inconvenience! (likely development window times: 8am-9:30am, 9pm-10pm)
-          </p>
-          <p style="opacity: 0.8; font-size: 14px; margin-bottom: 0;">
-            Suggestions? Reach out at 
-            <a href="mailto:PressboxdContact@gmail.com" style="color: #3252b3; text-decoration: none; font-weight: bold;">PressboxdContact@gmail.com</a>
-          </p>
-        </div>
-      </div>
-
       <div
         class="accentCard accentBorderSoft"
         style="
@@ -800,3 +960,4 @@
   </script>
 </body>
 </html>
+
