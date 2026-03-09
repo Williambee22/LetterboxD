@@ -153,9 +153,22 @@ ON notifications(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_unread
 
 
+CREATE TABLE IF NOT EXISTS user_favorite_shows (
+  user_id    INTEGER NOT NULL,
+  show_id    INTEGER NOT NULL,
+  created_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+  PRIMARY KEY (user_id, show_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (show_id) REFERENCES shows(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_favorite_shows_user_created
+ON user_favorite_shows(user_id, created_ts DESC);
+
 
 SELECT username, theme_color
 FROM users
 WHERE username = 'yourusername';
 
 ON notifications(user_id, is_read);
+
