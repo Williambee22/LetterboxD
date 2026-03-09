@@ -529,23 +529,19 @@ function createApp() {
   });
 
   function getConn() {
-    const conn = dbx.connect(DB_PATH);
-    dbx.ensureReviewsTable(conn);
-    dbx.ensureProfileColumns(conn);
-    dbx.ensureRolesTables(conn);
-    dbx.ensureReviewVotesTable(conn);
-    dbx.ensureReviewCommentsTable(conn);
-    dbx.ensureSocialTables(conn);
-    dbx.ensureNotificationsTable(conn);
-    dbx.ensureAuthColumns(conn);
-    dbx.ensureFavoriteShowsTable(conn);
-    dbx.isShowFavoritedByUser(conn, userId, showId);
-    dbx.countUserFavoriteShows(conn, userId);
-    dbx.addUserFavoriteShow(conn, userId, showId);
-    dbx.removeUserFavoriteShow(conn, userId, showId);
-    dbx.getUserFavoriteShows(conn, userId, limit);
-    return conn;
-  }
+  const conn = dbx.connect(DB_PATH);
+  dbx.ensureReviewsTable(conn);
+  dbx.ensureProfileColumns(conn);
+  dbx.ensureRolesTables(conn);
+  dbx.ensureReviewVotesTable(conn);
+  dbx.ensureReviewCommentsTable(conn);
+  dbx.ensureSocialTables(conn);
+  dbx.ensureNotificationsTable(conn);
+  dbx.ensureAuthColumns(conn);
+  dbx.ensureFavoriteShowsTable(conn);
+  return conn;
+}
+  
   const uploadPfp = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
@@ -2558,6 +2554,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
