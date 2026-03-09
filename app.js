@@ -538,6 +538,12 @@ function createApp() {
     dbx.ensureSocialTables(conn);
     dbx.ensureNotificationsTable(conn);
     dbx.ensureAuthColumns(conn);
+    dbx.ensureFavoriteShowsTable(conn);
+    dbx.isShowFavoritedByUser(conn, userId, showId);
+    dbx.countUserFavoriteShows(conn, userId);
+    dbx.addUserFavoriteShow(conn, userId, showId);
+    dbx.removeUserFavoriteShow(conn, userId, showId);
+    dbx.getUserFavoriteShows(conn, userId, limit);
     return conn;
   }
   const uploadPfp = multer({
@@ -990,6 +996,14 @@ function createApp() {
       const myRating = viewerUid ? await dbx.userRatingForShow(conn, showId, viewerUid) : null;
       const myReview = viewerUid ? await dbx.myReviewForShow(conn, showId, viewerUid) : null;
   
+      const isFavorite = viewerUid
+        ? !!dbx.isShowFavoritedByUser(conn, viewerUid, showId)
+        : false;
+  
+      const favoriteCount = viewerUid
+        ? Number(dbx.countUserFavoriteShows(conn, viewerUid) || 0)
+        : 0;
+  
       if (me && !me.avatar_url) me.avatar_url = pfpUrlForUsername(me.username || '');
   
       const reviews = (await dbx.listReviewsForShow(conn, showId, { viewerUserId: viewerUid, limit: 300 }) || []).map((rv) => {
@@ -1054,6 +1068,8 @@ function createApp() {
         verified_rating_histogram,
         reviews: reviewsWithComments,
         sort: activeSort,
+        is_favorite: isFavorite,
+        favorite_count: favoriteCount,
       });
     } catch (err) {
       next(err);
@@ -1336,6 +1352,60 @@ function createApp() {
     });
   }));
 
+  app.post('/show/:show_id/favorite', loginRequired(async (req, res) => {
+    const showId = Number(req.params.show_id);
+    const userId = Number(req.session.uid);
+  
+    let conn;
+    try {
+      conn = getConn();
+  
+      const show = await dbx.getShowById(conn, showId);
+      if (!show) return res.sendStatus(404);
+  
+      const result = await dbx.addUserFavoriteShow(conn, userId, showId);
+  
+      if (result && result.ok === false && result.error === 'limit_reached') {
+        req.flash('error', 'You can only have up to 5 favorite shows.');
+        return res.redirect(`/show/${showId}`);
+      }
+  
+      await dbx.commit(conn);
+      req.flash('ok', 'Added to favorites.');
+    } catch (err) {
+      req.flash('error', String(err.message || err));
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  
+    return res.redirect(`/show/${showId}`);
+  }));
+  
+  app.post('/show/:show_id/unfavorite', loginRequired(async (req, res) => {
+    const showId = Number(req.params.show_id);
+    const userId = Number(req.session.uid);
+  
+    let conn;
+    try {
+      conn = getConn();
+  
+      const show = await dbx.getShowById(conn, showId);
+      if (!show) return res.sendStatus(404);
+  
+      await dbx.removeUserFavoriteShow(conn, userId, showId);
+      await dbx.commit(conn);
+      req.flash('ok', 'Removed from favorites.');
+    } catch (err) {
+      req.flash('error', String(err.message || err));
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  
+    return res.redirect(`/show/${showId}`);
+  }));
+
+
+  
   app.post('/admin/bulk_add', adminRequired(async (req, res) => {
     const { items, errors } = parseLines(req.body.bulk_text || '');
 
@@ -1851,7 +1921,7 @@ function createApp() {
       const uid = Number(req.session.uid);
       const u = normalizeRow(await dbx.userById(conn, uid));
       if (!u) return res.sendStatus(404);
-
+  
       const [avg, cnt] = await dbx.userAvgRating(conn, uid);
       u.avg_rating = avg;
       u.avg_rating_cnt = cnt;
@@ -1859,7 +1929,7 @@ function createApp() {
       u.following_count = await dbx.followingCount(conn, uid);
       u.viewer_is_following = await dbx.isFollowing(conn, uid, uid);
       u.viewer_friend_status = await dbx.friendsStatus(conn, uid, uid);
-
+  
       const rolesForMe = (await dbx.rolesForUser(conn, uid) || []).map(normalizeRow);
       const recentRatings = (await dbx.listRecentRatingsForUser(conn, uid, { limit: 8 }) || []).map((x) => {
         const d = normalizeRow(x);
@@ -1871,14 +1941,21 @@ function createApp() {
         if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
-
+  
+      const favoriteShows = (await dbx.getUserFavoriteShows(conn, uid, 5) || []).map((x) => {
+        const d = normalizeRow(x);
+        if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+        return d;
+      });
+  
       if (!u.avatar_url) u.avatar_url = pfpUrlForUsername(u.username || '');
-
+  
       return res.render('profile', {
         profile_user: u,
         user_roles: rolesForMe,
         recent_ratings: recentRatings,
         recent_reviews: recentReviews,
+        favorite_shows: favoriteShows,
         me: u,
         is_me: true,
       });
@@ -1894,17 +1971,17 @@ function createApp() {
       conn = getConn();
       const profile = normalizeRow(await dbx.userByUsername(conn, username));
       if (!profile) return res.sendStatus(404);
-
+  
       const [avg, cnt] = await dbx.userAvgRating(conn, Number(profile.id));
       profile.avg_rating = avg;
       profile.avg_rating_cnt = cnt;
-
+  
       const viewerId = req.session.uid ? Number(req.session.uid) : null;
       profile.followers_count = await dbx.followerCount(conn, Number(profile.id));
       profile.following_count = await dbx.followingCount(conn, Number(profile.id));
       profile.viewer_is_following = viewerId ? await dbx.isFollowing(conn, viewerId, Number(profile.id)) : false;
       profile.viewer_friend_status = viewerId ? await dbx.friendsStatus(conn, viewerId, Number(profile.id)) : 'none';
-
+  
       const rolesForUser = (await dbx.rolesForUser(conn, Number(profile.id)) || []).map(normalizeRow);
       const recentRatings = (await dbx.listRecentRatingsForUser(conn, Number(profile.id), { limit: 7 }) || []).map((x) => {
         const d = normalizeRow(x);
@@ -1916,21 +1993,28 @@ function createApp() {
         if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
-
+  
+      const favoriteShows = (await dbx.getUserFavoriteShows(conn, Number(profile.id), 5) || []).map((x) => {
+        const d = normalizeRow(x);
+        if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+        return d;
+      });
+  
       if (!profile.avatar_url) profile.avatar_url = pfpUrlForUsername(profile.username || '');
-
+  
       let me = null;
       if (req.session.uid) {
         const meRow = await dbx.userById(conn, Number(req.session.uid));
         me = meRow ? normalizeRow(meRow) : null;
       }
-
+  
       const isMe = !!(me && me.username === profile.username);
       return res.render('profile', {
         profile_user: profile,
         user_roles: rolesForUser,
         recent_ratings: recentRatings,
         recent_reviews: recentReviews,
+        favorite_shows: favoriteShows,
         me,
         is_me: isMe,
       });
@@ -1938,7 +2022,7 @@ function createApp() {
       if (conn) dbx.close(conn);
     }
   });
-
+  
   app.get('/me/customize', loginRequired(async (req, res) => {
     let conn;
     try {
@@ -2474,6 +2558,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
+
 
 
 
