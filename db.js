@@ -351,6 +351,110 @@ function addShow(conn, year, corps, title, opts = {}) {
   }
 }
 
+function ensureFavoriteShowsTable(conn) {
+  conn.exec(`
+    CREATE TABLE IF NOT EXISTS user_favorite_shows (
+      user_id    INTEGER NOT NULL,
+      show_id    INTEGER NOT NULL,
+      created_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      PRIMARY KEY (user_id, show_id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (show_id) REFERENCES shows(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_user_favorite_shows_user_created
+    ON user_favorite_shows(user_id, created_ts DESC);
+  `);
+}
+
+function getUserFavoriteShowIds(conn, userId) {
+  ensureFavoriteShowsTable(conn);
+  return conn.prepare(`
+    SELECT show_id
+    FROM user_favorite_shows
+    WHERE user_id = ?
+    ORDER BY created_ts ASC
+  `).all(userId);
+}
+
+function getUserFavoriteShows(conn, userId, limit = 5) {
+  ensureFavoriteShowsTable(conn);
+  return conn.prepare(`
+    SELECT
+      s.id AS show_id,
+      s.title,
+      s.year,
+      s.corps,
+      s.poster_url,
+      ufs.created_ts
+    FROM user_favorite_shows ufs
+    JOIN shows s ON s.id = ufs.show_id
+    WHERE ufs.user_id = ?
+    ORDER BY ufs.created_ts ASC
+    LIMIT ?
+  `).all(userId, limit);
+}
+
+function isShowFavoritedByUser(conn, userId, showId) {
+  ensureFavoriteShowsTable(conn);
+  const row = conn.prepare(`
+    SELECT 1
+    FROM user_favorite_shows
+    WHERE user_id = ? AND show_id = ?
+    LIMIT 1
+  `).get(userId, showId);
+  return !!row;
+}
+
+function countUserFavoriteShows(conn, userId) {
+  ensureFavoriteShowsTable(conn);
+  const row = conn.prepare(`
+    SELECT COUNT(*) AS cnt
+    FROM user_favorite_shows
+    WHERE user_id = ?
+  `).get(userId);
+  return Number(row?.cnt || 0);
+}
+
+function addUserFavoriteShow(conn, userId, showId) {
+  ensureFavoriteShowsTable(conn);
+
+  const existing = conn.prepare(`
+    SELECT 1
+    FROM user_favorite_shows
+    WHERE user_id = ? AND show_id = ?
+    LIMIT 1
+  `).get(userId, showId);
+
+  if (existing) {
+    return { ok: true, already_exists: true, count: countUserFavoriteShows(conn, userId) };
+  }
+
+  const count = countUserFavoriteShows(conn, userId);
+  if (count >= 5) {
+    return { ok: false, error: 'limit_reached', count };
+  }
+
+  conn.prepare(`
+    INSERT INTO user_favorite_shows (user_id, show_id, created_ts)
+    VALUES (?, ?, strftime('%s','now'))
+  `).run(userId, showId);
+
+  return { ok: true, already_exists: false, count: countUserFavoriteShows(conn, userId) };
+}
+
+function removeUserFavoriteShow(conn, userId, showId) {
+  ensureFavoriteShowsTable(conn);
+  conn.prepare(`
+    DELETE FROM user_favorite_shows
+    WHERE user_id = ? AND show_id = ?
+  `).run(userId, showId);
+
+  return { ok: true, count: countUserFavoriteShows(conn, userId) };
+}
+
+
+
 function upsertRating(conn, showId, userId, ratingHalf) {
   return conn.prepare(`
     INSERT INTO ratings (show_id, user_id, rating_half, ts)
@@ -1625,11 +1729,19 @@ module.exports = {
   clearPasswordResetToken,
   setUserMustChangePassword,
   updateUserEmail,
+  getHotShows,
   getRatingHistogram,
   getVerifiedRatingHistogram,
-  getHotShows,
+  ensureFavoriteShowsTable,
+  getUserFavoriteShowIds,
+  getUserFavoriteShows,
+  isShowFavoritedByUser,
+  countUserFavoriteShows,
+  addUserFavoriteShow,
+  removeUserFavoriteShow,
   updateUserBio 
 };
+
 
 
 
