@@ -232,8 +232,6 @@
       }
     }
 
-
-
     .reviewSortSelect {
       width: 100%;
       min-width: 220px;
@@ -502,7 +500,93 @@
       color: var(--text);
     }
 
+    .showTopRight {
+      flex: 0 0 540px !important;
+      width: 540px !important;
+      min-width: 540px !important;
+      margin-left: auto;
+    }
 
+    .showActionPanels {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .favoritePanel {
+      flex: 0 0 132px;
+      width: 132px;
+      min-width: 132px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: none;
+      margin: 0;
+      padding: 14px 10px;
+    }
+
+    .favoriteLabel {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .favoriteHeartForm {
+      width: 100%;
+    }
+
+    .favoriteHeartBtn {
+      width: 72px;
+      height: 72px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.03);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform .15s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease;
+      box-shadow: 0 10px 24px rgba(0,0,0,.18);
+    }
+
+    .favoriteHeartBtn:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .favoriteHeartBtn.on {
+      color: #ff4d6d;
+      border-color: rgba(255,77,109,0.45);
+      background: rgba(255,77,109,0.12);
+      box-shadow: 0 0 0 1px rgba(255,77,109,0.10) inset, 0 10px 24px rgba(0,0,0,.18);
+    }
+
+    .favoriteHeartBtn svg {
+      width: 34px;
+      height: 34px;
+      display: block;
+    }
+
+    .favoriteMeta {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .ratingPanel {
+      flex: 1 1 auto;
+      min-width: 0;
+      box-shadow: none;
+      margin: 0;
+      width: 100%;
+    }
 
     @media (max-width: 768px) {
       .panel > div[style*="display:flex"] {
@@ -530,11 +614,21 @@
         line-height: 1.2;
       }
   
-      div[style*="flex:0 0 380px"] {
+      .showTopRight {
         flex: 1 1 auto !important;
         width: 100% !important;
         min-width: 0 !important;
-        margin: 0 !important;
+        margin-left: 0 !important;
+      }
+  
+      .showActionPanels {
+        flex-direction: column !important;
+      }
+
+      .favoritePanel {
+        width: 100%;
+        min-width: 0;
+        flex: 1 1 auto;
       }
   
       div[style*="display:flex; gap:10px; margin-top:12px"] {
@@ -635,6 +729,8 @@
     const notifCountSafe = typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
     const notifItemsSafe = (typeof notif_items !== "undefined" && Array.isArray(notif_items)) ? notif_items : [];
     const currentUserId = meUser ? Number(meUser.id) : null;
+    const isFavorite = typeof is_favorite !== "undefined" ? !!is_favorite : false;
+    const favoriteCount = typeof favorite_count !== "undefined" ? Number(favorite_count || 0) : 0;
 
     const distLabels = ["5.0","4.5","4.0","3.5","3.0","2.5","2.0","1.5","1.0","0.5","0.0"];
     const ratingHistogramRaw = (typeof rating_histogram !== "undefined" && rating_histogram) ? rating_histogram : {};
@@ -808,100 +904,132 @@
             </div>
           </div>
 
-          <div style="flex:0 0 380px; width:380px; min-width:380px; margin-left:auto;">
-            <div class="panel" style="box-shadow:none; margin:0; width:100%;">
-              <% if (meUser) { %>
-                <div class="kicker">Your rating</div>
+          <div class="showTopRight">
+            <div class="showActionPanels">
+              <div class="panel favoritePanel">
+                <div class="favoriteLabel">Favorite Show</div>
 
-                <form id="rateForm" method="post" action="/show/<%= showRow.id %>/rate">
-                  <input type="hidden" name="rating_half" id="ratingHalf" value="<%= myRatingVal != null ? myRatingVal : 0 %>"/>
+                <% if (meUser) { %>
+                  <% if (isFavorite) { %>
+                    <form class="favoriteHeartForm" method="post" action="/show/<%= showRow.id %>/unfavorite">
+                      <button class="favoriteHeartBtn on" type="submit" title="Remove from favorites" aria-label="Remove from favorites">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                      </button>
+                    </form>
+                  <% } else { %>
+                    <form class="favoriteHeartForm" method="post" action="/show/<%= showRow.id %>/favorite">
+                      <button class="favoriteHeartBtn" type="submit" title="Add to favorites" aria-label="Add to favorites">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                      </button>
+                    </form>
+                  <% } %>
 
-                  <div class="starwrap" style="justify-content:flex-end;">
-                    <div
-                      class="stars"
-                      id="stars"
-                      data-rating="<%= myRatingVal != null ? myRatingVal : 0 %>"
-                      aria-label="Rate this show from 0 to 5 stars in half-star steps"
-                      role="slider"
-                      tabindex="0"
-                    >
-                      <div class="stars-base">★★★★★</div>
-                      <div class="stars-fill" id="starsFill">★★★★★</div>
-                    </div>
-
-                    <div class="muted" id="ratingLabel" style="min-width:90px;"></div>
+                  <div class="favoriteMeta"><%= favoriteCount %>/5 selected</div>
+                <% } else { %>
+                  <div class="favoriteMeta">
+                    <a href="<%= loginNext %>">Log in</a> to favorite.
                   </div>
-                </form>
-
-                <% if (myRatingVal != null) { %>
-                  <form method="post" action="/show/<%= showRow.id %>/unrate" style="margin-top:10px;">
-                    <button class="btn ghost" type="submit">Remove rating</button>
-                  </form>
                 <% } %>
+              </div>
 
-                <script>
-                  (function () {
-                    const stars = document.getElementById("stars");
-                    const fill = document.getElementById("starsFill");
-                    const input = document.getElementById("ratingHalf");
-                    const label = document.getElementById("ratingLabel");
-                    const form = document.getElementById("rateForm");
-                    if (!stars || !fill || !input || !label || !form) return;
+              <div class="panel ratingPanel">
+                <% if (meUser) { %>
+                  <div class="kicker">Your rating</div>
 
-                    const initial = parseInt(stars.dataset.rating || "0", 10);
-                    setDisplay(initial);
+                  <form id="rateForm" method="post" action="/show/<%= showRow.id %>/rate">
+                    <input type="hidden" name="rating_half" id="ratingHalf" value="<%= myRatingVal != null ? myRatingVal : 0 %>"/>
 
-                    function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
-                    function halfToText(rh) {
-                      const val = (rh / 2).toFixed(rh % 2 ? 1 : 0);
-                      return val + " ★";
-                    }
-                    function setDisplay(rh) {
-                      const safe = clamp(rh, 0, 10);
-                      const pct = (safe / 10) * 100;
-                      fill.style.width = pct + "%";
-                      label.textContent = halfToText(safe);
-                    }
-                    function eventToHalf(e) {
-                      const rect = stars.getBoundingClientRect();
-                      const x = clamp(e.clientX - rect.left, 0, rect.width);
-                      return clamp(Math.round((x / rect.width) * 10), 0, 10);
-                    }
+                    <div class="starwrap" style="justify-content:flex-end;">
+                      <div
+                        class="stars"
+                        id="stars"
+                        data-rating="<%= myRatingVal != null ? myRatingVal : 0 %>"
+                        aria-label="Rate this show from 0 to 5 stars in half-star steps"
+                        role="slider"
+                        tabindex="0"
+                      >
+                        <div class="stars-base">★★★★★</div>
+                        <div class="stars-fill" id="starsFill">★★★★★</div>
+                      </div>
 
-                    stars.addEventListener("mousemove", (e) => setDisplay(eventToHalf(e)));
-                    stars.addEventListener("mouseleave", () => setDisplay(parseInt(input.value || "0", 10)));
+                      <div class="muted" id="ratingLabel" style="min-width:90px;"></div>
+                    </div>
+                  </form>
 
-                    stars.addEventListener("click", (e) => {
-                      const rh = eventToHalf(e);
-                      input.value = rh;
-                      setDisplay(rh);
-                      form.submit();
-                    });
+                  <% if (myRatingVal != null) { %>
+                    <form method="post" action="/show/<%= showRow.id %>/unrate" style="margin-top:10px;">
+                      <button class="btn ghost" type="submit">Remove rating</button>
+                    </form>
+                  <% } %>
 
-                    stars.addEventListener("keydown", (e) => {
-                      let rh = parseInt(input.value || "0", 10);
-                      if (e.key === "ArrowLeft") rh = clamp(rh - 1, 0, 10);
-                      if (e.key === "ArrowRight") rh = clamp(rh + 1, 0, 10);
+                  <script>
+                    (function () {
+                      const stars = document.getElementById("stars");
+                      const fill = document.getElementById("starsFill");
+                      const input = document.getElementById("ratingHalf");
+                      const label = document.getElementById("ratingLabel");
+                      const form = document.getElementById("rateForm");
+                      if (!stars || !fill || !input || !label || !form) return;
 
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        form.submit();
-                        return;
+                      const initial = parseInt(stars.dataset.rating || "0", 10);
+                      setDisplay(initial);
+
+                      function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+                      function halfToText(rh) {
+                        const val = (rh / 2).toFixed(rh % 2 ? 1 : 0);
+                        return val + " ★";
+                      }
+                      function setDisplay(rh) {
+                        const safe = clamp(rh, 0, 10);
+                        const pct = (safe / 10) * 100;
+                        fill.style.width = pct + "%";
+                        label.textContent = halfToText(safe);
+                      }
+                      function eventToHalf(e) {
+                        const rect = stars.getBoundingClientRect();
+                        const x = clamp(e.clientX - rect.left, 0, rect.width);
+                        return clamp(Math.round((x / rect.width) * 10), 0, 10);
                       }
 
-                      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-                        e.preventDefault();
+                      stars.addEventListener("mousemove", (e) => setDisplay(eventToHalf(e)));
+                      stars.addEventListener("mouseleave", () => setDisplay(parseInt(input.value || "0", 10)));
+
+                      stars.addEventListener("click", (e) => {
+                        const rh = eventToHalf(e);
                         input.value = rh;
                         setDisplay(rh);
-                      }
-                    });
-                  })();
-                </script>
-              <% } else { %>
-                <div class="muted">
-                  <a href="<%= loginNext %>">Log in</a> to rate this show.
-                </div>
-              <% } %>
+                        form.submit();
+                      });
+
+                      stars.addEventListener("keydown", (e) => {
+                        let rh = parseInt(input.value || "0", 10);
+                        if (e.key === "ArrowLeft") rh = clamp(rh - 1, 0, 10);
+                        if (e.key === "ArrowRight") rh = clamp(rh + 1, 0, 10);
+
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          form.submit();
+                          return;
+                        }
+
+                        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                          e.preventDefault();
+                          input.value = rh;
+                          setDisplay(rh);
+                        }
+                      });
+                    })();
+                  </script>
+                <% } else { %>
+                  <div class="muted">
+                    <a href="<%= loginNext %>">Log in</a> to rate this show.
+                  </div>
+                <% } %>
+              </div>
             </div>
 
             <div style="display:flex; gap:10px; margin-top:12px; align-items:flex-start;">
@@ -1029,7 +1157,7 @@
 
                     <div class="reviewtext"><%= rv.review_text || "" %></div>
 
-                   <div class="review_footer">
+                    <div class="review_footer">
                       <div class="review_votes">
                         <% if (meUser && !isOwner) { %>
                           <form method="post" action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote" style="display:inline;">
@@ -1118,7 +1246,7 @@
             <% } %>
           </div>
 
-         <div class="panel reviewsSide">
+          <div class="panel reviewsSide">
             <div class="kicker">Share your thoughts</div>
             <h3 style="margin: 6px 0 16px;">Write a Review</h3>
 
@@ -1185,17 +1313,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
