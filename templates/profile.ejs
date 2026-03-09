@@ -298,6 +298,94 @@
       padding-top: 12px;
     }
 
+    .profile_hero_content{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      min-width:0;
+      flex:1;
+    }
+
+    .profile_favorites_box{
+      margin-top:4px;
+      padding-top:12px;
+      border-top:1px solid var(--accentSoft);
+    }
+
+    .profile_favorites_title{
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .profile_favorites_row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:flex-start;
+    }
+
+    .profile_favorite_item{
+      width:72px;
+      text-decoration:none;
+      color:inherit;
+      display:block;
+    }
+
+    .profile_favorite_art{
+      position:relative;
+      width:72px;
+      height:108px;
+      overflow:hidden;
+      border-radius:10px;
+      background:rgba(255,255,255,0.05);
+      border:1px solid var(--accentSoft);
+      box-shadow:0 8px 20px rgba(0,0,0,.25);
+    }
+
+    .profile_favorite_art img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .profile_favorite_rank{
+      position:absolute;
+      left:6px;
+      top:6px;
+      min-width:22px;
+      height:22px;
+      padding:0 6px;
+      border-radius:999px;
+      background:rgba(0,0,0,.78);
+      border:1px solid rgba(255,255,255,0.10);
+      color:#fff;
+      font-size:11px;
+      font-weight:900;
+      line-height:22px;
+      text-align:center;
+    }
+
+    .profile_favorite_name{
+      margin-top:6px;
+      font-size:11px;
+      line-height:1.25;
+      color:var(--text);
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+
+    .profile_favorite_empty{
+      opacity:0.8;
+      font-size:13px;
+    }
+
     @media (max-width: 768px) {
       .topbar {
         position: relative !important;
@@ -360,6 +448,10 @@
         text-align: center;
         display: block;
       }
+
+      .profile_favorites_row{
+        justify-content:center;
+      }
     }
   </style>
 </head>
@@ -377,6 +469,7 @@
 
   const recentRatings = Array.isArray(recent_ratings) ? recent_ratings : [];
   const recentReviews = Array.isArray(recent_reviews) ? recent_reviews : [];
+  const favoriteShows = Array.isArray(favorite_shows) ? favorite_shows : [];
   const roles = Array.isArray(user_roles) ? user_roles : [];
   const flashesList = Array.isArray(flashes) ? flashes : [];
 
@@ -581,34 +674,62 @@
             <% } %>
           </div>
 
-          <div style="min-width:0; flex: 1;">
-            <div class="kicker" style="color: var(--accent);">Profile</div>
-            <h1 style="margin:6px 0 0;"><%= pu.username || "User" %></h1>
+          <div class="profile_hero_content">
+            <div>
+              <div class="kicker" style="color: var(--accent);">Profile</div>
+              <h1 style="margin:6px 0 0;"><%= pu.username || "User" %></h1>
 
-            <% if (roles.length > 0) { %>
-              <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
-                <% for (const r of roles) { %>
-                  <span class="rolebadge" style="background:<%= (r && r.color) ? r.color : '#666666' %>;">
-                    <%= r && r.name ? r.name : "" %>
-                  </span>
-                <% } %>
-              </div>
-            <% } %>
+              <% if (roles.length > 0) { %>
+                <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
+                  <% for (const r of roles) { %>
+                    <span class="rolebadge" style="background:<%= (r && r.color) ? r.color : '#666666' %>;">
+                      <%= r && r.name ? r.name : "" %>
+                    </span>
+                  <% } %>
+                </div>
+              <% } %>
 
-            <% if (pu.bio) { %>
-              <div class="profile_bio">
-                <%= pu.bio %>
-              </div>
-            <% } %>
+              <% if (pu.bio) { %>
+                <div class="profile_bio">
+                  <%= pu.bio %>
+                </div>
+              <% } %>
 
-            <% if (pu.username) { %>
-              <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
-                <% if (isMe) { %>
-                  <a class="btn ghost" href="/me/customize">Customize</a>
-                <% } %>
-                <a class="btn ghost" href="/u/<%= encodeURIComponent(pu.username) %>/ratings">All Ratings</a>
-              </div>
-            <% } %>
+              <% if (pu.username) { %>
+                <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
+                  <% if (isMe) { %>
+                    <a class="btn ghost" href="/me/customize">Customize</a>
+                  <% } %>
+                  <a class="btn ghost" href="/u/<%= encodeURIComponent(pu.username) %>/ratings">All Ratings</a>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="profile_favorites_box">
+              <div class="profile_favorites_title">Top 5 / Favorites</div>
+
+              <% if (favoriteShows.length > 0) { %>
+                <div class="profile_favorites_row">
+                  <% for (let i = 0; i < favoriteShows.length; i++) {
+                    const fav = favoriteShows[i];
+                  %>
+                    <a class="profile_favorite_item" href="/show/<%= fav.show_id %>">
+                      <div class="profile_favorite_art">
+                        <% if (fav && fav.poster_url) { %>
+                          <img src="<%= fav.poster_url %>" alt="<%= fav.title || 'Favorite show' %> poster" loading="lazy">
+                        <% } else { %>
+                          <div class="poster_fallback"></div>
+                        <% } %>
+                        <div class="profile_favorite_rank"><%= i + 1 %></div>
+                      </div>
+                      <div class="profile_favorite_name"><%= fav && fav.title ? fav.title : "" %></div>
+                    </a>
+                  <% } %>
+                </div>
+              <% } else { %>
+                <div class="profile_favorite_empty muted">No favorite shows selected yet.</div>
+              <% } %>
+            </div>
           </div>
 
           <div class="profile_avg_box">
