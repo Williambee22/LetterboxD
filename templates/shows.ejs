@@ -676,59 +676,61 @@
            const poster = row?.poster_url || POSTER_FALLBACK;
            const avg = row?.avg_rating != null ? Number(row.avg_rating) : (row?.avg != null ? Number(row.avg) : 0);
            let pct = Math.min(Math.max(avg / 5.0, 0), 1);
-           const hue = 60 * Math.pow(pct, 2.6);
+           let hue = avg <= 5
+            ? (Math.max(avg, 0) / 5) * 120
+            : 120 - ((Math.min(avg, 10) - 5) / 5) * 60;
       %>
         <a class="poster" href="/show/<%= row.id %>">
           <div class="poster_art" style="position:relative;">
-            <img class="poster_img" src="<%= poster %>" alt="poster" loading="lazy" onerror="this.src='<%= POSTER_FALLBACK %>';">
-            <% if (row.cnt > 0) { %>
-              <div class="tile_rating" style="color: hsl(<%= hue %>, 99%, 52%); text-shadow: -0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000, 0 0 4px rgba(0,0,0,0.9);"><span class="tile_star">★</span> <%= avg.toFixed(2) %></div>
-    
-              <div
-                class="muted small"
-                style="
-                  position:absolute;
-                  right:8px;
-                  top:8px;
-                  z-index:3;
-                  background: rgba(0,0,0,0.60);
-                  color:#ffffff;
-                  padding:3px 6px;
-                  border-radius:999px;
-                  font-size:9px;
-                  line-height:1;
-                  border:1px solid rgba(255,255,255,0.10);
-                "
-              >
-                <%= Number(row.cnt || 0) %> ratings
-              </div>
-            <% } else { %>
-              <span class="badge unrated bottom_left">Unrated</span>
+          <img class="poster_img" src="<%= poster %>" alt="poster" loading="lazy" onerror="this.src='<%= POSTER_FALLBACK %>';">
+          <% if (row.cnt > 0) { %>
+            <div class="tile_rating" style="color: hsl(<%= hue %>, 99%, 52%); text-shadow: -0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000, 0 0 4px rgba(0,0,0,0.9);"><span class="tile_star">★</span> <%= avg.toFixed(2) %></div>
+      
+            <div
+              class="muted small"
+              style="
+                position:absolute;
+                right:8px;
+                top:8px;
+                z-index:3;
+                background: rgba(0,0,0,0.60);
+                color:#ffffff;
+                padding:3px 6px;
+                border-radius:999px;
+                font-size:9px;
+                line-height:1;
+                border:1px solid rgba(255,255,255,0.10);
+              "
+            >
+              <%= Number(row.cnt || 0) %> ratings
+            </div>
+          <% } else { %>
+            <span class="badge unrated bottom_left">Unrated</span>
+          <% } %>
+        </div>
+      
+        <div class="poster_meta">
+          <div class="poster_title"><%= row.title || 'Untitled' %></div>
+          <div class="poster_sub">
+            <%= row.corps || '' %>
+            <% if (row.year) { %>
+              <span style="opacity: 0.5; margin: 0 4px;">&bull;</span>
+              <span><%= row.year %></span>
             <% } %>
           </div>
-    
-          <div class="poster_meta">
-            <div class="poster_title"><%= row.title || 'Untitled' %></div>
-            <div class="poster_sub">
-              <%= row.corps || '' %>
-              <% if (row.year) { %>
-                <span style="opacity: 0.5; margin: 0 4px;">&bull;</span>
-                <span><%= row.year %></span>
-              <% } %>
-            </div>
-          </div>
-        </a>
-      <% } %>
-    <% } else { %>
+        </div>
+      </a>
+    <% } %>
+  <% } else { %>
       <div class="panel" style="margin-top:14px;">
         <div class="muted">No shows found.</div>
       </div>
-<% } %>
-</main>
+  <% } %>
+  </main>
 
-<footer class="wrap footer">
-  <div class="small">Rate drum corps shows.</div>
-</footer>
+  <footer class="wrap footer">
+    <div class="small">Rate drum corps shows.</div>
+  </footer>
 
   <script>
     (() => {
@@ -873,6 +875,7 @@
   </script>
 </body>
 </html>
+
 
 
 
