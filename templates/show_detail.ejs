@@ -1192,7 +1192,15 @@
                     </div>
 
                     <details style="margin-top:10px;">
-                      <summary class="muted">Comments (<%= commentList.length %>)</summary>
+                      <summary class="muted">
+                        Comments (
+                        <% if (commentList.length !== 0) { %>
+                          <b><%= commentList.length %></b>
+                        <% } else { %>
+                          <%= commentList.length %>
+                        <% } %>
+                        )
+                      </summary>
 
                       <div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
                         <% if (commentList.length > 0) { %>
@@ -1323,4 +1331,5 @@
   </script>
 </body>
 </html>
+
 
