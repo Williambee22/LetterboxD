@@ -887,7 +887,17 @@
             <div class="showmeta" style="flex:1 1 auto; min-width:0;">
               <div class="kicker">Show</div>
               <h1 style="margin:6px 0 8px;"><%= showRow.title || "" %></h1>
-              <div class="muted"><%= showRow.year || "" %> — <%= showRow.corps || "" %></div>
+              <div class="muted">
+                <% if (showRow.year) { %>
+                  <a href="/shows?year=<%= encodeURIComponent(showRow.year) %>" style="color:inherit; text-decoration:none;"><%= showRow.year %></a>
+                <% } %>
+                <% if (showRow.year && showRow.corps) { %>
+                  <span> — </span>
+                <% } %>
+                <% if (showRow.corps) { %>
+                  <a href="/shows?corps=<%= encodeURIComponent(showRow.corps) %>" style="color:inherit; text-decoration:none;"><%= showRow.corps %></a>
+                <% } %>
+              </div>
 
               <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                 <% if (Number(showRow.cnt || 0) === 0) { %>
@@ -1313,3 +1323,4 @@
   </script>
 </body>
 </html>
+
