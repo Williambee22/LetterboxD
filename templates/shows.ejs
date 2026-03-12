@@ -679,11 +679,11 @@
              const pct = Math.max(0, Math.min(1, avg / 5));
              const hue = 60 * Math.pow(pct, 2.6);
         %>
-          <a class="poster" href="/show/<%= row.id %>">
-            <div class="poster_art" style="position:relative;">
+          <div class="poster">
+            <a class="poster_art" href="/show/<%= row.id %>" style="position:relative; display:block;">
               <img class="poster_img" src="<%= poster %>" alt="poster" loading="lazy" onerror="this.src='<%= POSTER_FALLBACK %>';">
               <% if (row.cnt > 0) { %>
-                <div class="tile_rating" style="color: hsl(<%= hue %>, 99%, 52%); text-shadow: -0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000, 0 0 4px rgba(0,0,0,0.9);"><span class="tile_star">★</span> <%= avg.toFixed(2) %></div>
+                <div class="tile_rating" style="color: hsl(<%= hue %>, 100%, 50%); text-shadow: -0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000, 0 0 4px rgba(0,0,0,0.9);"><span class="tile_star">★</span> <%= avg.toFixed(2) %></div>
     
                 <div
                   class="muted small"
@@ -706,20 +706,27 @@
               <% } else { %>
                 <span class="badge unrated bottom_left">Unrated</span>
               <% } %>
-            </div>
+            </a>
     
-           <div class="poster_meta">
-            <div class="poster_title"><%= row.title || 'Untitled' %></div>
-            <div class="poster_sub">
-              <% if (row.corps) { %>
-                <a href="/shows?corps=<%= encodeURIComponent(row.corps) %>" style="color:inherit; text-decoration:none;"><%= row.corps %></a>
-              <% } %>
-              <% if (row.year) { %>
-                <span style="opacity: 0.5; margin: 0 4px;">&bull;</span>
-                <a href="/shows?year=<%= encodeURIComponent(row.year) %>" style="color:inherit; text-decoration:none;"><%= row.year %></a>
-              <% } %>
+            <div class="poster_meta">
+              <div class="poster_title">
+                <a href="/show/<%= row.id %>" style="color:inherit; text-decoration:none;">
+                  <%= row.title || 'Untitled' %>
+                </a>
+              </div>
+              <div class="poster_sub">
+                <% if (row.corps) { %>
+                  <a href="/shows?corps=<%= encodeURIComponent(row.corps) %>" style="color:inherit; text-decoration:none;"><%= row.corps %></a>
+                <% } %>
+                <% if (row.year) { %>
+                  <span style="opacity: 0.5; margin: 0 4px;">&bull;</span>
+                  <a href="/shows?year=<%= encodeURIComponent(row.year) %>" style="color:inherit; text-decoration:none;"><%= row.year %></a>
+                <% } %>
+              </div>
             </div>
           </div>
+        <% } %>
+      </div>
     <% } else { %>
       <div class="panel" style="margin-top:14px;">
         <div class="muted">No shows found.</div>
@@ -874,6 +881,7 @@
   </script>
 </body>
 </html>
+
 
 
 
