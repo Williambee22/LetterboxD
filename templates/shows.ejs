@@ -711,16 +711,21 @@
             <div class="poster_meta">
               <div class="poster_title"><%= row.title || 'Untitled' %></div>
               <div class="poster_sub">
-                <%= row.corps || '' %>
+                <% if (row.corps) { %>
+                  <a
+                    href="/shows?corps=<%= encodeURIComponent(row.corps) %>"
+                    style="color:inherit; text-decoration:none;"
+                  ><%= row.corps %></a>
+                <% } %>
+              
                 <% if (row.year) { %>
                   <span style="opacity: 0.5; margin: 0 4px;">&bull;</span>
-                  <span><%= row.year %></span>
+                  <a
+                    href="/shows?year=<%= encodeURIComponent(row.year) %>"
+                    style="color:inherit; text-decoration:none;"
+                  ><%= row.year %></a>
                 <% } %>
               </div>
-            </div>
-          </a>
-        <% } %>
-      </div>
     <% } else { %>
       <div class="panel" style="margin-top:14px;">
         <div class="muted">No shows found.</div>
@@ -875,6 +880,7 @@
   </script>
 </body>
 </html>
+
 
 
 
