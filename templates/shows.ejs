@@ -677,7 +677,14 @@
              const poster = row?.poster_url || POSTER_FALLBACK;
              const avg = row?.avg_rating != null ? Number(row.avg_rating) : (row?.avg != null ? Number(row.avg) : 0);
              let pct = Math.min(Math.max(avg / 5.0, 0), 1);
-             const hue = 60 * Math.pow(pct, 2.6);
+             let hue;
+              if (avg <= 3.5) {
+                const t = Math.max(0, Math.min(1, avg / 3.5));
+                hue = 120 * Math.pow(t, 2.2);   // red -> green
+              } else {
+                const t = Math.max(0, Math.min(1, (avg - 3.5) / 1.5));
+                hue = 120 - (68 * Math.pow(t, 0.9)); // green -> gold
+              }
         %>
           <a class="poster" href="/show/<%= row.id %>">
             <div class="poster_art" style="position:relative;">
@@ -875,6 +882,7 @@
   </script>
 </body>
 </html>
+
 
 
 
