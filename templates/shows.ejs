@@ -672,25 +672,27 @@
     </div>
 
     <% if (safeRows.length > 0) { %>
-      <% for (const row of safeRows) { %>
-        <%
-          const poster = row?.poster_url || POSTER_FALLBACK;
-          const avg = row?.avg_rating != null ? Number(row.avg_rating) : (row?.avg != null ? Number(row.avg) : 0);
-    
-          let hue;
-          if (avg <= 5) {
-            hue = (Math.max(avg, 0) / 5) * 120;
-          } else {
-            hue = 120 - ((Math.min(avg, 10) - 5) / 5) * 60;
-          }
-        %>
-    
+      <% for (const row of safeRows) {
+           const poster = row?.poster_url || POSTER_FALLBACK;
+           const avg = row?.avg_rating != null ? Number(row.avg_rating) : (row?.avg != null ? Number(row.avg) : 0);
+           let pct = Math.min(Math.max(avg / 5.0, 0), 1);
+           const hue = 60 * Math.pow(pct, 2.6);
+      %>
         <a class="poster" href="/show/<%= row.id %>">
           <div class="poster_art" style="position:relative;">
-            <img class="poster_img" src="<%= poster %>" alt="poster" loading="lazy" onerror="this.src='<%= POSTER_FALLBACK %>';">
-            
+            <img
+              class="poster_img"
+              src="<%= poster %>"
+              alt="poster"
+              loading="lazy"
+              onerror="this.src='<%= POSTER_FALLBACK %>';"
+            >
+    
             <% if (row.cnt > 0) { %>
-              <div class="tile_rating" style="color: hsl(<%= hue %>, 99%, 52%); text-shadow: -0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000, 0 0 4px rgba(0,0,0,0.9);">
+              <div
+                class="tile_rating"
+                style="color: hsl(<%= hue %>, 99%, 52%); text-shadow: -0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000, 0 0 4px rgba(0,0,0,0.9);"
+              >
                 <span class="tile_star">★</span> <%= avg.toFixed(2) %>
               </div>
     
@@ -725,17 +727,21 @@
                 <span style="opacity: 0.5; margin: 0 4px;">&bull;</span>
                 <span><%= row.year %></span>
               <% } %>
+            </div>
           </div>
+        </a>
+      <% } %>
+    </div>
+    <% } else { %>
+      <div class="panel" style="margin-top:14px;">
+        <div class="muted">No shows found.</div>
       </div>
-    </a>
-  <% } %>
-</div>
-<% } else { %>
-  <div class="panel" style="margin-top:14px;"><div class="muted">No shows found.</div></div>
 <% } %>
 </main>
 
-<footer class="wrap footer"><div class="small">Rate drum corps shows.</div></footer>
+<footer class="wrap footer">
+  <div class="small">Rate drum corps shows.</div>
+</footer>
 
   <script>
     (() => {
@@ -880,5 +886,6 @@
   </script>
 </body>
 </html>
+
 
 
