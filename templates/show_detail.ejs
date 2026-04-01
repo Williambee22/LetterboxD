@@ -593,6 +593,44 @@
       width: 100%;
     }
 
+    .starwrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .stars {
+      position: relative;
+      display: inline-block;
+      font-size: 42px;
+      line-height: 1;
+      letter-spacing: 4px;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    
+    .stars-base,
+    .stars-fill {
+      display: block;
+      white-space: nowrap;
+      line-height: 1;
+    }
+    
+    .stars-base {
+      color: rgba(255,255,255,0.18);
+    }
+    
+    .stars-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      overflow: hidden;
+      width: 0%;
+      color: #ffd34d;
+      pointer-events: none;
+    }
+
     @media (max-width: 768px) {
       .panel > div[style*="display:flex"] {
         flex-direction: column !important;
