@@ -1125,9 +1125,29 @@ function createApp() {
         WHERE id = ?
       `).get(showId);
   
+      const yearRankRow = conn.prepare(`
+        WITH ranked AS (
+          SELECT
+            s.id,
+            s.year,
+            RANK() OVER (
+              PARTITION BY s.year
+              ORDER BY AVG(r.rating_half) DESC, COUNT(*) DESC, s.id ASC
+            ) AS year_rank
+          FROM shows s
+          JOIN ratings r ON r.show_id = s.id
+          GROUP BY s.id, s.year
+          HAVING COUNT(*) >= 5
+        )
+        SELECT year_rank
+        FROM ranked
+        WHERE id = ?
+      `).get(showId);
+  
       const overall_rank = overallRankRow ? Number(overallRankRow.overall_rank || 0) : 0;
       const critic_rank = criticRankRow ? Number(criticRankRow.critic_rank || 0) : 0;
       const corps_rank = corpsRankRow ? Number(corpsRankRow.corps_rank || 0) : 0;
+      const year_rank = yearRankRow ? Number(yearRankRow.year_rank || 0) : 0;
   
       res.render('show_detail', {
         row,
@@ -1144,6 +1164,7 @@ function createApp() {
         overall_rank,
         critic_rank,
         corps_rank,
+        year_rank,
       });
     } catch (err) {
       next(err);
