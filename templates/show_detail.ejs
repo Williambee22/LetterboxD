@@ -774,6 +774,7 @@
     const currentUserId = meUser ? Number(meUser.id) : null;
     const isFavorite = typeof is_favorite !== "undefined" ? !!is_favorite : false;
     const favoriteCount = typeof favorite_count !== "undefined" ? Number(favorite_count || 0) : 0;
+    const showFavoriteCount = typeof show_favorite_count !== "undefined" ? Number(show_favorite_count || 0) : 0;
     const overallRank = typeof overall_rank !== "undefined" ? Number(overall_rank || 0) : 0;
     const criticRank = typeof critic_rank !== "undefined" ? Number(critic_rank || 0) : 0;
     const corpsRank = typeof corps_rank !== "undefined" ? Number(corps_rank || 0) : 0;
@@ -971,6 +972,8 @@
                     </span>
                     <% if (criticRank > 0) { %>
                       <span class="badge muted">Critic Rank #<%= criticRank %></span>
+                    <% } else { %>
+                      <span class="badge muted">Needs 5 critic ratings to rank</span>
                     <% } %>
                   </div>
                 <% } %>
@@ -980,6 +983,10 @@
                     <span class="badge muted"><%= showRow.corps %> Rank #<%= corpsRank %></span>
                   </div>
                 <% } %>
+              
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                  <span class="badge muted"><%= showFavoriteCount %> favorite<%= showFavoriteCount === 1 ? '' : 's' %></span>
+                </div>
               
                 <% if (meUser && Number(meUser.is_admin) === 1) { %>
                   <a class="btn ghost" href="/admin/show/<%= showRow.id %>/edit">Edit show</a>
