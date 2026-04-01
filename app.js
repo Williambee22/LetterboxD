@@ -1000,6 +1000,16 @@ function createApp() {
         ? Number(dbx.countUserFavoriteShows(conn, viewerUid) || 0)
         : 0;
   
+      const showFavoriteCountRow = conn.prepare(`
+        SELECT COUNT(*) AS cnt
+        FROM user_favorite_shows
+        WHERE show_id = ?
+      `).get(showId);
+  
+      const show_favorite_count = showFavoriteCountRow
+        ? Number(showFavoriteCountRow.cnt || 0)
+        : 0;
+  
       if (me && !me.avatar_url) me.avatar_url = pfpUrlForUsername(me.username || '');
   
       const reviews = (await dbx.listReviewsForShow(conn, showId, { viewerUserId: viewerUid, limit: 300 }) || []).map((rv) => {
@@ -1130,6 +1140,7 @@ function createApp() {
         sort: activeSort,
         is_favorite: isFavorite,
         favorite_count: favoriteCount,
+        show_favorite_count,
         overall_rank,
         critic_rank,
         corps_rank,
