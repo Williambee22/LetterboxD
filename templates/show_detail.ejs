@@ -978,6 +978,12 @@
                   </div>
                 <% } %>
               
+                <% if (yearRank > 0 && showRow.year) { %>
+                  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                    <span class="badge muted"><%= showRow.year %> Rank #<%= yearRank %></span>
+                  </div>
+                <% } %>
+              
                 <% if (corpsRank > 0 && showRow.corps) { %>
                   <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                     <span class="badge muted"><%= showRow.corps %> Rank #<%= corpsRank %></span>
