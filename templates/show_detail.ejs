@@ -774,6 +774,9 @@
     const currentUserId = meUser ? Number(meUser.id) : null;
     const isFavorite = typeof is_favorite !== "undefined" ? !!is_favorite : false;
     const favoriteCount = typeof favorite_count !== "undefined" ? Number(favorite_count || 0) : 0;
+    const overallRank = typeof overall_rank !== "undefined" ? Number(overall_rank || 0) : 0;
+    const criticRank = typeof critic_rank !== "undefined" ? Number(critic_rank || 0) : 0;
+    const corpsRank = typeof corps_rank !== "undefined" ? Number(corps_rank || 0) : 0;
 
     const distLabels = ["5.0","4.5","4.0","3.5","3.0","2.5","2.0","1.5","1.0","0.5","0.0"];
     const ratingHistogramRaw = (typeof rating_histogram !== "undefined" && rating_histogram) ? rating_histogram : {};
@@ -955,6 +958,9 @@
                   <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                     <span class="badge good">★ <%= avgRating.toFixed(2) %></span>
                     <span class="badge muted"><%= totalRatings %> ratings</span>
+                    <% if (overallRank > 0) { %>
+                      <span class="badge muted">Rank #<%= overallRank %></span>
+                    <% } %>
                   </div>
                 <% } %>
               
@@ -963,6 +969,15 @@
                     <span class="badge" style="border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.05);">
                       Critic Avg. ★ <%= verifiedAverage.toFixed(2) %>
                     </span>
+                    <% if (criticRank > 0) { %>
+                      <span class="badge muted">Rank #<%= criticRank %></span>
+                    <% } %>
+                  </div>
+                <% } %>
+              
+                <% if (corpsRank > 0 && showRow.corps) { %>
+                  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                    <span class="badge muted"><%= showRow.corps %> Rank #<%= corpsRank %></span>
                   </div>
                 <% } %>
               
