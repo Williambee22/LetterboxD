@@ -1055,6 +1055,70 @@ function createApp() {
       const rating_histogram = dbx.getRatingHistogram(conn, showId);
       const verified_rating_histogram = dbx.getVerifiedRatingHistogram(conn, showId);
   
+      // ----------------------------
+      // RANK QUERIES
+      // ----------------------------
+  
+      const overallRankRow = conn.prepare(`
+        WITH ranked AS (
+          SELECT
+            s.id,
+            RANK() OVER (
+              ORDER BY AVG(r.rating_half) DESC, COUNT(*) DESC, s.year DESC, s.id ASC
+            ) AS overall_rank
+          FROM shows s
+          JOIN ratings r ON r.show_id = s.id
+          GROUP BY s.id
+          HAVING COUNT(*) >= 5
+        )
+        SELECT overall_rank
+        FROM ranked
+        WHERE id = ?
+      `).get(showId);
+  
+      const criticRankRow = conn.prepare(`
+        WITH ranked AS (
+          SELECT
+            s.id,
+            RANK() OVER (
+              ORDER BY AVG(r.rating_half) DESC, COUNT(*) DESC, s.year DESC, s.id ASC
+            ) AS critic_rank
+          FROM shows s
+          JOIN ratings r ON r.show_id = s.id
+          JOIN user_roles ur ON ur.user_id = r.user_id
+          JOIN roles ro ON ro.id = ur.role_id
+          WHERE ro.name = 'Verified Critic'
+          GROUP BY s.id
+          HAVING COUNT(*) >= 5
+        )
+        SELECT critic_rank
+        FROM ranked
+        WHERE id = ?
+      `).get(showId);
+  
+      const corpsRankRow = conn.prepare(`
+        WITH ranked AS (
+          SELECT
+            s.id,
+            s.corps,
+            RANK() OVER (
+              PARTITION BY s.corps
+              ORDER BY AVG(r.rating_half) DESC, COUNT(*) DESC, s.year DESC, s.id ASC
+            ) AS corps_rank
+          FROM shows s
+          JOIN ratings r ON r.show_id = s.id
+          GROUP BY s.id, s.corps
+          HAVING COUNT(*) >= 5
+        )
+        SELECT corps_rank
+        FROM ranked
+        WHERE id = ?
+      `).get(showId);
+  
+      const overall_rank = overallRankRow ? Number(overallRankRow.overall_rank || 0) : 0;
+      const critic_rank = criticRankRow ? Number(criticRankRow.critic_rank || 0) : 0;
+      const corps_rank = corpsRankRow ? Number(corpsRankRow.corps_rank || 0) : 0;
+  
       res.render('show_detail', {
         row,
         me,
@@ -1066,6 +1130,9 @@ function createApp() {
         sort: activeSort,
         is_favorite: isFavorite,
         favorite_count: favoriteCount,
+        overall_rank,
+        critic_rank,
+        corps_rank,
       });
     } catch (err) {
       next(err);
