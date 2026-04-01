@@ -800,6 +800,9 @@
     const verifiedDistTotal = verifiedDistRows.reduce((sum, r) => sum + r.count, 0);
     const ratingDistMax = ratingDistRows.reduce((m, r) => Math.max(m, r.count), 0);
     const verifiedDistMax = verifiedDistRows.reduce((m, r) => Math.max(m, r.count), 0);
+    
+    const verifiedWeightedTotal = verifiedDistRows.reduce((sum, r) => sum + (Number(r.label) * r.count), 0);
+    const verifiedAverage = verifiedDistTotal > 0 ? (verifiedWeightedTotal / verifiedDistTotal) : 0;
   %>
 
   <header class="topbar">
@@ -944,9 +947,7 @@
 
               <div style="margin-top:12px; display:flex; flex-direction:column; align-items:flex-start; gap:8px;">
                 <% const avgRating = Number(showRow.avg_rating || 0); %>
-                <% const criticAvgRating = Number(showRow.verified_avg_rating || showRow.critic_avg_rating || 0); %>
                 <% const totalRatings = Number(showRow.cnt || 0); %>
-                <% const criticRatings = Number(showRow.verified_cnt || showRow.critic_cnt || 0); %>
               
                 <% if (totalRatings === 0) { %>
                   <span class="badge muted">Unrated</span>
@@ -957,12 +958,12 @@
                   </div>
                 <% } %>
               
-                <% if (criticRatings > 0) { %>
+                <% if (verifiedDistTotal > 0) { %>
                   <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                     <span class="badge" style="border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.05);">
-                      Critic Average ★ <%= criticAvgRating.toFixed(2) %>
+                      Critic Average ★ <%= verifiedAverage.toFixed(2) %>
                     </span>
-                    <span class="badge muted"><%= criticRatings %> critic ratings</span>
+                    <span class="badge muted"><%= verifiedDistTotal %> critic ratings</span>
                   </div>
                 <% } %>
               
