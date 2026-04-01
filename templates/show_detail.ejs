@@ -942,14 +942,30 @@
                 <% } %>
               </div>
 
-              <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                <% if (Number(showRow.cnt || 0) === 0) { %>
+              <div style="margin-top:12px; display:flex; flex-direction:column; align-items:flex-start; gap:8px;">
+                <% const avgRating = Number(showRow.avg_rating || 0); %>
+                <% const criticAvgRating = Number(showRow.verified_avg_rating || showRow.critic_avg_rating || 0); %>
+                <% const totalRatings = Number(showRow.cnt || 0); %>
+                <% const criticRatings = Number(showRow.verified_cnt || showRow.critic_cnt || 0); %>
+              
+                <% if (totalRatings === 0) { %>
                   <span class="badge muted">Unrated</span>
                 <% } else { %>
-                  <span class="badge good">★ <%= Number(showRow.avg_rating || 0).toFixed(2) %></span>
-                  <span class="badge muted"><%= Number(showRow.cnt || 0) %> ratings</span>
+                  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                    <span class="badge good">★ <%= avgRating.toFixed(2) %></span>
+                    <span class="badge muted"><%= totalRatings %> ratings</span>
+                  </div>
                 <% } %>
-
+              
+                <% if (criticRatings > 0) { %>
+                  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                    <span class="badge" style="border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.05);">
+                      Critic Average ★ <%= criticAvgRating.toFixed(2) %>
+                    </span>
+                    <span class="badge muted"><%= criticRatings %> critic ratings</span>
+                  </div>
+                <% } %>
+              
                 <% if (meUser && Number(meUser.is_admin) === 1) { %>
                   <a class="btn ghost" href="/admin/show/<%= showRow.id %>/edit">Edit show</a>
                 <% } %>
