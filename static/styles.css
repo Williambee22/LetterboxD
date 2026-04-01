@@ -37,7 +37,7 @@ body{
 
 body{
   margin:0;
-  font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Comic Sans MS", "Comic Sans", cursive;
   color:var(--text);
   background:var(--bg);
 }
