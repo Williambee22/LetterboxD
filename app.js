@@ -2161,7 +2161,9 @@ function createApp() {
     let conn;
     try {
       conn = getConn();
-
+  
+      const sort = req.query.sort === 'newest' ? 'newest' : 'default';
+  
       const users = conn.prepare(`
         SELECT
           id,
@@ -2172,9 +2174,13 @@ function createApp() {
           created_ts,
           must_change_password
         FROM users
-        ORDER BY LOWER(username) ASC
+        ORDER BY ${
+          sort === 'newest'
+            ? 'created_ts DESC, id DESC'
+            : 'LOWER(username) ASC'
+        }
       `).all().map(normalizeRow);
-
+  
       for (const u of users) {
         if (!u.avatar_url) u.avatar_url = pfpUrlForUsername(u.username || '');
         try {
@@ -2183,10 +2189,11 @@ function createApp() {
           u.roles = [];
         }
       }
-
+  
       return res.render('admin_users', {
         me: res.locals.me,
         users,
+        sort,
       });
     } catch (err) {
       return next(err);
