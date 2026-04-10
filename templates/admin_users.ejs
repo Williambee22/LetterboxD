@@ -23,7 +23,7 @@
         <form method="get" action="/admin/users" class="row gap" style="align-items:center; margin:0;">
           <label class="muted small" for="sortUsers" style="font-weight:700;">Sort by</label>
           <select id="sortUsers" name="sort" class="input" onchange="this.form.submit()">
-            <option value="default" <%= sort === "default" ? "selected" : "" %>>Default</option>
+            <option value="default" <%= sort === "default" ? "selected" : "" %>>Username</option>
             <option value="newest" <%= sort === "newest" ? "selected" : "" %>>Newest created</option>
           </select>
           <noscript>
@@ -40,15 +40,15 @@
                 <div style="font-weight:800;"><%= u.username %></div>
                 <div class="muted small"><%= Number(u.is_admin) === 1 ? "Admin" : "User" %></div>
 
-                <% if (u.created_at) { %>
+                <% if (u.created_ts) { %>
                   <div class="muted small" style="margin-top:4px;">
-                    Created: <%= u.created_at %>
+                    Created: <%= new Date(Number(u.created_ts) * 1000).toLocaleString() %>
                   </div>
                 <% } %>
 
-                <% if (u.password_hash_type) { %>
+                <% if (u.must_change_password) { %>
                   <div class="muted small" style="margin-top:4px;">
-                    Password type: <%= u.password_hash_type %>
+                    Must change password on next login
                   </div>
                 <% } %>
               </div>
