@@ -319,6 +319,100 @@
       opacity: .9;
     }
 
+    .randomCard {
+    flex: 0 1 360px;
+    min-width: 300px;
+    max-width: 380px;
+    padding: 14px;
+    text-align: left;
+    }
+  
+    .randomControls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+  
+    .randomSelect {
+      flex: 1;
+      min-width: 140px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: inherit;
+      padding: 0 10px;
+      outline: none;
+    }
+  
+    .randomSelect:focus {
+      border-color: color-mix(in srgb, var(--accent) 40%, rgba(255,255,255,0.15));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+  
+    .randomShowBox {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(0,0,0,1.00);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+  
+    .randomPosterBox {
+      width: 100%;
+      height: 240px;
+      padding: 6px;
+      box-sizing: border-box;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,1.00);
+      border: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 12px;
+    }
+  
+    .randomPosterImg {
+      width: 100%;
+      height: 100%;
+      object-fit: scale-down;
+      object-position: center;
+      display: block;
+      background: transparent;
+    }
+  
+    .randomTitle {
+      font-weight: 900;
+      font-size: 18px;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+  
+    .randomSub {
+      margin-bottom: 8px;
+    }
+  
+    .randomMeta {
+      font-size: 13px;
+      opacity: 0.92;
+    }
+  
+    .randomEmpty {
+      padding: 12px 2px;
+    }
+  
+    @media (max-width: 768px) {
+      .randomCard {
+        max-width: none !important;
+        width: 100% !important;
+      }
+    }
+
     @media (max-width: 768px) {
       .topbar .wrap {
         flex-direction: column !important;
@@ -421,7 +515,16 @@
   const meUser = typeof me !== "undefined" ? me : null;
   const notifCountSafe = typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
   const notifItemsSafe = Array.isArray(typeof notif_items !== "undefined" ? notif_items : []) ? notif_items : [];
-%>
+  const safeRandomRows = safeRows.map(r => ({
+    id: r?.id || null,
+    title: r?.title || "Untitled",
+    corps: r?.corps || "",
+    year: r?.year != null ? Number(r.year) : null,
+    poster_url: r?.poster_url || POSTER_FALLBACK,
+    avg_rating: r?.avg_rating != null ? Number(r.avg_rating) : (r?.avg != null ? Number(r.avg) : 0),
+    cnt: Number(r?.cnt || 0)
+  })).filter(r => r.id);
+  %>
 <body class="app" <%= meUser && meUser.theme_color ? `style="--accent: ${meUser.theme_color};"` : "" %>>
   <header class="topbar">
     <div class="wrap row between">
@@ -528,6 +631,26 @@
 
   <main class="wrap">
     <div class="hotWrap">
+      <div class="accentCard accentBorderSoft randomCard">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+          <div>
+            <div style="font-weight:900; font-size:18px; line-height:1.1;">Random Show</div>
+            <div class="muted small">Loads a random show each time the page opens.</div>
+          </div>
+        </div>
+    
+        <div class="randomControls">
+          <select id="randomEraSelect" class="randomSelect">
+            <option value="all">Any era</option>
+            <option value="post2000">Post-2000s</option>
+            <option value="pre2000">Pre-2000s</option>
+          </select>
+          <button type="button" id="rerollRandomBtn" class="btn ghost">Reroll</button>
+        </div>
+    
+        <div id="randomShowMount"></div>
+      </div>
+    
       <div class="hotIntro">
         <div style="font-weight: 900; font-size: 42px; line-height: 1.1; letter-spacing: -1px; margin-top: 10px; margin-bottom: 10px; color: #ffffff;">
           Welcome to <span style="color: #3252b3;">Pressboxd</span>
@@ -545,7 +668,7 @@
           </p>
         </div>
       </div>
-
+    
       <div class="accentCard accentBorderSoft hotCard">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
           <div>
@@ -553,7 +676,7 @@
             <div class="muted small">Top 3 most popular shows in the last 48h.</div>
           </div>
         </div>
-
+    
         <% if (safeHotShows.length > 0) { %>
           <div class="hotList">
             <% for (let i = 0; i < safeHotShows.length; i++) {
@@ -562,7 +685,7 @@
             %>
               <a class="hotItem" href="/show/<%= hs.id %>">
                 <div class="hotRank"><%= i + 1 %></div>
-
+    
                 <div class="hotPosterBox accentThumb">
                   <img
                     class="hotPosterImg"
@@ -571,7 +694,7 @@
                     onerror="this.src='<%= POSTER_FALLBACK %>';"
                   >
                 </div>
-
+    
                 <div class="hotMeta">
                   <div class="hotTitle"><%= hs.title || 'Untitled' %></div>
                   <div class="hotSub muted small">
@@ -783,6 +906,98 @@
         }
       });
     })();
+
+    (() => {
+      const rows = <%- JSON.stringify(safeRandomRows) %>;
+      const mount = document.getElementById("randomShowMount");
+      const eraSelect = document.getElementById("randomEraSelect");
+      const rerollBtn = document.getElementById("rerollRandomBtn");
+      const posterFallback = "<%= POSTER_FALLBACK %>";
+    
+      if (!mount || !eraSelect || !rerollBtn) return;
+    
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+    
+      function pickRandom(list) {
+        if (!Array.isArray(list) || list.length === 0) return null;
+        return list[Math.floor(Math.random() * list.length)];
+      }
+    
+      function getFilteredRows() {
+        const mode = eraSelect.value;
+    
+        if (mode === "post2000") {
+          return rows.filter(r => r.year != null && r.year >= 2000);
+        }
+    
+        if (mode === "pre2000") {
+          return rows.filter(r => r.year != null && r.year < 2000);
+        }
+    
+        return rows;
+      }
+    
+      function renderRandomShow() {
+        const filtered = getFilteredRows();
+        const show = pickRandom(filtered);
+    
+        if (!show) {
+          mount.innerHTML = `
+            <div class="randomEmpty muted small">
+              No shows found for that era.
+            </div>
+          `;
+          return;
+        }
+    
+        const avg = Number(show.avg_rating || 0);
+        const count = Number(show.cnt || 0);
+    
+        mount.innerHTML = `
+          <a class="randomShowBox" href="/show/${encodeURIComponent(show.id)}">
+            <div class="randomPosterBox accentThumb">
+              <img
+                class="randomPosterImg"
+                src="${escapeHtml(show.poster_url || posterFallback)}"
+                alt="poster"
+                onerror="this.src='${posterFallback}';"
+              >
+            </div>
+    
+            <div class="randomTitle">${escapeHtml(show.title)}</div>
+    
+            <div class="randomSub muted small">
+              ${escapeHtml(show.corps || "")}${show.year ? ` • ${escapeHtml(show.year)}` : ""}
+            </div>
+    
+            <div class="randomMeta">
+              ${
+                count > 0
+                  ? `<span style="font-weight:800;">★ ${avg.toFixed(2)}</span>
+                     <span style="opacity:.5; margin:0 6px;">•</span>
+                     <span>${count} ratings</span>`
+                  : `<span class="muted">Unrated</span>`
+              }
+            </div>
+          </a>
+        `;
+      }
+    
+      eraSelect.addEventListener("change", renderRandomShow);
+      rerollBtn.addEventListener("click", renderRandomShow);
+    
+      renderRandomShow();
+    })();
+
+
+
 
     (() => {
       const input = document.getElementById("userSearchInput");
