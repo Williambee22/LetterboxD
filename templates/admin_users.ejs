@@ -37,30 +37,50 @@
           <% for (const u of users) { %>
             <div class="row between" style="align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.08);">
               <div>
-                <div style="font-weight:800;"><%= u.username %></div>
+                <div style="font-weight:800; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <%= u.username %>
+          
+                  <% if (u.role_name) { %>
+                    <span
+                      style="
+                        display:inline-flex;
+                        align-items:center;
+                        font-size:11px;
+                        font-weight:800;
+                        border-radius:999px;
+                        padding:3px 8px;
+                        color:#fff;
+                        background:<%= u.role_color || '#666666' %>;
+                      "
+                    >
+                      <%= u.role_name %>
+                    </span>
+                  <% } %>
+                </div>
+          
                 <div class="muted small"><%= Number(u.is_admin) === 1 ? "Admin" : "User" %></div>
-
+          
                 <% if (u.created_ts) { %>
                   <div class="muted small" style="margin-top:4px;">
                     Created: <%= new Date(Number(u.created_ts) * 1000).toLocaleString() %>
                   </div>
                 <% } %>
-
+          
                 <% if (u.must_change_password) { %>
                   <div class="muted small" style="margin-top:4px;">
                     Must change password on next login
                   </div>
                 <% } %>
               </div>
-
+          
               <div class="row gap" style="align-items:center; flex-wrap:wrap;">
                 <a class="btn ghost" href="/u/<%= encodeURIComponent(u.username) %>">Profile</a>
                 <a class="btn green" href="/admin/user/<%= encodeURIComponent(u.username) %>/roles">Assign roles</a>
-
+          
                 <form method="post" action="/admin/user/<%= encodeURIComponent(u.username) %>/force-reset" style="margin:0;">
                   <button class="btn ghost" type="submit">Force reset</button>
                 </form>
-
+          
                 <form method="post" action="/admin/user/<%= encodeURIComponent(u.username) %>/set-temp-password" style="margin:0;">
                   <button class="btn ghost" type="submit">Set temp password</button>
                 </form>
