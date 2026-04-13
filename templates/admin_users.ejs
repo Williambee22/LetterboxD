@@ -38,23 +38,26 @@
             <div class="row between" style="align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.08);">
               <div>
                 <div style="font-weight:800; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                  <%= u.username %>
+                  <span><%= u.username %></span>
           
-                  <% if (u.role_name) { %>
-                    <span
-                      style="
-                        display:inline-flex;
-                        align-items:center;
-                        font-size:11px;
-                        font-weight:800;
-                        border-radius:999px;
-                        padding:3px 8px;
-                        color:#fff;
-                        background:<%= u.role_color || '#666666' %>;
-                      "
-                    >
-                      <%= u.role_name %>
-                    </span>
+                  <% if (Array.isArray(u.roles) && u.roles.length > 0) { %>
+                    <% for (const role of u.roles) { %>
+                      <span
+                        class="rolebadge"
+                        style="
+                          display:inline-flex;
+                          align-items:center;
+                          font-size:11px;
+                          font-weight:800;
+                          border-radius:999px;
+                          padding:3px 8px;
+                          color:#fff;
+                          background:<%= role.color || '#666666' %>;
+                        "
+                      >
+                        <%= role.name %>
+                      </span>
+                    <% } %>
                   <% } %>
                 </div>
           
