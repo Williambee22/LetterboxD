@@ -223,7 +223,25 @@
       color: var(--muted);
       white-space: nowrap;
     }
+
+    .criticPanelLink {
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+      cursor: pointer;
+    }
     
+    .criticPanelLink:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.045);
+      border-color: color-mix(in srgb, var(--accent) 28%, rgba(255,255,255,0.14));
+    }
+    
+    .criticPanelLink:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+
+
     @media (max-width: 720px) {
       .review_footer {
         flex-direction: column;
@@ -1131,12 +1149,21 @@
             </div>
 
             <div style="display:flex; gap:10px; margin-top:12px; align-items:flex-start;">
-              <div class="panel ratingDistPanel" style="width:50%; margin-top:0; padding:10px;">
+              <a
+                href="/show/<%= showRow.id %>/critics"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="panel ratingDistPanel criticPanelLink"
+                style="width:50%; margin-top:0; padding:10px; text-decoration:none; color:inherit; display:block;"
+              >
                 <div class="ratingDistHeader" style="margin-bottom:8px;">
-                  <div><div class="kicker" style="font-size:12px;">Critic Rating</div></div>
+                  <div>
+                    <div class="kicker" style="font-size:12px;">Critic Rating</div>
+                    <div class="muted small" style="margin-top:2px;">Click to view all verified critic ratings</div>
+                  </div>
                   <div class="ratingDistMeta" style="font-size:11px;"><%= verifiedDistTotal %> total</div>
                 </div>
-
+            
                 <% if (verifiedDistTotal > 0) { %>
                   <div class="ratingDistList" style="gap:6px;">
                     <% for (const r of verifiedDistRows) {
@@ -1154,14 +1181,14 @@
                 <% } else { %>
                   <div class="ratingDistEmpty" style="font-size:12px;">No verified reviewer ratings yet.</div>
                 <% } %>
-              </div>
-
+              </a>
+            
               <div class="panel ratingDistPanel" style="width:50%; margin-top:0; padding:10px;">
                 <div class="ratingDistHeader" style="margin-bottom:8px;">
                   <div><div class="kicker">All Ratings</div></div>
                   <div class="ratingDistMeta" style="font-size:11px;"><%= ratingDistTotal %> total</div>
                 </div>
-
+            
                 <% if (ratingDistTotal > 0) { %>
                   <div class="ratingDistList" style="gap:6px;">
                     <% for (const r of ratingDistRows) {
