@@ -193,38 +193,18 @@
       overflow:hidden;
       margin-top:16px;
       border:1px solid var(--accentSoft);
-      background:
-        linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.58));
       box-shadow:var(--shadow, 0 10px 30px rgba(0,0,0,.35));
+      background-color:#0b0b0b;
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
     }
-
-    .profile_hero::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background-image: var(--pBanner);
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      opacity: .6;
-      pointer-events: none;
-    }
-
-    .profile_hero::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:
-        linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.62)),
-        radial-gradient(circle at top left, var(--accentFaint), transparent 30%);
-      pointer-events:none;
-    }
-
+    
     .profile_hero_inner{
       position:relative;
       z-index:2;
     }
-
+    
     .profile_hero_inner h1{
       color: var(--text);
       text-shadow: 0 2px 18px rgba(0,0,0,.45);
@@ -704,7 +684,16 @@
       </div>
     <% } %>
 
-    <div class="profile_hero" <%= pu.banner_url ? `style="--pBanner:url('${pu.banner_url}');"` : "" %>>
+    <div
+      class="profile_hero"
+      <%= pu.banner_url
+        ? `style="background-image:
+            linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.62)),
+            radial-gradient(circle at top left, ${pu.theme_color || '#7c7c7c'}22, transparent 30%),
+            url('${pu.banner_url}');"`
+        : ""
+      %>
+    >
       <div class="profile_hero_inner" <%= pu.theme_color ? `style="--pAccent: ${pu.theme_color};"` : "" %>>
         <div class="row gap" style="align-items:center;">
           <div class="avatar_lg">
