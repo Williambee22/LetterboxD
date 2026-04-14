@@ -996,6 +996,12 @@ textarea:focus{
   color: #ef4444; /* red */
 }
 
+body.app{
+  --accentSoft: color-mix(in srgb, var(--accent) 70%, transparent) !important;
+  --accentFaint: color-mix(in srgb, var(--accent) 24%, transparent) !important;
+  --accentGlow: color-mix(in srgb, var(--accent) 40%, transparent) !important;
+}
+
 
 body.app .kicker,
 body.app .tile_star,
