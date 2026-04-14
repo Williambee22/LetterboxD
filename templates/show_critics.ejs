@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Critic Ratings - <%= row && row.title ? row.title : "Show" %> - Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+
+  <style>
+    .criticList {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .criticCard {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      overflow: hidden;
+    }
+
+    .criticSummary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px;
+    }
+
+    .criticSummary::-webkit-details-marker {
+      display: none;
+    }
+
+    .criticSummary:hover {
+      background: rgba(255,255,255,0.035);
+    }
+
+    .criticLeft {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .criticAvatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      overflow: hidden;
+      flex: 0 0 44px;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .criticAvatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .criticMeta {
+      min-width: 0;
+    }
+
+    .criticNameRow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-weight: 800;
+    }
+
+    .criticScore {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 900;
+      white-space: nowrap;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .criticChevron {
+      font-size: 14px;
+      opacity: 0.75;
+      transition: transform .15s ease;
+      margin-left: 10px;
+    }
+
+    details[open] .criticChevron {
+      transform: rotate(90deg);
+    }
+
+    .criticBody {
+      padding: 0 14px 14px 14px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .criticReviewText {
+      white-space: pre-wrap;
+      line-height: 1.55;
+      margin-top: 12px;
+    }
+
+    .criticNoReview {
+      margin-top: 12px;
+      color: var(--muted);
+    }
+
+    .rolebadge {
+      display:inline-flex;
+      align-items:center;
+      font-size:11px;
+      font-weight:800;
+      border-radius:999px;
+      padding:3px 8px;
+      color:#fff;
+    }
+  </style>
+</head>
+<body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
+  <%
+    const POSTER_FALLBACK = "/static/posters/placeholder.png";
+    const criticList = Array.isArray(critic_ratings) ? critic_ratings : [];
+  %>
+
+  <header class="topbar">
+    <div class="wrap row between">
+      <a class="brand" href="/shows" style="display:flex; align-items:center; gap:8px; text-decoration:none;">
+        <img src="/static/logo.png" alt="logo" style="width:30px; height:30px; object-fit:contain; flex-shrink:0;">
+        <span>Pressboxd</span>
+      </a>
+
+      <nav class="nav row">
+        <a href="/shows">Shows</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+      </nav>
+
+      <div class="auth row">
+        <% if (me) { %>
+          <a class="nav_user" href="/me">
+            <span class="avatar_sm">
+              <% if (me.avatar_url) { %>
+                <img src="<%= me.avatar_url %>" alt="avatar">
+              <% } else { %>
+                <span class="avatar_fallback"></span>
+              <% } %>
+            </span>
+            <span class="muted small"><%= me.username || "me" %></span>
+          </a>
+          <a href="/logout">Logout</a>
+        <% } else { %>
+          <a href="/login">Login</a>
+          <a class="btn" href="/register">Register</a>
+        <% } %>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div style="margin-top:14px;">
+      <div class="panel">
+        <div style="display:flex; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+          <div class="showposter" style="position:relative; overflow:hidden; width:140px; height:210px; flex:0 0 140px;">
+            <img
+              src="<%= row.poster_url || POSTER_FALLBACK %>"
+              alt="<%= row.title || 'Show' %> poster"
+              style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;"
+              onerror="this.onerror=null;this.src='<%= POSTER_FALLBACK %>';"
+            >
+          </div>
+
+          <div style="flex:1 1 auto; min-width:0;">
+            <div class="kicker">Verified Critic Ratings</div>
+            <h1 style="margin:6px 0 8px;"><%= row.title || "" %></h1>
+            <div class="muted">
+              <% if (row.year) { %><%= row.year %><% } %>
+              <% if (row.year && row.corps) { %> — <% } %>
+              <% if (row.corps) { %><%= row.corps %><% } %>
+            </div>
+
+            <div style="margin-top:14px;">
+              <a class="btn ghost" href="/show/<%= row.id %>">← Back to show</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="criticList">
+      <% if (criticList.length > 0) { %>
+        <% for (const c of criticList) { %>
+          <details class="criticCard">
+            <summary class="criticSummary">
+              <div class="criticLeft">
+                <a href="/u/<%= encodeURIComponent(c.username || '') %>" class="criticAvatar">
+                  <% if (c.avatar_url) { %>
+                    <img src="<%= c.avatar_url %>" alt="<%= c.username || 'user' %>">
+                  <% } %>
+                </a>
+
+                <div class="criticMeta">
+                  <div class="criticNameRow">
+                    <a href="/u/<%= encodeURIComponent(c.username || '') %>"><%= c.username || "User" %></a>
+
+                    <% if (c.role_name) { %>
+                      <span class="rolebadge" style="background:<%= c.role_color || '#666666' %>;">
+                        <%= c.role_name %>
+                      </span>
+                    <% } %>
+                  </div>
+
+                  <div class="muted small">
+                    <% if (c.review_text && c.review_text.trim()) { %>
+                      Click to view review
+                    <% } else { %>
+                      No written review
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex; align-items:center;">
+                <div class="criticScore">
+                  ★ <%= (Number(c.rating_half || 0) / 2).toFixed(Number(c.rating_half || 0) % 2 ? 1 : 0) %>
+                </div>
+                <span class="criticChevron">▶</span>
+              </div>
+            </summary>
+
+            <div class="criticBody">
+              <% if (c.review_text && c.review_text.trim()) { %>
+                <div class="criticReviewText"><%= c.review_text %></div>
+                <% if (c.ts) { %>
+                  <div class="muted small" style="margin-top:10px;">
+                    Posted on <%= new Date(Number(c.ts) * 1000).toLocaleDateString('en-US') %>
+                  </div>
+                <% } %>
+              <% } else { %>
+                <div class="criticNoReview">This critic rated the show but did not leave a written review.</div>
+              <% } %>
+            </div>
+          </details>
+        <% } %>
+      <% } else { %>
+        <div class="panel">
+          <div class="muted">No Verified Critic ratings yet for this show.</div>
+        </div>
+      <% } %>
+    </div>
+  </main>
+
+  <footer class="wrap footer">
+    <div class="small">Rate drum corps shows.</div>
+  </footer>
+</body>
+</html>
