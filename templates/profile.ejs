@@ -518,6 +518,10 @@
 
   const avgRatingCnt = pu.avg_rating_cnt != null ? Number(pu.avg_rating_cnt) : 0;
   const avgRating = pu.avg_rating != null ? Number(pu.avg_rating) : 0;
+
+  const pageAccent = /^#([0-9a-fA-F]{6})$/.test(String(pu.theme_color || '').trim())
+    ? String(pu.theme_color).trim()
+    : '#7c7c7c';
 %>
 
 <body
