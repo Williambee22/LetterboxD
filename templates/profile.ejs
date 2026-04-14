@@ -523,12 +523,7 @@
 <body
   class="app"
   <%= pu && pu.theme_color
-    ? `style="
-        --accent: ${pu.theme_color};
-        --accent2: ${pu.theme_color};
-        --accentSoft: color-mix(in srgb, ${pu.theme_color} 55%, transparent);
-        --accentFaint: color-mix(in srgb, ${pu.theme_color} 22%, transparent);
-      "`
+    ? `style="--accent: ${pu.theme_color}; --accent2: ${pu.theme_color};"`
     : ""
   %>>
   <header class="topbar">
