@@ -1269,42 +1269,42 @@ function createApp() {
   }));
 
   app.post('/me/upload_banner', loginRequired((req, res, next) => {
-    uploadBanner.single('banner_file')(req, res, async (err) => {
+    uploadPfp.single('banner_file')(req, res, async (err) => {
       if (err) {
         req.flash('error', `Upload failed: ${err.message}`);
         return res.redirect('/me/customize');
       }
-
+  
       if (!req.file) {
         req.flash('error', 'No file selected.');
         return res.redirect('/me/customize');
       }
-
+  
       let conn;
       try {
         conn = getConn();
         const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
         if (!me) return res.sendStatus(404);
-
+  
         let ext = path.extname(req.file.originalname || '').toLowerCase();
         if (!ALLOWED_IMAGE_EXTS.has(ext)) {
           req.flash('error', 'Invalid file type.');
           return res.redirect('/me/customize');
         }
         if (ext === '.jpeg') ext = '.jpg';
-
+  
         const oldBannerUrl = String(me.banner_url || '').trim();
-
+  
         const fileName = `banner_${slugify(me.username)}_${crypto.randomUUID()}${ext}`;
         const key = `banners/${fileName}`;
-
+  
         const bannerUrl = await uploadBufferToR2({
           key,
           buffer: req.file.buffer,
           contentType: req.file.mimetype || 'application/octet-stream',
           cacheControl: 'public, max-age=604800',
         });
-
+  
         await dbx.updateUserProfileStyle(
           conn,
           Number(req.session.uid),
@@ -1313,7 +1313,7 @@ function createApp() {
           me.theme_color || null
         );
         await dbx.commit(conn);
-
+  
         try {
           if (oldBannerUrl && oldBannerUrl !== bannerUrl) {
             await deleteStoredImageByUrl(oldBannerUrl, 'banner');
@@ -1321,7 +1321,7 @@ function createApp() {
         } catch (cleanupErr) {
           console.error('Failed to delete old banner asset:', cleanupErr);
         }
-
+  
         req.flash('ok', 'Banner updated.');
         return res.redirect('/me/customize');
       } catch (e) {
