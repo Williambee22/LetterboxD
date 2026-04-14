@@ -2132,31 +2132,46 @@ function createApp() {
 
   app.post('/me/customize', loginRequired(async (req, res) => {
     const themeColor = String(req.body.theme_color || '').trim();
-
+  
+    if (themeColor && !/^#([0-9a-fA-F]{6})$/.test(themeColor)) {
+      req.flash('error', 'Theme color must be in #RRGGBB format.');
+      return res.redirect('/me/customize');
+    }
+  
     let conn;
     try {
       conn = getConn();
-
+  
       const current = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
       if (!current) return res.sendStatus(404);
-
+  
       await dbx.updateUserProfileStyle(
         conn,
         Number(req.session.uid),
         current.avatar_url || null,
         current.banner_url || null,
-        themeColor
+        themeColor || null
       );
-
+  
       await dbx.commit(conn);
+  
+      req.session.user = {
+        ...(req.session.user || {}),
+        id: Number(current.id),
+        username: current.username,
+        email: current.email || null,
+        is_admin: Number(current.is_admin || 0),
+        avatar_url: current.avatar_url || null,
+        theme_color: themeColor || null,
+      };
+  
       req.flash('ok', 'Theme color updated.');
     } finally {
       if (conn) dbx.close(conn);
     }
-
+  
     res.redirect('/me/customize');
   }));
-
   app.get('/admin/users', adminRequired(async (req, res, next) => {
     let conn;
     try {
