@@ -194,9 +194,8 @@
       margin-top:16px;
       border:1px solid var(--accentSoft);
       background:
-        linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.50));
-      box-shadow: var(--shadow, 0 10px 30px rgba(0,0,0,.35));
-      min-height: 260px;
+        linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.58));
+      box-shadow:var(--shadow, 0 10px 30px rgba(0,0,0,.35));
     }
 
     .profile_hero::before{
@@ -207,7 +206,7 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      opacity: .65;
+      opacity: .6;
       pointer-events: none;
     }
 
@@ -216,18 +215,14 @@
       position:absolute;
       inset:0;
       background:
-        linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.62)),
+        linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.62)),
         radial-gradient(circle at top left, var(--accentFaint), transparent 30%);
       pointer-events:none;
     }
 
     .profile_hero_inner{
-      position: relative;
-      z-index: 2;
-      padding: 18px;
-      min-height: 260px;
-      display: flex;
-      align-items: center;
+      position:relative;
+      z-index:2;
     }
 
     .profile_hero_inner h1{
@@ -285,7 +280,7 @@
       position: relative !important;
       transform: none !important;
       margin: 0 auto !important;
-      background: rgba(0,0,0,.45);
+      background: rgba(0,0,0,.35);
       backdrop-filter: blur(4px);
     }
 
@@ -469,7 +464,6 @@
 
       .profile_hero_inner {
         padding: 20px 10px !important;
-        min-height: 260px;
       }
 
       .profile_hero_inner .row.gap {
