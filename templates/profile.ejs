@@ -520,7 +520,7 @@
   const avgRating = pu.avg_rating != null ? Number(pu.avg_rating) : 0;
 
   const profileAccent = String((pu && pu.theme_color) || '').trim();
-  const meAccent = String((me && me.theme_color) || '').trim();
+  const meAccent = String((meUser && meUser.theme_color) || '').trim();
 
   const pageAccent =
     /^#([0-9a-fA-F]{6})$/.test(profileAccent) ? profileAccent :
