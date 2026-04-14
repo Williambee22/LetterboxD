@@ -11,9 +11,10 @@
     body,
     body.app {
       font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      }
+    }
+
     .auth { align-items:center; gap: 12px; }
-  
+
     .notifWrap { position: relative; display: inline-flex; align-items:center; }
     .bellBtn {
       position: relative;
@@ -29,7 +30,7 @@
       opacity: 0.95;
     }
     .bellBtn:hover { background: rgba(255,255,255,0.06); }
-  
+
     .badgeDot {
       position:absolute;
       top: 3px;
@@ -46,7 +47,7 @@
       font-weight: 800;
       box-shadow: 0 6px 18px rgba(0,0,0,0.35);
     }
-  
+
     .notifDropdown {
       display: none;
       position: absolute;
@@ -62,7 +63,7 @@
       z-index: 9999;
     }
     .notifDropdown.open { display:block; }
-  
+
     .notifHeader {
       display:flex;
       align-items:center;
@@ -74,9 +75,9 @@
       background: rgba(15, 23, 42, 0.98);
       backdrop-filter: blur(8px);
     }
-  
+
     .notifTitle { font-weight: 900; }
-  
+
     .markReadBtn {
       border: none;
       background: transparent;
@@ -88,49 +89,49 @@
       border-radius: 10px;
     }
     .markReadBtn:hover { background: rgba(255,255,255,0.06); opacity: 1; }
-  
+
     .notifList {
       padding: 8px;
       display:flex;
       flex-direction:column;
       gap: 8px;
     }
-  
+
     .notifItem {
       padding: 10px;
       border-radius: 12px;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.08);
     }
-  
+
     .notifItem.unread {
       background: rgba(99,102,241,0.18);
       border-color: rgba(99,102,241,0.25);
     }
-  
+
     .notifTime {
       font-size: 12px;
       opacity: 0.7;
       margin-top: 4px;
     }
-  
+
     .notifEmpty {
       padding: 12px;
       opacity: 0.8;
     }
-  
+
     .authBellSlot { display:inline-flex; align-items:center; }
-  
+
     .notifDropdown,
     .notifDropdown * {
       pointer-events: auto !important;
     }
-  
+
     .ratingDistPanel {
       margin-top: 12px;
       box-shadow: none;
     }
-  
+
     .ratingDistHeader {
       display:flex;
       align-items:center;
@@ -138,38 +139,38 @@
       gap:12px;
       margin-bottom: 12px;
     }
-  
+
     .ratingDistTitle {
       font-weight: 900;
       line-height: 1.15;
     }
-  
+
     .ratingDistMeta {
       text-align:right;
       font-size: 12px;
       opacity: 0.8;
       white-space: nowrap;
     }
-  
+
     .ratingDistList {
       display:flex;
       flex-direction:column;
       gap:8px;
     }
-  
+
     .ratingDistRow {
       display:grid;
       grid-template-columns: 52px 1fr 42px;
       gap:10px;
       align-items:center;
     }
-  
+
     .ratingDistLabel {
       font-size: 13px;
       font-weight: 700;
       opacity: 0.95;
     }
-  
+
     .ratingDistTrack {
       position: relative;
       height: 10px;
@@ -178,7 +179,7 @@
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.06);
     }
-  
+
     .ratingDistFill {
       position: absolute;
       left: 0;
@@ -192,7 +193,7 @@
         color-mix(in srgb, var(--accent) 60%, #ffffff 0%)
       );
     }
-  
+
     .ratingDistCount {
       text-align: right;
       font-size: 12px;
@@ -203,7 +204,7 @@
     .reviewToolbar {
       gap: 16px;
     }
-    
+
     .reviewSortForm {
       min-width: 220px;
     }
@@ -215,7 +216,7 @@
       gap: 12px;
       margin-top: 10px;
     }
-    
+
     .review_posted_date {
       margin-left: auto;
       text-align: right;
@@ -228,26 +229,24 @@
       transition: transform .15s ease, border-color .15s ease, background .15s ease;
       cursor: pointer;
     }
-    
+
     .criticPanelLink:hover {
       transform: translateY(-1px);
       background: rgba(255,255,255,0.045);
       border-color: color-mix(in srgb, var(--accent) 28%, rgba(255,255,255,0.14));
     }
-    
+
     .criticPanelLink:focus-visible {
       outline: 2px solid var(--accent);
       outline-offset: 2px;
     }
-
-
 
     @media (max-width: 720px) {
       .review_footer {
         flex-direction: column;
         align-items: flex-start;
       }
-    
+
       .review_posted_date {
         margin-left: 0;
         text-align: left;
@@ -266,27 +265,27 @@
       outline: none;
       box-shadow: none;
     }
-    
+
     .reviewSortSelect:focus {
       border-color: var(--accent);
     }
-    
+
     .reviewSortSelect option {
       background: #000 !important;
       color: #fff !important;
     }
-    
+
     @media (max-width: 720px) {
       .reviewToolbar {
         flex-direction: column !important;
         align-items: stretch !important;
       }
-    
+
       .reviewSortForm {
         width: 100%;
         min-width: 0;
       }
-    
+
       .reviewSortSelect {
         min-width: 0;
         width: 100%;
@@ -297,7 +296,7 @@
       font-size: 16px;
       opacity: 0.75;
     }
-  
+
     .reviewcard {
       padding: 14px;
       border: 1px solid var(--accentSoft);
@@ -305,7 +304,7 @@
       background: rgba(255,255,255,0.03);
       margin-bottom: 14px;
     }
-  
+
     .reviewhead {
       display:flex;
       align-items:center;
@@ -313,14 +312,14 @@
       gap:8px;
       margin-bottom:10px;
     }
-  
+
     .reviewuser {
       display:flex;
       align-items:center;
       gap:10px;
       min-width:0;
     }
-  
+
     .reviewavatar {
       width:40px;
       height:40px;
@@ -329,18 +328,18 @@
       background: rgba(255,255,255,0.08);
       flex: 0 0 40px;
     }
-  
+
     .reviewavatar img {
       width:100%;
       height:100%;
       object-fit:cover;
       display:block;
     }
-  
+
     .reviewmeta {
       min-width:0;
     }
-  
+
     .reviewname {
       font-weight:800;
       display:flex;
@@ -348,7 +347,7 @@
       gap:8px;
       flex-wrap:wrap;
     }
-  
+
     .rolebadge {
       display:inline-flex;
       align-items:center;
@@ -358,18 +357,18 @@
       padding:3px 8px;
       color:#fff;
     }
-  
+
     .reviewsub {
       font-size:12px;
       opacity:0.8;
     }
-  
+
     .reviewtext {
       white-space: pre-wrap;
       line-height:1.5;
       margin-top: 6px;
     }
-  
+
     .review_votes {
       display:flex;
       align-items:center;
@@ -377,7 +376,7 @@
       margin-top: 12px;
       flex-wrap:wrap;
     }
-  
+
     .vote_btn {
       border: 1px solid var(--accentSoft);
       background: rgba(255,255,255,0.03);
@@ -390,23 +389,23 @@
       text-align: center;
       transition: background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
     }
-    
+
     .vote_btn:hover {
       background: rgba(255,255,255,0.06);
     }
-    
+
     .vote_btn.up.on {
       background: rgba(34,197,94,0.18);
       border-color: rgba(34,197,94,0.65);
       color: #22c55e;
     }
-    
+
     .vote_btn.down.on {
       background: rgba(239,68,68,0.18);
       border-color: rgba(239,68,68,0.65);
       color: #ef4444;
     }
-    
+
     .vote_total {
       display: inline-flex;
       align-items: center;
@@ -418,19 +417,19 @@
       border: 1px solid var(--accentSoft);
       background: rgba(255,255,255,0.03);
     }
-  
+
     .vote_btn.active {
       border-color: var(--accent);
       background: color-mix(in srgb, var(--accent) 18%, transparent);
     }
-  
+
     .comment-item {
       padding: 10px;
       border-radius: 10px;
       background: rgba(255,255,255,0.04);
       border: 1px solid var(--accentSoft);
     }
-  
+
     .comment-head {
       display:flex;
       align-items:center;
@@ -438,13 +437,13 @@
       gap:10px;
       margin-bottom:6px;
     }
-  
+
     .comment-user {
       display:flex;
       align-items:center;
       gap:8px;
     }
-  
+
     .comment-avatar {
       width:28px;
       height:28px;
@@ -453,14 +452,14 @@
       background: rgba(255,255,255,0.08);
       flex:0 0 28px;
     }
-  
+
     .comment-avatar img {
       width:100%;
       height:100%;
       object-fit:cover;
       display:block;
     }
-  
+
     .comment-form textarea,
     .write-review-form textarea {
       width:100%;
@@ -473,22 +472,22 @@
       padding: 12px;
       font: inherit;
     }
-  
+
     .comment-form textarea {
       min-height:72px;
     }
-  
+
     .review-actions {
       display:flex;
       gap:8px;
       flex-wrap:wrap;
       margin-top:12px;
     }
-  
+
     .reviewsSection {
       width: 100% !important;
     }
-  
+
     .reviewsLayout {
       display: flex !important;
       align-items: flex-start !important;
@@ -496,25 +495,26 @@
       width: 100% !important;
       flex-wrap: nowrap !important;
     }
-  
+
     .reviewsMain {
       flex: 1 1 auto !important;
       min-width: 0 !important;
       width: auto !important;
     }
-  
+
     .reviewsSide {
       flex: 0 0 600px !important;
       width: 600px !important;
       min-width: 600px !important;
       align-self: flex-start !important;
     }
-  
+
     .reviewlist,
     .reviewcard {
       width: 100% !important;
       max-width: none !important;
     }
+
     .review_rating_plain {
       display: inline-flex;
       align-items: center;
@@ -616,7 +616,7 @@
       align-items: center;
       gap: 10px;
     }
-    
+
     .stars {
       position: relative;
       display: inline-block;
@@ -627,13 +627,11 @@
       user-select: none;
       white-space: nowrap;
     }
-    
-    .stars-base,
-    
+
     .stars-base {
       color: rgba(255,255,255,0.18);
     }
-    
+
     .stars-fill {
       position: absolute;
       left: 0;
@@ -650,7 +648,7 @@
         align-items: center !important;
         gap: 16px !important;
       }
-  
+
       .showposter {
         width: 160px !important;
         height: 240px !important;
@@ -659,24 +657,24 @@
         border-radius: 8px;
         box-shadow: 0 8px 24px rgba(0,0,0,0.4);
       }
-  
+
       .showmeta {
         text-align: center;
         width: 100%;
       }
-  
+
       .showmeta h1 {
         font-size: 1.6rem !important;
         line-height: 1.2;
       }
-  
+
       .showTopRight {
         flex: 1 1 auto !important;
         width: 100% !important;
         min-width: 0 !important;
         margin-left: 0 !important;
       }
-  
+
       .showActionPanels {
         flex-direction: column !important;
       }
@@ -686,39 +684,39 @@
         min-width: 0;
         flex: 1 1 auto;
       }
-  
+
       div[style*="display:flex; gap:10px; margin-top:12px"] {
         flex-direction: column !important;
       }
-  
+
       .ratingDistPanel {
         width: 100% !important;
       }
-  
+
       .topbar {
         position: relative !important;
         height: auto !important;
         padding: 10px 0;
       }
-  
+
       .topbar .wrap.row.between {
         flex-direction: column !important;
         align-items: center !important;
         gap: 12px !important;
       }
-  
+
       .nav.row {
         display: flex !important;
         flex-wrap: wrap !important;
         justify-content: center !important;
         gap: 8px 15px !important;
       }
-  
+
       .nav.row a {
         font-size: 13px !important;
         padding: 4px 0;
       }
-  
+
       .auth.row {
         width: 100%;
         justify-content: center !important;
@@ -726,114 +724,115 @@
         padding-top: 10px;
         margin-top: 5px;
       }
-  
+
       main.wrap {
         margin-top: 10px !important;
       }
-  
+
       .reviewcard {
         padding: 8px !important;
       }
-  
+
       .review_votes {
         margin-top: 12px;
         justify-content: flex-start;
         border-top: 1px solid rgba(255,255,255,0.05);
         padding-top: 8px;
       }
-  
+
       .stars {
         font-size: 38px !important;
         justify-content: center !important;
       }
-  
+
       .starwrap {
         justify-content: center !important;
         flex-direction: column;
         gap: 8px;
       }
     }
-  
+
     @media (max-width: 720px) {
       .reviewsLayout {
         display: block !important;
       }
-  
+
       .reviewsMain,
       .reviewsSide {
         width: 100% !important;
         min-width: 0 !important;
         max-width: none !important;
       }
-  
+
       .reviewsSide {
         margin-top: 16px !important;
       }
     }
   </style>
 </head>
+
+<%
+  const POSTER_FALLBACK = "/static/posters/placeholder.png";
+  const meUser = typeof me !== "undefined" ? me : null;
+  const showRow = row || {};
+  const reviewList = Array.isArray(reviews) ? [...reviews] : [];
+  const activeSort = typeof sort !== "undefined" ? sort : "popular";
+  const myReviewText = typeof my_review !== "undefined" ? (my_review || "") : "";
+  const myRatingVal = typeof my_rating !== "undefined" ? my_rating : null;
+  const loginNext = "/login?next=" + encodeURIComponent("/show/" + (showRow.id || ""));
+  const notifCountSafe = typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
+  const notifItemsSafe = (typeof notif_items !== "undefined" && Array.isArray(notif_items)) ? notif_items : [];
+  const currentUserId = meUser ? Number(meUser.id) : null;
+  const isFavorite = typeof is_favorite !== "undefined" ? !!is_favorite : false;
+  const favoriteCount = typeof favorite_count !== "undefined" ? Number(favorite_count || 0) : 0;
+  const showFavoriteCount = typeof show_favorite_count !== "undefined" ? Number(show_favorite_count || 0) : 0;
+  const overallRank = typeof overall_rank !== "undefined" ? Number(overall_rank || 0) : 0;
+  const criticRank = typeof critic_rank !== "undefined" ? Number(critic_rank || 0) : 0;
+  const corpsRank = typeof corps_rank !== "undefined" ? Number(corps_rank || 0) : 0;
+  const yearRank = typeof year_rank !== "undefined" ? Number(year_rank || 0) : 0;
+
+  const distLabels = ["5.0","4.5","4.0","3.5","3.0","2.5","2.0","1.5","1.0","0.5","0.0"];
+  const ratingHistogramRaw = (typeof rating_histogram !== "undefined" && rating_histogram) ? rating_histogram : {};
+  const verifiedHistogramRaw = (typeof verified_rating_histogram !== "undefined" && verified_rating_histogram) ? verified_rating_histogram : {};
+
+  function getHistCount(obj, key) {
+    if (!obj) return 0;
+    const v = obj[key];
+    const n = Number(v || 0);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  const ratingDistRows = distLabels.map((label) => ({
+    label,
+    count: getHistCount(ratingHistogramRaw, label)
+  }));
+
+  const verifiedDistRows = distLabels.map((label) => ({
+    label,
+    count: getHistCount(verifiedHistogramRaw, label)
+  }));
+
+  const ratingDistTotal = ratingDistRows.reduce((sum, r) => sum + r.count, 0);
+  const verifiedDistTotal = verifiedDistRows.reduce((sum, r) => sum + r.count, 0);
+  const ratingDistMax = ratingDistRows.reduce((m, r) => Math.max(m, r.count), 0);
+  const verifiedDistMax = verifiedDistRows.reduce((m, r) => Math.max(m, r.count), 0);
+
+  const verifiedWeightedTotal = verifiedDistRows.reduce((sum, r) => sum + (Number(r.label) * r.count), 0);
+  const verifiedAverage = verifiedDistTotal > 0 ? (verifiedWeightedTotal / verifiedDistTotal) : 0;
+%>
+
 <body
   class="app"
-  <%= me && me.theme_color
+  <%= meUser && meUser.theme_color
     ? `style="
-        --accent: ${me.theme_color};
-        --accent2: ${me.theme_color};
-        --accentSoft: color-mix(in srgb, ${me.theme_color} 90%, transparent);
-        --accentFaint: color-mix(in srgb, ${me.theme_color} 68%, transparent);
-        --accentGlow: color-mix(in srgb, ${me.theme_color} 80%, transparent);
+        --accent: ${meUser.theme_color};
+        --accent2: ${meUser.theme_color};
+        --accentSoft: color-mix(in srgb, ${meUser.theme_color} 90%, transparent);
+        --accentFaint: color-mix(in srgb, ${meUser.theme_color} 68%, transparent);
+        --accentGlow: color-mix(in srgb, ${meUser.theme_color} 80%, transparent);
       "`
     : ""
   %>>
-  <%
-    const POSTER_FALLBACK = "/static/posters/placeholder.png";
-    const meUser = typeof me !== "undefined" ? me : null;
-    const showRow = row || {};
-    const reviewList = Array.isArray(reviews) ? [...reviews] : [];
-    const activeSort = typeof sort !== "undefined" ? sort : "popular";
-    const myReviewText = typeof my_review !== "undefined" ? (my_review || "") : "";
-    const myRatingVal = typeof my_rating !== "undefined" ? my_rating : null;
-    const loginNext = "/login?next=" + encodeURIComponent("/show/" + (showRow.id || ""));
-    const notifCountSafe = typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
-    const notifItemsSafe = (typeof notif_items !== "undefined" && Array.isArray(notif_items)) ? notif_items : [];
-    const currentUserId = meUser ? Number(meUser.id) : null;
-    const isFavorite = typeof is_favorite !== "undefined" ? !!is_favorite : false;
-    const favoriteCount = typeof favorite_count !== "undefined" ? Number(favorite_count || 0) : 0;
-    const showFavoriteCount = typeof show_favorite_count !== "undefined" ? Number(show_favorite_count || 0) : 0;
-    const overallRank = typeof overall_rank !== "undefined" ? Number(overall_rank || 0) : 0;
-    const criticRank = typeof critic_rank !== "undefined" ? Number(critic_rank || 0) : 0;
-    const corpsRank = typeof corps_rank !== "undefined" ? Number(corps_rank || 0) : 0;
-    const yearRank = typeof year_rank !== "undefined" ? Number(year_rank || 0) : 0;
-
-    const distLabels = ["5.0","4.5","4.0","3.5","3.0","2.5","2.0","1.5","1.0","0.5","0.0"];
-    const ratingHistogramRaw = (typeof rating_histogram !== "undefined" && rating_histogram) ? rating_histogram : {};
-    const verifiedHistogramRaw = (typeof verified_rating_histogram !== "undefined" && verified_rating_histogram) ? verified_rating_histogram : {};
-
-    function getHistCount(obj, key) {
-      if (!obj) return 0;
-      const v = obj[key];
-      const n = Number(v || 0);
-      return Number.isFinite(n) ? n : 0;
-    }
-
-    const ratingDistRows = distLabels.map((label) => ({
-      label,
-      count: getHistCount(ratingHistogramRaw, label)
-    }));
-
-    const verifiedDistRows = distLabels.map((label) => ({
-      label,
-      count: getHistCount(verifiedHistogramRaw, label)
-    }));
-
-    const ratingDistTotal = ratingDistRows.reduce((sum, r) => sum + r.count, 0);
-    const verifiedDistTotal = verifiedDistRows.reduce((sum, r) => sum + r.count, 0);
-    const ratingDistMax = ratingDistRows.reduce((m, r) => Math.max(m, r.count), 0);
-    const verifiedDistMax = verifiedDistRows.reduce((m, r) => Math.max(m, r.count), 0);
-    
-    const verifiedWeightedTotal = verifiedDistRows.reduce((sum, r) => sum + (Number(r.label) * r.count), 0);
-    const verifiedAverage = verifiedDistTotal > 0 ? (verifiedWeightedTotal / verifiedDistTotal) : 0;
-  %>
-
   <header class="topbar">
     <div class="wrap row between">
       <a class="brand" href="/shows" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
@@ -977,7 +976,7 @@
               <div style="margin-top:12px; display:flex; flex-direction:column; align-items:flex-start; gap:8px;">
                 <% const avgRating = Number(showRow.avg_rating || 0); %>
                 <% const totalRatings = Number(showRow.cnt || 0); %>
-              
+
                 <% if (totalRatings === 0) { %>
                   <span class="badge muted">Unrated</span>
                 <% } else { %>
@@ -989,7 +988,7 @@
                     <% } %>
                   </div>
                 <% } %>
-              
+
                 <% if (verifiedDistTotal > 0) { %>
                   <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                     <span class="badge" style="border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.05);">
@@ -1002,23 +1001,23 @@
                     <% } %>
                   </div>
                 <% } %>
-              
+
                 <% if (yearRank > 0 && showRow.year) { %>
                   <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                     <span class="badge muted"><%= showRow.year %> Rank #<%= yearRank %></span>
                   </div>
                 <% } %>
-              
+
                 <% if (corpsRank > 0 && showRow.corps) { %>
                   <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                     <span class="badge muted"><%= showRow.corps %> Rank #<%= corpsRank %></span>
                   </div>
                 <% } %>
-              
+
                 <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                   <span class="badge muted"><%= showFavoriteCount %> favorite<%= showFavoriteCount === 1 ? '' : 's' %></span>
                 </div>
-              
+
                 <% if (meUser && Number(meUser.is_admin) === 1) { %>
                   <a class="btn ghost" href="/admin/show/<%= showRow.id %>/edit">Edit show</a>
                 <% } %>
@@ -1167,7 +1166,7 @@
                   </div>
                   <div class="ratingDistMeta" style="font-size:11px;"><%= verifiedDistTotal %> total</div>
                 </div>
-            
+
                 <% if (verifiedDistTotal > 0) { %>
                   <div class="ratingDistList" style="gap:6px;">
                     <% for (const r of verifiedDistRows) {
@@ -1186,13 +1185,13 @@
                   <div class="ratingDistEmpty" style="font-size:12px;">No verified reviewer ratings yet.</div>
                 <% } %>
               </a>
-            
+
               <div class="panel ratingDistPanel" style="width:50%; margin-top:0; padding:10px;">
                 <div class="ratingDistHeader" style="margin-bottom:8px;">
                   <div><div class="kicker">All Ratings</div></div>
                   <div class="ratingDistMeta" style="font-size:11px;"><%= ratingDistTotal %> total</div>
                 </div>
-            
+
                 <% if (ratingDistTotal > 0) { %>
                   <div class="ratingDistList" style="gap:6px;">
                     <% for (const r of ratingDistRows) {
@@ -1229,7 +1228,7 @@
                   <%= reviewList.length %> review<%= reviewList.length === 1 ? '' : 's' %>
                 </div>
               </div>
-            
+
               <form method="get" action="/show/<%= showRow.id %>" class="reviewSortForm">
                 <label for="reviewSort" class="muted small" style="display:block; margin-bottom:6px;">Sort by</label>
                 <select id="reviewSort" name="sort" class="reviewSortSelect" onchange="this.form.submit()">
@@ -1259,24 +1258,24 @@
                             <img src="<%= rv.avatar_url %>" alt="<%= rv.username || 'user' %>">
                           <% } %>
                         </a>
-                    
+
                         <div class="reviewmeta">
                           <div class="reviewname">
                             <a href="/u/<%= encodeURIComponent(rv.username || '') %>"><%= rv.username || "User" %></a>
-                    
+
                             <% if (rv.role_name) { %>
                               <span class="rolebadge" style="background:<%= rv.role_color || '#666666' %>;">
                                 <%= rv.role_name %>
                               </span>
                             <% } %>
-                    
+
                             <% if (rv.rating_half != null) { %>
                               <span class="review_rating_plain">★ <%= (Number(rv.rating_half) / 2).toFixed(Number(rv.rating_half) % 2 ? 1 : 0) %></span>
                             <% } %>
                           </div>
                         </div>
                       </div>
-                    
+
                       <% if (canAdminDelete) { %>
                         <form method="post" action="/admin/show/<%= showRow.id %>/review/<%= rv.user_id %>/delete">
                           <button class="btn ghost" type="submit">Delete review</button>
@@ -1293,16 +1292,16 @@
                             <input type="hidden" name="vote" value="1">
                             <button class="vote_btn up <%= myVote === 1 ? 'on' : '' %>" type="submit" aria-label="Upvote review" title="Upvote">▲</button>
                           </form>
-                    
+
                           <form method="post" action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/vote" style="display:inline;">
                             <input type="hidden" name="vote" value="-1">
                             <button class="vote_btn down <%= myVote === -1 ? 'on' : '' %>" type="submit" aria-label="Downvote review" title="Downvote">▼</button>
                           </form>
                         <% } %>
-                    
+
                         <span class="vote_total"><%= rvVote > 0 ? '+' + rvVote : rvVote %></span>
                       </div>
-                    
+
                       <% if (rv.ts) { %>
                         <div class="review_posted_date">
                           Posted on <%= new Date(Number(rv.ts) * 1000).toLocaleDateString('en-US') %>
@@ -1450,5 +1449,3 @@
   </script>
 </body>
 </html>
-
-
