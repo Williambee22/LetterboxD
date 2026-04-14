@@ -563,13 +563,12 @@ textarea:focus{
 .profile_hero::before{
   content:"";
   position:absolute;
-  inset:-30px;
+  inset:0;
   background-image:var(--pBanner);
   background-size:cover;
   background-position:center;
-  filter:blur(10px) saturate(1.1);
-  opacity:.22;
-  transform:scale(1.06);
+  background-repeat:no-repeat;
+  opacity:.55;
   pointer-events:none;
 }
 
