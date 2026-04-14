@@ -774,8 +774,8 @@
           <label>Sort</label>
           <select name="sort">
             <option value="" <%= !typeof sort !== 'undefined' ? "selected" : "" %>>Default</option>
-            <option value="year_desc" <%= typeof sort !== 'undefined' && sort === "year_desc" ? "selected" : "" %>>Year (New → Old)</option>
-            <option value="year_asc" <%= typeof sort !== 'undefined' && sort === "year_asc" ? "selected" : "" %>>Year (Old → New)</option>
+            <option value="year_desc" <%= typeof sort !== 'undefined' && sort === "year_desc" ? "selected" : "" %>>Year Newest to Oldest</option>
+            <option value="year_asc" <%= typeof sort !== 'undefined' && sort === "year_asc" ? "selected" : "" %>>Year Oldest to Newest</option>
             <option value="top" <%= typeof sort !== 'undefined' && sort === "top" ? "selected" : "" %>>Top Average Rating</option>
             <option value="bottom" <%= typeof sort !== 'undefined' && sort === "bottom" ? "selected" : "" %>>Lowest Average Rating</option>
             <option value="corps" <%= typeof sort !== 'undefined' && sort === "corps" ? "selected" : "" %>>Corps (A → Z)</option>
