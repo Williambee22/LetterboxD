@@ -1009,6 +1009,7 @@ body.app .topbar,
 body.app .panel,
 body.app .btn,
 body.app .badge,
+body.app .pilltab,
 body.app .avatar_sm,
 body.app .avatar_lg,
 body.app .poster,
@@ -1022,33 +1023,19 @@ body.app .profile_avg_box,
 body.app .profile_bio,
 body.app .profile_favorites_box,
 body.app .profile_favorite_art,
-body.app .footer,
-body.app .notifHeader,
-body.app .notifItem.unread {
-  border-color: var(--accentSoft) !important;
-}
-
-body.app .btn:hover,
-body.app .nav a:hover,
-body.app .auth a:hover,
-body.app .nav_user:hover,
-body.app .pilltab:hover,
-body.app .dropzone.hover,
-body.app .notifItem.unread,
-body.app .badge,
+body.app .showhero,
+body.app .showposter,
+body.app .friend_item,
+body.app .friend_thumb,
+body.app .empty_state,
 body.app .flash,
-body.app .profile_counts .badge {
-  background: var(--accentFaint) !important;
-}
-
-body.app .field input:focus,
-body.app .field select:focus,
-body.app .field textarea:focus,
-body.app textarea:focus,
-body.app .reviewuser:hover,
-body.app .poster:hover,
-body.app .btn:hover {
+body.app .notifHeader,
+body.app .notifItem,
+body.app .footer,
+body.app .topbar,
+body.app .field input,
+body.app .field select,
+body.app .field textarea,
+body.app textarea {
   border-color: var(--accent) !important;
 }
-
-
