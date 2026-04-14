@@ -741,7 +741,9 @@ function createApp() {
           email: me.email || null,
           is_admin: Number(me.is_admin || 0),
           avatar_url: me.avatar_url || null,
+          theme_color: me.theme_color || null,
         };
+        
 
         const conn = getConn();
         try {
@@ -816,6 +818,7 @@ function createApp() {
         email,
         is_admin: make ? 1 : 0,
         avatar_url: null,
+        theme_color: null,
       };
 
       req.flash('ok', "Account created. You're logged in.");
@@ -872,6 +875,7 @@ function createApp() {
         email: u.email || null,
         is_admin: Number(u.is_admin || 0),
         avatar_url: u.avatar_url || null,
+        theme_color: u.theme_color || null,
       };
 
       // --- LOGIC REMOVED START ---
@@ -1372,12 +1376,12 @@ function createApp() {
             await dbx.commit(conn);
 
             req.session.user = {
-                ...(req.session.user || {}),
-                id: Number(me.id),
-                username: me.username,
-                email: me.email || null,
-                is_admin: Number(me.is_admin || 0),
-                avatar_url: avatarUrl,
+              id: Number(me.id),
+              username: me.username,
+              email: me.email || null,
+              is_admin: Number(me.is_admin || 0),
+              avatar_url: me.avatar_url || null,
+              theme_color: me.theme_color || null,
             };
 
             try {
@@ -2157,12 +2161,12 @@ function createApp() {
   
       req.session.user = {
         ...(req.session.user || {}),
-        id: Number(current.id),
-        username: current.username,
-        email: current.email || null,
-        is_admin: Number(current.is_admin || 0),
-        avatar_url: current.avatar_url || null,
-        theme_color: themeColor || null,
+        id: Number(me.id),
+        username: me.username,
+        email: me.email || null,
+        is_admin: Number(me.is_admin || 0),
+        avatar_url: avatarUrl,
+        theme_color: me.theme_color || null,
       };
   
       req.flash('ok', 'Theme color updated.');
@@ -2643,6 +2647,7 @@ function createApp() {
         email: fresh.email || null,
         is_admin: Number(fresh.is_admin || 0),
         avatar_url: fresh.avatar_url || null,
+        theme_color: fresh.theme_color || null,
       };
 
       req.flash('ok', 'Username updated.');
