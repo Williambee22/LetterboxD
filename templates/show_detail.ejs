@@ -932,6 +932,11 @@
                             <b><%= actor %></b> commented on your review
                             <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %>
                           </div>
+                        <% } else if (kind === "comment_reply") { %>
+                          <div>
+                            <b><%= actor %></b> replied to your comment
+                            <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %>
+                          </div>
                         <% } else { %>
                           <div>New activity.</div>
                         <% } %>
