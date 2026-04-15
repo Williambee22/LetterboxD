@@ -1716,28 +1716,60 @@ function softDeleteReviewReply(conn, replyId, opts = {}) {
 }
 
 function adminHardDeleteReviewComment(conn, commentId) {
-  conn.prepare('DELETE FROM review_comments WHERE id = ?').run(Number(commentId));
+  const cid = Number(commentId);
+
+  try {
+    conn.prepare(`
+      DELETE FROM review_comment_replies
+      WHERE comment_id = ?
+    `).run(cid);
+  } catch (_) {}
+
+  conn.prepare(`
+    DELETE FROM review_comments
+    WHERE id = ?
+  `).run(cid);
 }
 
 function adminDeleteShow(conn, showId) {
   const sid = Number(showId);
+
   try { conn.prepare('DELETE FROM notifications WHERE show_id = ?').run(sid); } catch (_) {}
   try { conn.prepare('DELETE FROM review_comment_replies WHERE show_id = ?').run(sid); } catch (_) {}
   try { conn.prepare('DELETE FROM review_comments WHERE show_id = ?').run(sid); } catch (_) {}
   try { conn.prepare('DELETE FROM review_votes WHERE show_id = ?').run(sid); } catch (_) {}
   try { conn.prepare('DELETE FROM reviews WHERE show_id = ?').run(sid); } catch (_) {}
   try { conn.prepare('DELETE FROM ratings WHERE show_id = ?').run(sid); } catch (_) {}
+
   conn.prepare('DELETE FROM shows WHERE id = ?').run(sid);
 }
 
 function adminDeleteReview(conn, showId, reviewUserId) {
   const sid = Number(showId);
   const ruid = Number(reviewUserId);
-  try { conn.prepare('DELETE FROM review_votes WHERE show_id=? AND review_user_id=?').run(sid, ruid); } catch (_) {}
-  try { conn.prepare('DELETE FROM review_comment_replies WHERE show_id=? AND review_user_id=?').run(sid, ruid); } catch (_) {}
-  try { conn.prepare('DELETE FROM review_comments WHERE show_id=? AND review_user_id=?').run(sid, ruid); } catch (_) {}
-  conn.prepare('DELETE FROM reviews WHERE show_id=? AND user_id=?').run(sid, ruid);
+
+  try { conn.prepare('DELETE FROM review_votes WHERE show_id = ? AND review_user_id = ?').run(sid, ruid); } catch (_) {}
+
+  try {
+    conn.prepare(`
+      DELETE FROM review_comment_replies
+      WHERE show_id = ? AND review_user_id = ?
+    `).run(sid, ruid);
+  } catch (_) {}
+
+  try {
+    conn.prepare(`
+      DELETE FROM review_comments
+      WHERE show_id = ? AND review_user_id = ?
+    `).run(sid, ruid);
+  } catch (_) {}
+
+  conn.prepare(`
+    DELETE FROM reviews
+    WHERE show_id = ? AND user_id = ?
+  `).run(sid, ruid);
 }
+
 
 function userAvgRating(conn, userId) {
   const row = conn.prepare(`
