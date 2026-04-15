@@ -1387,11 +1387,19 @@
                                 </div>
                     
                                 <% if (isCommentOwner) { %>
-                                  <form method="post" action="/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete">
+                                  <form
+                                    method="post"
+                                    action="/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete"
+                                    style="display:inline;"
+                                  >
                                     <button class="btn ghost" type="submit">Delete</button>
                                   </form>
                                 <% } else if (canAdminDeleteComment) { %>
-                                  <form method="post" action="/admin/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete">
+                                  <form
+                                    method="post"
+                                    action="/admin/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete"
+                                    style="display:inline;"
+                                  >
                                     <button class="btn ghost" type="submit">Admin delete</button>
                                   </form>
                                 <% } %>
@@ -1423,11 +1431,19 @@
                                         </div>
                               
                                         <% if (isReplyOwner) { %>
-                                          <form method="post" action="/show/<%= showRow.id %>/reply/<%= r.reply_id %>/delete">
+                                          <form
+                                            method="post"
+                                            action="/show/<%= showRow.id %>/reply/<%= r.reply_id %>/delete"
+                                            style="display:inline;"
+                                          >
                                             <button class="btn ghost" type="submit">Delete</button>
                                           </form>
                                         <% } else if (canAdminDeleteComment) { %>
-                                          <form method="post" action="/admin/show/<%= showRow.id %>/reply/<%= r.reply_id %>/delete">
+                                          <form
+                                            method="post"
+                                            action="/admin/show/<%= showRow.id %>/reply/<%= r.reply_id %>/delete"
+                                            style="display:inline;"
+                                          >
                                             <button class="btn ghost" type="submit">Admin delete</button>
                                           </form>
                                         <% } %>
