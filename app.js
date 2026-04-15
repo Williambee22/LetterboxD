@@ -681,7 +681,7 @@ function createApp() {
         // 1. Update the password
         await dbx.updateUserPasswordHash(conn, userId, hashed);
         // 2. IMPORTANT: Set the flag to 0 so they aren't stuck in a loop
-        await dbx.updateUserMustChangePassword(conn, userId, 0); 
+        await dbx.setUserMustChangePassword(conn, userId, 0);
         
         await dbx.commit(conn);
 
@@ -1034,13 +1034,17 @@ function createApp() {
         if (!commentsMap.has(key)) commentsMap.set(key, []);
         commentsMap.get(key).push(c);
       }
-  
+      
       let reviewsWithComments = reviews.map((rv) => {
-        const items = commentsMap.get(Number(rv.user_id)) || [];
+        const flatItems = commentsMap.get(Number(rv.user_id)) || [];
+        const nestedItems = typeof dbx.nestReviewComments === 'function'
+          ? dbx.nestReviewComments(flatItems)
+          : flatItems;
+      
         return {
           ...rv,
-          comments: items,
-          comment_count: items.length,
+          comments: nestedItems,
+          comment_count: flatItems.length,
         };
       });
   
@@ -1242,15 +1246,23 @@ function createApp() {
     const reviewUserId = Number(req.params.review_user_id);
     const commenterId = Number(req.session.uid);
     const text = String(req.body.comment_text || '').trim();
-
+    const parentCommentId = req.body.parent_comment_id ? Number(req.body.parent_comment_id) : null;
+  
     let conn;
     try {
       conn = getConn();
       const show = await dbx.getShowById(conn, showId);
       if (!show) return res.sendStatus(404);
-
-      await dbx.addReviewComment(conn, showId, reviewUserId, commenterId, text);
-
+  
+      await dbx.addReviewComment(
+        conn,
+        showId,
+        reviewUserId,
+        commenterId,
+        text,
+        parentCommentId
+      );
+  
       if (commenterId !== reviewUserId) {
         try {
           await dbx.addNotification(conn, {
@@ -1262,13 +1274,14 @@ function createApp() {
           });
         } catch (_) {}
       }
-
+  
       await dbx.commit(conn);
     } catch (err) {
       req.flash('error', String(err.message || err));
     } finally {
       if (conn) dbx.close(conn);
     }
+  
     res.redirect(`/show/${showId}`);
   }));
 
