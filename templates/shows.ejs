@@ -602,9 +602,20 @@
                         <% } else if (kind === "follow") { %>
                           <div><b><%= actor %></b> followed you.</div>
                         <% } else if (kind === "review_upvote") { %>
-                          <div><b><%= actor %></b> upvoted your review <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %></div>
+                          <div>
+                            <b><%= actor %></b> upvoted your review
+                            <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %>
+                          </div>
                         <% } else if (kind === "review_comment") { %>
-                          <div><b><%= actor %></b> commented on your review <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %></div>
+                          <div>
+                            <b><%= actor %></b> commented on your review
+                            <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %>
+                          </div>
+                        <% } else if (kind === "comment_reply") { %>
+                          <div>
+                            <b><%= actor %></b> replied to your comment
+                            <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %>
+                          </div>
                         <% } else { %>
                           <div>New activity.</div>
                         <% } %>
