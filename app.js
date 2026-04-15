@@ -1032,12 +1032,12 @@ function createApp() {
       }
       
       let reviewsWithComments = reviews.map((rv) => {
-        const commentItems = commentsByReviewUser.get(Number(rv.user_id)) || [];
+        const reviewComments = commentsByReviewUser.get(Number(rv.user_id)) || [];
       
         return {
           ...rv,
-          comments: commentItems,
-          comment_count: commentItems.reduce((sum, c) => sum + 1 + (Array.isArray(c.replies) ? c.replies.length : 0), 0),
+          comments: reviewComments,
+          comment_count: reviewComments.length,
         };
       });
 
@@ -1196,18 +1196,23 @@ function createApp() {
     let conn;
     try {
       conn = getConn();
-      await dbx.deleteReviewReply(conn, replyId, {
-        requesterUserId: Number(req.session.uid),
-        isAdmin: true,
-      });
+      if (typeof dbx.deleteReviewReply === 'function') {
+        await dbx.deleteReviewReply(conn, replyId, {
+          requesterUserId: Number(req.session.uid),
+          isAdmin: true
+        });
+      }
       await dbx.commit(conn);
       req.flash('ok', 'Reply deleted.');
+    } catch (err) {
+      req.flash('error', String(err.message || err));
     } finally {
       if (conn) dbx.close(conn);
     }
     res.redirect(`/show/${showId}`);
   }));
-  
+
+
   app.post('/show/:show_id/reply/:reply_id/delete', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const replyId = Number(req.params.reply_id);
@@ -1215,7 +1220,7 @@ function createApp() {
     try {
       conn = getConn();
       await dbx.softDeleteReviewReply(conn, replyId, {
-        requesterUserId: Number(req.session.uid),
+        requesterUserId: Number(req.session.uid)
       });
       await dbx.commit(conn);
       req.flash('ok', 'Reply deleted.');
@@ -1224,28 +1229,11 @@ function createApp() {
     } finally {
       if (conn) dbx.close(conn);
     }
-    return res.redirect(`/show/${showId}`);
+    res.redirect(`/show/${showId}`);
   }));
   
-  app.post('/admin/show/:show_id/reply/:reply_id/delete', adminRequired(async (req, res) => {
-    const showId = Number(req.params.show_id);
-    const replyId = Number(req.params.reply_id);
-    let conn;
-    try {
-      conn = getConn();
-      await dbx.deleteReviewReply(conn, replyId, {
-        requesterUserId: Number(req.session.uid),
-        isAdmin: true,
-      });
-      await dbx.commit(conn);
-      req.flash('ok', 'Reply deleted.');
-    } catch (err) {
-      req.flash('error', String(err.message || err));
-    } finally {
-      if (conn) dbx.close(conn);
-    }
-    return res.redirect(`/show/${showId}`);
-  }));
+  
+  
 
   app.post('/admin/show/:show_id/review/:review_user_id/delete', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
@@ -1279,20 +1267,6 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
-  app.post('/admin/show/:show_id/reply/:reply_id/delete', adminRequired(async (req, res) => {
-    const showId = Number(req.params.show_id);
-    const replyId = Number(req.params.reply_id);
-    let conn;
-    try {
-      conn = getConn();
-      await dbx.deleteReviewReply(conn, replyId, { requesterUserId: Number(req.session.uid), isAdmin: true });
-      await dbx.commit(conn);
-      req.flash('ok', 'Reply deleted.');
-    } finally {
-      if (conn) dbx.close(conn);
-    }
-    res.redirect(`/show/${showId}`);
-  }));
 
   app.post('/show/:show_id/review/:review_user_id/comment', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
@@ -1588,24 +1562,6 @@ function createApp() {
     }
 
     return res.redirect(`/show/${showId}`);
-  }));
-
-  app.post('/admin/show/:show_id/reply/:reply_id/delete', adminRequired(async (req, res) => {
-    const showId = Number(req.params.show_id);
-    const replyId = Number(req.params.reply_id);
-    let conn;
-    try {
-      conn = getConn();
-      await dbx.deleteReviewReply(conn, replyId, {
-        requesterUserId: Number(req.session.uid),
-        isAdmin: true,
-      });
-      await dbx.commit(conn);
-      req.flash('ok', 'Reply deleted.');
-    } finally {
-      if (conn) dbx.close(conn);
-    }
-    res.redirect(`/show/${showId}`);
   }));
 
   
