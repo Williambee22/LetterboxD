@@ -999,41 +999,45 @@ function createApp() {
       const comments = (await dbx.listReviewCommentsForShow(conn, showId, { limitTotal: 500 }) || []).map((c) => {
         const d = normalizeRow(c);
         if (!d.commenter_avatar_url) d.commenter_avatar_url = pfpUrlForUsername(d.commenter_username || '');
+        d.replies = [];
         return d;
       });
-
-      const replies = (await dbx.listReviewRepliesForShow(conn, showId, { limitTotal: 500 }) || []).map((r) => {
+      
+      const replies = (typeof dbx.listReviewRepliesForShow === 'function'
+        ? await dbx.listReviewRepliesForShow(conn, showId, { limitTotal: 500 })
+        : []
+      ) || [];
+      
+      const replyRows = replies.map((r) => {
         const d = normalizeRow(r);
         if (!d.replier_avatar_url) d.replier_avatar_url = pfpUrlForUsername(d.replier_username || '');
         return d;
       });
-
-      const commentsMap = new Map();
+      
+      const commentsByReviewUser = new Map();
+      const commentsById = new Map();
+      
       for (const c of comments) {
-        const key = Number(c.review_user_id);
-        if (!commentsMap.has(key)) commentsMap.set(key, []);
-        commentsMap.get(key).push(c);
+        const reviewKey = Number(c.review_user_id);
+        if (!commentsByReviewUser.has(reviewKey)) commentsByReviewUser.set(reviewKey, []);
+        commentsByReviewUser.get(reviewKey).push(c);
+        commentsById.set(Number(c.comment_id), c);
       }
-
-      const repliesMap = new Map();
-      for (const r of replies) {
-        const key = Number(r.comment_id);
-        if (!repliesMap.has(key)) repliesMap.set(key, []);
-        repliesMap.get(key).push(r);
+      
+      for (const r of replyRows) {
+        const parent = commentsById.get(Number(r.comment_id));
+        if (parent) {
+          parent.replies.push(r);
+        }
       }
-
+      
       let reviewsWithComments = reviews.map((rv) => {
-        const flatComments = commentsMap.get(Number(rv.user_id)) || [];
-
-        const commentItems = flatComments.map((c) => ({
-          ...c,
-          replies: repliesMap.get(Number(c.comment_id)) || []
-        }));
-
+        const commentItems = commentsByReviewUser.get(Number(rv.user_id)) || [];
+      
         return {
           ...rv,
           comments: commentItems,
-          comment_count: flatComments.length,
+          comment_count: commentItems.reduce((sum, c) => sum + 1 + (Array.isArray(c.replies) ? c.replies.length : 0), 0),
         };
       });
 
@@ -1191,6 +1195,45 @@ function createApp() {
     let conn;
     try {
       conn = getConn();
+      await dbx.softDeleteReviewReply(conn, replyId, {
+        requesterUserId: Number(req.session.uid),
+      });
+      await dbx.commit(conn);
+      req.flash('ok', 'Reply deleted.');
+    } catch (err) {
+      req.flash('error', String(err.message || err));
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+    return res.redirect(`/show/${showId}`);
+  }));
+
+
+
+  app.post('/admin/show/:show_id/reply/:reply_id/delete', adminRequired(async (req, res) => {
+    const showId = Number(req.params.show_id);
+    const replyId = Number(req.params.reply_id);
+    let conn;
+    try {
+      conn = getConn();
+      await dbx.deleteReviewReply(conn, replyId, {
+        requesterUserId: Number(req.session.uid),
+        isAdmin: true,
+      });
+      await dbx.commit(conn);
+      req.flash('ok', 'Reply deleted.');
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+    res.redirect(`/show/${showId}`);
+  }));
+  
+  app.post('/show/:show_id/reply/:reply_id/delete', loginRequired(async (req, res) => {
+    const showId = Number(req.params.show_id);
+    const replyId = Number(req.params.reply_id);
+    let conn;
+    try {
+      conn = getConn();
       const show = await dbx.getShowById(conn, showId);
       if (!show) return res.sendStatus(404);
       await dbx.softDeleteReviewReply(conn, replyId, { requesterUserId: Number(req.session.uid) });
@@ -1256,15 +1299,33 @@ function createApp() {
     const reviewUserId = Number(req.params.review_user_id);
     const commenterId = Number(req.session.uid);
     const text = String(req.body.comment_text || '').trim();
-
+    const parentCommentId = req.body.parent_comment_id ? Number(req.body.parent_comment_id) : null;
+  
     let conn;
     try {
       conn = getConn();
       const show = await dbx.getShowById(conn, showId);
       if (!show) return res.sendStatus(404);
-
-      await dbx.addReviewComment(conn, showId, reviewUserId, commenterId, text);
-
+  
+      if (parentCommentId) {
+        await dbx.addReviewReply(
+          conn,
+          parentCommentId,
+          showId,
+          reviewUserId,
+          commenterId,
+          text
+        );
+      } else {
+        await dbx.addReviewComment(
+          conn,
+          showId,
+          reviewUserId,
+          commenterId,
+          text
+        );
+      }
+  
       if (commenterId !== reviewUserId) {
         try {
           await dbx.addNotification(conn, {
@@ -1276,14 +1337,14 @@ function createApp() {
           });
         } catch (_) {}
       }
-
+  
       await dbx.commit(conn);
     } catch (err) {
       req.flash('error', String(err.message || err));
     } finally {
       if (conn) dbx.close(conn);
     }
-
+  
     res.redirect(`/show/${showId}`);
   }));
 
