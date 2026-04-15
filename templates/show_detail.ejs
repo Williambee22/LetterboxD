@@ -1274,9 +1274,9 @@
                 <% for (const rv of reviewList) {
                   const commentList = Array.isArray(rv.comments)
                     ? [...rv.comments].sort((a, b) => {
-                        const at = Number(a.created_ts || a.ts || 0);
-                        const bt = Number(b.created_ts || b.ts || 0);
-                        return at - bt;
+                        const at = String(a.created_at || '');
+                        const bt = String(b.created_at || '');
+                        return at.localeCompare(bt);
                       })
                     : [];
                   const rvVote = Number(rv.vote_score || 0);
@@ -1416,11 +1416,11 @@
                                         </div>
                     
                                         <% if (isReplyOwner) { %>
-                                          <form method="post" action="/show/<%= showRow.id %>/comment/<%= r.comment_id %>/delete">
+                                          <form method="post" action="/show/<%= showRow.id %>/reply/<%= r.reply_id %>/delete">
                                             <button class="btn ghost" type="submit">Delete</button>
                                           </form>
                                         <% } else if (canAdminDeleteComment) { %>
-                                          <form method="post" action="/admin/show/<%= showRow.id %>/comment/<%= r.comment_id %>/delete">
+                                          <form method="post" action="/admin/show/<%= showRow.id %>/reply/<%= r.reply_id %>/delete">
                                             <button class="btn ghost" type="submit">Admin delete</button>
                                           </form>
                                         <% } %>
