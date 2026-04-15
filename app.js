@@ -1393,7 +1393,7 @@ function createApp() {
               username: me.username,
               email: me.email || null,
               is_admin: Number(me.is_admin || 0),
-              avatar_url: me.avatar_url || null,
+              avatar_url: avatarUrl,
               theme_color: me.theme_color || null,
             };
 
@@ -2172,14 +2172,16 @@ function createApp() {
   
       await dbx.commit(conn);
   
+      const fresh = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
+
       req.session.user = {
         ...(req.session.user || {}),
-        id: Number(me.id),
-        username: me.username,
-        email: me.email || null,
-        is_admin: Number(me.is_admin || 0),
-        avatar_url: avatarUrl,
-        theme_color: me.theme_color || null,
+        id: Number(fresh.id),
+        username: fresh.username,
+        email: fresh.email || null,
+        is_admin: Number(fresh.is_admin || 0),
+        avatar_url: fresh.avatar_url || null,
+        theme_color: fresh.theme_color || null,
       };
   
       req.flash('ok', 'Theme color updated.');
