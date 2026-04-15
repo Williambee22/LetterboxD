@@ -1385,7 +1385,7 @@ function createApp() {
         try {
           await dbx.addNotification(conn, {
             userId: notifyUserId,
-            kind: 'review_comment',
+            kind: 'comment_reply',
             actorUserId: replierId,
             showId,
             reviewUserId,
