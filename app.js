@@ -285,10 +285,6 @@ function wantsJson(req) {
     || req.accepts(['html', 'json']) === 'json';
 }
 
-/* =========================
-   HASH COMPATIBILITY
-========================= */
-
 function safeEqualHex(a, b) {
   try {
     const aBuf = Buffer.from(String(a || ''), 'hex');
@@ -386,10 +382,6 @@ function needsRehashToBcrypt(storedHash) {
 async function hashPassword(password) {
   return bcrypt.hash(String(password || ''), 12);
 }
-
-/* =========================
-   TEMP PASSWORD / EMAIL
-========================= */
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || 're_dNcSQUTw_4vJre8Avs4k2b6CUHrsdzj47';
 const MAIL_FROM = process.env.MAIL_FROM || 'Pressboxd pressboxdcontact@gmail.com';
@@ -529,24 +521,29 @@ function createApp() {
   });
 
   function getConn() {
-  const conn = dbx.connect(DB_PATH);
-  dbx.ensureReviewsTable(conn);
-  dbx.ensureProfileColumns(conn);
-  dbx.ensureRolesTables(conn);
-  dbx.ensureReviewVotesTable(conn);
-  dbx.ensureReviewCommentsTable(conn);
-  dbx.ensureSocialTables(conn);
-  dbx.ensureNotificationsTable(conn);
-  dbx.ensureAuthColumns(conn);
-  dbx.ensureFavoriteShowsTable(conn);
-  return conn;
-}
-  
+    const conn = dbx.connect(DB_PATH);
+    dbx.ensureReviewsTable(conn);
+    dbx.ensureProfileColumns(conn);
+    dbx.ensureRolesTables(conn);
+    dbx.ensureReviewVotesTable(conn);
+    dbx.ensureReviewCommentsTable(conn);
+    dbx.ensureSocialTables(conn);
+    dbx.ensureNotificationsTable(conn);
+    dbx.ensureAuthColumns(conn);
+    dbx.ensureFavoriteShowsTable(conn);
+    return conn;
+  }
+
   const uploadPfp = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-  }); // <--- This closing line is vital!
-      
+    limits: { fileSize: 5 * 1024 * 1024 }
+  });
+
+  const uploadPoster = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }
+  });
+
   async function currentUser(req) {
     const uid = req.session.uid;
     if (!uid) return null;
@@ -575,37 +572,32 @@ function createApp() {
   app.get('/posters/:name', async (req, res) => {
     const name = String(req.params.name || '').trim();
     const base = String(process.env.R2_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
-  
+
     if (!base || !name) {
       return res.redirect('/static/posters/placeholder.png');
     }
-  
+
     const exts = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
-  
+
     try {
       for (const ext of exts) {
         const url = `${base}/posters/${name}${ext}`;
         const r = await fetch(url, { method: 'HEAD' });
-        if (r.ok) {
-          return res.redirect(url);
-        }
+        if (r.ok) return res.redirect(url);
       }
-  
+
       for (const ext of exts) {
         const url = `${base}/posters/default${ext}`;
         const r = await fetch(url, { method: 'HEAD' });
-        if (r.ok) {
-          return res.redirect(url);
-        }
+        if (r.ok) return res.redirect(url);
       }
     } catch (err) {
       console.error('poster lookup failed:', err);
     }
-  
+
     return res.redirect('/static/posters/placeholder.png');
   });
 
-  
   app.get('/forgot-password', (req, res) => {
     res.render('forgot_password');
   });
@@ -621,7 +613,6 @@ function createApp() {
     let conn;
     try {
       conn = getConn();
-
       const u = normalizeRow(await dbx.userByEmail(conn, email));
 
       if (!u) {
@@ -669,33 +660,28 @@ function createApp() {
     const userId = req.session.uid;
 
     if (new_password !== confirm_password) {
-        req.flash('error', 'Passwords do not match.');
-        return res.redirect('/force-change-password');
+      req.flash('error', 'Passwords do not match.');
+      return res.redirect('/force-change-password');
     }
 
     let conn;
     try {
-        conn = getConn();
-        const hashed = await hashPassword(new_password); // Use your existing hash function
+      conn = getConn();
+      const hashed = await hashPassword(new_password);
+      await dbx.updateUserPasswordHash(conn, userId, hashed);
+      await dbx.setUserMustChangePassword(conn, userId, 0);
+      await dbx.commit(conn);
 
-        // 1. Update the password
-        await dbx.updateUserPasswordHash(conn, userId, hashed);
-        // 2. IMPORTANT: Set the flag to 0 so they aren't stuck in a loop
-        await dbx.setUserMustChangePassword(conn, userId, 0);
-        
-        await dbx.commit(conn);
-
-        req.flash('ok', 'Password updated! Please log in again.');
-        req.session.destroy(); // Clear session
+      req.flash('ok', 'Password updated! Please log in again.');
+      req.session.destroy(() => {
         res.redirect('');
+      });
     } catch (err) {
-        if (conn) dbx.rollback(conn);
-        next(err);
+      next(err);
     } finally {
-        if (conn) dbx.close(conn);
+      if (conn) dbx.close(conn);
     }
   });
-
 
   app.use(async (req, res, next) => {
     if (!['POST', 'PUT', 'PATCH'].includes(req.method)) return next();
@@ -743,7 +729,6 @@ function createApp() {
           avatar_url: me.avatar_url || null,
           theme_color: me.theme_color || null,
         };
-        
 
         const conn = getConn();
         try {
@@ -766,7 +751,6 @@ function createApp() {
   });
 
   app.get('/', (_req, res) => res.redirect('/shows'));
-
   app.get('/register', (_req, res) => res.render('auth_register'));
 
   app.post('/register', async (req, res, next) => {
@@ -878,10 +862,6 @@ function createApp() {
         theme_color: u.theme_color || null,
       };
 
-      // --- LOGIC REMOVED START ---
-      // We no longer check (Number(u.must_change_password || 0) === 1) here
-      // --- LOGIC REMOVED END ---
-
       req.flash('ok', 'Logged in.');
 
       return req.session.save((err) => {
@@ -893,7 +873,7 @@ function createApp() {
     } finally {
       if (conn) dbx.close(conn);
     }
-});
+  });
 
   app.get('/logout', (req, res) => {
     req.session.destroy(() => {
@@ -908,12 +888,6 @@ function createApp() {
     let conn;
     try {
       conn = getConn();
-
-      if (typeof dbx.updateUserBio !== 'function') {
-        req.flash('error', 'updateUserBio() is missing in db.js');
-        return res.redirect('/me');
-      }
-
       await dbx.updateUserBio(conn, Number(req.session.uid), bio);
       await dbx.commit(conn);
 
@@ -931,18 +905,18 @@ function createApp() {
     const sort = String(req.query.sort || 'year_desc').trim();
     const year = String(req.query.year || '').trim();
     const corps = String(req.query.corps || '').trim();
-  
+
     let conn;
     try {
       conn = getConn();
-  
+
       const rows = await dbx.listShows(conn, { sort, year, corps });
       const rows2 = (rows || []).map((r) => {
         const d = normalizeRow(r);
         if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
-  
+
       let friendActivity = [];
       if (req.session.uid) {
         friendActivity = (await dbx.listFriendActivity(conn, Number(req.session.uid), { limit: 5 }) || []).map((x) => {
@@ -951,7 +925,7 @@ function createApp() {
           return d;
         });
       }
-  
+
       let hotShows = [];
       if (typeof dbx.getHotShows === 'function') {
         hotShows = (await dbx.getHotShows(conn, 3) || []).map((x) => {
@@ -960,7 +934,7 @@ function createApp() {
           return d;
         });
       }
-  
+
       res.render('shows', {
         rows: rows2,
         sort,
@@ -979,75 +953,90 @@ function createApp() {
   app.get('/show/:show_id', async (req, res, next) => {
     const showId = Number(req.params.show_id);
     const viewerUid = req.session.uid ? Number(req.session.uid) : null;
-  
+
     const sort = String(req.query.sort || 'popular').trim().toLowerCase();
     const allowedSorts = new Set(['popular', 'newest', 'oldest', 'highest', 'lowest']);
     const activeSort = allowedSorts.has(sort) ? sort : 'popular';
-  
+
     let conn;
     try {
       conn = getConn();
-  
+
       let row = normalizeRow(await dbx.getShowById(conn, showId));
       if (!row) return res.sendStatus(404);
       if (!row.poster_url) row.poster_url = posterUrlForShow(row.corps || '', row.year || 0);
-  
+
       let me = viewerUid ? normalizeRow(await dbx.userById(conn, viewerUid)) : null;
       const myRating = viewerUid ? await dbx.userRatingForShow(conn, showId, viewerUid) : null;
       const myReview = viewerUid ? await dbx.myReviewForShow(conn, showId, viewerUid) : null;
-  
+
       const isFavorite = viewerUid
         ? !!dbx.isShowFavoritedByUser(conn, viewerUid, showId)
         : false;
-  
+
       const favoriteCount = viewerUid
         ? Number(dbx.countUserFavoriteShows(conn, viewerUid) || 0)
         : 0;
-  
+
       const showFavoriteCountRow = conn.prepare(`
         SELECT COUNT(*) AS cnt
         FROM user_favorite_shows
         WHERE show_id = ?
       `).get(showId);
-  
+
       const show_favorite_count = showFavoriteCountRow
         ? Number(showFavoriteCountRow.cnt || 0)
         : 0;
-  
+
       if (me && !me.avatar_url) me.avatar_url = pfpUrlForUsername(me.username || '');
-  
+
       const reviews = (await dbx.listReviewsForShow(conn, showId, { viewerUserId: viewerUid, limit: 300 }) || []).map((rv) => {
         const d = normalizeRow(rv);
         if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
         return d;
       });
-  
+
       const comments = (await dbx.listReviewCommentsForShow(conn, showId, { limitTotal: 500 }) || []).map((c) => {
         const d = normalizeRow(c);
         if (!d.commenter_avatar_url) d.commenter_avatar_url = pfpUrlForUsername(d.commenter_username || '');
         return d;
       });
-  
+
+      const replies = (await dbx.listReviewRepliesForShow(conn, showId, { limitTotal: 500 }) || []).map((r) => {
+        const d = normalizeRow(r);
+        if (!d.replier_avatar_url) d.replier_avatar_url = pfpUrlForUsername(d.replier_username || '');
+        return d;
+      });
+
       const commentsMap = new Map();
       for (const c of comments) {
         const key = Number(c.review_user_id);
         if (!commentsMap.has(key)) commentsMap.set(key, []);
         commentsMap.get(key).push(c);
       }
-      
+
+      const repliesMap = new Map();
+      for (const r of replies) {
+        const key = Number(r.comment_id);
+        if (!repliesMap.has(key)) repliesMap.set(key, []);
+        repliesMap.get(key).push(r);
+      }
+
       let reviewsWithComments = reviews.map((rv) => {
-        const flatItems = commentsMap.get(Number(rv.user_id)) || [];
-        const nestedItems = typeof dbx.nestReviewComments === 'function'
-          ? dbx.nestReviewComments(flatItems)
-          : flatItems;
-      
+        const flatComments = commentsMap.get(Number(rv.user_id)) || [];
+
+        const commentItems = flatComments.map((c) => ({
+          ...c,
+          replies: repliesMap.get(Number(c.comment_id)) || []
+        }));
+
         return {
           ...rv,
-          comments: nestedItems,
-          comment_count: flatItems.length,
+          comments: commentItems,
+          comment_count: flatComments.length,
         };
       });
-  
+
       reviewsWithComments.sort((a, b) => {
         if (activeSort === 'newest') {
           return Number(b.ts || 0) - Number(a.ts || 0);
@@ -1065,18 +1054,14 @@ function createApp() {
             || Number(b.vote_score || 0) - Number(a.vote_score || 0)
             || Number(b.ts || 0) - Number(a.ts || 0);
         }
-  
+
         return Number(b.vote_score || 0) - Number(a.vote_score || 0)
           || Number(b.ts || 0) - Number(a.ts || 0);
       });
-  
+
       const rating_histogram = dbx.getRatingHistogram(conn, showId);
       const verified_rating_histogram = dbx.getVerifiedRatingHistogram(conn, showId);
-  
-      // ----------------------------
-      // RANK QUERIES
-      // ----------------------------
-  
+
       const overallRankRow = conn.prepare(`
         WITH ranked AS (
           SELECT
@@ -1093,7 +1078,7 @@ function createApp() {
         FROM ranked
         WHERE id = ?
       `).get(showId);
-  
+
       const criticRankRow = conn.prepare(`
         WITH ranked AS (
           SELECT
@@ -1113,7 +1098,7 @@ function createApp() {
         FROM ranked
         WHERE id = ?
       `).get(showId);
-  
+
       const corpsRankRow = conn.prepare(`
         WITH ranked AS (
           SELECT
@@ -1132,7 +1117,7 @@ function createApp() {
         FROM ranked
         WHERE id = ?
       `).get(showId);
-  
+
       const yearRankRow = conn.prepare(`
         WITH ranked AS (
           SELECT
@@ -1151,12 +1136,12 @@ function createApp() {
         FROM ranked
         WHERE id = ?
       `).get(showId);
-  
+
       const overall_rank = overallRankRow ? Number(overallRankRow.overall_rank || 0) : 0;
       const critic_rank = criticRankRow ? Number(criticRankRow.critic_rank || 0) : 0;
       const corps_rank = corpsRankRow ? Number(corpsRankRow.corps_rank || 0) : 0;
       const year_rank = yearRankRow ? Number(yearRankRow.year_rank || 0) : 0;
-  
+
       res.render('show_detail', {
         row,
         me,
@@ -1181,11 +1166,6 @@ function createApp() {
     }
   });
 
-  app.get('/force-change-password', (req, res) => {
-    if (!req.session.uid) return res.redirect('/login');
-    res.render('force_change_password'); // This matches your error message name
-  });
-  
   app.post('/show/:show_id/comment/:comment_id/delete', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const commentId = Number(req.params.comment_id);
@@ -1197,6 +1177,25 @@ function createApp() {
       await dbx.softDeleteReviewComment(conn, commentId, { requesterUserId: Number(req.session.uid) });
       await dbx.commit(conn);
       req.flash('ok', 'Comment deleted.');
+    } catch (err) {
+      req.flash('error', String(err.message || err));
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+    return res.redirect(`/show/${showId}`);
+  }));
+
+  app.post('/show/:show_id/reply/:reply_id/delete', loginRequired(async (req, res) => {
+    const showId = Number(req.params.show_id);
+    const replyId = Number(req.params.reply_id);
+    let conn;
+    try {
+      conn = getConn();
+      const show = await dbx.getShowById(conn, showId);
+      if (!show) return res.sendStatus(404);
+      await dbx.softDeleteReviewReply(conn, replyId, { requesterUserId: Number(req.session.uid) });
+      await dbx.commit(conn);
+      req.flash('ok', 'Reply deleted.');
     } catch (err) {
       req.flash('error', String(err.message || err));
     } finally {
@@ -1228,13 +1227,24 @@ function createApp() {
     let conn;
     try {
       conn = getConn();
-      if (typeof dbx.deleteReviewComment === 'function') {
-        await dbx.deleteReviewComment(conn, commentId, { requesterUserId: Number(req.session.uid), isAdmin: true });
-      } else if (typeof dbx.adminHardDeleteReviewComment === 'function') {
-        await dbx.adminHardDeleteReviewComment(conn, commentId);
-      }
+      await dbx.deleteReviewComment(conn, commentId, { requesterUserId: Number(req.session.uid), isAdmin: true });
       await dbx.commit(conn);
       req.flash('ok', 'Comment deleted.');
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+    res.redirect(`/show/${showId}`);
+  }));
+
+  app.post('/admin/show/:show_id/reply/:reply_id/delete', adminRequired(async (req, res) => {
+    const showId = Number(req.params.show_id);
+    const replyId = Number(req.params.reply_id);
+    let conn;
+    try {
+      conn = getConn();
+      await dbx.deleteReviewReply(conn, replyId, { requesterUserId: Number(req.session.uid), isAdmin: true });
+      await dbx.commit(conn);
+      req.flash('ok', 'Reply deleted.');
     } finally {
       if (conn) dbx.close(conn);
     }
@@ -1246,23 +1256,15 @@ function createApp() {
     const reviewUserId = Number(req.params.review_user_id);
     const commenterId = Number(req.session.uid);
     const text = String(req.body.comment_text || '').trim();
-    const parentCommentId = req.body.parent_comment_id ? Number(req.body.parent_comment_id) : null;
-  
+
     let conn;
     try {
       conn = getConn();
       const show = await dbx.getShowById(conn, showId);
       if (!show) return res.sendStatus(404);
-  
-      await dbx.addReviewComment(
-        conn,
-        showId,
-        reviewUserId,
-        commenterId,
-        text,
-        parentCommentId
-      );
-  
+
+      await dbx.addReviewComment(conn, showId, reviewUserId, commenterId, text);
+
       if (commenterId !== reviewUserId) {
         try {
           await dbx.addNotification(conn, {
@@ -1274,14 +1276,51 @@ function createApp() {
           });
         } catch (_) {}
       }
-  
+
       await dbx.commit(conn);
     } catch (err) {
       req.flash('error', String(err.message || err));
     } finally {
       if (conn) dbx.close(conn);
     }
-  
+
+    res.redirect(`/show/${showId}`);
+  }));
+
+  app.post('/show/:show_id/review/:review_user_id/comment/:comment_id/reply', loginRequired(async (req, res) => {
+    const showId = Number(req.params.show_id);
+    const reviewUserId = Number(req.params.review_user_id);
+    const commentId = Number(req.params.comment_id);
+    const replierId = Number(req.session.uid);
+    const text = String(req.body.reply_text || '').trim();
+
+    let conn;
+    try {
+      conn = getConn();
+      const show = await dbx.getShowById(conn, showId);
+      if (!show) return res.sendStatus(404);
+
+      await dbx.addReviewReply(conn, commentId, showId, reviewUserId, replierId, text);
+
+      if (replierId !== reviewUserId) {
+        try {
+          await dbx.addNotification(conn, {
+            userId: reviewUserId,
+            kind: 'review_comment',
+            actorUserId: replierId,
+            showId,
+            reviewUserId,
+          });
+        } catch (_) {}
+      }
+
+      await dbx.commit(conn);
+    } catch (err) {
+      req.flash('error', String(err.message || err));
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+
     res.redirect(`/show/${showId}`);
   }));
 
@@ -1291,37 +1330,36 @@ function createApp() {
         req.flash('error', `Upload failed: ${err.message}`);
         return res.redirect('/me/customize');
       }
-  
+
       if (!req.file) {
         req.flash('error', 'No file selected.');
         return res.redirect('/me/customize');
       }
-  
+
       let conn;
       try {
         conn = getConn();
         const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
         if (!me) return res.sendStatus(404);
-  
+
         let ext = path.extname(req.file.originalname || '').toLowerCase();
         if (!ALLOWED_IMAGE_EXTS.has(ext)) {
           req.flash('error', 'Invalid file type.');
           return res.redirect('/me/customize');
         }
         if (ext === '.jpeg') ext = '.jpg';
-  
+
         const oldBannerUrl = String(me.banner_url || '').trim();
-  
         const fileName = `banner_${slugify(me.username)}_${crypto.randomUUID()}${ext}`;
         const key = `banners/${fileName}`;
-  
+
         const bannerUrl = await uploadBufferToR2({
           key,
           buffer: req.file.buffer,
           contentType: req.file.mimetype || 'application/octet-stream',
           cacheControl: 'public, max-age=604800',
         });
-  
+
         await dbx.updateUserProfileStyle(
           conn,
           Number(req.session.uid),
@@ -1330,7 +1368,7 @@ function createApp() {
           me.theme_color || null
         );
         await dbx.commit(conn);
-  
+
         try {
           if (oldBannerUrl && oldBannerUrl !== bannerUrl) {
             await deleteStoredImageByUrl(oldBannerUrl, 'banner');
@@ -1338,7 +1376,7 @@ function createApp() {
         } catch (cleanupErr) {
           console.error('Failed to delete old banner asset:', cleanupErr);
         }
-  
+
         req.flash('ok', 'Banner updated.');
         return res.redirect('/me/customize');
       } catch (e) {
@@ -1351,69 +1389,69 @@ function createApp() {
 
   app.post('/me/upload_pfp', loginRequired((req, res, next) => {
     uploadPfp.single('pfp_file')(req, res, async (err) => {
-        if (err) {
-            req.flash('error', `Upload failed: ${err.message}`);
-            return res.redirect('/me/customize');
-        }
+      if (err) {
+        req.flash('error', `Upload failed: ${err.message}`);
+        return res.redirect('/me/customize');
+      }
 
-        if (!req.file) {
-            req.flash('error', 'No file selected.');
-            return res.redirect('/me/customize');
-        }
+      if (!req.file) {
+        req.flash('error', 'No file selected.');
+        return res.redirect('/me/customize');
+      }
 
-        let conn;
+      let conn;
+      try {
+        conn = getConn();
+        const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
+        if (!me) return res.sendStatus(404);
+
+        let ext = path.extname(req.file.originalname || '').toLowerCase();
+        if (!ALLOWED_IMAGE_EXTS.has(ext)) {
+          req.flash('error', 'Invalid file type.');
+          return res.redirect('/me/customize');
+        }
+        if (ext === '.jpeg') ext = '.jpg';
+
+        const oldAvatarUrl = String(me.avatar_url || '').trim();
+        const fileName = `pfp_${slugify(me.username)}_${crypto.randomUUID()}${ext}`;
+        const key = `pfps/${fileName}`;
+
+        const avatarUrl = await uploadBufferToR2({
+          key,
+          buffer: req.file.buffer,
+          contentType: req.file.mimetype || 'application/octet-stream',
+          cacheControl: 'public, max-age=604800',
+        });
+
+        await dbx.updateUserAvatarUrl(conn, Number(req.session.uid), avatarUrl);
+        await dbx.commit(conn);
+
+        req.session.user = {
+          id: Number(me.id),
+          username: me.username,
+          email: me.email || null,
+          is_admin: Number(me.is_admin || 0),
+          avatar_url: avatarUrl,
+          theme_color: me.theme_color || null,
+        };
+
         try {
-            conn = getConn();
-            const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
-            if (!me) return res.sendStatus(404);
-
-            let ext = path.extname(req.file.originalname || '').toLowerCase();
-            if (!ALLOWED_IMAGE_EXTS.has(ext)) {
-                req.flash('error', 'Invalid file type.');
-                return res.redirect('/me/customize');
-            }
-            if (ext === '.jpeg') ext = '.jpg';
-
-            const oldAvatarUrl = String(me.avatar_url || '').trim();
-            const fileName = `pfp_${slugify(me.username)}_${crypto.randomUUID()}${ext}`;
-            const key = `pfps/${fileName}`;
-
-            const avatarUrl = await uploadBufferToR2({
-                key,
-                buffer: req.file.buffer,
-                contentType: req.file.mimetype || 'application/octet-stream',
-                cacheControl: 'public, max-age=604800',
-            });
-
-            await dbx.updateUserAvatarUrl(conn, Number(req.session.uid), avatarUrl);
-            await dbx.commit(conn);
-
-            req.session.user = {
-              id: Number(me.id),
-              username: me.username,
-              email: me.email || null,
-              is_admin: Number(me.is_admin || 0),
-              avatar_url: avatarUrl,
-              theme_color: me.theme_color || null,
-            };
-
-            try {
-                if (oldAvatarUrl && oldAvatarUrl !== avatarUrl) {
-                    await deleteStoredImageByUrl(oldAvatarUrl, 'pfp');
-                }
-            } catch (cleanupErr) {
-                console.error('Failed to delete old avatar asset:', cleanupErr);
-            }
-
-            req.flash('ok', 'Profile picture updated.');
-            return res.redirect('/me/customize');
-        } catch (e) {
-            return next(e);
-        } finally {
-            if (conn) dbx.close(conn);
+          if (oldAvatarUrl && oldAvatarUrl !== avatarUrl) {
+            await deleteStoredImageByUrl(oldAvatarUrl, 'pfp');
+          }
+        } catch (cleanupErr) {
+          console.error('Failed to delete old avatar asset:', cleanupErr);
         }
-    }); // <--- CHECK THIS
-})); // <--- AND THIS
+
+        req.flash('ok', 'Profile picture updated.');
+        return res.redirect('/me/customize');
+      } catch (e) {
+        return next(e);
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+    });
+  }));
 
   app.post('/show/:show_id/rate', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
@@ -1459,29 +1497,27 @@ function createApp() {
   }));
 
   app.get('/admin/bulk_add', adminRequired(async (req, res) => {
-    return res.render('bulk_add', {
-      me: res.locals.me,
-    });
+    return res.render('bulk_add', { me: res.locals.me });
   }));
 
   app.post('/show/:show_id/favorite', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const userId = Number(req.session.uid);
-  
+
     let conn;
     try {
       conn = getConn();
-  
+
       const show = await dbx.getShowById(conn, showId);
       if (!show) return res.sendStatus(404);
-  
+
       const result = await dbx.addUserFavoriteShow(conn, userId, showId);
-  
+
       if (result && result.ok === false && result.error === 'limit_reached') {
         req.flash('error', 'You can only have up to 5 favorite shows.');
         return res.redirect(`/show/${showId}`);
       }
-  
+
       await dbx.commit(conn);
       req.flash('ok', 'Added to favorites.');
     } catch (err) {
@@ -1489,21 +1525,21 @@ function createApp() {
     } finally {
       if (conn) dbx.close(conn);
     }
-  
+
     return res.redirect(`/show/${showId}`);
   }));
-  
+
   app.post('/show/:show_id/unfavorite', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const userId = Number(req.session.uid);
-  
+
     let conn;
     try {
       conn = getConn();
-  
+
       const show = await dbx.getShowById(conn, showId);
       if (!show) return res.sendStatus(404);
-  
+
       await dbx.removeUserFavoriteShow(conn, userId, showId);
       await dbx.commit(conn);
       req.flash('ok', 'Removed from favorites.');
@@ -1512,12 +1548,10 @@ function createApp() {
     } finally {
       if (conn) dbx.close(conn);
     }
-  
+
     return res.redirect(`/show/${showId}`);
   }));
 
-
-  
   app.post('/admin/bulk_add', adminRequired(async (req, res) => {
     const { items, errors } = parseLines(req.body.bulk_text || '');
 
@@ -1580,33 +1614,6 @@ function createApp() {
     }
 
     res.redirect(redirectTo);
-  }));
-
-  app.post('/admin/user/:user_id/delete-account', adminRequired(async (req, res) => {
-    const targetId = Number(req.params.user_id);
-
-    if (targetId === Number(req.session.uid)) {
-      req.flash('error', 'You cannot delete your own account from the admin panel.');
-      return res.redirect(`/u/${targetId}`);
-    }
-
-    let conn;
-    try {
-      conn = getConn();
-      const u = normalizeRow(await dbx.userById(conn, targetId));
-      if (!u) return res.status(404).send('User not found');
-
-      await dbx.deleteUser(conn, targetId);
-      await dbx.commit(conn);
-
-      req.flash('ok', `Account for ${u.username} has been permanently deleted.`);
-      res.redirect('/shows');
-    } catch (err) {
-      req.flash('error', `Failed to delete account: ${err.message}`);
-      res.redirect(`/u/${targetId}`);
-    } finally {
-      if (conn) dbx.close(conn);
-    }
   }));
 
   app.get('/admin/show/:show_id/edit', adminRequired(async (req, res) => {
@@ -1983,29 +1990,14 @@ function createApp() {
     }
   }));
 
-  function searchUsers(conn, q, opts = {}) {
-    const limit = Math.max(1, Math.min(Number(opts.limit || 8), 20));
-    const term = String(q || '').trim();
-
-    if (!term) return [];
-
-    return conn.prepare(`
-      SELECT id, username, avatar_url
-      FROM users
-      WHERE username LIKE ? COLLATE NOCASE
-      ORDER BY username ASC
-      LIMIT ?
-    `).all(`%${term}%`, limit);
-  }
-
   app.get('/api/users/search', (req, res) => {
     try {
       const q = String(req.query.q || '').trim();
-  
+
       if (!q) {
         return res.json({ ok: true, users: [] });
       }
-  
+
       const conn = dbx.connect(process.env.DB_PATH || '/data/site.db');
       try {
         const users = dbx.searchUsers(conn, q, { limit: 8 }) || [];
@@ -2033,7 +2025,7 @@ function createApp() {
       const uid = Number(req.session.uid);
       const u = normalizeRow(await dbx.userById(conn, uid));
       if (!u) return res.sendStatus(404);
-  
+
       const [avg, cnt] = await dbx.userAvgRating(conn, uid);
       u.avg_rating = avg;
       u.avg_rating_cnt = cnt;
@@ -2041,7 +2033,7 @@ function createApp() {
       u.following_count = await dbx.followingCount(conn, uid);
       u.viewer_is_following = await dbx.isFollowing(conn, uid, uid);
       u.viewer_friend_status = await dbx.friendsStatus(conn, uid, uid);
-  
+
       const rolesForMe = (await dbx.rolesForUser(conn, uid) || []).map(normalizeRow);
       const recentRatings = (await dbx.listRecentRatingsForUser(conn, uid, { limit: 8 }) || []).map((x) => {
         const d = normalizeRow(x);
@@ -2053,15 +2045,15 @@ function createApp() {
         if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
-  
+
       const favoriteShows = (await dbx.getUserFavoriteShows(conn, uid, 5) || []).map((x) => {
         const d = normalizeRow(x);
         if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
-  
+
       if (!u.avatar_url) u.avatar_url = pfpUrlForUsername(u.username || '');
-  
+
       return res.render('profile', {
         profile_user: u,
         user_roles: rolesForMe,
@@ -2083,17 +2075,17 @@ function createApp() {
       conn = getConn();
       const profile = normalizeRow(await dbx.userByUsername(conn, username));
       if (!profile) return res.sendStatus(404);
-  
+
       const [avg, cnt] = await dbx.userAvgRating(conn, Number(profile.id));
       profile.avg_rating = avg;
       profile.avg_rating_cnt = cnt;
-  
+
       const viewerId = req.session.uid ? Number(req.session.uid) : null;
       profile.followers_count = await dbx.followerCount(conn, Number(profile.id));
       profile.following_count = await dbx.followingCount(conn, Number(profile.id));
       profile.viewer_is_following = viewerId ? await dbx.isFollowing(conn, viewerId, Number(profile.id)) : false;
       profile.viewer_friend_status = viewerId ? await dbx.friendsStatus(conn, viewerId, Number(profile.id)) : 'none';
-  
+
       const rolesForUser = (await dbx.rolesForUser(conn, Number(profile.id)) || []).map(normalizeRow);
       const recentRatings = (await dbx.listRecentRatingsForUser(conn, Number(profile.id), { limit: 7 }) || []).map((x) => {
         const d = normalizeRow(x);
@@ -2105,21 +2097,21 @@ function createApp() {
         if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
-  
+
       const favoriteShows = (await dbx.getUserFavoriteShows(conn, Number(profile.id), 5) || []).map((x) => {
         const d = normalizeRow(x);
         if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
-  
+
       if (!profile.avatar_url) profile.avatar_url = pfpUrlForUsername(profile.username || '');
-  
+
       let me = null;
       if (req.session.uid) {
         const meRow = await dbx.userById(conn, Number(req.session.uid));
         me = meRow ? normalizeRow(meRow) : null;
       }
-  
+
       const isMe = !!(me && me.username === profile.username);
       return res.render('profile', {
         profile_user: profile,
@@ -2134,7 +2126,7 @@ function createApp() {
       if (conn) dbx.close(conn);
     }
   });
-  
+
   app.get('/me/customize', loginRequired(async (req, res) => {
     let conn;
     try {
@@ -2149,19 +2141,19 @@ function createApp() {
 
   app.post('/me/customize', loginRequired(async (req, res) => {
     const themeColor = String(req.body.theme_color || '').trim();
-  
+
     if (themeColor && !/^#([0-9a-fA-F]{6})$/.test(themeColor)) {
       req.flash('error', 'Theme color must be in #RRGGBB format.');
       return res.redirect('/me/customize');
     }
-  
+
     let conn;
     try {
       conn = getConn();
-  
+
       const current = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
       if (!current) return res.sendStatus(404);
-  
+
       await dbx.updateUserProfileStyle(
         conn,
         Number(req.session.uid),
@@ -2169,9 +2161,9 @@ function createApp() {
         current.banner_url || null,
         themeColor || null
       );
-  
+
       await dbx.commit(conn);
-  
+
       const fresh = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
 
       req.session.user = {
@@ -2183,21 +2175,22 @@ function createApp() {
         avatar_url: fresh.avatar_url || null,
         theme_color: fresh.theme_color || null,
       };
-  
+
       req.flash('ok', 'Theme color updated.');
     } finally {
       if (conn) dbx.close(conn);
     }
-  
+
     res.redirect('/me/customize');
   }));
+
   app.get('/admin/users', adminRequired(async (req, res, next) => {
     let conn;
     try {
       conn = getConn();
-  
+
       const sort = req.query.sort === 'newest' ? 'newest' : 'default';
-  
+
       const users = conn.prepare(`
         SELECT
           id,
@@ -2214,7 +2207,7 @@ function createApp() {
             : 'LOWER(username) ASC'
         }
       `).all().map(normalizeRow);
-  
+
       for (const u of users) {
         if (!u.avatar_url) u.avatar_url = pfpUrlForUsername(u.username || '');
         try {
@@ -2223,7 +2216,7 @@ function createApp() {
           u.roles = [];
         }
       }
-  
+
       return res.render('admin_users', {
         me: res.locals.me,
         users,
@@ -2270,18 +2263,18 @@ function createApp() {
   app.get('/show/:show_id/critics', async (req, res, next) => {
     const showId = Number(req.params.show_id);
     const viewerUid = req.session.uid ? Number(req.session.uid) : null;
-  
+
     let conn;
     try {
       conn = getConn();
-  
+
       let row = normalizeRow(await dbx.getShowById(conn, showId));
       if (!row) return res.sendStatus(404);
       if (!row.poster_url) row.poster_url = posterUrlForShow(row.corps || '', row.year || 0);
-  
+
       let me = viewerUid ? normalizeRow(await dbx.userById(conn, viewerUid)) : null;
       if (me && !me.avatar_url) me.avatar_url = pfpUrlForUsername(me.username || '');
-  
+
       const criticRatings = conn.prepare(`
         SELECT
           u.id AS user_id,
@@ -2293,25 +2286,18 @@ function createApp() {
           ro.name AS role_name,
           ro.color AS role_color
         FROM ratings r
-        JOIN users u
-          ON u.id = r.user_id
-        JOIN user_roles ur
-          ON ur.user_id = u.id
-        JOIN roles ro
-          ON ro.id = ur.role_id
-        LEFT JOIN reviews rv
-          ON rv.show_id = r.show_id
-         AND rv.user_id = r.user_id
+        JOIN users u ON u.id = r.user_id
+        JOIN user_roles ur ON ur.user_id = u.id
+        JOIN roles ro ON ro.id = ur.role_id
+        LEFT JOIN reviews rv ON rv.show_id = r.show_id AND rv.user_id = r.user_id
         WHERE r.show_id = ?
           AND ro.name = 'Verified Critic'
-        ORDER BY
-          r.rating_half DESC,
-          LOWER(u.username) ASC
+        ORDER BY r.rating_half DESC, LOWER(u.username) ASC
       `).all(showId).map(normalizeRow).map((c) => {
         if (!c.avatar_url) c.avatar_url = pfpUrlForUsername(c.username || '');
         return c;
       });
-  
+
       res.render('show_critics', {
         row,
         me,
@@ -2324,7 +2310,6 @@ function createApp() {
     }
   });
 
-  
   app.post('/show/:show_id/review/:review_user_id/vote', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const reviewUserId = Number(req.params.review_user_id);
@@ -2361,38 +2346,32 @@ function createApp() {
 
   app.get('/top', (req, res, next) => {
     const mode = String(req.query.mode || 'top').trim().toLowerCase();
-  
+
     const allowedModes = new Set(['top', 'bottom', 'critic_top', 'critic_bottom']);
     const safeMode = allowedModes.has(mode) ? mode : 'top';
-  
+
     let conn;
     try {
       conn = getConn();
-  
+
       let rawRows = dbx.listTopShowsWithTopReview(conn, {
         mode: safeMode,
         limit: 100
       }) || [];
-  
-      // Transform rows to include auto-generated poster paths and avatars
+
       const rows = rawRows.map((r) => {
         const d = normalizeRow(r);
-
-        // 1. Logic: If DB has no poster_url, use the file-system lookup function
         if (!d.poster_url || !String(d.poster_url).trim()) {
-            d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+          d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         }
-
-        // 2. Logic: If the top reviewer has no avatar_url, try to find their PFP
         if (d.top_review_username && !d.top_review_avatar_url) {
-            d.top_review_avatar_url = pfpUrlForUsername(d.top_review_username);
+          d.top_review_avatar_url = pfpUrlForUsername(d.top_review_username);
         }
-
         return d;
       });
-  
+
       return res.render('top_shows', {
-        me: res.locals.me || null, // Using res.locals.me to stay consistent with your middleware
+        me: res.locals.me || null,
         rows,
         mode: safeMode
       });
@@ -2402,27 +2381,26 @@ function createApp() {
       if (conn) dbx.close(conn);
     }
   });
+
   app.get('/top_users', async (req, res, next) => {
     let conn;
     try {
       conn = getConn();
-      // Pass the number 25 directly, not an object { limit: 25 }
       const rawRows = dbx.listTopUsersByReviewUpvotes(conn, 25) || [];
-      
+
       const rows = rawRows.map((r) => {
         const d = normalizeRow(r);
         if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
-        // Ensure the top poster is generated if missing
         if (d.top_show_id && !d.top_poster_url) {
           d.top_poster_url = posterUrlForShow(d.top_corps || '', d.top_year || 0);
         }
         return d;
       });
-  
+
       res.render('top_users', { rows });
     } catch (err) {
       console.error("Top Users Route Error:", err);
-      next(err); // This sends the error to Express instead of crashing
+      next(err);
     } finally {
       if (conn) dbx.close(conn);
     }
@@ -2753,38 +2731,3 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`DB_PATH=${DB_PATH}`);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
