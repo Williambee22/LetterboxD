@@ -177,24 +177,21 @@
 
   <header class="topbar">
     <div class="wrap row between">
-      <div style="display: flex; align-items: center; gap: 10px;">
-        
-        <a href="https://your-external-link.com" target="_blank" rel="noopener" style="display: flex; align-items: center; text-decoration: none;">
-          <div style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <img 
-              src="/static/logo.png" 
-              alt="Logo" 
-              style="max-width: 35px; max-height: 35px; width: auto; height: auto; object-fit: contain; transition: transform 0.6s ease-in-out;"
-              onmouseover="this.style.transform='rotate(360deg)'" 
-              onmouseout="this.style.transform='rotate(0deg)'"
-            >
-          </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <a class="brand" href="/shows" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
+          <img
+            src="/static/logo.png"
+            alt="Pressboxd logo"
+            style="width:30px; height:30px; object-fit:contain; flex-shrink:0; transition:transform 0.6s ease-in-out;"
+            onmouseover="this.style.transform='rotate(360deg)'"
+            onmouseout="this.style.transform='rotate(0deg)'"
+          >
+          <img
+            src="/static/pressboxd-wordmark.png"
+            alt="Pressboxd"
+            style="height:64px; width:auto; object-fit:contain; display:block;"
+          >
         </a>
-  
-        <a class="brand" href="/shows">
-          <span>Pressboxd</span>
-        </a>
-  
       </div>
 
       <nav class="nav row">
