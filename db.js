@@ -1771,6 +1771,7 @@ module.exports = {
   addReviewComment,
   listReviewCommentsForShow,
   deleteReviewComment,
+  nestReviewComments,
   softDeleteReviewComment,
   adminHardDeleteReviewComment,
   adminDeleteShow,
@@ -1796,8 +1797,7 @@ module.exports = {
   countUserFavoriteShows,
   addUserFavoriteShow,
   removeUserFavoriteShow,
-  nestReviewComments,
-  updateUserBio 
+  updateUserBio,
 };
 
 
