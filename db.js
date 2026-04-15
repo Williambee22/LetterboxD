@@ -1517,12 +1517,14 @@ function ensureReviewCommentsTable(conn) {
       show_id INTEGER NOT NULL,
       review_user_id INTEGER NOT NULL,
       replier_user_id INTEGER NOT NULL,
+      parent_reply_id INTEGER,
       reply_text TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (comment_id) REFERENCES review_comments(id) ON DELETE CASCADE,
       FOREIGN KEY (show_id) REFERENCES shows(id) ON DELETE CASCADE,
       FOREIGN KEY (review_user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (replier_user_id) REFERENCES users(id) ON DELETE CASCADE
+      FOREIGN KEY (replier_user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (parent_reply_id) REFERENCES review_comment_replies(id) ON DELETE CASCADE
     );
 
     CREATE INDEX IF NOT EXISTS idx_review_comment_replies_comment
@@ -1530,7 +1532,18 @@ function ensureReviewCommentsTable(conn) {
 
     CREATE INDEX IF NOT EXISTS idx_review_comment_replies_replier
       ON review_comment_replies(replier_user_id, created_at);
+
+    CREATE INDEX IF NOT EXISTS idx_review_comment_replies_parent_reply
+      ON review_comment_replies(parent_reply_id, created_at);
   `);
+
+  const replyCols = tableColumns(conn, 'review_comment_replies');
+
+  if (!replyCols.has('parent_reply_id')) {
+    try {
+      conn.prepare('ALTER TABLE review_comment_replies ADD COLUMN parent_reply_id INTEGER').run();
+    } catch (_) {}
+  }
 }
 
 function addReviewComment(conn, showId, reviewUserId, commenterUserId, commentText) {
@@ -1549,23 +1562,43 @@ function addReviewComment(conn, showId, reviewUserId, commenterUserId, commentTe
   );
 }
 
-function addReviewReply(conn, commentId, showId, reviewUserId, replierUserId, replyText) {
+function addReviewReply(conn, commentId, showId, reviewUserId, replierUserId, replyText, parentReplyId = null) {
   const text = String(replyText || '').trim();
   if (!text) throw new Error('Reply cannot be empty.');
   if (text.length > 1000) throw new Error('Reply too long (max 1000 chars).');
 
-  const parent = conn.prepare(`
+  const parentComment = conn.prepare(`
     SELECT id, show_id, review_user_id
     FROM review_comments
     WHERE id = ?
   `).get(Number(commentId));
 
-  if (!parent) throw new Error('Parent comment not found.');
+  if (!parentComment) throw new Error('Parent comment not found.');
   if (
-    Number(parent.show_id) !== Number(showId) ||
-    Number(parent.review_user_id) !== Number(reviewUserId)
+    Number(parentComment.show_id) !== Number(showId) ||
+    Number(parentComment.review_user_id) !== Number(reviewUserId)
   ) {
     throw new Error('Invalid parent comment.');
+  }
+
+  let parentReplyIdNum = null;
+  if (parentReplyId != null && parentReplyId !== '') {
+    const parentReply = conn.prepare(`
+      SELECT id, comment_id, show_id, review_user_id
+      FROM review_comment_replies
+      WHERE id = ?
+    `).get(Number(parentReplyId));
+
+    if (!parentReply) throw new Error('Parent reply not found.');
+    if (
+      Number(parentReply.comment_id) !== Number(commentId) ||
+      Number(parentReply.show_id) !== Number(showId) ||
+      Number(parentReply.review_user_id) !== Number(reviewUserId)
+    ) {
+      throw new Error('Invalid parent reply.');
+    }
+
+    parentReplyIdNum = Number(parentReply.id);
   }
 
   conn.prepare(`
@@ -1574,14 +1607,16 @@ function addReviewReply(conn, commentId, showId, reviewUserId, replierUserId, re
       show_id,
       review_user_id,
       replier_user_id,
+      parent_reply_id,
       reply_text
     )
-    VALUES (?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?)
   `).run(
     Number(commentId),
     Number(showId),
     Number(reviewUserId),
     Number(replierUserId),
+    parentReplyIdNum,
     text
   );
 }
@@ -1616,12 +1651,17 @@ function listReviewRepliesForShow(conn, showId, opts = {}) {
       r.show_id,
       r.review_user_id,
       r.replier_user_id,
+      r.parent_reply_id,
       u.username AS replier_username,
       u.avatar_url AS replier_avatar_url,
+      pr.replier_user_id AS parent_replier_user_id,
+      pu.username AS parent_replier_username,
       r.reply_text,
       r.created_at
     FROM review_comment_replies r
     JOIN users u ON u.id = r.replier_user_id
+    LEFT JOIN review_comment_replies pr ON pr.id = r.parent_reply_id
+    LEFT JOIN users pu ON pu.id = pr.replier_user_id
     WHERE r.show_id = ?
     ORDER BY datetime(r.created_at) ASC, r.id ASC
     LIMIT ?
