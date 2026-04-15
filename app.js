@@ -1276,32 +1276,17 @@ function createApp() {
     const reviewUserId = Number(req.params.review_user_id);
     const commenterId = Number(req.session.uid);
     const text = String(req.body.comment_text || '').trim();
-    const parentCommentId = req.body.parent_comment_id ? Number(req.body.parent_comment_id) : null;
   
     let conn;
     try {
       conn = getConn();
-      const show = await dbx.getShowById(conn, showId);
-      if (!show) return res.sendStatus(404);
   
-      if (parentCommentId) {
-        await dbx.addReviewReply(
-          conn,
-          parentCommentId,
-          showId,
-          reviewUserId,
-          commenterId,
-          text
-        );
-      } else {
-        await dbx.addReviewComment(
-          conn,
-          showId,
-          reviewUserId,
-          commenterId,
-          text
-        );
+      if (!text) {
+        req.flash('error', 'Comment cannot be empty.');
+        return res.redirect(`/show/${showId}`);
       }
+  
+      await dbx.addReviewComment(conn, showId, reviewUserId, commenterId, text);
   
       if (commenterId !== reviewUserId) {
         try {
@@ -1316,6 +1301,7 @@ function createApp() {
       }
   
       await dbx.commit(conn);
+      req.flash('ok', 'Comment posted.');
     } catch (err) {
       req.flash('error', String(err.message || err));
     } finally {
