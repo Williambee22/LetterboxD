@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Critic Ratings - <%= row && row.title ? row.title : "Show" %> - Pressboxd</title>
   <link rel="stylesheet" href="/static/styles.css"/>
+  <link rel="icon" type="image/png" href="/static/favicon.png"/>
 
   <style>
     .criticList {
@@ -133,10 +134,25 @@
 
   <header class="topbar">
     <div class="wrap row between">
-      <a class="brand" href="/shows" style="display:flex; align-items:center; gap:8px; text-decoration:none;">
-        <img src="/static/logo.png" alt="logo" style="width:30px; height:30px; object-fit:contain; flex-shrink:0;">
-        <span>Pressboxd</span>
-      </a>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display:flex; align-items:center;">
+          <img
+            src="/static/logo.png"
+            alt="Logo"
+            style="width:36px; height:36px; object-fit:contain; flex-shrink:0; transition: transform 0.6s ease-in-out;"
+            onmouseover="this.style.transform='rotate(360deg)'"
+            onmouseout="this.style.transform='rotate(0deg)'"
+          >
+        </a>
+      
+        <a class="brand" href="/shows" style="display:flex; align-items:center; text-decoration:none;">
+          <img
+            src="/static/pressboxd-wordmark.png"
+            alt="Pressboxd"
+            style="height:68px; width:auto; display:block;"
+          >
+        </a>
+      </div>
 
       <nav class="nav row">
         <a href="/shows">Shows</a>
