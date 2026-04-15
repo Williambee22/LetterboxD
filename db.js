@@ -1541,7 +1541,10 @@ function ensureReviewCommentsTable(conn) {
 
   if (!replyCols.has('parent_reply_id')) {
     try {
-      conn.prepare('ALTER TABLE review_comment_replies ADD COLUMN parent_reply_id INTEGER').run();
+      conn.prepare(`
+        ALTER TABLE review_comment_replies
+        ADD COLUMN parent_reply_id INTEGER
+      `).run();
     } catch (_) {}
   }
 }
