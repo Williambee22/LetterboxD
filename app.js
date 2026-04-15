@@ -1529,6 +1529,25 @@ function createApp() {
     return res.redirect(`/show/${showId}`);
   }));
 
+  app.post('/admin/show/:show_id/reply/:reply_id/delete', adminRequired(async (req, res) => {
+    const showId = Number(req.params.show_id);
+    const replyId = Number(req.params.reply_id);
+    let conn;
+    try {
+      conn = getConn();
+      await dbx.deleteReviewReply(conn, replyId, {
+        requesterUserId: Number(req.session.uid),
+        isAdmin: true,
+      });
+      await dbx.commit(conn);
+      req.flash('ok', 'Reply deleted.');
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+    res.redirect(`/show/${showId}`);
+  }));
+
+  
   app.post('/show/:show_id/unfavorite', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const userId = Number(req.session.uid);
