@@ -1516,9 +1516,10 @@ function ensureReviewCommentsTable(conn) {
 
   const cols = tableColumns(conn, 'review_comments');
   if (!cols.has('parent_comment_id')) {
-  try {
-    conn.prepare('ALTER TABLE review_comments ADD COLUMN parent_comment_id INTEGER').run();
-  } catch (_) {}
+    try {
+      conn.prepare('ALTER TABLE review_comments ADD COLUMN parent_comment_id INTEGER').run();
+    } catch (_) {}
+  }
 }
 
 function addReviewComment(conn, showId, reviewUserId, commenterUserId, commentText, parentCommentId = null) {
