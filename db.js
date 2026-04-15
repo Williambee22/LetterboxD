@@ -1498,28 +1498,61 @@ function ensureReviewCommentsTable(conn) {
       show_id INTEGER NOT NULL,
       review_user_id INTEGER NOT NULL,
       commenter_user_id INTEGER NOT NULL,
+      parent_comment_id INTEGER,
       comment_text TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (show_id) REFERENCES shows(id) ON DELETE CASCADE,
       FOREIGN KEY (review_user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (commenter_user_id) REFERENCES users(id) ON DELETE CASCADE
+      FOREIGN KEY (commenter_user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (parent_comment_id) REFERENCES review_comments(id) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS idx_review_comments_target
       ON review_comments(show_id, review_user_id, created_at);
     CREATE INDEX IF NOT EXISTS idx_review_comments_commenter
       ON review_comments(commenter_user_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_review_comments_parent
+      ON review_comments(parent_comment_id, created_at);
   `);
+
+  const cols = tableColumns(conn, 'review_comments');
+  if (!cols.has('parent_comment_id')) {
+  try {
+    conn.prepare('ALTER TABLE review_comments ADD COLUMN parent_comment_id INTEGER').run();
+  } catch (_) {}
 }
 
-function addReviewComment(conn, showId, reviewUserId, commenterUserId, commentText) {
+function addReviewComment(conn, showId, reviewUserId, commenterUserId, commentText, parentCommentId = null) {
   const text = String(commentText || '').trim();
   if (!text) throw new Error('Comment cannot be empty.');
   if (text.length > 1000) throw new Error('Comment too long (max 1000 chars).');
 
+  const pid = parentCommentId == null || parentCommentId === ''
+    ? null
+    : Number(parentCommentId);
+
+  if (pid != null) {
+    const parent = conn.prepare(`
+      SELECT id, show_id, review_user_id
+      FROM review_comments
+      WHERE id = ?
+    `).get(pid);
+
+    if (!parent) throw new Error('Parent comment not found.');
+    if (Number(parent.show_id) !== Number(showId) || Number(parent.review_user_id) !== Number(reviewUserId)) {
+      throw new Error('Invalid parent comment.');
+    }
+  }
+
   conn.prepare(`
-    INSERT INTO review_comments(show_id, review_user_id, commenter_user_id, comment_text)
-    VALUES(?,?,?,?)
-  `).run(Number(showId), Number(reviewUserId), Number(commenterUserId), text);
+    INSERT INTO review_comments(show_id, review_user_id, commenter_user_id, parent_comment_id, comment_text)
+    VALUES(?,?,?,?,?)
+  `).run(
+    Number(showId),
+    Number(reviewUserId),
+    Number(commenterUserId),
+    pid,
+    text
+  );
 }
 
 function listReviewCommentsForShow(conn, showId, opts = {}) {
@@ -1530,6 +1563,7 @@ function listReviewCommentsForShow(conn, showId, opts = {}) {
       rc.show_id,
       rc.review_user_id,
       rc.commenter_user_id,
+      rc.parent_comment_id,
       u.username AS commenter_username,
       u.avatar_url AS commenter_avatar_url,
       rc.comment_text,
@@ -1537,10 +1571,11 @@ function listReviewCommentsForShow(conn, showId, opts = {}) {
     FROM review_comments rc
     JOIN users u ON u.id = rc.commenter_user_id
     WHERE rc.show_id = ?
-    ORDER BY rc.created_at DESC
+    ORDER BY datetime(rc.created_at) ASC, rc.id ASC
     LIMIT ?
   `).all(Number(showId), limitTotal);
 }
+
 
 function deleteReviewComment(conn, commentId, opts = {}) {
   const requesterUserId = Number(opts.requesterUserId);
@@ -1554,6 +1589,28 @@ function deleteReviewComment(conn, commentId, opts = {}) {
   conn.prepare('DELETE FROM review_comments WHERE id = ?').run(Number(commentId));
   return true;
 }
+
+function nestReviewComments(comments) {
+  const all = Array.isArray(comments) ? comments.map(c => ({ ...c, replies: [] })) : [];
+  const byId = new Map();
+  const roots = [];
+
+  for (const c of all) {
+    byId.set(Number(c.comment_id), c);
+  }
+
+  for (const c of all) {
+    const parentId = c.parent_comment_id == null ? null : Number(c.parent_comment_id);
+    if (parentId != null && byId.has(parentId)) {
+      byId.get(parentId).replies.push(c);
+    } else {
+      roots.push(c);
+    }
+  }
+
+  return roots;
+}
+
 
 function softDeleteReviewComment(conn, commentId, opts = {}) {
   const cid = Number(commentId);
@@ -1739,6 +1796,7 @@ module.exports = {
   countUserFavoriteShows,
   addUserFavoriteShow,
   removeUserFavoriteShow,
+  nestReviewComments,
   updateUserBio 
 };
 
