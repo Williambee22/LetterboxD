@@ -1515,6 +1515,7 @@ function ensureReviewCommentsTable(conn) {
   `);
 
   const cols = tableColumns(conn, 'review_comments');
+
   if (!cols.has('parent_comment_id')) {
     try {
       conn.prepare('ALTER TABLE review_comments ADD COLUMN parent_comment_id INTEGER').run();
@@ -1522,14 +1523,15 @@ function ensureReviewCommentsTable(conn) {
   }
 }
 
+
+
+
 function addReviewComment(conn, showId, reviewUserId, commenterUserId, commentText, parentCommentId = null) {
   const text = String(commentText || '').trim();
   if (!text) throw new Error('Comment cannot be empty.');
   if (text.length > 1000) throw new Error('Comment too long (max 1000 chars).');
 
-  const pid = parentCommentId == null || parentCommentId === ''
-    ? null
-    : Number(parentCommentId);
+  const pid = parentCommentId == null || parentCommentId === '' ? null : Number(parentCommentId);
 
   if (pid != null) {
     const parent = conn.prepare(`
@@ -1546,7 +1548,7 @@ function addReviewComment(conn, showId, reviewUserId, commenterUserId, commentTe
 
   conn.prepare(`
     INSERT INTO review_comments(show_id, review_user_id, commenter_user_id, parent_comment_id, comment_text)
-    VALUES(?,?,?,?,?)
+    VALUES (?, ?, ?, ?, ?)
   `).run(
     Number(showId),
     Number(reviewUserId),
@@ -1576,7 +1578,6 @@ function listReviewCommentsForShow(conn, showId, opts = {}) {
     LIMIT ?
   `).all(Number(showId), limitTotal);
 }
-
 
 function deleteReviewComment(conn, commentId, opts = {}) {
   const requesterUserId = Number(opts.requesterUserId);
