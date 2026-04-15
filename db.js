@@ -1517,14 +1517,12 @@ function ensureReviewCommentsTable(conn) {
       show_id INTEGER NOT NULL,
       review_user_id INTEGER NOT NULL,
       replier_user_id INTEGER NOT NULL,
-      parent_reply_id INTEGER,
       reply_text TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (comment_id) REFERENCES review_comments(id) ON DELETE CASCADE,
       FOREIGN KEY (show_id) REFERENCES shows(id) ON DELETE CASCADE,
       FOREIGN KEY (review_user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (replier_user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (parent_reply_id) REFERENCES review_comment_replies(id) ON DELETE CASCADE
+      FOREIGN KEY (replier_user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
     CREATE INDEX IF NOT EXISTS idx_review_comment_replies_comment
@@ -1532,9 +1530,6 @@ function ensureReviewCommentsTable(conn) {
 
     CREATE INDEX IF NOT EXISTS idx_review_comment_replies_replier
       ON review_comment_replies(replier_user_id, created_at);
-
-    CREATE INDEX IF NOT EXISTS idx_review_comment_replies_parent_reply
-      ON review_comment_replies(parent_reply_id, created_at);
   `);
 
   const replyCols = tableColumns(conn, 'review_comment_replies');
@@ -1545,7 +1540,10 @@ function ensureReviewCommentsTable(conn) {
         ALTER TABLE review_comment_replies
         ADD COLUMN parent_reply_id INTEGER
       `).run();
-    } catch (_) {}
+      console.log('Added parent_reply_id to review_comment_replies');
+    } catch (err) {
+      console.error('Failed adding parent_reply_id:', err.message);
+    }
   }
 }
 
@@ -1570,40 +1568,6 @@ function addReviewReply(conn, commentId, showId, reviewUserId, replierUserId, re
   if (!text) throw new Error('Reply cannot be empty.');
   if (text.length > 1000) throw new Error('Reply too long (max 1000 chars).');
 
-  const parentComment = conn.prepare(`
-    SELECT id, show_id, review_user_id
-    FROM review_comments
-    WHERE id = ?
-  `).get(Number(commentId));
-
-  if (!parentComment) throw new Error('Parent comment not found.');
-  if (
-    Number(parentComment.show_id) !== Number(showId) ||
-    Number(parentComment.review_user_id) !== Number(reviewUserId)
-  ) {
-    throw new Error('Invalid parent comment.');
-  }
-
-  let parentReplyIdNum = null;
-  if (parentReplyId != null && parentReplyId !== '') {
-    const parentReply = conn.prepare(`
-      SELECT id, comment_id, show_id, review_user_id
-      FROM review_comment_replies
-      WHERE id = ?
-    `).get(Number(parentReplyId));
-
-    if (!parentReply) throw new Error('Parent reply not found.');
-    if (
-      Number(parentReply.comment_id) !== Number(commentId) ||
-      Number(parentReply.show_id) !== Number(showId) ||
-      Number(parentReply.review_user_id) !== Number(reviewUserId)
-    ) {
-      throw new Error('Invalid parent reply.');
-    }
-
-    parentReplyIdNum = Number(parentReply.id);
-  }
-
   conn.prepare(`
     INSERT INTO review_comment_replies (
       comment_id,
@@ -1619,7 +1583,7 @@ function addReviewReply(conn, commentId, showId, reviewUserId, replierUserId, re
     Number(showId),
     Number(reviewUserId),
     Number(replierUserId),
-    parentReplyIdNum,
+    parentReplyId == null ? null : Number(parentReplyId),
     text
   );
 }
