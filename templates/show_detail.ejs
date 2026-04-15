@@ -1272,7 +1272,13 @@
             <% if (reviewList.length > 0) { %>
               <div class="reviewlist">
                 <% for (const rv of reviewList) {
-                  const commentList = Array.isArray(rv.comments) ? rv.comments : [];
+                  const commentList = Array.isArray(rv.comments)
+                    ? [...rv.comments].sort((a, b) => {
+                        const at = Number(a.created_ts || a.ts || 0);
+                        const bt = Number(b.created_ts || b.ts || 0);
+                        return at - bt;
+                      })
+                    : [];
                   const rvVote = Number(rv.vote_score || 0);
                   const myVote = rv.my_vote == null ? 0 : Number(rv.my_vote);
                   const isOwner = currentUserId != null && currentUserId === Number(rv.user_id);
@@ -1340,19 +1346,20 @@
                     <details style="margin-top:10px;">
                       <summary class="muted">
                         Comments (
-                        <% if (commentList.length !== 0) { %>
-                          <b><%= commentList.length %></b>
+                        <% if (rv.comment_count !== 0) { %>
+                          <b><%= rv.comment_count %></b>
                         <% } else { %>
-                          <%= commentList.length %>
+                          <%= rv.comment_count %>
                         <% } %>
                         )
                       </summary>
-
+                    
                       <div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
                         <% if (commentList.length > 0) { %>
                           <% for (const c of commentList) {
                             const isCommentOwner = currentUserId != null && currentUserId === Number(c.commenter_user_id);
                             const canAdminDeleteComment = meUser && Number(meUser.is_admin || 0) === 1;
+                            const replyList = Array.isArray(c.replies) ? c.replies : [];
                           %>
                             <div class="comment-item">
                               <div class="comment-head">
@@ -1371,7 +1378,7 @@
                                     <% } %>
                                   </div>
                                 </div>
-
+                    
                                 <% if (isCommentOwner) { %>
                                   <form method="post" action="/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete">
                                     <button class="btn ghost" type="submit">Delete</button>
@@ -1382,14 +1389,72 @@
                                   </form>
                                 <% } %>
                               </div>
-
+                    
                               <div class="muted"><%= c.comment_text %></div>
+                    
+                              <% if (replyList.length > 0) { %>
+                                <div style="margin-top:10px; margin-left:20px; display:flex; flex-direction:column; gap:8px;">
+                                  <% for (const r of replyList) {
+                                    const isReplyOwner = currentUserId != null && currentUserId === Number(r.commenter_user_id);
+                                  %>
+                                    <div class="comment-item" style="background:rgba(255,255,255,0.025);">
+                                      <div class="comment-head">
+                                        <div class="comment-user">
+                                          <a href="/u/<%= encodeURIComponent(r.commenter_username || '') %>" class="comment-avatar">
+                                            <% if (r.commenter_avatar_url) { %>
+                                              <img src="<%= r.commenter_avatar_url %>" alt="<%= r.commenter_username || 'user' %>">
+                                            <% } %>
+                                          </a>
+                                          <div>
+                                            <div style="font-weight:700;">
+                                              <a href="/u/<%= encodeURIComponent(r.commenter_username || '') %>"><%= r.commenter_username || "User" %></a>
+                                            </div>
+                                            <% if (r.created_at) { %>
+                                              <div class="muted small"><%= r.created_at %></div>
+                                            <% } %>
+                                          </div>
+                                        </div>
+                    
+                                        <% if (isReplyOwner) { %>
+                                          <form method="post" action="/show/<%= showRow.id %>/comment/<%= r.comment_id %>/delete">
+                                            <button class="btn ghost" type="submit">Delete</button>
+                                          </form>
+                                        <% } else if (canAdminDeleteComment) { %>
+                                          <form method="post" action="/admin/show/<%= showRow.id %>/comment/<%= r.comment_id %>/delete">
+                                            <button class="btn ghost" type="submit">Admin delete</button>
+                                          </form>
+                                        <% } %>
+                                      </div>
+                    
+                                      <div class="muted"><%= r.comment_text %></div>
+                                    </div>
+                                  <% } %>
+                                </div>
+                              <% } %>
+                    
+                              <% if (meUser) { %>
+                                <details style="margin-top:10px;">
+                                  <summary class="muted small" style="cursor:pointer;">Reply</summary>
+                                  <form
+                                    class="comment-form"
+                                    method="post"
+                                    action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment"
+                                    style="margin-top:8px;"
+                                  >
+                                    <input type="hidden" name="parent_comment_id" value="<%= c.comment_id %>">
+                                    <textarea name="comment_text" placeholder="Write a reply…" required></textarea>
+                                    <div class="review-actions">
+                                      <button class="btn ghost" type="submit">Post reply</button>
+                                    </div>
+                                  </form>
+                                </details>
+                              <% } %>
                             </div>
                           <% } %>
                         <% } else { %>
                           <div class="muted">No comments yet.</div>
                         <% } %>
-
+                    
                         <% if (meUser) { %>
                           <form class="comment-form" method="post" action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment">
                             <textarea name="comment_text" placeholder="Add a comment…" required></textarea>
