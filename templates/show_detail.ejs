@@ -640,8 +640,18 @@
       top: 0;
       overflow: hidden;
       width: 0%;
-      color: var(--accent);
+      color: #ffffff;
       pointer-events: none;
+      transition: filter .18s ease, text-shadow .18s ease;
+    }
+    
+    .stars-fill.perfect {
+      filter: drop-shadow(0 0 6px rgba(255,255,255,0.95))
+              drop-shadow(0 0 14px rgba(255,255,255,0.65));
+      text-shadow:
+        0 0 6px rgba(255,255,255,0.95),
+        0 0 14px rgba(255,255,255,0.75),
+        0 0 22px rgba(255,255,255,0.45);
     }
 
     @media (max-width: 768px) {
@@ -1105,63 +1115,64 @@
                   <% } %>
 
                   <script>
-                    (function () {
-                      const stars = document.getElementById("stars");
-                      const fill = document.getElementById("starsFill");
-                      const input = document.getElementById("ratingHalf");
-                      const label = document.getElementById("ratingLabel");
-                      const form = document.getElementById("rateForm");
-                      if (!stars || !fill || !input || !label || !form) return;
-
-                      const initial = parseInt(stars.dataset.rating || "0", 10);
-                      setDisplay(initial);
-
-                      function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
-                      function halfToText(rh) {
-                        const val = (rh / 2).toFixed(rh % 2 ? 1 : 0);
-                        return val + " ★";
+                  (function () {
+                    const stars = document.getElementById("stars");
+                    const fill = document.getElementById("starsFill");
+                    const input = document.getElementById("ratingHalf");
+                    const label = document.getElementById("ratingLabel");
+                    const form = document.getElementById("rateForm");
+                    if (!stars || !fill || !input || !label || !form) return;
+                
+                    const initial = parseInt(stars.dataset.rating || "0", 10);
+                    setDisplay(initial);
+                
+                    function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+                    function halfToText(rh) {
+                      const val = (rh / 2).toFixed(rh % 2 ? 1 : 0);
+                      return val + " ★";
+                    }
+                    function setDisplay(rh) {
+                      const safe = clamp(rh, 0, 10);
+                      const pct = (safe / 10) * 100;
+                      fill.style.width = pct + "%";
+                      fill.classList.toggle("perfect", safe === 10);
+                      label.textContent = halfToText(safe);
+                    }
+                    function eventToHalf(e) {
+                      const rect = stars.getBoundingClientRect();
+                      const x = clamp(e.clientX - rect.left, 0, rect.width);
+                      return clamp(Math.round((x / rect.width) * 10), 0, 10);
+                    }
+                
+                    stars.addEventListener("mousemove", (e) => setDisplay(eventToHalf(e)));
+                    stars.addEventListener("mouseleave", () => setDisplay(parseInt(input.value || "0", 10)));
+                
+                    stars.addEventListener("click", (e) => {
+                      const rh = eventToHalf(e);
+                      input.value = rh;
+                      setDisplay(rh);
+                      form.submit();
+                    });
+                
+                    stars.addEventListener("keydown", (e) => {
+                      let rh = parseInt(input.value || "0", 10);
+                      if (e.key === "ArrowLeft") rh = clamp(rh - 1, 0, 10);
+                      if (e.key === "ArrowRight") rh = clamp(rh + 1, 0, 10);
+                
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        form.submit();
+                        return;
                       }
-                      function setDisplay(rh) {
-                        const safe = clamp(rh, 0, 10);
-                        const pct = (safe / 10) * 100;
-                        fill.style.width = pct + "%";
-                        label.textContent = halfToText(safe);
-                      }
-                      function eventToHalf(e) {
-                        const rect = stars.getBoundingClientRect();
-                        const x = clamp(e.clientX - rect.left, 0, rect.width);
-                        return clamp(Math.round((x / rect.width) * 10), 0, 10);
-                      }
-
-                      stars.addEventListener("mousemove", (e) => setDisplay(eventToHalf(e)));
-                      stars.addEventListener("mouseleave", () => setDisplay(parseInt(input.value || "0", 10)));
-
-                      stars.addEventListener("click", (e) => {
-                        const rh = eventToHalf(e);
+                
+                      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                        e.preventDefault();
                         input.value = rh;
                         setDisplay(rh);
-                        form.submit();
-                      });
-
-                      stars.addEventListener("keydown", (e) => {
-                        let rh = parseInt(input.value || "0", 10);
-                        if (e.key === "ArrowLeft") rh = clamp(rh - 1, 0, 10);
-                        if (e.key === "ArrowRight") rh = clamp(rh + 1, 0, 10);
-
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          form.submit();
-                          return;
-                        }
-
-                        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-                          e.preventDefault();
-                          input.value = rh;
-                          setDisplay(rh);
-                        }
-                      });
-                    })();
-                  </script>
+                      }
+                    });
+                  })();
+                </script>
                 <% } else { %>
                   <div class="muted">
                     <a href="<%= loginNext %>">Log in</a> to rate this show.
