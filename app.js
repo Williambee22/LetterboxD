@@ -953,72 +953,88 @@ function createApp() {
   app.get('/show/:show_id', async (req, res, next) => {
     const showId = Number(req.params.show_id);
     const viewerUid = req.session.uid ? Number(req.session.uid) : null;
-
+  
     const sort = String(req.query.sort || 'popular').trim().toLowerCase();
     const allowedSorts = new Set(['popular', 'newest', 'oldest', 'highest', 'lowest']);
     const activeSort = allowedSorts.has(sort) ? sort : 'popular';
-
+  
     let conn;
     try {
       conn = getConn();
-
+  
       let row = normalizeRow(await dbx.getShowById(conn, showId));
       if (!row) return res.sendStatus(404);
       if (!row.poster_url) row.poster_url = posterUrlForShow(row.corps || '', row.year || 0);
-
+  
       let me = viewerUid ? normalizeRow(await dbx.userById(conn, viewerUid)) : null;
       const myRating = viewerUid ? await dbx.userRatingForShow(conn, showId, viewerUid) : null;
       const myReview = viewerUid ? await dbx.myReviewForShow(conn, showId, viewerUid) : null;
-
+  
       const isFavorite = viewerUid
         ? !!dbx.isShowFavoritedByUser(conn, viewerUid, showId)
         : false;
-
+  
       const favoriteCount = viewerUid
         ? Number(dbx.countUserFavoriteShows(conn, viewerUid) || 0)
         : 0;
-
+  
       const showFavoriteCountRow = conn.prepare(`
         SELECT COUNT(*) AS cnt
         FROM user_favorite_shows
         WHERE show_id = ?
       `).get(showId);
-
+  
       const show_favorite_count = showFavoriteCountRow
         ? Number(showFavoriteCountRow.cnt || 0)
         : 0;
-
+  
       if (me && !me.avatar_url) me.avatar_url = pfpUrlForUsername(me.username || '');
-
+  
       const reviews = (await dbx.listReviewsForShow(conn, showId, { viewerUserId: viewerUid, limit: 300 }) || []).map((rv) => {
         const d = normalizeRow(rv);
         if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
         return d;
       });
-
+  
       const comments = (await dbx.listReviewCommentsForShow(conn, showId, { limitTotal: 500 }) || []).map((c) => {
         const d = normalizeRow(c);
         if (!d.commenter_avatar_url) d.commenter_avatar_url = pfpUrlForUsername(d.commenter_username || '');
         d.replies = [];
         return d;
       });
-      
+  
       const replies = (typeof dbx.listReviewRepliesForShow === 'function'
         ? await dbx.listReviewRepliesForShow(conn, showId, { limitTotal: 500 })
         : []
       ) || [];
-      
+  
       const replyRows = replies.map((r) => {
         const d = normalizeRow(r);
         if (!d.replier_avatar_url) d.replier_avatar_url = pfpUrlForUsername(d.replier_username || '');
-        d.replies = [];
         return d;
       });
-      
+  
       const commentsByReviewUser = new Map();
       const commentsById = new Map();
-      const repliesById = new Map();
-      
+  
+      for (const c of comments) {
+        const reviewKey = Number(c.review_user_id);
+  
+        if (!commentsByReviewUser.has(reviewKey)) {
+          commentsByReviewUser.set(reviewKey, []);
+        }
+  
+        commentsByReviewUser.get(reviewKey).push(c);
+        commentsById.set(Number(c.comment_id), c);
+      }
+  
+      for (const r of replyRows) {
+        const parentComment = commentsById.get(Number(r.comment_id));
+        if (parentComment) {
+          parentComment.replies.push(r);
+        }
+      }
+  
       for (const c of comments) {
         c.replies.sort((a, b) => {
           const at = String(a.created_at || '');
@@ -1026,24 +1042,25 @@ function createApp() {
           return at.localeCompare(bt);
         });
       }
-      
-      for (const r of replyRows) {
-        const parentComment = commentsById.get(Number(r.comment_id));
-        if (parentComment) {
-          parentComment.replies.push(r);
-        }
-      }
-      
+  
       let reviewsWithComments = reviews.map((rv) => {
         const reviewComments = commentsByReviewUser.get(Number(rv.user_id)) || [];
-      
+  
+        reviewComments.sort((a, b) => {
+          const at = String(a.created_at || '');
+          const bt = String(b.created_at || '');
+          return at.localeCompare(bt);
+        });
+  
         return {
           ...rv,
           comments: reviewComments,
-          comment_count: reviewComments.length,
+          comment_count: reviewComments.length + reviewComments.reduce((sum, c) => {
+            return sum + (Array.isArray(c.replies) ? c.replies.length : 0);
+          }, 0),
         };
       });
-
+  
       reviewsWithComments.sort((a, b) => {
         if (activeSort === 'newest') {
           return Number(b.ts || 0) - Number(a.ts || 0);
@@ -1061,14 +1078,14 @@ function createApp() {
             || Number(b.vote_score || 0) - Number(a.vote_score || 0)
             || Number(b.ts || 0) - Number(a.ts || 0);
         }
-
+  
         return Number(b.vote_score || 0) - Number(a.vote_score || 0)
           || Number(b.ts || 0) - Number(a.ts || 0);
       });
-
+  
       const rating_histogram = dbx.getRatingHistogram(conn, showId);
       const verified_rating_histogram = dbx.getVerifiedRatingHistogram(conn, showId);
-
+  
       const overallRankRow = conn.prepare(`
         WITH ranked AS (
           SELECT
@@ -1085,7 +1102,7 @@ function createApp() {
         FROM ranked
         WHERE id = ?
       `).get(showId);
-
+  
       const criticRankRow = conn.prepare(`
         WITH ranked AS (
           SELECT
@@ -1105,7 +1122,7 @@ function createApp() {
         FROM ranked
         WHERE id = ?
       `).get(showId);
-
+  
       const corpsRankRow = conn.prepare(`
         WITH ranked AS (
           SELECT
@@ -1124,7 +1141,7 @@ function createApp() {
         FROM ranked
         WHERE id = ?
       `).get(showId);
-
+  
       const yearRankRow = conn.prepare(`
         WITH ranked AS (
           SELECT
@@ -1143,12 +1160,12 @@ function createApp() {
         FROM ranked
         WHERE id = ?
       `).get(showId);
-
+  
       const overall_rank = overallRankRow ? Number(overallRankRow.overall_rank || 0) : 0;
       const critic_rank = criticRankRow ? Number(criticRankRow.critic_rank || 0) : 0;
       const corps_rank = corpsRankRow ? Number(corpsRankRow.corps_rank || 0) : 0;
       const year_rank = yearRankRow ? Number(yearRankRow.year_rank || 0) : 0;
-
+  
       res.render('show_detail', {
         row,
         me,
@@ -1172,25 +1189,6 @@ function createApp() {
       if (conn) dbx.close(conn);
     }
   });
-
-  app.post('/show/:show_id/comment/:comment_id/delete', loginRequired(async (req, res) => {
-    const showId = Number(req.params.show_id);
-    const commentId = Number(req.params.comment_id);
-    let conn;
-    try {
-      conn = getConn();
-      const show = await dbx.getShowById(conn, showId);
-      if (!show) return res.sendStatus(404);
-      await dbx.softDeleteReviewComment(conn, commentId, { requesterUserId: Number(req.session.uid) });
-      await dbx.commit(conn);
-      req.flash('ok', 'Comment deleted.');
-    } catch (err) {
-      req.flash('error', String(err.message || err));
-    } finally {
-      if (conn) dbx.close(conn);
-    }
-    return res.redirect(`/show/${showId}`);
-  }));
 
 
   app.post('/admin/show/:show_id/reply/:reply_id/delete', adminRequired(async (req, res) => {
