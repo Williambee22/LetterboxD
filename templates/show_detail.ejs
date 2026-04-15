@@ -1486,7 +1486,11 @@
                         <% } %>
                     
                         <% if (meUser) { %>
-                          <form class="comment-form" method="post" action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment/<%= c.comment_id %>/reply"
+                          <form
+                            class="comment-form"
+                            method="post"
+                            action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment"
+                          >
                             <textarea name="comment_text" placeholder="Add a comment…" required></textarea>
                             <div class="review-actions">
                               <button class="btn ghost" type="submit">Post comment</button>
