@@ -1498,62 +1498,90 @@ function ensureReviewCommentsTable(conn) {
       show_id INTEGER NOT NULL,
       review_user_id INTEGER NOT NULL,
       commenter_user_id INTEGER NOT NULL,
-      parent_comment_id INTEGER,
       comment_text TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (show_id) REFERENCES shows(id) ON DELETE CASCADE,
       FOREIGN KEY (review_user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (commenter_user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (parent_comment_id) REFERENCES review_comments(id) ON DELETE CASCADE
+      FOREIGN KEY (commenter_user_id) REFERENCES users(id) ON DELETE CASCADE
     );
+
     CREATE INDEX IF NOT EXISTS idx_review_comments_target
       ON review_comments(show_id, review_user_id, created_at);
+
     CREATE INDEX IF NOT EXISTS idx_review_comments_commenter
       ON review_comments(commenter_user_id, created_at);
-    CREATE INDEX IF NOT EXISTS idx_review_comments_parent
-      ON review_comments(parent_comment_id, created_at);
+
+    CREATE TABLE IF NOT EXISTS review_comment_replies (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      comment_id INTEGER NOT NULL,
+      show_id INTEGER NOT NULL,
+      review_user_id INTEGER NOT NULL,
+      replier_user_id INTEGER NOT NULL,
+      reply_text TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (comment_id) REFERENCES review_comments(id) ON DELETE CASCADE,
+      FOREIGN KEY (show_id) REFERENCES shows(id) ON DELETE CASCADE,
+      FOREIGN KEY (review_user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (replier_user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_review_comment_replies_comment
+      ON review_comment_replies(comment_id, created_at);
+
+    CREATE INDEX IF NOT EXISTS idx_review_comment_replies_replier
+      ON review_comment_replies(replier_user_id, created_at);
   `);
-
-  const cols = tableColumns(conn, 'review_comments');
-
-  if (!cols.has('parent_comment_id')) {
-    try {
-      conn.prepare('ALTER TABLE review_comments ADD COLUMN parent_comment_id INTEGER').run();
-    } catch (_) {}
-  }
 }
 
-
-
-
-function addReviewComment(conn, showId, reviewUserId, commenterUserId, commentText, parentCommentId = null) {
+function addReviewComment(conn, showId, reviewUserId, commenterUserId, commentText) {
   const text = String(commentText || '').trim();
   if (!text) throw new Error('Comment cannot be empty.');
   if (text.length > 1000) throw new Error('Comment too long (max 1000 chars).');
 
-  const pid = parentCommentId == null || parentCommentId === '' ? null : Number(parentCommentId);
-
-  if (pid != null) {
-    const parent = conn.prepare(`
-      SELECT id, show_id, review_user_id
-      FROM review_comments
-      WHERE id = ?
-    `).get(pid);
-
-    if (!parent) throw new Error('Parent comment not found.');
-    if (Number(parent.show_id) !== Number(showId) || Number(parent.review_user_id) !== Number(reviewUserId)) {
-      throw new Error('Invalid parent comment.');
-    }
-  }
-
   conn.prepare(`
-    INSERT INTO review_comments(show_id, review_user_id, commenter_user_id, parent_comment_id, comment_text)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO review_comments(show_id, review_user_id, commenter_user_id, comment_text)
+    VALUES (?, ?, ?, ?)
   `).run(
     Number(showId),
     Number(reviewUserId),
     Number(commenterUserId),
-    pid,
+    text
+  );
+}
+
+function addReviewReply(conn, commentId, showId, reviewUserId, replierUserId, replyText) {
+  const text = String(replyText || '').trim();
+  if (!text) throw new Error('Reply cannot be empty.');
+  if (text.length > 1000) throw new Error('Reply too long (max 1000 chars).');
+
+  const parent = conn.prepare(`
+    SELECT id, show_id, review_user_id
+    FROM review_comments
+    WHERE id = ?
+  `).get(Number(commentId));
+
+  if (!parent) throw new Error('Parent comment not found.');
+  if (
+    Number(parent.show_id) !== Number(showId) ||
+    Number(parent.review_user_id) !== Number(reviewUserId)
+  ) {
+    throw new Error('Invalid parent comment.');
+  }
+
+  conn.prepare(`
+    INSERT INTO review_comment_replies (
+      comment_id,
+      show_id,
+      review_user_id,
+      replier_user_id,
+      reply_text
+    )
+    VALUES (?, ?, ?, ?, ?)
+  `).run(
+    Number(commentId),
+    Number(showId),
+    Number(reviewUserId),
+    Number(replierUserId),
     text
   );
 }
@@ -1566,7 +1594,6 @@ function listReviewCommentsForShow(conn, showId, opts = {}) {
       rc.show_id,
       rc.review_user_id,
       rc.commenter_user_id,
-      rc.parent_comment_id,
       u.username AS commenter_username,
       u.avatar_url AS commenter_avatar_url,
       rc.comment_text,
@@ -1579,59 +1606,123 @@ function listReviewCommentsForShow(conn, showId, opts = {}) {
   `).all(Number(showId), limitTotal);
 }
 
+function listReviewRepliesForShow(conn, showId, opts = {}) {
+  const limitTotal = Number(opts.limitTotal || 500);
+
+  return conn.prepare(`
+    SELECT
+      r.id AS reply_id,
+      r.comment_id,
+      r.show_id,
+      r.review_user_id,
+      r.replier_user_id,
+      u.username AS replier_username,
+      u.avatar_url AS replier_avatar_url,
+      r.reply_text,
+      r.created_at
+    FROM review_comment_replies r
+    JOIN users u ON u.id = r.replier_user_id
+    WHERE r.show_id = ?
+    ORDER BY datetime(r.created_at) ASC, r.id ASC
+    LIMIT ?
+  `).all(Number(showId), limitTotal);
+}
+
 function deleteReviewComment(conn, commentId, opts = {}) {
   const requesterUserId = Number(opts.requesterUserId);
   const isAdmin = !!opts.isAdmin;
-  const row = conn.prepare('SELECT commenter_user_id FROM review_comments WHERE id = ?').get(Number(commentId));
+  const row = conn.prepare(`
+    SELECT commenter_user_id
+    FROM review_comments
+    WHERE id = ?
+  `).get(Number(commentId));
+
   if (!row) return false;
+
   const ownerId = Number(row.commenter_user_id);
   if (ownerId !== requesterUserId && !isAdmin) {
     throw new Error('Not allowed.');
   }
+
   conn.prepare('DELETE FROM review_comments WHERE id = ?').run(Number(commentId));
   return true;
 }
 
-function nestReviewComments(comments) {
-  const all = Array.isArray(comments) ? comments.map(c => ({ ...c, replies: [] })) : [];
-  const byId = new Map();
-  const roots = [];
-
-  for (const c of all) {
-    byId.set(Number(c.comment_id), c);
-  }
-
-  for (const c of all) {
-    const parentId = c.parent_comment_id == null ? null : Number(c.parent_comment_id);
-    if (parentId != null && byId.has(parentId)) {
-      byId.get(parentId).replies.push(c);
-    } else {
-      roots.push(c);
-    }
-  }
-
-  return roots;
-}
-
-
 function softDeleteReviewComment(conn, commentId, opts = {}) {
   const cid = Number(commentId);
   const uid = Number(opts.requesterUserId);
-  const row = conn.prepare('SELECT id, commenter_user_id FROM review_comments WHERE id=?').get(cid);
+  const row = conn.prepare(`
+    SELECT id, commenter_user_id
+    FROM review_comments
+    WHERE id = ?
+  `).get(cid);
 
   if (!row) throw new Error('Comment not found.');
-  if (Number(row.commenter_user_id) !== uid) throw new Error('You can only delete your own comments.');
+  if (Number(row.commenter_user_id) !== uid) {
+    throw new Error('You can only delete your own comments.');
+  }
 
-  conn.prepare("UPDATE review_comments SET comment_text='[comment deleted]' WHERE id=?").run(cid);
+  conn.prepare(`
+    UPDATE review_comments
+    SET comment_text = '[comment deleted]'
+    WHERE id = ?
+  `).run(cid);
+}
+
+function deleteReviewReply(conn, replyId, opts = {}) {
+  const requesterUserId = Number(opts.requesterUserId);
+  const isAdmin = !!opts.isAdmin;
+
+  const row = conn.prepare(`
+    SELECT replier_user_id
+    FROM review_comment_replies
+    WHERE id = ?
+  `).get(Number(replyId));
+
+  if (!row) return false;
+
+  if (Number(row.replier_user_id) !== requesterUserId && !isAdmin) {
+    throw new Error('Not allowed.');
+  }
+
+  conn.prepare(`
+    DELETE FROM review_comment_replies
+    WHERE id = ?
+  `).run(Number(replyId));
+
+  return true;
+}
+
+function softDeleteReviewReply(conn, replyId, opts = {}) {
+  const rid = Number(replyId);
+  const uid = Number(opts.requesterUserId);
+
+  const row = conn.prepare(`
+    SELECT id, replier_user_id
+    FROM review_comment_replies
+    WHERE id = ?
+  `).get(rid);
+
+  if (!row) throw new Error('Reply not found.');
+  if (Number(row.replier_user_id) !== uid) {
+    throw new Error('You can only delete your own replies.');
+  }
+
+  conn.prepare(`
+    UPDATE review_comment_replies
+    SET reply_text = '[reply deleted]'
+    WHERE id = ?
+  `).run(rid);
 }
 
 function adminHardDeleteReviewComment(conn, commentId) {
-  conn.prepare('DELETE FROM review_comments WHERE id=?').run(Number(commentId));
+  conn.prepare('DELETE FROM review_comments WHERE id = ?').run(Number(commentId));
 }
 
 function adminDeleteShow(conn, showId) {
   const sid = Number(showId);
   try { conn.prepare('DELETE FROM notifications WHERE show_id = ?').run(sid); } catch (_) {}
+  try { conn.prepare('DELETE FROM review_comment_replies WHERE show_id = ?').run(sid); } catch (_) {}
   try { conn.prepare('DELETE FROM review_comments WHERE show_id = ?').run(sid); } catch (_) {}
   try { conn.prepare('DELETE FROM review_votes WHERE show_id = ?').run(sid); } catch (_) {}
   try { conn.prepare('DELETE FROM reviews WHERE show_id = ?').run(sid); } catch (_) {}
@@ -1643,6 +1734,7 @@ function adminDeleteReview(conn, showId, reviewUserId) {
   const sid = Number(showId);
   const ruid = Number(reviewUserId);
   try { conn.prepare('DELETE FROM review_votes WHERE show_id=? AND review_user_id=?').run(sid, ruid); } catch (_) {}
+  try { conn.prepare('DELETE FROM review_comment_replies WHERE show_id=? AND review_user_id=?').run(sid, ruid); } catch (_) {}
   try { conn.prepare('DELETE FROM review_comments WHERE show_id=? AND review_user_id=?').run(sid, ruid); } catch (_) {}
   conn.prepare('DELETE FROM reviews WHERE show_id=? AND user_id=?').run(sid, ruid);
 }
@@ -1773,7 +1865,6 @@ module.exports = {
   addReviewComment,
   listReviewCommentsForShow,
   deleteReviewComment,
-  nestReviewComments,
   softDeleteReviewComment,
   adminHardDeleteReviewComment,
   adminDeleteShow,
@@ -1800,6 +1891,10 @@ module.exports = {
   addUserFavoriteShow,
   removeUserFavoriteShow,
   updateUserBio,
+  addReviewReply,
+  listReviewRepliesForShow,
+  deleteReviewReply,
+  softDeleteReviewReply,
 };
 
 
