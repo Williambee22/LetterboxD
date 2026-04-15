@@ -1433,23 +1433,46 @@
                                         <% } %>
                                       </div>
                               
-                                      <div class="muted"><%= r.reply_text %></div>
+                                      <div class="muted">
+                                        <% if (r.parent_replier_username) { %>
+                                          <b>@<%= r.parent_replier_username %></b>
+                                          <span> </span>
+                                        <% } %>
+                                        <%= r.reply_text %>
+                                      </div>
+                              
+                                      <% if (meUser) { %>
+                                        <details style="margin-top:10px;">
+                                          <summary class="muted small" style="cursor:pointer;">Reply</summary>
+                                          <form
+                                            class="comment-form"
+                                            method="post"
+                                            action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment/<%= c.comment_id %>/reply"
+                                            style="margin-top:8px;"
+                                          >
+                                            <input type="hidden" name="parent_reply_id" value="<%= r.reply_id %>">
+                                            <textarea name="reply_text" placeholder="Write a reply…" required></textarea>
+                                            <div class="review-actions">
+                                              <button class="btn ghost" type="submit">Post reply</button>
+                                            </div>
+                                          </form>
+                                        </details>
+                                      <% } %>
                                     </div>
                                   <% } %>
                                 </div>
                               <% } %>
-                    
+                                
                               <% if (meUser) { %>
                                 <details style="margin-top:10px;">
                                   <summary class="muted small" style="cursor:pointer;">Reply</summary>
                                   <form
                                     class="comment-form"
                                     method="post"
-                                    action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment"
+                                    action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment/<%= c.comment_id %>/reply"
                                     style="margin-top:8px;"
                                   >
-                                    <input type="hidden" name="parent_comment_id" value="<%= c.comment_id %>">
-                                    <textarea name="comment_text" placeholder="Write a reply…" required></textarea>
+                                    <textarea name="reply_text" placeholder="Write a reply…" required></textarea>
                                     <div class="review-actions">
                                       <button class="btn ghost" type="submit">Post reply</button>
                                     </div>
@@ -1463,7 +1486,7 @@
                         <% } %>
                     
                         <% if (meUser) { %>
-                          <form class="comment-form" method="post" action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment">
+                          <form class="comment-form" method="post" action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment/<%= c.comment_id %>/reply"
                             <textarea name="comment_text" placeholder="Add a comment…" required></textarea>
                             <div class="review-actions">
                               <button class="btn ghost" type="submit">Post comment</button>
