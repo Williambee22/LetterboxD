@@ -42,6 +42,24 @@ body{
   background:var(--bg);
 }
 
+html,
+body,
+body.app,
+button,
+input,
+select,
+textarea,
+a,
+span,
+div,
+nav,
+header,
+main,
+footer {
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
+
 img{
   max-width:100%;
   display:block;
