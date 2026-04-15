@@ -232,6 +232,13 @@
       cursor: pointer;
     }
 
+    .comment-reply {
+      margin-left: 22px;
+      padding-left: 12px;
+      border-left: 2px solid rgba(255,255,255,0.12);
+    }
+
+
     .criticPanelLink:hover {
       transform: translateY(-1px);
       background: rgba(255,255,255,0.045);
@@ -1395,26 +1402,26 @@
                               <% if (replyList.length > 0) { %>
                                 <div style="margin-top:10px; margin-left:20px; display:flex; flex-direction:column; gap:8px;">
                                   <% for (const r of replyList) {
-                                    const isReplyOwner = currentUserId != null && currentUserId === Number(r.commenter_user_id);
+                                    const isReplyOwner = currentUserId != null && currentUserId === Number(r.replier_user_id);
                                   %>
-                                    <div class="comment-item" style="background:rgba(255,255,255,0.025);">
+                                    <div class="comment-item comment-reply" style="background:rgba(255,255,255,0.025);">
                                       <div class="comment-head">
                                         <div class="comment-user">
-                                          <a href="/u/<%= encodeURIComponent(r.commenter_username || '') %>" class="comment-avatar">
-                                            <% if (r.commenter_avatar_url) { %>
-                                              <img src="<%= r.commenter_avatar_url %>" alt="<%= r.commenter_username || 'user' %>">
+                                          <a href="/u/<%= encodeURIComponent(r.replier_username || '') %>" class="comment-avatar">
+                                            <% if (r.replier_avatar_url) { %>
+                                              <img src="<%= r.replier_avatar_url %>" alt="<%= r.replier_username || 'user' %>">
                                             <% } %>
                                           </a>
                                           <div>
                                             <div style="font-weight:700;">
-                                              <a href="/u/<%= encodeURIComponent(r.commenter_username || '') %>"><%= r.commenter_username || "User" %></a>
+                                              <a href="/u/<%= encodeURIComponent(r.replier_username || '') %>"><%= r.replier_username || "User" %></a>
                                             </div>
                                             <% if (r.created_at) { %>
                                               <div class="muted small"><%= r.created_at %></div>
                                             <% } %>
                                           </div>
                                         </div>
-                    
+                              
                                         <% if (isReplyOwner) { %>
                                           <form method="post" action="/show/<%= showRow.id %>/reply/<%= r.reply_id %>/delete">
                                             <button class="btn ghost" type="submit">Delete</button>
@@ -1425,8 +1432,8 @@
                                           </form>
                                         <% } %>
                                       </div>
-                    
-                                      <div class="muted"><%= r.comment_text %></div>
+                              
+                                      <div class="muted"><%= r.reply_text %></div>
                                     </div>
                                   <% } %>
                                 </div>
