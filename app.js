@@ -1011,23 +1011,26 @@ function createApp() {
       const replyRows = replies.map((r) => {
         const d = normalizeRow(r);
         if (!d.replier_avatar_url) d.replier_avatar_url = pfpUrlForUsername(d.replier_username || '');
+        d.replies = [];
         return d;
       });
       
       const commentsByReviewUser = new Map();
       const commentsById = new Map();
+      const repliesById = new Map();
       
       for (const c of comments) {
-        const reviewKey = Number(c.review_user_id);
-        if (!commentsByReviewUser.has(reviewKey)) commentsByReviewUser.set(reviewKey, []);
-        commentsByReviewUser.get(reviewKey).push(c);
-        commentsById.set(Number(c.comment_id), c);
+        c.replies.sort((a, b) => {
+          const at = String(a.created_at || '');
+          const bt = String(b.created_at || '');
+          return at.localeCompare(bt);
+        });
       }
       
       for (const r of replyRows) {
-        const parent = commentsById.get(Number(r.comment_id));
-        if (parent) {
-          parent.replies.push(r);
+        const parentComment = commentsById.get(Number(r.comment_id));
+        if (parentComment) {
+          parentComment.replies.push(r);
         }
       }
       
@@ -1328,19 +1331,52 @@ function createApp() {
     const commentId = Number(req.params.comment_id);
     const replierId = Number(req.session.uid);
     const text = String(req.body.reply_text || '').trim();
-
+    const parentReplyId = req.body.parent_reply_id ? Number(req.body.parent_reply_id) : null;
+  
     let conn;
     try {
       conn = getConn();
       const show = await dbx.getShowById(conn, showId);
       if (!show) return res.sendStatus(404);
-
-      await dbx.addReviewReply(conn, commentId, showId, reviewUserId, replierId, text);
-
-      if (replierId !== reviewUserId) {
+  
+      await dbx.addReviewReply(
+        conn,
+        commentId,
+        showId,
+        reviewUserId,
+        replierId,
+        text,
+        parentReplyId
+      );
+  
+      let notifyUserId = reviewUserId;
+  
+      if (parentReplyId) {
+        const parentReply = conn.prepare(`
+          SELECT replier_user_id
+          FROM review_comment_replies
+          WHERE id = ?
+        `).get(parentReplyId);
+  
+        if (parentReply && Number(parentReply.replier_user_id) !== replierId) {
+          notifyUserId = Number(parentReply.replier_user_id);
+        }
+      } else {
+        const parentComment = conn.prepare(`
+          SELECT commenter_user_id
+          FROM review_comments
+          WHERE id = ?
+        `).get(commentId);
+  
+        if (parentComment && Number(parentComment.commenter_user_id) !== replierId) {
+          notifyUserId = Number(parentComment.commenter_user_id);
+        }
+      }
+  
+      if (notifyUserId !== replierId) {
         try {
           await dbx.addNotification(conn, {
-            userId: reviewUserId,
+            userId: notifyUserId,
             kind: 'review_comment',
             actorUserId: replierId,
             showId,
@@ -1348,14 +1384,14 @@ function createApp() {
           });
         } catch (_) {}
       }
-
+  
       await dbx.commit(conn);
     } catch (err) {
       req.flash('error', String(err.message || err));
     } finally {
       if (conn) dbx.close(conn);
     }
-
+  
     res.redirect(`/show/${showId}`);
   }));
 
