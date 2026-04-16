@@ -54,6 +54,54 @@
       margin-top: 14px;
     }
 
+    .weeklyGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+    
+    .weeklyCard {
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .weeklyLabel {
+      font-size: 13px;
+      opacity: 0.75;
+      margin-bottom: 8px;
+    }
+    
+    .weeklyNow {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    
+    .weeklyPrev {
+      font-size: 13px;
+      opacity: 0.75;
+      margin-bottom: 6px;
+    }
+    
+    .pctUp {
+      color: #22c55e;
+      font-weight: 800;
+    }
+    
+    .pctDown {
+      color: #ef4444;
+      font-weight: 800;
+    }
+    
+    .pctFlat {
+      color: #d1d5db;
+      font-weight: 800;
+    }
+
     .breakdownItem {
       padding: 12px;
       border-radius: 12px;
@@ -90,6 +138,38 @@
     }
   </style>
 </head>
+<%
+  const rb = stats.rating_breakdown || {};
+  const weekly = stats.weekly || {};
+
+  const weeklyItems = [
+    { key: "ratings", label: "Ratings" },
+    { key: "reviews", label: "Reviews" },
+    { key: "comments", label: "Comments" },
+    { key: "replies", label: "Replies" },
+    { key: "discussion", label: "Comments + Replies" }
+  ];
+
+  function pctClass(v) {
+    const n = Number(v || 0);
+    if (n > 0) return "pctUp";
+    if (n < 0) return "pctDown";
+    return "pctFlat";
+  }
+
+  function pctText(v, current, previous) {
+    const cur = Number(current || 0);
+    const prev = Number(previous || 0);
+
+    if (prev === 0 && cur === 0) return "0.0%";
+    if (prev === 0 && cur > 0) return "New";
+
+    const n = Number(v || 0);
+    if (n > 0) return `+${n.toFixed(1)}%`;
+    if (n < 0) return `${n.toFixed(1)}%`;
+    return "0.0%";
+  }
+%>
 <body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
   <header class="topbar">
     <div class="wrap">
@@ -157,11 +237,30 @@
         <div class="muted small">How many ratings exist at each star value sitewide.</div>
 
         <div class="breakdownList">
-          <% const rb = stats.rating_breakdown || {}; %>
           <% for (const label of ["5.0","4.5","4.0","3.5","3.0","2.5","2.0","1.5","1.0","0.5","0.0"]) { %>
             <div class="breakdownItem">
               <div class="breakdownStars">★ <%= label %></div>
               <div class="breakdownCount"><%= Number(rb[label] || 0).toLocaleString() %></div>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="breakdownWrap">
+        <div style="font-weight:900; font-size:18px;">Weekly Activity</div>
+        <div class="muted small">Last 7 days compared to the 7 days before that.</div>
+
+        <div class="weeklyGrid">
+          <% for (const item of weeklyItems) {
+               const block = weekly[item.key] || {};
+          %>
+            <div class="weeklyCard">
+              <div class="weeklyLabel"><%= item.label %> this week</div>
+              <div class="weeklyNow"><%= Number(block.current || 0).toLocaleString() %></div>
+              <div class="weeklyPrev">Previous week: <%= Number(block.previous || 0).toLocaleString() %></div>
+              <div class="<%= pctClass(block.pct_change) %>">
+                <%= pctText(block.pct_change, block.current, block.previous) %>
+              </div>
             </div>
           <% } %>
         </div>
