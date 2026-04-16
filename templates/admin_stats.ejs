@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Site Stats - Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <link rel="icon" type="image/png" href="/static/favicon.png"/>
+
+  <style>
+    html, body, body.app {
+      background: #000 !important;
+      background-image: none !important;
+    }
+
+    .statsGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .statCard {
+      padding: 16px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .statLabel {
+      font-size: 13px;
+      opacity: 0.75;
+      margin-bottom: 8px;
+    }
+
+    .statValue {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .breakdownWrap {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .breakdownList {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .breakdownItem {
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .breakdownStars {
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .breakdownCount {
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .topbar .wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .nav a {
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
+  <header class="topbar">
+    <div class="wrap">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <a class="brand" href="/shows">Pressboxd</a>
+      </div>
+
+      <nav class="nav">
+        <a href="/shows">Shows</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+        <a href="/admin/bulk_add">Mass Add</a>
+        <a href="/admin/roles">Roles</a>
+        <a href="/admin/users">Users</a>
+        <a href="/admin/stats">Stats</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap" style="padding-top:20px;">
+    <div class="panel">
+      <div class="kicker">Admin</div>
+      <h1 style="margin:6px 0 6px;">Site Stats</h1>
+      <div class="muted small">Overall totals across the entire website.</div>
+
+      <div class="statsGrid">
+        <div class="statCard">
+          <div class="statLabel">Total Users</div>
+          <div class="statValue"><%= Number(stats.total_users || 0).toLocaleString() %></div>
+        </div>
+
+        <div class="statCard">
+          <div class="statLabel">Total Shows</div>
+          <div class="statValue"><%= Number(stats.total_shows || 0).toLocaleString() %></div>
+        </div>
+
+        <div class="statCard">
+          <div class="statLabel">Total Ratings</div>
+          <div class="statValue"><%= Number(stats.total_ratings || 0).toLocaleString() %></div>
+        </div>
+
+        <div class="statCard">
+          <div class="statLabel">Total Reviews</div>
+          <div class="statValue"><%= Number(stats.total_reviews || 0).toLocaleString() %></div>
+        </div>
+
+        <div class="statCard">
+          <div class="statLabel">Total Comments</div>
+          <div class="statValue"><%= Number(stats.total_comments || 0).toLocaleString() %></div>
+        </div>
+
+        <div class="statCard">
+          <div class="statLabel">Total Replies</div>
+          <div class="statValue"><%= Number(stats.total_replies || 0).toLocaleString() %></div>
+        </div>
+
+        <div class="statCard">
+          <div class="statLabel">Comments + Replies</div>
+          <div class="statValue"><%= Number(stats.total_discussion_posts || 0).toLocaleString() %></div>
+        </div>
+      </div>
+
+      <div class="breakdownWrap">
+        <div style="font-weight:900; font-size:18px;">Rating Breakdown</div>
+        <div class="muted small">How many ratings exist at each star value sitewide.</div>
+
+        <div class="breakdownList">
+          <% const rb = stats.rating_breakdown || {}; %>
+          <% for (const label of ["5.0","4.5","4.0","3.5","3.0","2.5","2.0","1.5","1.0","0.5","0.0"]) { %>
+            <div class="breakdownItem">
+              <div class="breakdownStars">★ <%= label %></div>
+              <div class="breakdownCount"><%= Number(rb[label] || 0).toLocaleString() %></div>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
