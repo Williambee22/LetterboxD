@@ -850,6 +850,57 @@ function getSiteStats(conn) {
     }
   }
 
+  const weekly = conn.prepare(`
+    SELECT
+      (SELECT COUNT(*) FROM ratings
+        WHERE CAST(COALESCE(ts, 0) AS INTEGER) >= strftime('%s','now','-7 days')
+      ) AS ratings_this_week,
+
+      (SELECT COUNT(*) FROM ratings
+        WHERE CAST(COALESCE(ts, 0) AS INTEGER) >= strftime('%s','now','-14 days')
+          AND CAST(COALESCE(ts, 0) AS INTEGER) < strftime('%s','now','-7 days')
+      ) AS ratings_prev_week,
+
+      (SELECT COUNT(*) FROM reviews
+        WHERE CAST(COALESCE(ts, 0) AS INTEGER) >= strftime('%s','now','-7 days')
+      ) AS reviews_this_week,
+
+      (SELECT COUNT(*) FROM reviews
+        WHERE CAST(COALESCE(ts, 0) AS INTEGER) >= strftime('%s','now','-14 days')
+          AND CAST(COALESCE(ts, 0) AS INTEGER) < strftime('%s','now','-7 days')
+      ) AS reviews_prev_week,
+
+      (SELECT COUNT(*) FROM review_comments
+        WHERE strftime('%s', created_at) >= strftime('%s','now','-7 days')
+      ) AS comments_this_week,
+
+      (SELECT COUNT(*) FROM review_comments
+        WHERE strftime('%s', created_at) >= strftime('%s','now','-14 days')
+          AND strftime('%s', created_at) < strftime('%s','now','-7 days')
+      ) AS comments_prev_week,
+
+      (SELECT COUNT(*) FROM review_comment_replies
+        WHERE strftime('%s', created_at) >= strftime('%s','now','-7 days')
+      ) AS replies_this_week,
+
+      (SELECT COUNT(*) FROM review_comment_replies
+        WHERE strftime('%s', created_at) >= strftime('%s','now','-14 days')
+          AND strftime('%s', created_at) < strftime('%s','now','-7 days')
+      ) AS replies_prev_week
+  `).get() || {};
+
+  function pctChange(current, previous) {
+    const cur = Number(current || 0);
+    const prev = Number(previous || 0);
+
+    if (prev === 0) {
+      if (cur === 0) return 0;
+      return 100;
+    }
+
+    return ((cur - prev) / prev) * 100;
+  }
+
   return {
     total_users: Number(totals.total_users || 0),
     total_shows: Number(totals.total_shows || 0),
@@ -859,10 +910,33 @@ function getSiteStats(conn) {
     total_replies: Number(totals.total_replies || 0),
     total_discussion_posts:
       Number(totals.total_comments || 0) + Number(totals.total_replies || 0),
+
     rating_breakdown,
+
+    weekly: {
+      ratings: {
+        current: Number(weekly.ratings_this_week || 0),
+        previous: Number(weekly.ratings_prev_week || 0),
+        pct_change: pctChange(weekly.ratings_this_week, weekly.ratings_prev_week),
+      },
+      reviews: {
+        current: Number(weekly.reviews_this_week || 0),
+        previous: Number(weekly.reviews_prev_week || 0),
+        pct_change: pctChange(weekly.reviews_this_week, weekly.reviews_prev_week),
+      },
+      comments: {
+        current: Number(weekly.comments_this_week || 0),
+        previous: Number(weekly.comments_prev_week || 0),
+        pct_change: pctChange(weekly.comments_this_week, weekly.comments_prev_week),
+      },
+      replies: {
+        current: Number(weekly.replies_this_week || 0),
+        previous: Number(weekly.replies_prev_week || 0),
+        pct_change: pctChange(weekly.replies_this_week, weekly.replies_prev_week),
+      }
+    }
   };
 }
-
 
 
 function recentRatingsForUser(conn, userId, limit = 24) {
