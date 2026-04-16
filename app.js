@@ -449,6 +449,12 @@ async function sendTempPasswordEmail(toEmail, username, tempPassword) {
   return result;
 }
 
+function resolveAccentColor(value) {
+  const v = String(value || '').trim();
+  return /^#([0-9a-fA-F]{6})$/.test(v) ? v : '#3252b3';
+}
+
+
 function createApp() {
   const app = express();
 
@@ -721,14 +727,18 @@ function createApp() {
       let notifItems = [];
 
       if (me) {
+        const safeThemeColor = resolveAccentColor(me.theme_color);
+
         req.session.user = {
           id: Number(me.id),
           username: me.username,
           email: me.email || null,
           is_admin: Number(me.is_admin || 0),
           avatar_url: me.avatar_url || null,
-          theme_color: me.theme_color || null,
+          theme_color: safeThemeColor,
         };
+
+        me.theme_color = safeThemeColor;
 
         const conn = getConn();
         try {
@@ -742,6 +752,7 @@ function createApp() {
       }
 
       res.locals.me = me;
+      res.locals.accent_color = resolveAccentColor(me?.theme_color);
       res.locals.notif_count = notifCount;
       res.locals.notif_items = notifItems;
       next();
@@ -749,7 +760,7 @@ function createApp() {
       next(err);
     }
   });
-
+  
   app.get('/', (_req, res) => res.redirect('/shows'));
   app.get('/register', (_req, res) => res.render('auth_register'));
 
@@ -2220,9 +2231,10 @@ function createApp() {
   }));
 
   app.post('/me/customize', loginRequired(async (req, res) => {
-    const themeColor = String(req.body.theme_color || '').trim();
+    const themeColorRaw = String(req.body.theme_color || '').trim();
+    const themeColor = themeColorRaw ? resolveAccentColor(themeColorRaw) : null;
 
-    if (themeColor && !/^#([0-9a-fA-F]{6})$/.test(themeColor)) {
+    if (themeColorRaw && !/^#([0-9a-fA-F]{6})$/.test(themeColorRaw)) {
       req.flash('error', 'Theme color must be in #RRGGBB format.');
       return res.redirect('/me/customize');
     }
@@ -2239,12 +2251,13 @@ function createApp() {
         Number(req.session.uid),
         current.avatar_url || null,
         current.banner_url || null,
-        themeColor || null
+        themeColor
       );
 
       await dbx.commit(conn);
 
       const fresh = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
+      const safeThemeColor = resolveAccentColor(fresh.theme_color);
 
       req.session.user = {
         ...(req.session.user || {}),
@@ -2253,7 +2266,7 @@ function createApp() {
         email: fresh.email || null,
         is_admin: Number(fresh.is_admin || 0),
         avatar_url: fresh.avatar_url || null,
-        theme_color: fresh.theme_color || null,
+        theme_color: safeThemeColor,
       };
 
       req.flash('ok', 'Theme color updated.');
