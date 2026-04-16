@@ -2264,6 +2264,24 @@ function createApp() {
     res.redirect('/me/customize');
   }));
 
+  app.get('/admin/stats', adminRequired(async (req, res, next) => {
+    let conn;
+    try {
+      conn = getConn();
+  
+      const stats = normalizeRow(await dbx.getSiteStats(conn));
+  
+      return res.render('admin_stats', {
+        me: res.locals.me,
+        stats,
+      });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+
   app.get('/admin/users', adminRequired(async (req, res, next) => {
     let conn;
     try {
