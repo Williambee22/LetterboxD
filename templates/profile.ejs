@@ -529,12 +529,7 @@
     '#7c7c7c';
 %>
 
-<body
-  class="app"
-  <%= pu && pu.theme_color
-    ? `style="--accent: ${pu.theme_color}; --accent2: ${pu.theme_color};"`
-    : ""
-  %>>
+<body class="app" style="--accent: <%= pageAccent %>; --accent2: <%= pageAccent %>;">
   <header class="topbar">
     <div class="wrap row between">
       <div style="display:flex; align-items:center; gap:10px;">
@@ -722,7 +717,7 @@
     
       <div class="profile_hero_overlay"></div>
     
-      <body class="app" style="--accent: <%= accent_color || '#3252b3' %>;">
+      <div class="profile_hero_inner">
         <div class="row gap" style="align-items:center;">
           <div class="avatar_lg">
             <% if (pu.avatar_url) { %>
