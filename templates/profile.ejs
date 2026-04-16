@@ -722,7 +722,7 @@
     
       <div class="profile_hero_overlay"></div>
     
-      <div class="profile_hero_inner" <%= pu.theme_color ? `style="--pAccent: ${pu.theme_color};"` : "" %>>
+      <body class="app" style="--accent: <%= accent_color || '#3252b3' %>;">
         <div class="row gap" style="align-items:center;">
           <div class="avatar_lg">
             <% if (pu.avatar_url) { %>
