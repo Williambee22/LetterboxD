@@ -528,7 +528,7 @@
     cnt: Number(r?.cnt || 0)
   })).filter(r => r.id);
   %>
-<body class="app" <%= meUser && meUser.theme_color ? `style="--accent: ${meUser.theme_color};"` : "" %>>
+<body class="app" style="--accent: <%= accent_color || '#3252b3' %>;">
   <header class="topbar">
     <div class="wrap row between">
       <div style="display:flex; align-items:center; gap:10px;">
