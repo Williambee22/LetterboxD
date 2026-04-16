@@ -631,7 +631,7 @@
       display: inline-block;
       font-size: 42px;
       line-height: 1;
-      letter-spacing: 4px;
+      letter-spacing: 0;
       cursor: pointer;
       user-select: none;
       white-space: nowrap;
@@ -647,17 +647,17 @@
       top: 0;
       overflow: hidden;
       width: 0%;
-      color: #ffffff;
+      color: var(--accent);
       pointer-events: none;
       transition: filter .18s ease, text-shadow .18s ease;
     }
     
     .stars-fill.perfect {
-      filter: drop-shadow(0 0 3px rgba(255,255,255,0.7))
-              drop-shadow(0 0 7px rgba(255,255,255,0.35));
+      filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 70%, white 30%))
+              drop-shadow(0 0 7px color-mix(in srgb, var(--accent) 45%, transparent));
       text-shadow:
-        0 0 3px rgba(255,255,255,0.65),
-        0 0 7px rgba(255,255,255,0.3);
+        0 0 3px color-mix(in srgb, var(--accent) 70%, white 30%),
+        0 0 7px color-mix(in srgb, var(--accent) 45%, transparent);
     }
 
 
@@ -842,16 +842,13 @@
 
 <body
   class="app"
-  <%= meUser && meUser.theme_color
-    ? `style="
-        --accent: ${meUser.theme_color};
-        --accent2: ${meUser.theme_color};
-        --accentSoft: color-mix(in srgb, ${meUser.theme_color} 90%, transparent);
-        --accentFaint: color-mix(in srgb, ${meUser.theme_color} 68%, transparent);
-        --accentGlow: color-mix(in srgb, ${meUser.theme_color} 80%, transparent);
-      "`
-    : ""
-  %>>
+  style="
+    --accent: <%= accent_color || '#3252b3' %>;
+    --accent2: <%= accent_color || '#3252b3' %>;
+    --accentSoft: color-mix(in srgb, <%= accent_color || '#3252b3' %> 90%, transparent);
+    --accentFaint: color-mix(in srgb, <%= accent_color || '#3252b3' %> 68%, transparent);
+    --accentGlow: color-mix(in srgb, <%= accent_color || '#3252b3' %> 80%, transparent);
+  ">
   <header class="topbar">
     <div class="wrap row between">
       <div style="display:flex; align-items:center; gap:10px;">
