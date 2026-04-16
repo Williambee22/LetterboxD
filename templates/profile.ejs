@@ -520,13 +520,15 @@
   const avgRatingCnt = pu.avg_rating_cnt != null ? Number(pu.avg_rating_cnt) : 0;
   const avgRating = pu.avg_rating != null ? Number(pu.avg_rating) : 0;
 
-  const profileAccent = String((pu && pu.theme_color) || '').trim();
+    const profileAccent = String((pu && pu.theme_color) || '').trim();
   const meAccent = String((me && me.theme_color) || '').trim();
 
-  const pageAccent =
-    /^#([0-9a-fA-F]{6})$/.test(profileAccent) ? profileAccent :
-    /^#([0-9a-fA-F]{6})$/.test(meAccent) ? meAccent :
-    '#7c7c7c';
+  const validProfileAccent = /^#([0-9a-fA-F]{6})$/.test(profileAccent) ? profileAccent : '';
+  const validMeAccent = /^#([0-9a-fA-F]{6})$/.test(meAccent) ? meAccent : '';
+
+  const pageAccent = isMe
+    ? (validMeAccent || '#ffffff')
+    : (validProfileAccent || '#ffffff');
 %>
 
 <body class="app" style="--accent: <%= pageAccent %>; --accent2: <%= pageAccent %>;">
