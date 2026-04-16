@@ -808,6 +808,63 @@ function listReviewsForShow(conn, showId, opts = {}) {
   `).all(viewerUserId, Number(showId), limit);
 }
 
+function getSiteStats(conn) {
+  const totals = conn.prepare(`
+    SELECT
+      (SELECT COUNT(*) FROM users) AS total_users,
+      (SELECT COUNT(*) FROM shows) AS total_shows,
+      (SELECT COUNT(*) FROM ratings) AS total_ratings,
+      (SELECT COUNT(*) FROM reviews) AS total_reviews,
+      (SELECT COUNT(*) FROM review_comments) AS total_comments,
+      (SELECT COUNT(*) FROM review_comment_replies) AS total_replies
+  `).get() || {};
+
+  const ratingRows = conn.prepare(`
+    SELECT
+      rating_half,
+      COUNT(*) AS cnt
+    FROM ratings
+    WHERE rating_half IS NOT NULL
+    GROUP BY rating_half
+    ORDER BY rating_half DESC
+  `).all();
+
+  const rating_breakdown = {
+    "5.0": 0,
+    "4.5": 0,
+    "4.0": 0,
+    "3.5": 0,
+    "3.0": 0,
+    "2.5": 0,
+    "2.0": 0,
+    "1.5": 0,
+    "1.0": 0,
+    "0.5": 0,
+    "0.0": 0
+  };
+
+  for (const row of ratingRows || []) {
+    const label = (Number(row.rating_half) / 2).toFixed(1);
+    if (Object.prototype.hasOwnProperty.call(rating_breakdown, label)) {
+      rating_breakdown[label] = Number(row.cnt || 0);
+    }
+  }
+
+  return {
+    total_users: Number(totals.total_users || 0),
+    total_shows: Number(totals.total_shows || 0),
+    total_ratings: Number(totals.total_ratings || 0),
+    total_reviews: Number(totals.total_reviews || 0),
+    total_comments: Number(totals.total_comments || 0),
+    total_replies: Number(totals.total_replies || 0),
+    total_discussion_posts:
+      Number(totals.total_comments || 0) + Number(totals.total_replies || 0),
+    rating_breakdown,
+  };
+}
+
+
+
 function recentRatingsForUser(conn, userId, limit = 24) {
   return conn.prepare(`
     SELECT
@@ -1934,6 +1991,7 @@ module.exports = {
   listReviewRepliesForShow,
   deleteReviewReply,
   softDeleteReviewReply,
+  getSiteStats,
 };
 
 
