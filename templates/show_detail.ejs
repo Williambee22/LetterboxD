@@ -267,21 +267,22 @@
       width: 100%;
       min-width: 220px;
       padding: 10px 12px;
-      background: #000 !important;
-      : #fff !important;
-      border: 1px solid rgba(255,255,255,0.16);
+      background: color-mix(in srgb, var(--accent) 10%, rgba(255,255,255,0.03)) !important;
+      color: #fff !important;
+      border: 1px solid color-mix(in srgb, var(--accent) 24%, rgba(255,255,255,0.14));
       border-radius: 10px;
       outline: none;
       box-shadow: none;
     }
-
+    
     .reviewSortSelect:focus {
-      border-: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
     }
-
+    
     .reviewSortSelect option {
-      background: #000 !important;
-      : #fff !important;
+      background: #111 !important;
+      color: #fff !important;
     }
 
     @media (max-width: 720px) {
