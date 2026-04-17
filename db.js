@@ -1839,6 +1839,36 @@ function deleteReviewReply(conn, replyId, opts = {}) {
 }
 
 
+function softDeleteReviewReply(conn, replyId, opts = {}) {
+  const rid = Number(replyId);
+  const uid = Number(opts.requesterUserId);
+
+  const row = conn.prepare(`
+    SELECT id, replier_user_id
+    FROM review_comment_replies
+    WHERE id = ?
+  `).get(rid);
+
+  if (!row) throw new Error('Reply not found.');
+  if (Number(row.replier_user_id) !== uid) {
+    throw new Error('You can only delete your own replies.');
+  }
+
+  const info = conn.prepare(`
+    UPDATE review_comment_replies
+    SET reply_text = '[reply deleted]'
+    WHERE id = ?
+  `).run(rid);
+
+  if (info.changes < 1) {
+    throw new Error('Reply was not deleted.');
+  }
+
+  return true;
+}
+
+
+
 function adminHardDeleteReviewComment(conn, commentId) {
   const cid = Number(commentId);
 
