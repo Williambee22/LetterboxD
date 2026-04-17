@@ -1814,55 +1814,30 @@ function softDeleteReviewComment(conn, commentId, opts = {}) {
   return true;
 }
 
-function softDeleteReviewReply(conn, replyId, opts = {}) {
-  const rid = Number(replyId);
-  const uid = Number(opts.requesterUserId);
+function deleteReviewReply(conn, replyId, opts = {}) {
+  const requesterUserId = Number(opts.requesterUserId);
+  const isAdmin = !!opts.isAdmin;
 
   const row = conn.prepare(`
-    SELECT id, replier_user_id, reply_text
+    SELECT replier_user_id
     FROM review_comment_replies
     WHERE id = ?
-  `).get(rid);
+  `).get(Number(replyId));
 
-  if (!row) throw new Error('Reply not found.');
-  if (Number(row.replier_user_id) !== uid) {
-    throw new Error('You can only delete your own replies.');
+  if (!row) return false;
+
+  if (Number(row.replier_user_id) !== requesterUserId && !isAdmin) {
+    throw new Error('Not allowed.');
   }
 
-  const info = conn.prepare(`
-    UPDATE review_comment_replies
-    SET reply_text = '[reply deleted]'
+  conn.prepare(`
+    DELETE FROM review_comment_replies
     WHERE id = ?
-  `).run(rid);
-
-  if (info.changes < 1) {
-    throw new Error('Reply was not deleted.');
-  }
+  `).run(Number(replyId));
 
   return true;
 }
 
-function softDeleteReviewReply(conn, replyId, opts = {}) {
-  const rid = Number(replyId);
-  const uid = Number(opts.requesterUserId);
-
-  const row = conn.prepare(`
-    SELECT id, replier_user_id
-    FROM review_comment_replies
-    WHERE id = ?
-  `).get(rid);
-
-  if (!row) throw new Error('Reply not found.');
-  if (Number(row.replier_user_id) !== uid) {
-    throw new Error('You can only delete your own replies.');
-  }
-
-  conn.prepare(`
-    UPDATE review_comment_replies
-    SET reply_text = '[reply deleted]'
-    WHERE id = ?
-  `).run(rid);
-}
 
 function adminHardDeleteReviewComment(conn, commentId) {
   const cid = Number(commentId);
