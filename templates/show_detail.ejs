@@ -1442,7 +1442,7 @@
                                         <%= replyDeleted ? '[reply deleted]' : r.reply_text %>
                                       </div>
                               
-                                      <% if (meUser) { %>
+                                      <% if (meUser && !replyDeleted) { %>
                                         <details style="margin-top:10px;">
                                           <summary class="muted small" style="cursor:pointer;">Reply</summary>
                                           <form
@@ -1464,7 +1464,7 @@
                                 </div>
                               <% } %>
                                 
-                              <% if (meUser) { %>
+                              <% if (meUser && !replyDeleted) { %>
                                 <details style="margin-top:10px;">
                                   <summary class="muted small" style="cursor:pointer;">Reply</summary>
                                   <form
