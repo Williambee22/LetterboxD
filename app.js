@@ -1228,15 +1228,26 @@ function createApp() {
   app.post('/show/:show_id/comment/:comment_id/delete', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const commentId = Number(req.params.comment_id);
+  
     let conn;
     try {
       conn = getConn();
+  
       const show = await dbx.getShowById(conn, showId);
       if (!show) return res.sendStatus(404);
   
-      await dbx.softDeleteReviewComment(conn, commentId, {
-        requesterUserId: Number(req.session.uid)
-      });
+      if (typeof dbx.deleteReviewComment === 'function') {
+        await dbx.deleteReviewComment(conn, commentId, {
+          requesterUserId: Number(req.session.uid),
+          isAdmin: false
+        });
+      } else if (typeof dbx.softDeleteReviewComment === 'function') {
+        await dbx.softDeleteReviewComment(conn, commentId, {
+          requesterUserId: Number(req.session.uid)
+        });
+      } else {
+        throw new Error('Comment delete function is not available.');
+      }
   
       await dbx.commit(conn);
       req.flash('ok', 'Comment deleted.');
@@ -1248,16 +1259,31 @@ function createApp() {
   
     return res.redirect(`/show/${showId}`);
   }));
-
+  
   app.post('/show/:show_id/reply/:reply_id/delete', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const replyId = Number(req.params.reply_id);
+  
     let conn;
     try {
       conn = getConn();
-      await dbx.softDeleteReviewReply(conn, replyId, {
-        requesterUserId: Number(req.session.uid)
-      });
+  
+      const show = await dbx.getShowById(conn, showId);
+      if (!show) return res.sendStatus(404);
+  
+      if (typeof dbx.deleteReviewReply === 'function') {
+        await dbx.deleteReviewReply(conn, replyId, {
+          requesterUserId: Number(req.session.uid),
+          isAdmin: false
+        });
+      } else if (typeof dbx.softDeleteReviewReply === 'function') {
+        await dbx.softDeleteReviewReply(conn, replyId, {
+          requesterUserId: Number(req.session.uid)
+        });
+      } else {
+        throw new Error('Reply delete function is not available.');
+      }
+  
       await dbx.commit(conn);
       req.flash('ok', 'Reply deleted.');
     } catch (err) {
@@ -1265,7 +1291,8 @@ function createApp() {
     } finally {
       if (conn) dbx.close(conn);
     }
-    res.redirect(`/show/${showId}`);
+  
+    return res.redirect(`/show/${showId}`);
   }));
   
   
