@@ -1362,6 +1362,7 @@
                             const isCommentOwner = currentUserId != null && currentUserId === Number(c.commenter_user_id);
                             const canAdminDeleteComment = meUser && Number(meUser.is_admin || 0) === 1;
                             const replyList = Array.isArray(c.replies) ? c.replies : [];
+                            const commentDeleted = String(c.comment_text || '').trim() === '[comment deleted]';
                           %>
                             <div class="comment-item">
                               <div class="comment-head">
@@ -1381,23 +1382,26 @@
                                   </div>
                                 </div>
                     
-                                <% if (canAdminDeleteComment) { %>
-                                  <form method="post" action="/admin/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete">
-                                    <button class="btn ghost" type="submit">Delete</button>
-                                  </form>
-                                <% } else if (isCommentOwner) { %>
-                                  <form method="post" action="/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete">
-                                    <button class="btn ghost" type="submit">Delete</button>
-                                  </form>
+                                <% if (!commentDeleted) { %>
+                                  <% if (canAdminDeleteComment) { %>
+                                    <form method="post" action="/admin/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete">
+                                      <button class="btn ghost" type="submit">Delete</button>
+                                    </form>
+                                  <% } else if (isCommentOwner) { %>
+                                    <form method="post" action="/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete">
+                                      <button class="btn ghost" type="submit">Delete</button>
+                                    </form>
+                                  <% } %>
                                 <% } %>
                               </div>
                     
-                              <div class="muted"><%= c.comment_text %></div>
+                              <div class="muted"><%= commentDeleted ? '[comment deleted]' : c.comment_text %></div>
                     
                               <% if (replyList.length > 0) { %>
                                 <div style="margin-top:10px; margin-left:20px; display:flex; flex-direction:column; gap:8px;">
                                   <% for (const r of replyList) {
                                     const isReplyOwner = currentUserId != null && currentUserId === Number(r.replier_user_id);
+                                    const replyDeleted = String(r.reply_text || '').trim() === '[reply deleted]';
                                   %>
                                     <div class="comment-item comment-reply" style="background:rgba(255,255,255,0.025);">
                                       <div class="comment-head">
@@ -1417,23 +1421,25 @@
                                           </div>
                                         </div>
                               
-                                        <% if (canAdminDeleteComment) { %>
-                                          <form method="post" action="/admin/show/<%= showRow.id %>/reply/<%= r.reply_id %>/delete">
-                                            <button class="btn ghost" type="submit">Delete</button>
-                                          </form>
-                                        <% } else if (isReplyOwner) { %>
-                                          <form method="post" action="/show/<%= showRow.id %>/reply/<%= r.reply_id %>/delete">
-                                            <button class="btn ghost" type="submit">Delete</button>
-                                          </form>
+                                        <% if (!replyDeleted) { %>
+                                          <% if (canAdminDeleteComment) { %>
+                                            <form method="post" action="/admin/show/<%= showRow.id %>/reply/<%= r.reply_id %>/delete">
+                                              <button class="btn ghost" type="submit">Delete</button>
+                                            </form>
+                                          <% } else if (isReplyOwner) { %>
+                                            <form method="post" action="/show/<%= showRow.id %>/reply/<%= r.reply_id %>/delete">
+                                              <button class="btn ghost" type="submit">Delete</button>
+                                            </form>
+                                          <% } %>
                                         <% } %>
                                       </div>
                               
                                       <div class="muted">
-                                        <% if (r.parent_replier_username) { %>
+                                        <% if (!replyDeleted && r.parent_replier_username) { %>
                                           <b>@<%= r.parent_replier_username %></b>
                                           <span> </span>
                                         <% } %>
-                                        <%= r.reply_text %>
+                                        <%= replyDeleted ? '[reply deleted]' : r.reply_text %>
                                       </div>
                               
                                       <% if (meUser) { %>
