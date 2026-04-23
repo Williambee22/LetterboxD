@@ -238,7 +238,8 @@
   const rawRows = (typeof rows !== "undefined" && Array.isArray(rows)) ? rows : [];
   const safeMode = (typeof mode !== "undefined" && mode) ? mode : "top";
   const isCriticMode = safeMode === "critic_top" || safeMode === "critic_bottom";
-  const safeRows = rawRows.filter(r => Number(r.cnt || 0) >= 8);
+  const minRatingsRequired = isCriticMode ? 5 : 8;
+  const safeRows = rawRows.filter(r => Number(r.cnt || 0) >= minRatingsRequired);
 
   const pageTitle =
     safeMode === "bottom" ? "Lowest Rated Shows" :
