@@ -1109,21 +1109,25 @@ function createApp() {
           GROUP BY s.id
           HAVING COUNT(*) >= 5
         ),
-        ranked AS (
+        ordered AS (
           SELECT
             id,
             avg_rating,
+            rating_count,
+            year,
             ROW_NUMBER() OVER (
               ORDER BY avg_rating DESC, rating_count DESC, year DESC, id ASC
-            ) AS overall_rank,
-            MIN(
-              ROW_NUMBER() OVER (
-                ORDER BY avg_rating DESC, rating_count DESC, year DESC, id ASC
-              )
-            ) OVER (
+            ) AS overall_rank
+          FROM scored
+        ),
+        ranked AS (
+          SELECT
+            id,
+            overall_rank,
+            MIN(overall_rank) OVER (
               PARTITION BY avg_rating
             ) AS overall_tie_rank
-          FROM scored
+          FROM ordered
         )
         SELECT overall_rank, overall_tie_rank
         FROM ranked
@@ -1145,21 +1149,25 @@ function createApp() {
           GROUP BY s.id
           HAVING COUNT(*) >= 5
         ),
-        ranked AS (
+        ordered AS (
           SELECT
             id,
             avg_rating,
+            rating_count,
+            year,
             ROW_NUMBER() OVER (
               ORDER BY avg_rating DESC, rating_count DESC, year DESC, id ASC
-            ) AS critic_rank,
-            MIN(
-              ROW_NUMBER() OVER (
-                ORDER BY avg_rating DESC, rating_count DESC, year DESC, id ASC
-              )
-            ) OVER (
+            ) AS critic_rank
+          FROM scored
+        ),
+        ranked AS (
+          SELECT
+            id,
+            critic_rank,
+            MIN(critic_rank) OVER (
               PARTITION BY avg_rating
             ) AS critic_tie_rank
-          FROM scored
+          FROM ordered
         )
         SELECT critic_rank, critic_tie_rank
         FROM ranked
