@@ -1015,8 +1015,8 @@
                     <% if (overallRank > 0) { %>
                       <span class="badge muted">
                         Rank #<%= overallRank %>
-                        <% if (typeof overallTieRank !== "undefined" && overallTieRank && Number(overallTieRank) !== Number(overallRank)) { %>
-                          <span style="font-size:11px; opacity:.82; margin-left:4px;">(T-<%= overallTieRank %>)</span>
+                        <% if (overallTieRank > 0 && overallTieRank !== overallRank) { %>
+                          <span class="tie-rank">(T-<%= overallTieRank %>)</span>
                         <% } %>
                       </span>
                     <% } %>
@@ -1031,8 +1031,8 @@
                     <% if (criticRank > 0) { %>
                       <span class="badge muted">
                         Critic Rank #<%= criticRank %>
-                        <% if (typeof criticTieRank !== "undefined" && criticTieRank && Number(criticTieRank) !== Number(criticRank)) { %>
-                          <span style="font-size:11px; opacity:.82; margin-left:4px;">(T-<%= criticTieRank %>)</span>
+                        <% if (criticTieRank > 0 && criticTieRank !== criticRank) { %>
+                          <span class="tie-rank">(T-<%= criticTieRank %>)</span>
                         <% } %>
                       </span>
                     <% } else { %>
