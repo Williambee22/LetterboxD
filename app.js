@@ -1101,7 +1101,7 @@ function createApp() {
         WITH scored AS (
           SELECT
             s.id,
-            AVG(r.rating_half) AS avg_rating,
+            ROUND(AVG(r.rating_half) / 2.0, 2) AS avg_rating,
             COUNT(*) AS rating_count,
             s.year
           FROM shows s
@@ -1138,7 +1138,7 @@ function createApp() {
         WITH scored AS (
           SELECT
             s.id,
-            AVG(r.rating_half) AS avg_rating,
+            ROUND(AVG(r.rating_half) / 2.0, 2) AS avg_rating,
             COUNT(*) AS rating_count,
             s.year
           FROM shows s
