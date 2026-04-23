@@ -810,6 +810,8 @@
   const criticRank = typeof critic_rank !== "undefined" ? Number(critic_rank || 0) : 0;
   const corpsRank = typeof corps_rank !== "undefined" ? Number(corps_rank || 0) : 0;
   const yearRank = typeof year_rank !== "undefined" ? Number(year_rank || 0) : 0;
+  const overallTieRank = typeof overall_tie_rank !== "undefined" ? Number(overall_tie_rank || 0) : 0;
+  const criticTieRank = typeof critic_tie_rank !== "undefined" ? Number(critic_tie_rank || 0) : 0;
 
   const distLabels = ["5.0","4.5","4.0","3.5","3.0","2.5","2.0","1.5","1.0","0.5","0.0"];
   const ratingHistogramRaw = (typeof rating_histogram !== "undefined" && rating_histogram) ? rating_histogram : {};
