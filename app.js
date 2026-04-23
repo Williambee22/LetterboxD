@@ -1098,29 +1098,45 @@ function createApp() {
       const verified_rating_histogram = dbx.getVerifiedRatingHistogram(conn, showId);
   
       const overallRankRow = conn.prepare(`
-        WITH ranked AS (
+        WITH scored AS (
           SELECT
             s.id,
-            RANK() OVER (
-              ORDER BY AVG(r.rating_half) DESC, COUNT(*) DESC, s.year DESC, s.id ASC
-            ) AS overall_rank
+            AVG(r.rating_half) AS avg_rating,
+            COUNT(*) AS rating_count,
+            s.year
           FROM shows s
           JOIN ratings r ON r.show_id = s.id
           GROUP BY s.id
           HAVING COUNT(*) >= 5
+        ),
+        ranked AS (
+          SELECT
+            id,
+            avg_rating,
+            ROW_NUMBER() OVER (
+              ORDER BY avg_rating DESC, rating_count DESC, year DESC, id ASC
+            ) AS overall_rank,
+            MIN(
+              ROW_NUMBER() OVER (
+                ORDER BY avg_rating DESC, rating_count DESC, year DESC, id ASC
+              )
+            ) OVER (
+              PARTITION BY avg_rating
+            ) AS overall_tie_rank
+          FROM scored
         )
-        SELECT overall_rank
+        SELECT overall_rank, overall_tie_rank
         FROM ranked
         WHERE id = ?
       `).get(showId);
   
       const criticRankRow = conn.prepare(`
-        WITH ranked AS (
+        WITH scored AS (
           SELECT
             s.id,
-            RANK() OVER (
-              ORDER BY AVG(r.rating_half) DESC, COUNT(*) DESC, s.year DESC, s.id ASC
-            ) AS critic_rank
+            AVG(r.rating_half) AS avg_rating,
+            COUNT(*) AS rating_count,
+            s.year
           FROM shows s
           JOIN ratings r ON r.show_id = s.id
           JOIN user_roles ur ON ur.user_id = r.user_id
@@ -1128,8 +1144,24 @@ function createApp() {
           WHERE ro.name = 'Verified Critic'
           GROUP BY s.id
           HAVING COUNT(*) >= 5
+        ),
+        ranked AS (
+          SELECT
+            id,
+            avg_rating,
+            ROW_NUMBER() OVER (
+              ORDER BY avg_rating DESC, rating_count DESC, year DESC, id ASC
+            ) AS critic_rank,
+            MIN(
+              ROW_NUMBER() OVER (
+                ORDER BY avg_rating DESC, rating_count DESC, year DESC, id ASC
+              )
+            ) OVER (
+              PARTITION BY avg_rating
+            ) AS critic_tie_rank
+          FROM scored
         )
-        SELECT critic_rank
+        SELECT critic_rank, critic_tie_rank
         FROM ranked
         WHERE id = ?
       `).get(showId);
@@ -1173,7 +1205,11 @@ function createApp() {
       `).get(showId);
   
       const overall_rank = overallRankRow ? Number(overallRankRow.overall_rank || 0) : 0;
+      const overall_tie_rank = overallRankRow ? Number(overallRankRow.overall_tie_rank || 0) : 0;
+      
       const critic_rank = criticRankRow ? Number(criticRankRow.critic_rank || 0) : 0;
+      const critic_tie_rank = criticRankRow ? Number(criticRankRow.critic_tie_rank || 0) : 0;
+      
       const corps_rank = corpsRankRow ? Number(corpsRankRow.corps_rank || 0) : 0;
       const year_rank = yearRankRow ? Number(yearRankRow.year_rank || 0) : 0;
   
@@ -1190,7 +1226,9 @@ function createApp() {
         favorite_count: favoriteCount,
         show_favorite_count,
         overall_rank,
+        overall_tie_rank,
         critic_rank,
+        critic_tie_rank,
         corps_rank,
         year_rank,
       });
