@@ -1376,6 +1376,7 @@ function createApp() {
         const seasonLabel = settings.season_label;
   
         const activeCorps = dbx.listPredictionActiveCorps(conn, seasonLabel);
+        const activeSet = activeCorps;
         const myPrediction = dbx.getUserPredictionRows(conn, seasonLabel, Number(req.session.uid));
         const results = dbx.getPredictionResultsRows(conn, seasonLabel);
         const leaderboard = dbx.listPredictionLeaderboard(conn, seasonLabel).map((r) => {
@@ -1439,7 +1440,7 @@ function createApp() {
   
         const allCorps = dbx.listAllCorps(conn);
         const activeCorps = dbx.listPredictionActiveCorps(conn, seasonLabel);
-        const activeSet = new Set(activeCorps);
+        const activeSet = activeCorps;
   
         const results = dbx.getPredictionResultsRows(conn, seasonLabel);
         const leaderboard = dbx.listPredictionLeaderboard(conn, seasonLabel).map((r) => {
