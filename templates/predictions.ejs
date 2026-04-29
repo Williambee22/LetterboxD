@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Season Predictions - Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <link rel="icon" type="image/png" href="/static/favicon.png"/>
+
+  <style>
+    html,
+    body,
+    body.app {
+      background: #000 !important;
+      color: #fff;
+    }
+
+    .predShell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 22px 0 50px;
+    }
+
+    .predHero {
+      padding: 22px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+      margin-bottom: 16px;
+    }
+
+    .predGrid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .predPanel {
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .pickRow {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .placement {
+      font-weight: 900;
+      opacity: 0.9;
+    }
+
+    .pickSelect {
+      width: 100%;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: #111;
+      color: #fff;
+      padding: 0 10px;
+    }
+
+    .pickSelect option {
+      background: #111;
+      color: #fff;
+    }
+
+    .statusPill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 900;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .statusOpen {
+      background: rgba(34,197,94,0.16);
+      color: #86efac;
+    }
+
+    .statusClosed {
+      background: rgba(239,68,68,0.16);
+      color: #fca5a5;
+    }
+
+    .leaderRow,
+    .resultRow {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) 60px;
+      gap: 8px;
+      padding: 9px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      align-items: center;
+    }
+
+    .resultRow {
+      grid-template-columns: 44px minmax(0, 1fr);
+    }
+
+    .leaderRow:last-child,
+    .resultRow:last-child {
+      border-bottom: none;
+    }
+
+    .topbar .wrap {
+      max-width: 1200px;
+    }
+
+    @media (max-width: 850px) {
+      .predGrid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<%
+  const meUser = typeof me !== "undefined" ? me : null;
+  const s = typeof settings !== "undefined" ? settings : {};
+  const activeCorps = Array.isArray(active_corps) ? active_corps : [];
+  const myRows = Array.isArray(my_prediction) ? my_prediction : [];
+  const resultRows = Array.isArray(results) ? results : [];
+  const leaders = Array.isArray(leaderboard) ? leaderboard : [];
+  const isOpen = Number(s?.is_open || 0) === 1;
+  const awarded = Number(s?.results_awarded || 0) === 1;
+
+  function suffix(n) {
+    const v = Number(n);
+    if (v % 100 >= 11 && v % 100 <= 13) return `${v}th`;
+    if (v % 10 === 1) return `${v}st`;
+    if (v % 10 === 2) return `${v}nd`;
+    if (v % 10 === 3) return `${v}rd`;
+    return `${v}th`;
+  }
+%>
+
+<body class="app" style="--accent: <%= accent_color || '#3252b3' %>;">
+  <header class="topbar">
+    <div class="wrap row between">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <a class="brand" href="/shows" style="display:flex; align-items:center;">
+          <img src="/static/pressboxd-wordmark.png" alt="Pressboxd" style="height:64px; width:auto;">
+        </a>
+      </div>
+
+      <nav class="nav row">
+        <a href="/shows">Shows</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+        <a href="/predictions">Predictions</a>
+        <% if (meUser && Number(meUser.is_admin) === 1) { %>
+          <a href="/admin/predictions">Admin Predictions</a>
+        <% } %>
+      </nav>
+
+      <div class="auth row">
+        <% if (meUser) { %>
+          <a class="nav_user" href="/me">
+            <span class="avatar_sm">
+              <% if (meUser.avatar_url) { %>
+                <img src="<%= meUser.avatar_url %>" alt="avatar">
+              <% } else { %>
+                <span class="avatar_fallback"></span>
+              <% } %>
+            </span>
+            <span class="muted small"><%= meUser.username || "me" %></span>
+          </a>
+          <a href="/logout">Logout</a>
+        <% } else { %>
+          <a href="/login">Login</a>
+        <% } %>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap predShell">
+    <% if (typeof flashes !== "undefined" && flashes && flashes.length) { %>
+      <% for (const f of flashes) { %>
+        <div class="panel" style="margin-bottom:12px; border-color:<%= f.category === 'error' ? 'rgba(239,68,68,.45)' : 'rgba(34,197,94,.35)' %>;">
+          <%= f.message %>
+        </div>
+      <% } %>
+    <% } %>
+
+    <section class="predHero">
+      <div class="row between" style="gap:12px; align-items:flex-start;">
+        <div>
+          <h1 style="margin:0 0 6px;">Season Predictions</h1>
+          <div class="muted">
+            Predict the top 12 for <b><%= s.season_label || "Next Season" %></b>.
+            You get 1 point for every exact placement you get right.
+          </div>
+          <div class="muted small" style="margin-top:8px;">
+            <%= Number(submission_count || 0) %> users have submitted predictions.
+          </div>
+        </div>
+
+        <% if (isOpen) { %>
+          <span class="statusPill statusOpen">Open</span>
+        <% } else { %>
+          <span class="statusPill statusClosed">Closed</span>
+        <% } %>
+      </div>
+    </section>
+
+    <div class="predGrid">
+      <section class="predPanel">
+        <h2 style="margin-top:0;">Your Prediction</h2>
+
+        <% if (activeCorps.length < 12) { %>
+          <div class="muted">
+            Predictions are not ready yet. An admin needs to choose at least 12 active corps.
+          </div>
+        <% } else { %>
+          <form method="post" action="/predictions" id="predictionForm">
+            <% for (let i = 1; i <= 12; i++) {
+                 const existing = myRows.find(r => Number(r.slot) === i)?.corps || "";
+            %>
+              <div class="pickRow">
+                <div class="placement"><%= suffix(i) %></div>
+                <select class="pickSelect placementSelect" name="slot_<%= i %>" <%= isOpen ? "" : "disabled" %> required>
+                  <option value="">Choose corps...</option>
+                  <% for (const corps of activeCorps) { %>
+                    <option value="<%= corps %>" <%= existing === corps ? "selected" : "" %>><%= corps %></option>
+                  <% } %>
+                </select>
+              </div>
+            <% } %>
+
+            <% if (isOpen) { %>
+              <button class="btn green" type="submit" style="margin-top:12px;">Submit Prediction</button>
+            <% } else { %>
+              <div class="muted small" style="margin-top:12px;">Predictions are closed. You can view your picks, but you cannot edit them.</div>
+            <% } %>
+          </form>
+        <% } %>
+      </section>
+
+      <aside style="display:flex; flex-direction:column; gap:16px;">
+        <section class="predPanel">
+          <h3 style="margin-top:0;">Final Results</h3>
+
+          <% const hasResults = resultRows.some(r => r.corps); %>
+          <% if (hasResults) { %>
+            <% for (const r of resultRows) { %>
+              <div class="resultRow">
+                <div style="font-weight:900;"><%= suffix(r.slot) %></div>
+                <div><%= r.corps || "—" %></div>
+              </div>
+            <% } %>
+          <% } else { %>
+            <div class="muted small">Results have not been entered yet.</div>
+          <% } %>
+        </section>
+
+        <section class="predPanel">
+          <h3 style="margin-top:0;">Leaderboard</h3>
+
+          <% if (awarded && leaders.length > 0) { %>
+            <% for (const l of leaders) { %>
+              <div class="leaderRow">
+                <div style="font-weight:900;">#<%= l.rank %></div>
+                <div style="min-width:0;">
+                  <a href="/u/<%= encodeURIComponent(l.username) %>" style="color:inherit; text-decoration:none; font-weight:800;">
+                    <%= l.username %>
+                  </a>
+                </div>
+                <div style="text-align:right; font-weight:900;"><%= l.total_points %>/12</div>
+              </div>
+            <% } %>
+          <% } else { %>
+            <div class="muted small">Points have not been awarded yet.</div>
+          <% } %>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const selects = [...document.querySelectorAll(".placementSelect")];
+
+      function updateDisabledOptions() {
+        const used = new Set(
+          selects
+            .map(s => s.value)
+            .filter(Boolean)
+        );
+
+        for (const select of selects) {
+          const ownValue = select.value;
+
+          for (const option of [...select.options]) {
+            if (!option.value) continue;
+            option.disabled = used.has(option.value) && option.value !== ownValue;
+          }
+        }
+      }
+
+      for (const select of selects) {
+        select.addEventListener("change", updateDisabledOptions);
+      }
+
+      updateDisabledOptions();
+    })();
+  </script>
+</body>
+</html>
