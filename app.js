@@ -537,6 +537,7 @@ function createApp() {
     dbx.ensureNotificationsTable(conn);
     dbx.ensureAuthColumns(conn);
     dbx.ensureFavoriteShowsTable(conn);
+    dbx.ensurePredictionTables(conn);
     return conn;
   }
 
@@ -1360,7 +1361,247 @@ function createApp() {
     res.redirect(`/show/${showId}`);
   }));
 
+    app.get('/predictions', loginRequired(async (req, res, next) => {
+      let conn;
+  
+      try {
+        conn = getConn();
+  
+        const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
+        if (!me) return res.sendStatus(404);
+  
+        if (!me.avatar_url) me.avatar_url = pfpUrlForUsername(me.username || '');
+  
+        const settings = normalizeRow(dbx.getPredictionSettings(conn));
+        const seasonLabel = settings.season_label;
+  
+        const activeCorps = dbx.listPredictionActiveCorps(conn, seasonLabel);
+        const myPrediction = dbx.getUserPredictionRows(conn, seasonLabel, Number(req.session.uid));
+        const results = dbx.getPredictionResultsRows(conn, seasonLabel);
+        const leaderboard = dbx.listPredictionLeaderboard(conn, seasonLabel).map((r) => {
+          const d = normalizeRow(r);
+          if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
+          return d;
+        });
+  
+        const submissionCount = dbx.countPredictionSubmissions(conn, seasonLabel);
+  
+        return res.render('predictions', {
+          me,
+          settings,
+          active_corps: activeCorps,
+          my_prediction: myPrediction,
+          results,
+          leaderboard,
+          submission_count: submissionCount,
+        });
+      } catch (err) {
+        return next(err);
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+    }));
+  
+    app.post('/predictions', loginRequired(async (req, res) => {
+      let conn;
+  
+      try {
+        conn = getConn();
+  
+        const settings = dbx.getPredictionSettings(conn);
+        const picks = [];
+  
+        for (let i = 1; i <= 12; i += 1) {
+          picks.push(String(req.body[`slot_${i}`] || '').trim());
+        }
+  
+        dbx.saveUserPrediction(conn, settings.season_label, Number(req.session.uid), picks);
+        await dbx.commit(conn);
+  
+        req.flash('ok', 'Prediction submitted.');
+      } catch (err) {
+        req.flash('error', String(err.message || err));
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+  
+      return res.redirect('/predictions');
+    }));
+  
+    app.get('/admin/predictions', adminRequired(async (req, res, next) => {
+      let conn;
+  
+      try {
+        conn = getConn();
+  
+        const settings = normalizeRow(dbx.getPredictionSettings(conn));
+        const seasonLabel = settings.season_label;
+  
+        const allCorps = dbx.listAllCorps(conn);
+        const activeCorps = dbx.listPredictionActiveCorps(conn, seasonLabel);
+        const activeSet = new Set(activeCorps);
+  
+        const results = dbx.getPredictionResultsRows(conn, seasonLabel);
+        const leaderboard = dbx.listPredictionLeaderboard(conn, seasonLabel).map((r) => {
+          const d = normalizeRow(r);
+          if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
+          return d;
+        });
+  
+        const submissionCount = dbx.countPredictionSubmissions(conn, seasonLabel);
+  
+        return res.render('admin_predictions', {
+          me: res.locals.me,
+          settings,
+          all_corps: allCorps,
+          active_corps: activeCorps,
+          active_set: activeSet,
+          results,
+          leaderboard,
+          submission_count: submissionCount,
+        });
+      } catch (err) {
+        return next(err);
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+    }));
+  
+    app.post('/admin/predictions/settings', adminRequired(async (req, res) => {
+      let conn;
+  
+      try {
+        conn = getConn();
+  
+        const seasonLabel = String(req.body.season_label || '').trim() || 'Next Season';
+        const isOpen = req.body.is_open === '1';
+  
+        dbx.updatePredictionSettings(conn, {
+          seasonLabel,
+          isOpen,
+        });
+  
+        await dbx.commit(conn);
+        req.flash('ok', 'Prediction settings updated.');
+      } catch (err) {
+        req.flash('error', String(err.message || err));
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+  
+      return res.redirect('/admin/predictions');
+    }));
+  
+    app.post('/admin/predictions/active-corps', adminRequired(async (req, res) => {
+      let conn;
+  
+      try {
+        conn = getConn();
+  
+        const settings = dbx.getPredictionSettings(conn);
+  
+        let selected = req.body.active_corps || [];
+        if (!Array.isArray(selected)) selected = selected ? [selected] : [];
+  
+        const customCorpsRaw = String(req.body.custom_corps || '').trim();
+        const customCorps = customCorpsRaw
+          ? customCorpsRaw
+              .split(/\r?\n|,/)
+              .map(x => x.trim())
+              .filter(Boolean)
+          : [];
+  
+        const finalList = [...selected, ...customCorps];
+  
+        dbx.setPredictionActiveCorps(conn, settings.season_label, finalList);
+        await dbx.commit(conn);
+  
+        req.flash('ok', 'Active corps updated.');
+      } catch (err) {
+        req.flash('error', String(err.message || err));
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+  
+      return res.redirect('/admin/predictions');
+    }));
+  
+    app.post('/admin/predictions/results', adminRequired(async (req, res) => {
+      let conn;
+  
+      try {
+        conn = getConn();
+  
+        const settings = dbx.getPredictionSettings(conn);
+        const results = [];
+  
+        for (let i = 1; i <= 12; i += 1) {
+          results.push(String(req.body[`result_${i}`] || '').trim());
+        }
+  
+        dbx.savePredictionResults(conn, settings.season_label, results);
+        await dbx.commit(conn);
+  
+        req.flash('ok', 'Final results saved.');
+      } catch (err) {
+        req.flash('error', String(err.message || err));
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+  
+      return res.redirect('/admin/predictions');
+    }));
+  
+    app.post('/admin/predictions/award', adminRequired(async (req, res) => {
+      let conn;
+  
+      try {
+        conn = getConn();
+  
+        const settings = dbx.getPredictionSettings(conn);
+        const result = dbx.awardPredictionScores(conn, settings.season_label);
+  
+        await dbx.commit(conn);
+  
+        req.flash('ok', `Points awarded. Users scored: ${result.users_scored}.`);
+      } catch (err) {
+        req.flash('error', String(err.message || err));
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+  
+      return res.redirect('/admin/predictions');
+    }));
+  
+    app.post('/admin/predictions/reset-season', adminRequired(async (req, res) => {
+      let conn;
+  
+      try {
+        conn = getConn();
+  
+        const newSeasonLabel = String(req.body.new_season_label || '').trim();
+  
+        if (!newSeasonLabel) {
+          req.flash('error', 'Enter a season label.');
+          return res.redirect('/admin/predictions');
+        }
+  
+        dbx.resetPredictionSeason(conn, newSeasonLabel);
+        await dbx.commit(conn);
+  
+        req.flash('ok', `Prediction window reset for ${newSeasonLabel}.`);
+      } catch (err) {
+        req.flash('error', String(err.message || err));
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+  
+      return res.redirect('/admin/predictions');
+    }));
 
+
+
+  
   app.post('/show/:show_id/review/:review_user_id/comment', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const reviewUserId = Number(req.params.review_user_id);
