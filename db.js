@@ -860,10 +860,23 @@ function awardPredictionScores(conn, seasonLabel = null) {
       const picks = pickStmt.all(season, Number(u.user_id));
 
       let points = 0;
+
       for (const p of picks) {
-        const slot = Number(p.slot);
-        if (resultBySlot.get(slot) === String(p.corps)) {
-          points += 1;
+        const predictedSlot = Number(p.slot);
+        const predictedCorps = String(p.corps);
+      
+        for (const [actualSlot, actualCorps] of resultBySlot.entries()) {
+          if (actualCorps !== predictedCorps) continue;
+      
+          const distance = Math.abs(actualSlot - predictedSlot);
+      
+          if (distance === 0) {
+            points += 20;
+          } else if (distance === 1) {
+            points += 10;
+          }
+      
+          break;
         }
       }
 
