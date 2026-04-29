@@ -118,7 +118,7 @@
   const s = typeof settings !== "undefined" ? settings : {};
   const allCorps = Array.isArray(all_corps) ? all_corps : [];
   const activeCorps = Array.isArray(active_corps) ? active_corps : [];
-  const activeSetSafe = typeof active_set !== "undefined" && active_set ? active_set : new Set();
+  const activeSetSafe = Array.isArray(active_set) ? active_set : [];
   const resultRows = Array.isArray(results) ? results : [];
   const leaders = Array.isArray(leaderboard) ? leaderboard : [];
 
@@ -227,7 +227,7 @@
                   type="checkbox"
                   name="active_corps"
                   value="<%= corps %>"
-                  <%= activeSetSafe.has(corps) ? "checked" : "" %>
+                  <%= activeSetSafe.includes(corps) ? "checked" : "" %>
                 >
                 <span><%= corps %></span>
               </label>
