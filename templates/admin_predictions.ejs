@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin Predictions - Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <link rel="icon" type="image/png" href="/static/favicon.png"/>
+
+  <style>
+    html,
+    body,
+    body.app {
+      background: #000 !important;
+      color: #fff;
+    }
+
+    .adminPredShell {
+      max-width: 1150px;
+      margin: 0 auto;
+      padding: 22px 0 60px;
+    }
+
+    .adminGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .adminPanel {
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .fieldInput,
+    .fieldSelect,
+    .fieldTextarea {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: #111;
+      color: #fff;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    .fieldSelect {
+      height: 40px;
+      padding: 0 10px;
+    }
+
+    .fieldSelect option {
+      background: #111;
+      color: #fff;
+    }
+
+    .corpsChecklist {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 8px;
+      max-height: 420px;
+      overflow: auto;
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .checkItem {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 8px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+      font-size: 14px;
+    }
+
+    .resultRow {
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .leaderRow {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) 60px;
+      gap: 8px;
+      padding: 9px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      align-items: center;
+    }
+
+    .leaderRow:last-child {
+      border-bottom: none;
+    }
+
+    .dangerZone {
+      border-color: rgba(239,68,68,0.35);
+      background: rgba(239,68,68,0.06);
+    }
+
+    @media (max-width: 850px) {
+      .adminGrid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<%
+  const meUser = typeof me !== "undefined" ? me : null;
+  const s = typeof settings !== "undefined" ? settings : {};
+  const allCorps = Array.isArray(all_corps) ? all_corps : [];
+  const activeCorps = Array.isArray(active_corps) ? active_corps : [];
+  const activeSetSafe = typeof active_set !== "undefined" && active_set ? active_set : new Set();
+  const resultRows = Array.isArray(results) ? results : [];
+  const leaders = Array.isArray(leaderboard) ? leaderboard : [];
+
+  function suffix(n) {
+    const v = Number(n);
+    if (v % 100 >= 11 && v % 100 <= 13) return `${v}th`;
+    if (v % 10 === 1) return `${v}st`;
+    if (v % 10 === 2) return `${v}nd`;
+    if (v % 10 === 3) return `${v}rd`;
+    return `${v}th`;
+  }
+%>
+
+<body class="app" style="--accent: <%= accent_color || '#3252b3' %>;">
+  <header class="topbar">
+    <div class="wrap row between">
+      <a class="brand" href="/shows" style="display:flex; align-items:center;">
+        <img src="/static/pressboxd-wordmark.png" alt="Pressboxd" style="height:64px; width:auto;">
+      </a>
+
+      <nav class="nav row">
+        <a href="/shows">Shows</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+        <a href="/predictions">Predictions</a>
+        <a href="/admin/predictions">Admin Predictions</a>
+      </nav>
+
+      <div class="auth row">
+        <% if (meUser) { %>
+          <a href="/me"><%= meUser.username || "me" %></a>
+          <a href="/logout">Logout</a>
+        <% } %>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap adminPredShell">
+    <% if (typeof flashes !== "undefined" && flashes && flashes.length) { %>
+      <% for (const f of flashes) { %>
+        <div class="panel" style="margin-bottom:12px; border-color:<%= f.category === 'error' ? 'rgba(239,68,68,.45)' : 'rgba(34,197,94,.35)' %>;">
+          <%= f.message %>
+        </div>
+      <% } %>
+    <% } %>
+
+    <div style="margin-bottom:18px;">
+      <h1 style="margin-bottom:4px;">Prediction Admin</h1>
+      <div class="muted">
+        Current season: <b><%= s.season_label || "Next Season" %></b> ·
+        Window: <b><%= Number(s.is_open || 0) === 1 ? "Open" : "Closed" %></b> ·
+        Submissions: <b><%= Number(submission_count || 0) %></b> ·
+        Points awarded: <b><%= Number(s.results_awarded || 0) === 1 ? "Yes" : "No" %></b>
+      </div>
+    </div>
+
+    <div class="adminGrid">
+      <section class="adminPanel">
+        <h2 style="margin-top:0;">Window Settings</h2>
+
+        <form method="post" action="/admin/predictions/settings">
+          <div class="field" style="margin-bottom:12px;">
+            <label>Season Label</label>
+            <input class="fieldInput" name="season_label" value="<%= s.season_label || 'Next Season' %>">
+          </div>
+
+          <div class="field" style="margin-bottom:12px;">
+            <label>Prediction Window</label>
+            <select class="fieldSelect" name="is_open">
+              <option value="1" <%= Number(s.is_open || 0) === 1 ? "selected" : "" %>>Open</option>
+              <option value="0" <%= Number(s.is_open || 0) !== 1 ? "selected" : "" %>>Closed</option>
+            </select>
+          </div>
+
+          <button class="btn green" type="submit">Save Settings</button>
+        </form>
+      </section>
+
+      <section class="adminPanel dangerZone">
+        <h2 style="margin-top:0;">Reset / New Season</h2>
+        <div class="muted small" style="margin-bottom:12px;">
+          This switches the current prediction window to a new season label and clears that new season’s active corps, predictions, results, and scores.
+        </div>
+
+        <form method="post" action="/admin/predictions/reset-season" onsubmit="return confirm('Reset prediction window for this season label?');">
+          <div class="field" style="margin-bottom:12px;">
+            <label>New Season Label</label>
+            <input class="fieldInput" name="new_season_label" placeholder="2026 DCI Season">
+          </div>
+
+          <button class="btn" type="submit" style="background:#ef4444; color:white;">Reset Window</button>
+        </form>
+      </section>
+
+      <section class="adminPanel" style="grid-column:1 / -1;">
+        <h2 style="margin-top:0;">Active Corps</h2>
+        <div class="muted small" style="margin-bottom:12px;">
+          Choose which corps users can pick. You need at least 12 active corps.
+        </div>
+
+        <form method="post" action="/admin/predictions/active-corps">
+          <div class="corpsChecklist">
+            <% for (const corps of allCorps) { %>
+              <label class="checkItem">
+                <input
+                  type="checkbox"
+                  name="active_corps"
+                  value="<%= corps %>"
+                  <%= activeSetSafe.has(corps) ? "checked" : "" %>
+                >
+                <span><%= corps %></span>
+              </label>
+            <% } %>
+          </div>
+
+          <div class="field" style="margin-top:14px;">
+            <label>Add custom corps, one per line or comma-separated</label>
+            <textarea class="fieldTextarea" name="custom_corps" rows="3" placeholder="Example Corps, Another Corps"></textarea>
+          </div>
+
+          <button class="btn green" type="submit" style="margin-top:12px;">Save Active Corps</button>
+        </form>
+      </section>
+
+      <section class="adminPanel">
+        <h2 style="margin-top:0;">Enter Final Results</h2>
+
+        <% if (activeCorps.length < 12) { %>
+          <div class="muted">Pick at least 12 active corps first.</div>
+        <% } else { %>
+          <form method="post" action="/admin/predictions/results" id="resultsForm">
+            <% for (let i = 1; i <= 12; i++) {
+                 const existing = resultRows.find(r => Number(r.slot) === i)?.corps || "";
+            %>
+              <div class="resultRow">
+                <div style="font-weight:900;"><%= suffix(i) %></div>
+                <select class="fieldSelect resultSelect" name="result_<%= i %>" required>
+                  <option value="">Choose corps...</option>
+                  <% for (const corps of activeCorps) { %>
+                    <option value="<%= corps %>" <%= existing === corps ? "selected" : "" %>><%= corps %></option>
+                  <% } %>
+                </select>
+              </div>
+            <% } %>
+
+            <button class="btn green" type="submit" style="margin-top:10px;">Save Results</button>
+          </form>
+
+          <form method="post" action="/admin/predictions/award" style="margin-top:12px;" onsubmit="return confirm('Award points now? This will recalculate every user score.');">
+            <button class="btn" type="submit">Award / Recalculate Points</button>
+          </form>
+        <% } %>
+      </section>
+
+      <section class="adminPanel">
+        <h2 style="margin-top:0;">Leaderboard</h2>
+
+        <% if (leaders.length > 0) { %>
+          <% for (const l of leaders) { %>
+            <div class="leaderRow">
+              <div style="font-weight:900;">#<%= l.rank %></div>
+              <div>
+                <a href="/u/<%= encodeURIComponent(l.username) %>" style="color:inherit; text-decoration:none; font-weight:800;">
+                  <%= l.username %>
+                </a>
+              </div>
+              <div style="text-align:right; font-weight:900;"><%= l.total_points %>/12</div>
+            </div>
+          <% } %>
+        <% } else { %>
+          <div class="muted small">No scores yet.</div>
+        <% } %>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const selects = [...document.querySelectorAll(".resultSelect")];
+
+      function updateDisabledOptions() {
+        const used = new Set(
+          selects
+            .map(s => s.value)
+            .filter(Boolean)
+        );
+
+        for (const select of selects) {
+          const ownValue = select.value;
+
+          for (const option of [...select.options]) {
+            if (!option.value) continue;
+            option.disabled = used.has(option.value) && option.value !== ownValue;
+          }
+        }
+      }
+
+      for (const select of selects) {
+        select.addEventListener("change", updateDisabledOptions);
+      }
+
+      updateDisabledOptions();
+    })();
+  </script>
+</body>
+</html>
