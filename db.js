@@ -500,6 +500,468 @@ function ensureNotificationsTable(conn) {
   `);
 }
 
+function ensurePredictionTables(conn) {
+  conn.exec(`
+    CREATE TABLE IF NOT EXISTS prediction_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      season_label TEXT NOT NULL DEFAULT 'Next Season',
+      is_open INTEGER NOT NULL DEFAULT 1,
+      results_awarded INTEGER NOT NULL DEFAULT 0,
+      updated_ts INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+    );
+
+    INSERT OR IGNORE INTO prediction_settings(id, season_label, is_open, results_awarded, updated_ts)
+    VALUES (1, 'Next Season', 1, 0, strftime('%s','now'));
+
+    CREATE TABLE IF NOT EXISTS prediction_active_corps (
+      season_label TEXT NOT NULL,
+      corps TEXT NOT NULL,
+      created_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      PRIMARY KEY (season_label, corps)
+    );
+
+    CREATE TABLE IF NOT EXISTS season_predictions (
+      season_label TEXT NOT NULL,
+      user_id INTEGER NOT NULL,
+      slot INTEGER NOT NULL,
+      corps TEXT NOT NULL,
+      submitted_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      PRIMARY KEY (season_label, user_id, slot),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_season_predictions_season_user
+    ON season_predictions(season_label, user_id);
+
+    CREATE TABLE IF NOT EXISTS season_prediction_results (
+      season_label TEXT NOT NULL,
+      slot INTEGER NOT NULL,
+      corps TEXT NOT NULL,
+      created_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      PRIMARY KEY (season_label, slot)
+    );
+
+    CREATE TABLE IF NOT EXISTS season_prediction_scores (
+      season_label TEXT NOT NULL,
+      user_id INTEGER NOT NULL,
+      total_points INTEGER NOT NULL DEFAULT 0,
+      awarded_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      PRIMARY KEY (season_label, user_id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_season_prediction_scores_points
+    ON season_prediction_scores(season_label, total_points DESC);
+  `);
+}
+
+function getPredictionSettings(conn) {
+  ensurePredictionTables(conn);
+
+  return conn.prepare(`
+    SELECT *
+    FROM prediction_settings
+    WHERE id = 1
+  `).get() || {
+    id: 1,
+    season_label: 'Next Season',
+    is_open: 1,
+    results_awarded: 0,
+  };
+}
+
+function updatePredictionSettings(conn, args = {}) {
+  ensurePredictionTables(conn);
+
+  const current = getPredictionSettings(conn);
+
+  const seasonLabel = String(args.seasonLabel ?? current.season_label ?? 'Next Season').trim() || 'Next Season';
+  const isOpen = args.isOpen == null ? Number(current.is_open || 0) : (args.isOpen ? 1 : 0);
+  const resultsAwarded = args.resultsAwarded == null
+    ? Number(current.results_awarded || 0)
+    : (args.resultsAwarded ? 1 : 0);
+
+  conn.prepare(`
+    UPDATE prediction_settings
+    SET season_label = ?,
+        is_open = ?,
+        results_awarded = ?,
+        updated_ts = strftime('%s','now')
+    WHERE id = 1
+  `).run(seasonLabel, isOpen, resultsAwarded);
+
+  return getPredictionSettings(conn);
+}
+
+function listAllCorps(conn) {
+  return conn.prepare(`
+    SELECT DISTINCT TRIM(corps) AS corps
+    FROM shows
+    WHERE TRIM(COALESCE(corps, '')) <> ''
+    ORDER BY corps COLLATE NOCASE ASC
+  `).all().map(r => r.corps);
+}
+
+function listPredictionActiveCorps(conn, seasonLabel = null) {
+  ensurePredictionTables(conn);
+
+  const settings = getPredictionSettings(conn);
+  const season = String(seasonLabel || settings.season_label || 'Next Season').trim();
+
+  return conn.prepare(`
+    SELECT corps
+    FROM prediction_active_corps
+    WHERE season_label = ?
+    ORDER BY corps COLLATE NOCASE ASC
+  `).all(season).map(r => r.corps);
+}
+
+function setPredictionActiveCorps(conn, seasonLabel, corpsList = []) {
+  ensurePredictionTables(conn);
+
+  const season = String(seasonLabel || getPredictionSettings(conn).season_label || 'Next Season').trim();
+  const clean = [...new Set(
+    (Array.isArray(corpsList) ? corpsList : [])
+      .map(c => String(c || '').trim())
+      .filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b));
+
+  const tx = conn.transaction(() => {
+    conn.prepare(`
+      DELETE FROM prediction_active_corps
+      WHERE season_label = ?
+    `).run(season);
+
+    const ins = conn.prepare(`
+      INSERT OR IGNORE INTO prediction_active_corps(season_label, corps)
+      VALUES (?, ?)
+    `);
+
+    for (const corps of clean) {
+      ins.run(season, corps);
+    }
+  });
+
+  tx();
+
+  return clean;
+}
+
+function getUserPredictionRows(conn, seasonLabel, userId) {
+  ensurePredictionTables(conn);
+
+  const season = String(seasonLabel || getPredictionSettings(conn).season_label || 'Next Season').trim();
+
+  const rows = conn.prepare(`
+    SELECT slot, corps, submitted_ts
+    FROM season_predictions
+    WHERE season_label = ?
+      AND user_id = ?
+    ORDER BY slot ASC
+  `).all(season, Number(userId));
+
+  const bySlot = new Map(rows.map(r => [Number(r.slot), r]));
+
+  const out = [];
+  for (let i = 1; i <= 12; i += 1) {
+    out.push({
+      slot: i,
+      corps: bySlot.get(i)?.corps || '',
+      submitted_ts: bySlot.get(i)?.submitted_ts || null,
+    });
+  }
+
+  return out;
+}
+
+function saveUserPrediction(conn, seasonLabel, userId, picks = []) {
+  ensurePredictionTables(conn);
+
+  const settings = getPredictionSettings(conn);
+  const season = String(seasonLabel || settings.season_label || 'Next Season').trim();
+
+  if (Number(settings.is_open || 0) !== 1) {
+    throw new Error('Predictions are closed.');
+  }
+
+  const activeCorps = new Set(listPredictionActiveCorps(conn, season));
+
+  if (activeCorps.size < 12) {
+    throw new Error('Admin must choose at least 12 active corps first.');
+  }
+
+  const clean = [];
+
+  for (let slot = 1; slot <= 12; slot += 1) {
+    const corps = String(picks[slot - 1] || '').trim();
+
+    if (!corps) {
+      throw new Error(`Missing pick for placement #${slot}.`);
+    }
+
+    if (!activeCorps.has(corps)) {
+      throw new Error(`${corps} is not an active corps for this season.`);
+    }
+
+    clean.push({ slot, corps });
+  }
+
+  const unique = new Set(clean.map(x => x.corps));
+  if (unique.size !== 12) {
+    throw new Error('You cannot use the same corps more than once.');
+  }
+
+  const tx = conn.transaction(() => {
+    conn.prepare(`
+      DELETE FROM season_predictions
+      WHERE season_label = ?
+        AND user_id = ?
+    `).run(season, Number(userId));
+
+    const ins = conn.prepare(`
+      INSERT INTO season_predictions(season_label, user_id, slot, corps, submitted_ts)
+      VALUES (?, ?, ?, ?, strftime('%s','now'))
+    `);
+
+    for (const p of clean) {
+      ins.run(season, Number(userId), Number(p.slot), p.corps);
+    }
+  });
+
+  tx();
+
+  return true;
+}
+
+function getPredictionResultsRows(conn, seasonLabel = null) {
+  ensurePredictionTables(conn);
+
+  const season = String(seasonLabel || getPredictionSettings(conn).season_label || 'Next Season').trim();
+
+  const rows = conn.prepare(`
+    SELECT slot, corps
+    FROM season_prediction_results
+    WHERE season_label = ?
+    ORDER BY slot ASC
+  `).all(season);
+
+  const bySlot = new Map(rows.map(r => [Number(r.slot), r.corps]));
+
+  const out = [];
+  for (let i = 1; i <= 12; i += 1) {
+    out.push({
+      slot: i,
+      corps: bySlot.get(i) || '',
+    });
+  }
+
+  return out;
+}
+
+function savePredictionResults(conn, seasonLabel, results = []) {
+  ensurePredictionTables(conn);
+
+  const season = String(seasonLabel || getPredictionSettings(conn).season_label || 'Next Season').trim();
+  const activeCorps = new Set(listPredictionActiveCorps(conn, season));
+
+  const clean = [];
+
+  for (let slot = 1; slot <= 12; slot += 1) {
+    const corps = String(results[slot - 1] || '').trim();
+
+    if (!corps) {
+      throw new Error(`Missing result for placement #${slot}.`);
+    }
+
+    if (!activeCorps.has(corps)) {
+      throw new Error(`${corps} is not an active corps for this season.`);
+    }
+
+    clean.push({ slot, corps });
+  }
+
+  const unique = new Set(clean.map(x => x.corps));
+  if (unique.size !== 12) {
+    throw new Error('Results cannot use the same corps more than once.');
+  }
+
+  const tx = conn.transaction(() => {
+    conn.prepare(`
+      DELETE FROM season_prediction_results
+      WHERE season_label = ?
+    `).run(season);
+
+    const ins = conn.prepare(`
+      INSERT INTO season_prediction_results(season_label, slot, corps, created_ts)
+      VALUES (?, ?, ?, strftime('%s','now'))
+    `);
+
+    for (const r of clean) {
+      ins.run(season, Number(r.slot), r.corps);
+    }
+
+    conn.prepare(`
+      UPDATE prediction_settings
+      SET results_awarded = 0,
+          updated_ts = strftime('%s','now')
+      WHERE id = 1
+    `).run();
+  });
+
+  tx();
+
+  return true;
+}
+
+function awardPredictionScores(conn, seasonLabel = null) {
+  ensurePredictionTables(conn);
+
+  const season = String(seasonLabel || getPredictionSettings(conn).season_label || 'Next Season').trim();
+
+  const resultRows = conn.prepare(`
+    SELECT slot, corps
+    FROM season_prediction_results
+    WHERE season_label = ?
+    ORDER BY slot ASC
+  `).all(season);
+
+  if (resultRows.length !== 12) {
+    throw new Error('You must enter all 12 final results before awarding points.');
+  }
+
+  const resultBySlot = new Map(resultRows.map(r => [Number(r.slot), String(r.corps)]));
+
+  const users = conn.prepare(`
+    SELECT DISTINCT user_id
+    FROM season_predictions
+    WHERE season_label = ?
+  `).all(season);
+
+  const tx = conn.transaction(() => {
+    conn.prepare(`
+      DELETE FROM season_prediction_scores
+      WHERE season_label = ?
+    `).run(season);
+
+    const pickStmt = conn.prepare(`
+      SELECT slot, corps
+      FROM season_predictions
+      WHERE season_label = ?
+        AND user_id = ?
+      ORDER BY slot ASC
+    `);
+
+    const scoreStmt = conn.prepare(`
+      INSERT INTO season_prediction_scores(season_label, user_id, total_points, awarded_ts)
+      VALUES (?, ?, ?, strftime('%s','now'))
+    `);
+
+    for (const u of users) {
+      const picks = pickStmt.all(season, Number(u.user_id));
+
+      let points = 0;
+      for (const p of picks) {
+        const slot = Number(p.slot);
+        if (resultBySlot.get(slot) === String(p.corps)) {
+          points += 1;
+        }
+      }
+
+      scoreStmt.run(season, Number(u.user_id), points);
+    }
+
+    conn.prepare(`
+      UPDATE prediction_settings
+      SET results_awarded = 1,
+          is_open = 0,
+          updated_ts = strftime('%s','now')
+      WHERE id = 1
+    `).run();
+  });
+
+  tx();
+
+  return {
+    users_scored: users.length,
+  };
+}
+
+function listPredictionLeaderboard(conn, seasonLabel = null) {
+  ensurePredictionTables(conn);
+
+  const season = String(seasonLabel || getPredictionSettings(conn).season_label || 'Next Season').trim();
+
+  return conn.prepare(`
+    SELECT
+      s.user_id,
+      u.username,
+      u.avatar_url,
+      s.total_points,
+      s.awarded_ts,
+      RANK() OVER (
+        ORDER BY s.total_points DESC, LOWER(u.username) ASC
+      ) AS rank
+    FROM season_prediction_scores s
+    JOIN users u ON u.id = s.user_id
+    WHERE s.season_label = ?
+    ORDER BY s.total_points DESC, LOWER(u.username) ASC
+  `).all(season);
+}
+
+function countPredictionSubmissions(conn, seasonLabel = null) {
+  ensurePredictionTables(conn);
+
+  const season = String(seasonLabel || getPredictionSettings(conn).season_label || 'Next Season').trim();
+
+  const row = conn.prepare(`
+    SELECT COUNT(DISTINCT user_id) AS cnt
+    FROM season_predictions
+    WHERE season_label = ?
+  `).get(season);
+
+  return Number(row?.cnt || 0);
+}
+
+function resetPredictionSeason(conn, newSeasonLabel) {
+  ensurePredictionTables(conn);
+
+  const season = String(newSeasonLabel || '').trim();
+  if (!season) throw new Error('Season label is required.');
+
+  conn.prepare(`
+    UPDATE prediction_settings
+    SET season_label = ?,
+        is_open = 1,
+        results_awarded = 0,
+        updated_ts = strftime('%s','now')
+    WHERE id = 1
+  `).run(season);
+
+  conn.prepare(`
+    DELETE FROM prediction_active_corps
+    WHERE season_label = ?
+  `).run(season);
+
+  conn.prepare(`
+    DELETE FROM season_predictions
+    WHERE season_label = ?
+  `).run(season);
+
+  conn.prepare(`
+    DELETE FROM season_prediction_results
+    WHERE season_label = ?
+  `).run(season);
+
+  conn.prepare(`
+    DELETE FROM season_prediction_scores
+    WHERE season_label = ?
+  `).run(season);
+
+  return getPredictionSettings(conn);
+}
+
+
+
 function addNotification(conn, args = {}) {
   conn.prepare(`
     INSERT INTO notifications(user_id, actor_user_id, kind, show_id, review_user_id, vote)
@@ -2082,6 +2544,20 @@ module.exports = {
   deleteReviewReply,
   softDeleteReviewReply,
   getSiteStats,
+  ensurePredictionTables,
+  getPredictionSettings,
+  updatePredictionSettings,
+  listAllCorps,
+  listPredictionActiveCorps,
+  setPredictionActiveCorps,
+  getUserPredictionRows,
+  saveUserPrediction,
+  getPredictionResultsRows,
+  savePredictionResults,
+  awardPredictionScores,
+  listPredictionLeaderboard,
+  countPredictionSubmissions,
+  resetPredictionSeason,
 };
 
 
