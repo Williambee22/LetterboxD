@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>All Predictions - Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <link rel="icon" type="image/png" href="/static/favicon.png"/>
+
+  <style>
+    html,
+    body,
+    body.app {
+      background: #000 !important;
+      color: #fff;
+    }
+
+    .subsShell {
+      max-width: 1150px;
+      margin: 0 auto;
+      padding: 22px 0 60px;
+    }
+
+    .subsHero {
+      padding: 22px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+      margin-bottom: 16px;
+    }
+
+    .subsGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 16px;
+    }
+
+    .subCard {
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .subHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .subUser {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .subAvatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.08);
+      flex: 0 0 auto;
+    }
+
+    .subAvatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .subUsername {
+      font-weight: 900;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .scorePill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 22%, rgba(255,255,255,0.06));
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, rgba(255,255,255,0.10));
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .pickRow {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr);
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      align-items: center;
+    }
+
+    .pickRow:last-child {
+      border-bottom: none;
+    }
+
+    .placement {
+      font-weight: 900;
+      opacity: 0.9;
+    }
+
+    .corpsName {
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (max-width: 600px) {
+      .subsGrid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<%
+  const meUser = typeof me !== "undefined" ? me : null;
+  const s = typeof settings !== "undefined" ? settings : {};
+  const users = Array.isArray(submissions) ? submissions : [];
+
+  function suffix(n) {
+    const v = Number(n);
+    if (v % 100 >= 11 && v % 100 <= 13) return `${v}th`;
+    if (v % 10 === 1) return `${v}st`;
+    if (v % 10 === 2) return `${v}nd`;
+    if (v % 10 === 3) return `${v}rd`;
+    return `${v}th`;
+  }
+%>
+
+<body class="app" style="--accent: <%= accent_color || '#3252b3' %>;">
+  <header class="topbar">
+    <div class="wrap row between">
+      <a class="brand" href="/shows" style="display:flex; align-items:center;">
+        <img src="/static/pressboxd-wordmark.png" alt="Pressboxd" style="height:64px; width:auto;">
+      </a>
+
+      <nav class="nav row">
+        <a href="/shows">Shows</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+        <a href="/predictions">Predictions</a>
+        <% if (meUser && Number(meUser.is_admin) === 1) { %>
+          <a href="/admin/predictions">Admin Predictions</a>
+        <% } %>
+      </nav>
+
+      <div class="auth row">
+        <% if (meUser) { %>
+          <a href="/me"><%= meUser.username || "me" %></a>
+          <a href="/logout">Logout</a>
+        <% } %>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap subsShell">
+    <section class="subsHero">
+      <div class="row between" style="gap:12px; align-items:flex-start;">
+        <div>
+          <h1 style="margin:0 0 6px;">All Predictions</h1>
+          <div class="muted">
+            Viewing submitted predictions for <b><%= s.season_label || "Next Season" %></b>.
+          </div>
+          <div class="muted small" style="margin-top:8px;">
+            <%= users.length %> users have submitted predictions.
+          </div>
+        </div>
+
+        <a class="btn ghost" href="/predictions">Back to Predictions</a>
+      </div>
+    </section>
+
+    <% if (users.length > 0) { %>
+      <div class="subsGrid">
+        <% for (const u of users) { %>
+          <section class="subCard">
+            <div class="subHeader">
+              <a class="subUser" href="/u/<%= encodeURIComponent(u.username) %>" style="color:inherit; text-decoration:none;">
+                <span class="subAvatar">
+                  <% if (u.avatar_url) { %>
+                    <img src="<%= u.avatar_url %>" alt="<%= u.username %>">
+                  <% } %>
+                </span>
+
+                <span style="min-width:0;">
+                  <div class="subUsername"><%= u.username %></div>
+                  <div class="muted small">Submitted prediction</div>
+                </span>
+              </a>
+
+              <% if (u.total_points !== null && u.total_points !== undefined) { %>
+                <div class="scorePill"><%= Number(u.total_points || 0) %>/240</div>
+              <% } %>
+            </div>
+
+            <% const picks = Array.isArray(u.picks) ? u.picks : []; %>
+            <% for (let i = 1; i <= 12; i++) {
+                 const pick = picks.find(p => Number(p.slot) === i);
+            %>
+              <div class="pickRow">
+                <div class="placement"><%= suffix(i) %></div>
+                <div class="corpsName"><%= pick?.corps || "—" %></div>
+              </div>
+            <% } %>
+          </section>
+        <% } %>
+      </div>
+    <% } else { %>
+      <section class="subCard">
+        <div class="muted">No users have submitted predictions yet.</div>
+      </section>
+    <% } %>
+  </main>
+</body>
+</html>
