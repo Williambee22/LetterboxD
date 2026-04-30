@@ -137,6 +137,7 @@
   const myRows = Array.isArray(my_prediction) ? my_prediction : [];
   const resultRows = Array.isArray(results) ? results : [];
   const leaders = Array.isArray(leaderboard) ? leaderboard : [];
+  const allTimeLeaders = Array.isArray(all_time_leaderboard) ? all_time_leaderboard : [];
   const isOpen = Number(s?.is_open || 0) === 1;
   const awarded = Number(s?.results_awarded || 0) === 1;
 
@@ -275,8 +276,8 @@
         </section>
 
         <section class="predPanel">
-          <h3 style="margin-top:0;">Leaderboard</h3>
-
+          <h3 style="margin-top:0;">Current Season Leaderboard</h3>
+        
           <% if (awarded && leaders.length > 0) { %>
             <% for (const l of leaders) { %>
               <div class="leaderRow">
@@ -290,7 +291,28 @@
               </div>
             <% } %>
           <% } else { %>
-            <div class="muted small">Points have not been awarded yet.</div>
+            <div class="muted small">Current season points have not been awarded yet.</div>
+          <% } %>
+        </section>
+        
+        <section class="predPanel">
+          <h3 style="margin-top:0;">All-Time Leaderboard</h3>
+        
+          <% if (allTimeLeaders.length > 0) { %>
+            <% for (const l of allTimeLeaders) { %>
+              <div class="leaderRow">
+                <div style="font-weight:900;">#<%= l.rank %></div>
+                <div style="min-width:0;">
+                  <a href="/u/<%= encodeURIComponent(l.username) %>" style="color:inherit; text-decoration:none; font-weight:800;">
+                    <%= l.username %>
+                  </a>
+                  <div class="muted small"><%= Number(l.seasons_count || 0) %> season<%= Number(l.seasons_count || 0) === 1 ? "" : "s" %></div>
+                </div>
+                <div style="text-align:right; font-weight:900;"><%= l.total_points %></div>
+              </div>
+            <% } %>
+          <% } else { %>
+            <div class="muted small">No all-time prediction scores yet.</div>
           <% } %>
         </section>
       </aside>
