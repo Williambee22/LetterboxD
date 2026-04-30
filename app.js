@@ -1428,6 +1428,40 @@ function createApp() {
   
       return res.redirect('/predictions');
     }));
+
+    app.get('/predictions/all', loginRequired(async (req, res, next) => {
+      let conn;
+    
+      try {
+        conn = getConn();
+    
+        const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
+        if (!me) return res.sendStatus(404);
+    
+        if (!me.avatar_url) me.avatar_url = pfpUrlForUsername(me.username || '');
+    
+        const settings = normalizeRow(dbx.getPredictionSettings(conn));
+        const seasonLabel = settings.season_label;
+    
+        const submissions = dbx.listAllPredictionSubmissions(conn, seasonLabel).map((u) => {
+          const d = normalizeRow(u);
+          if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
+          return d;
+        });
+    
+        return res.render('prediction_submissions', {
+          me,
+          settings,
+          submissions,
+        });
+      } catch (err) {
+        return next(err);
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+    }));
+
+
   
     app.get('/admin/predictions', adminRequired(async (req, res, next) => {
       let conn;
