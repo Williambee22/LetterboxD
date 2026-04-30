@@ -92,6 +92,13 @@
       color: #fca5a5;
     }
 
+    .heroActions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
     .leaderRow,
     .resultRow {
       display: grid;
@@ -157,6 +164,7 @@
         <a href="/top">Top Shows</a>
         <a href="/top_users">Top Users</a>
         <a href="/predictions">Predictions</a>
+        <a href="/predictions/all">All Predictions</a>
         <% if (meUser && Number(meUser.is_admin) === 1) { %>
           <a href="/admin/predictions">Admin Predictions</a>
         <% } %>
@@ -201,6 +209,10 @@
           </div>
           <div class="muted small" style="margin-top:8px;">
             <%= Number(submission_count || 0) %> users have submitted predictions.
+          </div>
+
+          <div class="heroActions">
+            <a class="btn ghost" href="/predictions/all">View Other's Predictions</a>
           </div>
         </div>
 
