@@ -1402,7 +1402,7 @@ function createApp() {
           leaderboard,
           all_time_leaderboard: allTimeLeaderboard,
           submission_count: submissionCount,
-          can_submit_prediction: canSubmitPrediction,
+          can_submit_prediction: canSubmitPredictionSafe,
           prediction_remaining_hours: predictionRemainingHours,
         });
       } catch (err) {
@@ -1424,8 +1424,8 @@ function createApp() {
         const createdTs = Number(me.created_ts || 0);
         const accountAgeSeconds = Math.floor(Date.now() / 1000) - createdTs;
         const threeDaysSeconds = 3 * 24 * 60 * 60;
-        const canSubmitPrediction = !!createdTs && accountAgeSeconds >= threeDaysSeconds;
-        const predictionRemainingHours = canSubmitPrediction
+        const canSubmitPredictionSafe = !!createdTs && accountAgeSeconds >= threeDaysSeconds;
+        const predictionRemainingHours = canSubmitPredictionSafe
           ? 0
           : Math.ceil(Math.max(0, threeDaysSeconds - accountAgeSeconds) / 3600);
     
