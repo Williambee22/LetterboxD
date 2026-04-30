@@ -121,6 +121,8 @@
   const activeSetSafe = Array.isArray(active_set) ? active_set : [];
   const resultRows = Array.isArray(results) ? results : [];
   const leaders = Array.isArray(leaderboard) ? leaderboard : [];
+  const allTimeLeaders = Array.isArray(all_time_leaderboard) ? all_time_leaderboard : [];
+  const predictionSeasons = Array.isArray(prediction_seasons) ? prediction_seasons : [];
 
   function suffix(n) {
     const v = Number(n);
@@ -213,6 +215,32 @@
         </form>
       </section>
 
+      <section class="adminPanel dangerZone">
+        <h2 style="margin-top:0;">Delete Season Results</h2>
+        <div class="muted small" style="margin-bottom:12px;">
+          This deletes the final results and removes all awarded points for that season. User predictions will stay saved.
+        </div>
+      
+        <% if (predictionSeasons.length > 0) { %>
+          <form method="post" action="/admin/predictions/delete-results" onsubmit="return confirm('Delete this season’s results and remove all awarded points for that season?');">
+            <div class="field" style="margin-bottom:12px;">
+              <label>Season</label>
+              <select class="fieldSelect" name="season_label" required>
+                <% for (const season of predictionSeasons) { %>
+                  <option value="<%= season %>" <%= season === s.season_label ? "selected" : "" %>><%= season %></option>
+                <% } %>
+              </select>
+            </div>
+      
+            <button class="btn" type="submit" style="background:#ef4444; color:white;">Delete Results + Points</button>
+          </form>
+        <% } else { %>
+          <div class="muted small">No prediction seasons exist yet.</div>
+        <% } %>
+      </section>
+
+
+
       <section class="adminPanel" style="grid-column:1 / -1;">
         <h2 style="margin-top:0;">Active Corps</h2>
         <div class="muted small" style="margin-bottom:12px;">
@@ -274,8 +302,8 @@
       </section>
 
       <section class="adminPanel">
-        <h2 style="margin-top:0;">Leaderboard</h2>
-
+        <h2 style="margin-top:0;">Current Season Leaderboard</h2>
+      
         <% if (leaders.length > 0) { %>
           <% for (const l of leaders) { %>
             <div class="leaderRow">
@@ -285,11 +313,32 @@
                   <%= l.username %>
                 </a>
               </div>
-              <div style="text-align:right; font-weight:900;"><%= l.total_points %>/12</div>
+              <div style="text-align:right; font-weight:900;"><%= l.total_points %>/240</div>
             </div>
           <% } %>
         <% } else { %>
-          <div class="muted small">No scores yet.</div>
+          <div class="muted small">No current season scores yet.</div>
+        <% } %>
+      </section>
+      
+      <section class="adminPanel">
+        <h2 style="margin-top:0;">All-Time Leaderboard</h2>
+      
+        <% if (allTimeLeaders.length > 0) { %>
+          <% for (const l of allTimeLeaders) { %>
+            <div class="leaderRow">
+              <div style="font-weight:900;">#<%= l.rank %></div>
+              <div>
+                <a href="/u/<%= encodeURIComponent(l.username) %>" style="color:inherit; text-decoration:none; font-weight:800;">
+                  <%= l.username %>
+                </a>
+                <div class="muted small"><%= Number(l.seasons_count || 0) %> season<%= Number(l.seasons_count || 0) === 1 ? "" : "s" %></div>
+              </div>
+              <div style="text-align:right; font-weight:900;"><%= l.total_points %></div>
+            </div>
+          <% } %>
+        <% } else { %>
+          <div class="muted small">No all-time scores yet.</div>
         <% } %>
       </section>
     </div>
