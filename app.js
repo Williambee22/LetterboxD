@@ -1481,17 +1481,21 @@ function createApp() {
     
         const settings = normalizeRow(dbx.getPredictionSettings(conn));
         const seasonLabel = settings.season_label;
+        const results = dbx.getPredictionResultsRows(conn, seasonLabel);
     
         const submissions = dbx.listAllPredictionSubmissions(conn, seasonLabel).map((u) => {
           const d = normalizeRow(u);
           if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
           return d;
         });
-    
+
+        const results = dbx.getPredictionResultsRows(conn, seasonLabel);
+        
         return res.render('prediction_submissions', {
           me,
           settings,
           submissions,
+          results,
         });
       } catch (err) {
         return next(err);
