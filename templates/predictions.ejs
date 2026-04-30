@@ -140,6 +140,8 @@
   const allTimeLeaders = Array.isArray(all_time_leaderboard) ? all_time_leaderboard : [];
   const isOpen = Number(s?.is_open || 0) === 1;
   const awarded = Number(s?.results_awarded || 0) === 1;
+  const canSubmitPrediction = typeof can_submit_prediction !== "undefined" ? !!can_submit_prediction : true;
+  const predictionRemainingHours = typeof prediction_remaining_hours !== "undefined" ? Number(prediction_remaining_hours || 0) : 0;
 
   function suffix(n) {
     const v = Number(n);
@@ -240,7 +242,7 @@
             %>
               <div class="pickRow">
                 <div class="placement"><%= suffix(i) %></div>
-                <select class="pickSelect placementSelect" name="slot_<%= i %>" <%= isOpen ? "" : "disabled" %> required>
+                <select class="pickSelect placementSelect" name="slot_<%= i %>" <%= isOpen && canSubmitPrediction ? "" : "disabled" %> required>
                   <option value="">Choose corps...</option>
                   <% for (const corps of activeCorps) { %>
                     <option value="<%= corps %>" <%= existing === corps ? "selected" : "" %>><%= corps %></option>
@@ -249,8 +251,15 @@
               </div>
             <% } %>
 
-            <% if (isOpen) { %>
+            <% if (isOpen && canSubmitPrediction) { %>
               <button class="btn green" type="submit" style="margin-top:12px;">Submit Prediction</button>
+            <% } else if (isOpen && !canSubmitPrediction) { %>
+              <div class="muted small" style="margin-top:12px;">
+                Your account must be at least 3 days old before you can submit a prediction.
+                <% if (predictionRemainingHours > 0) { %>
+                  Try again in about <%= predictionRemainingHours %> hour<%= predictionRemainingHours === 1 ? "" : "s" %>.
+                <% } %>
+              </div>
             <% } else { %>
               <div class="muted small" style="margin-top:12px;">Predictions are closed. You can view your picks, but you cannot edit them.</div>
             <% } %>
