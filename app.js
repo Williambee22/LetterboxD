@@ -1488,8 +1488,6 @@ function createApp() {
           if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
           return d;
         });
-
-        const results = dbx.getPredictionResultsRows(conn, seasonLabel);
         
         return res.render('prediction_submissions', {
           me,
