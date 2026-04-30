@@ -108,6 +108,31 @@
       opacity: 0.9;
     }
 
+    .pickCorrect {
+      background: rgba(34,197,94,0.18);
+      border: 1px solid rgba(34,197,94,0.40);
+      border-radius: 10px;
+      padding: 8px;
+    }
+    
+    .pickOneOff {
+      background: rgba(202,138,4,0.22);
+      border: 1px solid rgba(234,179,8,0.42);
+      border-radius: 10px;
+      padding: 8px;
+    }
+    
+    .pickWrong {
+      background: rgba(239,68,68,0.18);
+      border: 1px solid rgba(239,68,68,0.38);
+      border-radius: 10px;
+      padding: 8px;
+    }
+    
+    .pickNeutral {
+      padding: 8px 0;
+    }
+
     .corpsName {
       min-width: 0;
       white-space: nowrap;
@@ -127,6 +152,7 @@
   const meUser = typeof me !== "undefined" ? me : null;
   const s = typeof settings !== "undefined" ? settings : {};
   const users = Array.isArray(submissions) ? submissions : [];
+  const resultRows = Array.isArray(results) ? results : [];
 
   function suffix(n) {
     const v = Number(n);
@@ -135,6 +161,26 @@
     if (v % 10 === 2) return `${v}nd`;
     if (v % 10 === 3) return `${v}rd`;
     return `${v}th`;
+  }
+
+  function pickStatusClass(slot, corps) {
+    const pickedCorps = String(corps || "").trim();
+    if (!pickedCorps) return "pickNeutral";
+
+    const completedResults = resultRows.filter(r => String(r?.corps || "").trim());
+    if (completedResults.length < 12) return "pickNeutral";
+
+    const actualSameSlot = resultRows.find(r => Number(r.slot) === Number(slot));
+    if (actualSameSlot && String(actualSameSlot.corps || "").trim() === pickedCorps) {
+      return "pickCorrect";
+    }
+
+    const actualForCorps = resultRows.find(r => String(r.corps || "").trim() === pickedCorps);
+    if (actualForCorps && Math.abs(Number(actualForCorps.slot) - Number(slot)) === 1) {
+      return "pickOneOff";
+    }
+
+    return "pickWrong";
   }
 %>
 
@@ -208,7 +254,7 @@
             <% for (let i = 1; i <= 12; i++) {
                  const pick = picks.find(p => Number(p.slot) === i);
             %>
-              <div class="pickRow">
+              <div class="pickRow <%= pickStatusClass(i, pick?.corps || '') %>">
                 <div class="placement"><%= suffix(i) %></div>
                 <div class="corpsName"><%= pick?.corps || "—" %></div>
               </div>
