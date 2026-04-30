@@ -140,8 +140,16 @@
   const allTimeLeaders = Array.isArray(all_time_leaderboard) ? all_time_leaderboard : [];
   const isOpen = Number(s?.is_open || 0) === 1;
   const awarded = Number(s?.results_awarded || 0) === 1;
-  const canSubmitPrediction = typeof can_submit_prediction !== "undefined" ? !!can_submit_prediction : true;
-  const predictionRemainingHours = typeof prediction_remaining_hours !== "undefined" ? Number(prediction_remaining_hours || 0) : 0;
+  
+  const canSubmitPrediction =
+    typeof can_submit_prediction !== "undefined"
+      ? !!can_submit_prediction
+      : true;
+  
+  const predictionRemainingHours =
+    typeof prediction_remaining_hours !== "undefined"
+      ? Number(prediction_remaining_hours || 0)
+      : 0;
 
   function suffix(n) {
     const v = Number(n);
