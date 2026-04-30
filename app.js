@@ -1384,7 +1384,13 @@ function createApp() {
           if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
           return d;
         });
-  
+
+        const allTimeLeaderboard = dbx.listPredictionAllTimeLeaderboard(conn).map((r) => {
+          const d = normalizeRow(r);
+          if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
+          return d;
+        });
+        
         const submissionCount = dbx.countPredictionSubmissions(conn, seasonLabel);
   
         return res.render('predictions', {
@@ -1394,6 +1400,7 @@ function createApp() {
           my_prediction: myPrediction,
           results,
           leaderboard,
+          all_time_leaderboard: allTimeLeaderboard,
           submission_count: submissionCount,
         });
       } catch (err) {
@@ -1482,7 +1489,16 @@ function createApp() {
           if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
           return d;
         });
-  
+
+        const allTimeLeaderboard = dbx.listPredictionAllTimeLeaderboard(conn).map((r) => {
+          const d = normalizeRow(r);
+          if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
+          return d;
+        });
+        
+        const predictionSeasons = dbx.listPredictionSeasons(conn);
+
+        
         const submissionCount = dbx.countPredictionSubmissions(conn, seasonLabel);
   
         return res.render('admin_predictions', {
@@ -1494,6 +1510,8 @@ function createApp() {
           results,
           leaderboard,
           submission_count: submissionCount,
+          all_time_leaderboard: allTimeLeaderboard,
+          prediction_seasons: predictionSeasons,
         });
       } catch (err) {
         return next(err);
@@ -1526,6 +1544,33 @@ function createApp() {
   
       return res.redirect('/admin/predictions');
     }));
+
+    app.post('/admin/predictions/delete-results', adminRequired(async (req, res) => {
+      let conn;
+    
+      try {
+        conn = getConn();
+    
+        const seasonLabel = String(req.body.season_label || '').trim();
+    
+        if (!seasonLabel) {
+          req.flash('error', 'Choose a season to delete results from.');
+          return res.redirect('/admin/predictions');
+        }
+    
+        dbx.deletePredictionSeasonResults(conn, seasonLabel);
+        await dbx.commit(conn);
+    
+        req.flash('ok', `Deleted results and awarded points for ${seasonLabel}.`);
+      } catch (err) {
+        req.flash('error', String(err.message || err));
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+    
+      return res.redirect('/admin/predictions');
+    }));
+
   
     app.post('/admin/predictions/active-corps', adminRequired(async (req, res) => {
       let conn;
