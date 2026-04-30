@@ -1363,36 +1363,47 @@ function createApp() {
 
     app.get('/predictions', loginRequired(async (req, res, next) => {
       let conn;
-  
+    
       try {
         conn = getConn();
-  
+    
         const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
         if (!me) return res.sendStatus(404);
-  
+    
         if (!me.avatar_url) me.avatar_url = pfpUrlForUsername(me.username || '');
-  
+    
+        const createdTs = Number(me.created_ts || 0);
+        const accountAgeSeconds = Math.floor(Date.now() / 1000) - createdTs;
+        const threeDaysSeconds = 3 * 24 * 60 * 60;
+    
+        const canSubmitPredictionSafe =
+          !!createdTs && accountAgeSeconds >= threeDaysSeconds;
+    
+        const predictionRemainingHours = canSubmitPredictionSafe
+          ? 0
+          : Math.ceil(Math.max(0, threeDaysSeconds - accountAgeSeconds) / 3600);
+    
         const settings = normalizeRow(dbx.getPredictionSettings(conn));
         const seasonLabel = settings.season_label;
-  
+    
         const activeCorps = dbx.listPredictionActiveCorps(conn, seasonLabel);
-        const activeSet = activeCorps;
         const myPrediction = dbx.getUserPredictionRows(conn, seasonLabel, Number(req.session.uid));
         const results = dbx.getPredictionResultsRows(conn, seasonLabel);
+    
         const leaderboard = dbx.listPredictionLeaderboard(conn, seasonLabel).map((r) => {
           const d = normalizeRow(r);
           if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
           return d;
         });
-
+    
         const allTimeLeaderboard = dbx.listPredictionAllTimeLeaderboard(conn).map((r) => {
           const d = normalizeRow(r);
           if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
           return d;
         });
-        
+    
         const submissionCount = dbx.countPredictionSubmissions(conn, seasonLabel);
-  
+    
         return res.render('predictions', {
           me,
           settings,
