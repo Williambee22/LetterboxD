@@ -570,6 +570,59 @@ function getPredictionSettings(conn) {
   };
 }
 
+function listAllPredictionSubmissions(conn, seasonLabel = null) {
+  ensurePredictionTables(conn);
+
+  const season = String(seasonLabel || getPredictionSettings(conn).season_label || 'Next Season').trim();
+
+  const rows = conn.prepare(`
+    SELECT
+      u.id AS user_id,
+      u.username,
+      u.avatar_url,
+      p.slot,
+      p.corps,
+      p.submitted_ts,
+      COALESCE(sc.total_points, NULL) AS total_points
+    FROM season_predictions p
+    JOIN users u ON u.id = p.user_id
+    LEFT JOIN season_prediction_scores sc
+      ON sc.season_label = p.season_label
+     AND sc.user_id = p.user_id
+    WHERE p.season_label = ?
+    ORDER BY
+      sc.total_points DESC,
+      LOWER(u.username) ASC,
+      p.slot ASC
+  `).all(season);
+
+  const users = new Map();
+
+  for (const row of rows) {
+    const userId = Number(row.user_id);
+
+    if (!users.has(userId)) {
+      users.set(userId, {
+        user_id: userId,
+        username: row.username,
+        avatar_url: row.avatar_url,
+        submitted_ts: row.submitted_ts,
+        total_points: row.total_points == null ? null : Number(row.total_points),
+        picks: [],
+      });
+    }
+
+    users.get(userId).picks.push({
+      slot: Number(row.slot),
+      corps: row.corps,
+    });
+  }
+
+  return [...users.values()];
+}
+
+
+
 function updatePredictionSettings(conn, args = {}) {
   ensurePredictionTables(conn);
 
@@ -2571,6 +2624,7 @@ module.exports = {
   listPredictionLeaderboard,
   countPredictionSubmissions,
   resetPredictionSeason,
+  listAllPredictionSubmissions,
 };
 
 
