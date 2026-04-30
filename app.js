@@ -1402,6 +1402,8 @@ function createApp() {
           leaderboard,
           all_time_leaderboard: allTimeLeaderboard,
           submission_count: submissionCount,
+          can_submit_prediction: canSubmitPrediction,
+          prediction_remaining_hours: predictionRemainingHours,
         });
       } catch (err) {
         return next(err);
@@ -1412,27 +1414,46 @@ function createApp() {
   
     app.post('/predictions', loginRequired(async (req, res) => {
       let conn;
-  
+    
       try {
         conn = getConn();
-  
+    
+        const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
+        if (!me) return res.sendStatus(404);
+    
+        const createdTs = Number(me.created_ts || 0);
+        const accountAgeSeconds = Math.floor(Date.now() / 1000) - createdTs;
+        const threeDaysSeconds = 3 * 24 * 60 * 60;
+        const canSubmitPrediction = !!createdTs && accountAgeSeconds >= threeDaysSeconds;
+        const predictionRemainingHours = canSubmitPrediction
+          ? 0
+          : Math.ceil(Math.max(0, threeDaysSeconds - accountAgeSeconds) / 3600);
+    
+        if (!createdTs || accountAgeSeconds < threeDaysSeconds) {
+          const remainingSeconds = Math.max(0, threeDaysSeconds - accountAgeSeconds);
+          const remainingHours = Math.ceil(remainingSeconds / 3600);
+    
+          req.flash('error', `Your account must be at least 3 days old before you can submit a prediction. Try again in about ${remainingHours} hour${remainingHours === 1 ? '' : 's'}.`);
+          return res.redirect('/predictions');
+        }
+    
         const settings = dbx.getPredictionSettings(conn);
         const picks = [];
-  
+    
         for (let i = 1; i <= 12; i += 1) {
           picks.push(String(req.body[`slot_${i}`] || '').trim());
         }
-  
+    
         dbx.saveUserPrediction(conn, settings.season_label, Number(req.session.uid), picks);
         await dbx.commit(conn);
-  
+    
         req.flash('ok', 'Prediction submitted.');
       } catch (err) {
         req.flash('error', String(err.message || err));
       } finally {
         if (conn) dbx.close(conn);
       }
-  
+    
       return res.redirect('/predictions');
     }));
 
