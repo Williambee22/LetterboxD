@@ -621,7 +621,76 @@ function listAllPredictionSubmissions(conn, seasonLabel = null) {
   return [...users.values()];
 }
 
+function listPredictionAllTimeLeaderboard(conn) {
+  ensurePredictionTables(conn);
 
+  return conn.prepare(`
+    SELECT
+      u.id AS user_id,
+      u.username,
+      u.avatar_url,
+      SUM(s.total_points) AS total_points,
+      COUNT(*) AS seasons_count,
+      RANK() OVER (
+        ORDER BY SUM(s.total_points) DESC, LOWER(u.username) ASC
+      ) AS rank
+    FROM season_prediction_scores s
+    JOIN users u ON u.id = s.user_id
+    GROUP BY u.id, u.username, u.avatar_url
+    ORDER BY total_points DESC, LOWER(u.username) ASC
+  `).all();
+}
+
+function deletePredictionSeasonResults(conn, seasonLabel = null) {
+  ensurePredictionTables(conn);
+
+  const settings = getPredictionSettings(conn);
+  const season = String(seasonLabel || settings.season_label || 'Next Season').trim();
+
+  const tx = conn.transaction(() => {
+    conn.prepare(`
+      DELETE FROM season_prediction_results
+      WHERE season_label = ?
+    `).run(season);
+
+    conn.prepare(`
+      DELETE FROM season_prediction_scores
+      WHERE season_label = ?
+    `).run(season);
+
+    if (String(settings.season_label || '') === season) {
+      conn.prepare(`
+        UPDATE prediction_settings
+        SET results_awarded = 0,
+            updated_ts = strftime('%s','now')
+        WHERE id = 1
+      `).run();
+    }
+  });
+
+  tx();
+
+  return true;
+}
+
+function listPredictionSeasons(conn) {
+  ensurePredictionTables(conn);
+
+  return conn.prepare(`
+    SELECT season_label
+    FROM (
+      SELECT season_label FROM season_predictions
+      UNION
+      SELECT season_label FROM season_prediction_results
+      UNION
+      SELECT season_label FROM season_prediction_scores
+      UNION
+      SELECT season_label FROM prediction_active_corps
+    )
+    WHERE TRIM(COALESCE(season_label, '')) <> ''
+    ORDER BY season_label DESC
+  `).all().map(r => r.season_label);
+}
 
 function updatePredictionSettings(conn, args = {}) {
   ensurePredictionTables(conn);
@@ -2625,6 +2694,9 @@ module.exports = {
   countPredictionSubmissions,
   resetPredictionSeason,
   listAllPredictionSubmissions,
+  listPredictionAllTimeLeaderboard,
+  deletePredictionSeasonResults,
+  listPredictionSeasons,
 };
 
 
