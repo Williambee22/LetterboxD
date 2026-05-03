@@ -697,20 +697,55 @@ function updatePredictionSettings(conn, args = {}) {
 
   const current = getPredictionSettings(conn);
 
-  const seasonLabel = String(args.seasonLabel ?? current.season_label ?? 'Next Season').trim() || 'Next Season';
-  const isOpen = args.isOpen == null ? Number(current.is_open || 0) : (args.isOpen ? 1 : 0);
+  const oldSeasonLabel = String(current.season_label || 'Next Season').trim() || 'Next Season';
+  const newSeasonLabel = String(args.seasonLabel ?? oldSeasonLabel).trim() || oldSeasonLabel;
+
+  const isOpen = args.isOpen == null
+    ? Number(current.is_open || 0)
+    : (args.isOpen ? 1 : 0);
+
   const resultsAwarded = args.resultsAwarded == null
     ? Number(current.results_awarded || 0)
     : (args.resultsAwarded ? 1 : 0);
 
-  conn.prepare(`
-    UPDATE prediction_settings
-    SET season_label = ?,
-        is_open = ?,
-        results_awarded = ?,
-        updated_ts = strftime('%s','now')
-    WHERE id = 1
-  `).run(seasonLabel, isOpen, resultsAwarded);
+  const tx = conn.transaction(() => {
+    if (newSeasonLabel !== oldSeasonLabel) {
+      conn.prepare(`
+        UPDATE prediction_active_corps
+        SET season_label = ?
+        WHERE season_label = ?
+      `).run(newSeasonLabel, oldSeasonLabel);
+
+      conn.prepare(`
+        UPDATE season_predictions
+        SET season_label = ?
+        WHERE season_label = ?
+      `).run(newSeasonLabel, oldSeasonLabel);
+
+      conn.prepare(`
+        UPDATE season_prediction_results
+        SET season_label = ?
+        WHERE season_label = ?
+      `).run(newSeasonLabel, oldSeasonLabel);
+
+      conn.prepare(`
+        UPDATE season_prediction_scores
+        SET season_label = ?
+        WHERE season_label = ?
+      `).run(newSeasonLabel, oldSeasonLabel);
+    }
+
+    conn.prepare(`
+      UPDATE prediction_settings
+      SET season_label = ?,
+          is_open = ?,
+          results_awarded = ?,
+          updated_ts = strftime('%s','now')
+      WHERE id = 1
+    `).run(newSeasonLabel, isOpen, resultsAwarded);
+  });
+
+  tx();
 
   return getPredictionSettings(conn);
 }
