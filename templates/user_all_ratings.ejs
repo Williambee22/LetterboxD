@@ -100,12 +100,130 @@
       pointer-events: auto !important;
     }
 
-    /* simple ratings list */
+    /* critic-style ratings list */
     .ratings_list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-top: 14px;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    .ratingCard {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      overflow: hidden;
+    }
+    
+    .ratingSummary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px;
+    }
+    
+    .ratingSummary::-webkit-details-marker {
+      display: none;
+    }
+    
+    .ratingSummary:hover {
+      background: rgba(255,255,255,0.035);
+    }
+    
+    .ratingLeft {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    
+    .ratingPoster {
+      width: 44px;
+      height: 64px;
+      border-radius: 8px;
+      overflow: hidden;
+      flex: 0 0 44px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .ratingPoster img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    
+    .ratingMeta {
+      min-width: 0;
+    }
+    
+    .ratingTitle {
+      font-weight: 900;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .ratingSub {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.25;
+      margin-top: 3px;
+    }
+    
+    .ratingScore {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 900;
+      white-space: nowrap;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+    }
+    
+    .ratingChevron {
+      font-size: 14px;
+      opacity: 0.75;
+      transition: transform .15s ease;
+      margin-left: 10px;
+    }
+    
+    details[open] .ratingChevron {
+      transform: rotate(90deg);
+    }
+    
+    .ratingBody {
+      padding: 0 14px 14px 14px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+    }
+    
+    .ratingReviewText {
+      white-space: pre-wrap;
+      line-height: 1.55;
+      margin-top: 12px;
+    }
+    
+    .ratingNoReview {
+      margin-top: 12px;
+      color: var(--muted);
+    }
+    
+    @media (max-width: 700px) {
+      .ratingSummary {
+        align-items: flex-start;
+      }
+    
+      .ratingTitle {
+        white-space: normal;
+      }
     }
 
     .rating_row {
@@ -356,7 +474,7 @@
             <div>
               <div class="kicker">Ratings</div>
               <h2 style="margin:6px 0 0;">All Ratings</h2>
-              <div class="muted small">Filter by corps name, and sort high/low.</div>
+              <div class="muted small">Filter by rating, or ratings with written reviews.</div>
             </div>
           </div>
 
@@ -373,8 +491,10 @@
                 <div class="field" style="min-width:200px;">
                   <label>Sort</label>
                   <select name="sort">
-                    <option value="high" <%= safeSort !== 'low' ? 'selected' : '' %>>Highest rated</option>
-                    <option value="low" <%= safeSort === 'low' ? 'selected' : '' %>>Lowest rated</option>
+                    <option value="high" <%= safeSort === 'high' ? 'selected' : '' %>>Highest Rating</option>
+                    <option value="low" <%= safeSort === 'low' ? 'selected' : '' %>>Lowest Rating</option>
+                    <option value="high_reviews" <%= safeSort === 'high_reviews' ? 'selected' : '' %>>Highest Rating With Reviews</option>
+                    <option value="low_reviews" <%= safeSort === 'low_reviews' ? 'selected' : '' %>>Lowest Rating With Reviews</option>
                   </select>
                 </div>
 
@@ -392,19 +512,67 @@
                    const titleText = rr.title || "Untitled Show";
                    const corpsText = rr.corps || "";
                    const yearText = rr.year || "";
+                   const reviewText = String(rr.review_text || "").trim();
+                   const hasReview = reviewText.length > 0;
+                   const posterUrl = rr.poster_url && String(rr.poster_url).trim()
+                     ? rr.poster_url
+                     : "/static/posters/placeholder.png";
               %>
-                <a class="rating_row" href="/show/<%= rr.show_id %>">
-                  <div class="rating_main">
-                    <div class="rating_title"><%= titleText %></div>
-                    <div class="rating_sub">
-                      <%= corpsText %><%= corpsText && yearText ? " • " : "" %><%= yearText %>
+                <details class="ratingCard">
+                  <summary class="ratingSummary">
+                    <div class="ratingLeft">
+                      <a href="/show/<%= rr.show_id %>" class="ratingPoster" onclick="event.stopPropagation();">
+                        <img
+                          src="<%= posterUrl %>"
+                          alt="<%= titleText %> poster"
+                          onerror="this.onerror=null;this.src='/static/posters/placeholder.png';"
+                        >
+                      </a>
+          
+                      <div class="ratingMeta">
+                        <div class="ratingTitle">
+                          <a href="/show/<%= rr.show_id %>" style="color:inherit; text-decoration:none;" onclick="event.stopPropagation();">
+                            <%= titleText %>
+                          </a>
+                        </div>
+          
+                        <div class="ratingSub">
+                          <%= corpsText %><%= corpsText && yearText ? " • " : "" %><%= yearText %>
+                        </div>
+          
+                        <div class="muted small" style="margin-top:5px;">
+                          <% if (hasReview) { %>
+                            Click to view review
+                          <% } else { %>
+                            No written review
+                          <% } %>
+                        </div>
+                      </div>
                     </div>
+          
+                    <div style="display:flex; align-items:center;">
+                      <div class="ratingScore">
+                        ★ <%= (rh / 2).toFixed(rh % 2 ? 1 : 0) %>
+                      </div>
+                      <span class="ratingChevron">▶</span>
+                    </div>
+                  </summary>
+          
+                  <div class="ratingBody">
+                    <% if (hasReview) { %>
+                      <div class="ratingReviewText"><%= reviewText %></div>
+                      <% if (rr.review_ts) { %>
+                        <div class="muted small" style="margin-top:10px;">
+                          Posted on <%= new Date(Number(rr.review_ts) * 1000).toLocaleDateString('en-US') %>
+                        </div>
+                      <% } %>
+                    <% } else { %>
+                      <div class="ratingNoReview">
+                        <%= safeProfileUser.username || "This user" %> rated this show but did not leave a written review.
+                      </div>
+                    <% } %>
                   </div>
-
-                  <div class="rating_score">
-                    ★ <%= (rh / 2).toFixed(1) %>
-                  </div>
-                </a>
+                </details>
               <% } %>
             </div>
           <% } else { %>
