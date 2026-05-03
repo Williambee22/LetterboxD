@@ -140,23 +140,6 @@
       min-width: 0;
     }
     
-    .ratingPoster {
-      width: 44px;
-      height: 64px;
-      border-radius: 8px;
-      overflow: hidden;
-      flex: 0 0 44px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    
-    .ratingPoster img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    
     .ratingMeta {
       min-width: 0;
     }
@@ -514,21 +497,10 @@
                    const yearText = rr.year || "";
                    const reviewText = String(rr.review_text || "").trim();
                    const hasReview = reviewText.length > 0;
-                   const posterUrl = rr.poster_url && String(rr.poster_url).trim()
-                     ? rr.poster_url
-                     : "/static/posters/placeholder.png";
               %>
                 <details class="ratingCard">
                   <summary class="ratingSummary">
                     <div class="ratingLeft">
-                      <a href="/show/<%= rr.show_id %>" class="ratingPoster" onclick="event.stopPropagation();">
-                        <img
-                          src="<%= posterUrl %>"
-                          alt="<%= titleText %> poster"
-                          onerror="this.onerror=null;this.src='/static/posters/placeholder.png';"
-                        >
-                      </a>
-          
                       <div class="ratingMeta">
                         <div class="ratingTitle">
                           <a href="/show/<%= rr.show_id %>" style="color:inherit; text-decoration:none;" onclick="event.stopPropagation();">
