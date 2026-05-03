@@ -2026,23 +2026,42 @@ function ensureSocialTables(conn) {
 function listAllRatingsForUser(conn, userId, opts = {}) {
   const sort = String(opts.sort || 'high').trim().toLowerCase();
   const corpsQ = String(opts.corpsQ || '').trim();
-  const orderSql = sort === 'low'
-    ? 'r.rating_half ASC, r.ts DESC, s.year DESC, s.id ASC'
-    : 'r.rating_half DESC, r.ts DESC, s.year DESC, s.id ASC';
+  const textCol = tableColumns(conn, 'reviews').has('review_text') ? 'review_text' : reviewsTextCol(conn);
+
+  let reviewWhere = '';
+  if (sort === 'high_reviews' || sort === 'low_reviews') {
+    reviewWhere = `AND rv.${textCol} IS NOT NULL AND TRIM(rv.${textCol}) <> ''`;
+  }
+
+  let orderSql = 'r.rating_half DESC, r.ts DESC, s.year DESC, s.id ASC';
+
+  if (sort === 'low') {
+    orderSql = 'r.rating_half ASC, r.ts DESC, s.year DESC, s.id ASC';
+  } else if (sort === 'high_reviews') {
+    orderSql = 'r.rating_half DESC, rv.ts DESC, s.year DESC, s.id ASC';
+  } else if (sort === 'low_reviews') {
+    orderSql = 'r.rating_half ASC, rv.ts DESC, s.year DESC, s.id ASC';
+  }
 
   const sql = `
     SELECT
       r.show_id,
       r.rating_half,
-      r.ts,
+      r.ts AS rating_ts,
       s.title,
       s.corps,
       s.year,
-      COALESCE(s.poster_url, '') AS poster_url
+      COALESCE(s.poster_url, '') AS poster_url,
+      rv.${textCol} AS review_text,
+      rv.ts AS review_ts
     FROM ratings r
     JOIN shows s ON s.id = r.show_id
+    LEFT JOIN reviews rv
+      ON rv.show_id = r.show_id
+     AND rv.user_id = r.user_id
     WHERE r.user_id = ?
       AND (? = '' OR LOWER(s.corps) LIKE '%' || LOWER(?) || '%')
+      ${reviewWhere}
     ORDER BY ${orderSql}
   `;
 
