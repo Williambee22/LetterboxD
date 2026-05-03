@@ -193,7 +193,21 @@
       line-height: 1.55;
       margin-top: 12px;
     }
+
+    .ratingFilterSelect,
+    .ratingSearchInput {
+      background: #111 !important;
+      color: #fff !important;
+      border: 1px solid rgba(255,255,255,0.14) !important;
+      border-radius: 10px;
+    }
     
+    .ratingFilterSelect option {
+      background: #111 !important;
+      color: #fff !important;
+    }
+
+
     .ratingNoReview {
       margin-top: 12px;
       color: var(--muted);
@@ -463,26 +477,30 @@
 
           <% if (safeProfileUser.username) { %>
             <form method="get"
+                  id="ratingsFilterForm"
                   action="/u/<%= encodeURIComponent(safeProfileUser.username) %>/ratings"
                   style="margin-top:12px;">
               <div class="row gap" style="flex-wrap:wrap; align-items:flex-end;">
                 <div class="field" style="min-width:240px; flex:1;">
                   <label>Search corps</label>
-                  <input name="q" value="<%= safeQ %>" placeholder="e.g., Blue Devils, Crown, Phantom">
+                  <input
+                    class="ratingSearchInput"
+                    id="ratingsSearchInput"
+                    name="q"
+                    value="<%= safeQ %>"
+                    placeholder="e.g., Blue Devils, Crown, Phantom"
+                    autocomplete="off"
+                  >
                 </div>
-
-                <div class="field" style="min-width:200px;">
+          
+                <div class="field" style="min-width:260px;">
                   <label>Sort</label>
-                  <select name="sort">
+                  <select class="ratingFilterSelect" id="ratingsSortSelect" name="sort">
                     <option value="high" <%= safeSort === 'high' ? 'selected' : '' %>>Highest Rating</option>
                     <option value="low" <%= safeSort === 'low' ? 'selected' : '' %>>Lowest Rating</option>
                     <option value="high_reviews" <%= safeSort === 'high_reviews' ? 'selected' : '' %>>Highest Rating With Reviews</option>
                     <option value="low_reviews" <%= safeSort === 'low_reviews' ? 'selected' : '' %>>Lowest Rating With Reviews</option>
                   </select>
-                </div>
-
-                <div class="actions" style="min-width:160px;">
-                  <button class="btn green" type="submit">Apply</button>
                 </div>
               </div>
             </form>
@@ -582,6 +600,46 @@
       });
     })();
   </script>
+  <script>
+    (() => {
+      const form = document.getElementById("ratingsFilterForm");
+      const sortSelect = document.getElementById("ratingsSortSelect");
+      const searchInput = document.getElementById("ratingsSearchInput");
+  
+      if (!form) return;
+  
+      if (sortSelect) {
+        sortSelect.addEventListener("change", () => {
+          form.submit();
+        });
+      }
+  
+      if (searchInput) {
+        let timer = null;
+  
+        searchInput.addEventListener("input", () => {
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            form.submit();
+          }, 450);
+        });
+  
+        window.addEventListener("load", () => {
+          if (sessionStorage.getItem("restoreRatingsSearchFocus") === "1") {
+            sessionStorage.removeItem("restoreRatingsSearchFocus");
+            searchInput.focus();
+            const len = searchInput.value.length;
+            searchInput.setSelectionRange(len, len);
+          }
+        });
+  
+        searchInput.addEventListener("input", () => {
+          sessionStorage.setItem("restoreRatingsSearchFocus", "1");
+        });
+      }
+    })();
+  </script>
+
 </body>
 </html>
 
