@@ -2223,7 +2223,9 @@ function createApp() {
 
   app.get('/u/:username/ratings', async (req, res, next) => {
     const username = req.params.username;
-    const sort = String(req.query.sort || 'high').trim().toLowerCase();
+    const rawSort = String(req.query.sort || 'high').trim().toLowerCase();
+    const allowedSorts = new Set(['high', 'low', 'high_reviews', 'low_reviews']);
+    const sort = allowedSorts.has(rawSort) ? rawSort : 'high';
     const q = String(req.query.q || '').trim();
 
     let conn;
