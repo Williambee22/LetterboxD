@@ -498,6 +498,83 @@
       width: 100% !important;
     }
 
+    .friendRatingBox {
+      position: relative;
+      width: 100%;
+      max-width: 360px;
+    }
+    
+    .friendRatingSummary {
+      list-style: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .friendRatingSummary::-webkit-details-marker {
+      display: none;
+    }
+    
+    .friendRatingSummary::after {
+      content: "▾";
+      font-size: 11px;
+      opacity: 0.75;
+    }
+    
+    .friendRatingBox[open] .friendRatingSummary::after {
+      content: "▴";
+    }
+    
+    .friendRatingDropdown {
+      margin-top: 8px;
+      width: min(360px, 90vw);
+      border: 1px solid var(--accentSoft);
+      background: rgba(10,10,10,0.98);
+      border-radius: 14px;
+      padding: 8px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 20;
+    }
+    
+    .friendRatingItem {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    
+    .friendRatingUser {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    
+    .friendRatingAvatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.08);
+      flex: 0 0 28px;
+    }
+    
+    .friendRatingAvatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
     .reviewsLayout {
       display: flex !important;
       align-items: flex-start !important;
@@ -806,6 +883,16 @@
   const isFavorite = typeof is_favorite !== "undefined" ? !!is_favorite : false;
   const favoriteCount = typeof favorite_count !== "undefined" ? Number(favorite_count || 0) : 0;
   const showFavoriteCount = typeof show_favorite_count !== "undefined" ? Number(show_favorite_count || 0) : 0;
+
+  const friendRatings = Array.isArray(typeof friend_ratings !== "undefined" ? friend_ratings : [])
+    ? friend_ratings
+    : [];
+
+  const friendRatingCount = friendRatings.length;
+  
+  const friendRatingAvg = friendRatingCount > 0
+    ? friendRatings.reduce((sum, fr) => sum + (Number(fr.rating_half || 0) / 2), 0) / friendRatingCount
+    : 0;
   const overallRank = typeof overall_rank !== "undefined" ? Number(overall_rank || 0) : 0;
   const criticRank = typeof critic_rank !== "undefined" ? Number(critic_rank || 0) : 0;
   const corpsRank = typeof corps_rank !== "undefined" ? Number(corps_rank || 0) : 0;
@@ -1058,6 +1145,57 @@
                 <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                   <span class="badge muted"><%= showFavoriteCount %> favorite<%= showFavoriteCount === 1 ? '' : 's' %></span>
                 </div>
+
+                <% if (meUser) { %>
+                  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                    <details class="friendRatingBox">
+                      <summary class="friendRatingSummary">
+                        <% if (friendRatingCount > 0) { %>
+                          <span class="badge good">Friends ★ <%= friendRatingAvg.toFixed(2) %></span>
+                          <span class="badge muted"><%= friendRatingCount %> friend rating<%= friendRatingCount === 1 ? '' : 's' %></span>
+                        <% } else { %>
+                          <span class="badge muted">No friend ratings yet</span>
+                        <% } %>
+                      </summary>
+                
+                      <div class="friendRatingDropdown">
+                        <% if (friendRatingCount > 0) { %>
+                          <% for (const fr of friendRatings) {
+                            const frHalf = Number(fr.rating_half || 0);
+                            const frRatingText = (frHalf / 2).toFixed(frHalf % 2 ? 1 : 0);
+                          %>
+                            <div class="friendRatingItem">
+                              <div class="friendRatingUser">
+                                <a href="/u/<%= encodeURIComponent(fr.username || '') %>" class="friendRatingAvatar">
+                                  <% if (fr.avatar_url) { %>
+                                    <img src="<%= fr.avatar_url %>" alt="<%= fr.username || 'user' %>">
+                                  <% } %>
+                                </a>
+                
+                                <div style="min-width:0;">
+                                  <a
+                                    href="/u/<%= encodeURIComponent(fr.username || '') %>"
+                                    style="font-weight:800; text-decoration:none; color:inherit;"
+                                  >
+                                    <%= fr.username || "User" %>
+                                  </a>
+                                </div>
+                              </div>
+                
+                              <div style="font-weight:900; white-space:nowrap;">
+                                ★ <%= frRatingText %>
+                              </div>
+                            </div>
+                          <% } %>
+                        <% } else { %>
+                          <div class="muted small" style="padding:6px;">
+                            None of your friends have rated this show yet.
+                          </div>
+                        <% } %>
+                      </div>
+                    </details>
+                  </div>
+                <% } %>
 
                 <% if (meUser && Number(meUser.is_admin) === 1) { %>
                   <a class="btn ghost" href="/admin/show/<%= showRow.id %>/edit">Edit show</a>
