@@ -2250,7 +2250,7 @@ function listFriendActivity(conn, userId, { limit = 8 } = {}) {
         s.year,
         s.title,
         s.poster_url,
-        rv.rating_half,
+        rr.rating_half,
         rv.body AS body,
         rv.ts AS ts
       FROM reviews rv
