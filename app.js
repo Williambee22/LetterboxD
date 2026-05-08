@@ -999,7 +999,20 @@ function createApp() {
       const show_favorite_count = showFavoriteCountRow
         ? Number(showFavoriteCountRow.cnt || 0)
         : 0;
-  
+
+      let friendRatings = [];
+
+      if (viewerUid && typeof dbx.listFriendRatingsForShow === 'function') {
+        friendRatings = (dbx.listFriendRatingsForShow(conn, viewerUid, showId) || []).map((fr) => {
+          const d = normalizeRow(fr);
+          if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
+          d.rating_half = Number(d.rating_half || 0);
+          d.rating_value = d.rating_half / 2;
+          return d;
+        });
+      }
+
+      
       if (me && !me.avatar_url) me.avatar_url = pfpUrlForUsername(me.username || '');
   
       const reviews = (await dbx.listReviewsForShow(conn, showId, { viewerUserId: viewerUid, limit: 300 }) || []).map((rv) => {
@@ -1230,6 +1243,7 @@ function createApp() {
         rating_histogram,
         verified_rating_histogram,
         reviews: reviewsWithComments,
+        friend_ratings: friendRatings,
         sort: activeSort,
         is_favorite: isFavorite,
         favorite_count: favoriteCount,
