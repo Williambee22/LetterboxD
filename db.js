@@ -1873,6 +1873,41 @@ function listUsers(conn) {
   ).all();
 }
 
+function listFriendRatingsForShow(conn, viewerUserId, showId) {
+  const uid = Number(viewerUserId);
+  const sid = Number(showId);
+
+  if (!uid || !sid) return [];
+
+  return conn.prepare(`
+    WITH friend_users AS (
+      SELECT
+        CASE
+          WHEN requester_id = @uid THEN addressee_id
+          ELSE requester_id
+        END AS user_id
+      FROM friend_requests
+      WHERE status = 'accepted'
+        AND (requester_id = @uid OR addressee_id = @uid)
+    )
+    SELECT
+      u.id AS user_id,
+      u.username,
+      u.avatar_url,
+      r.rating_half,
+      r.ts
+    FROM friend_users fu
+    JOIN ratings r
+      ON r.user_id = fu.user_id
+     AND r.show_id = @sid
+    JOIN users u
+      ON u.id = fu.user_id
+    WHERE r.rating_half IS NOT NULL
+    ORDER BY r.rating_half DESC, LOWER(u.username) ASC
+  `).all({ uid, sid });
+}
+
+
 function listTopShowsWithTopReview(conn, opts = {}) {
   const limit = Number(opts.limit || 25);
   const mode = String(opts.mode || 'top').trim().toLowerCase();
@@ -2764,6 +2799,7 @@ module.exports = {
   listPredictionAllTimeLeaderboard,
   deletePredictionSeasonResults,
   listPredictionSeasons,
+  listFriendRatingsForShow,
 };
 
 
