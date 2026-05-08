@@ -1008,8 +1008,85 @@ function createApp() {
           if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
           d.rating_half = Number(d.rating_half || 0);
           d.rating_value = d.rating_half / 2;
+          d.friend_rank = Number(d.friend_rank || 0);
           return d;
         });
+      }
+      
+      let friend_rating_avg = 0;
+      let friend_rating_count = 0;
+      let friend_rank = 0;
+      let friend_tie_rank = 0;
+      
+      if (viewerUid) {
+        const friendRankRow = conn.prepare(`
+          WITH friend_users AS (
+            SELECT
+              CASE
+                WHEN requester_id = @viewerUid THEN addressee_id
+                ELSE requester_id
+              END AS user_id
+            FROM friend_requests
+            WHERE status = 'accepted'
+              AND (requester_id = @viewerUid OR addressee_id = @viewerUid)
+          ),
+      
+          scored AS (
+            SELECT
+              s.id,
+              ROUND(AVG(r.rating_half) / 2.0, 2) AS avg_rating,
+              COUNT(*) AS rating_count,
+              s.year
+            FROM shows s
+            JOIN ratings r ON r.show_id = s.id
+            JOIN friend_users fu ON fu.user_id = r.user_id
+            WHERE r.rating_half IS NOT NULL
+            GROUP BY s.id
+            HAVING COUNT(*) >= 1
+          ),
+      
+          ordered AS (
+            SELECT
+              id,
+              avg_rating,
+              rating_count,
+              year,
+              ROW_NUMBER() OVER (
+                ORDER BY avg_rating DESC, rating_count DESC, year DESC, id ASC
+              ) AS friend_rank
+            FROM scored
+          ),
+      
+          ranked AS (
+            SELECT
+              id,
+              avg_rating,
+              rating_count,
+              friend_rank,
+              MIN(friend_rank) OVER (
+                PARTITION BY avg_rating
+              ) AS friend_tie_rank
+            FROM ordered
+          )
+      
+          SELECT
+            avg_rating,
+            rating_count,
+            friend_rank,
+            friend_tie_rank
+          FROM ranked
+          WHERE id = @showId
+        `).get({
+          viewerUid,
+          showId
+        });
+      
+        if (friendRankRow) {
+          friend_rating_avg = Number(friendRankRow.avg_rating || 0);
+          friend_rating_count = Number(friendRankRow.rating_count || 0);
+          friend_rank = Number(friendRankRow.friend_rank || 0);
+          friend_tie_rank = Number(friendRankRow.friend_tie_rank || 0);
+        }
       }
 
       
@@ -1243,11 +1320,15 @@ function createApp() {
         rating_histogram,
         verified_rating_histogram,
         reviews: reviewsWithComments,
-        friend_ratings: friendRatings,
         sort: activeSort,
         is_favorite: isFavorite,
         favorite_count: favoriteCount,
         show_favorite_count,
+        friend_ratings: friendRatings,
+        friend_rating_avg,
+        friend_rating_count,
+        friend_rank,
+        friend_tie_rank,
         overall_rank,
         overall_tie_rank,
         critic_rank,
