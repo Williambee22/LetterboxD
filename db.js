@@ -2212,12 +2212,28 @@ function listIncomingFriendRequests(conn, userId, opts = {}) {
 function listFriendActivity(conn, userId, { limit = 8 } = {}) {
   const uid = Number(userId);
   const lim = Math.max(1, Math.min(50, Number(limit || 8)));
+  const textCol = tableColumns(conn, 'reviews').has('review_text')
+    ? 'review_text'
+    : reviewsTextCol(conn);
 
   return conn.prepare(`
     WITH visible_users AS (
+      -- People I follow
       SELECT followed_id AS user_id
       FROM follows
       WHERE follower_id = @uid
+
+      UNION
+
+      -- Accepted friends, both directions
+      SELECT
+        CASE
+          WHEN requester_id = @uid THEN addressee_id
+          ELSE requester_id
+        END AS user_id
+      FROM friend_requests
+      WHERE status = 'accepted'
+        AND (requester_id = @uid OR addressee_id = @uid)
     ),
 
     activity AS (
@@ -2230,7 +2246,7 @@ function listFriendActivity(conn, userId, { limit = 8 } = {}) {
         s.year,
         s.title,
         s.poster_url,
-        r.rating_half,
+        r.rating_half AS rating_half,
         NULL AS body,
         r.ts AS ts
       FROM ratings r
@@ -2250,13 +2266,16 @@ function listFriendActivity(conn, userId, { limit = 8 } = {}) {
         s.year,
         s.title,
         s.poster_url,
-        rr.rating_half,
-        rv.body AS body,
+        rr.rating_half AS rating_half,
+        rv.${textCol} AS body,
         rv.ts AS ts
       FROM reviews rv
       JOIN visible_users vu ON vu.user_id = rv.user_id
       JOIN users u ON u.id = rv.user_id
       JOIN shows s ON s.id = rv.show_id
+      LEFT JOIN ratings rr
+        ON rr.show_id = rv.show_id
+       AND rr.user_id = rv.user_id
       WHERE rv.user_id != @uid
     )
 
