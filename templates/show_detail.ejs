@@ -900,6 +900,11 @@
   const overallTieRank = typeof overall_tie_rank !== "undefined" ? Number(overall_tie_rank || 0) : 0;
   const criticTieRank = typeof critic_tie_rank !== "undefined" ? Number(critic_tie_rank || 0) : 0;
 
+  const friendRatingAvgValue = typeof friend_rating_avg !== "undefined" ? Number(friend_rating_avg || 0) : 0;
+  const friendRatingCountValue = typeof friend_rating_count !== "undefined" ? Number(friend_rating_count || 0) : 0;
+  const friendRank = typeof friend_rank !== "undefined" ? Number(friend_rank || 0) : 0;
+  const friendTieRank = typeof friend_tie_rank !== "undefined" ? Number(friend_tie_rank || 0) : 0;
+
   const distLabels = ["5.0","4.5","4.0","3.5","3.0","2.5","2.0","1.5","1.0","0.5","0.0"];
   const ratingHistogramRaw = (typeof rating_histogram !== "undefined" && rating_histogram) ? rating_histogram : {};
   const verifiedHistogramRaw = (typeof verified_rating_histogram !== "undefined" && verified_rating_histogram) ? verified_rating_histogram : {};
@@ -1150,9 +1155,21 @@
                   <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                     <details class="friendRatingBox">
                       <summary class="friendRatingSummary">
-                        <% if (friendRatingCount > 0) { %>
-                          <span class="badge good">Friends ★ <%= friendRatingAvg.toFixed(2) %></span>
-                          <span class="badge muted"><%= friendRatingCount %> friend rating<%= friendRatingCount === 1 ? '' : 's' %></span>
+                        <% if (friendRatingCountValue > 0) { %>
+                          <span class="badge good">Friend Avg. ★ <%= friendRatingAvgValue.toFixed(2) %></span>
+                      
+                          <span class="badge muted">
+                            <%= friendRatingCountValue %> friend rating<%= friendRatingCountValue === 1 ? '' : 's' %>
+                          </span>
+                      
+                          <% if (friendRank > 0) { %>
+                            <span class="badge muted">
+                              Friend Rank #<%= friendRank %>
+                              <% if (friendTieRank > 0 && friendTieRank !== friendRank) { %>
+                                <span class="tie-rank">(T-<%= friendTieRank %>)</span>
+                              <% } %>
+                            </span>
+                          <% } %>
                         <% } else { %>
                           <span class="badge muted">No friend ratings yet</span>
                         <% } %>
@@ -1182,8 +1199,8 @@
                                 </div>
                               </div>
                 
-                              <div style="font-weight:900; white-space:nowrap;">
-                                ★ <%= frRatingText %>
+                              <div style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                                <span style="font-weight:900;">★ <%= frRatingText %></span>
                               </div>
                             </div>
                           <% } %>
