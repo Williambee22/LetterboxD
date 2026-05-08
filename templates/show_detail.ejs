@@ -500,8 +500,9 @@
 
     .friendRatingBox {
       position: relative;
-      width: 100%;
-      max-width: 360px;
+      width: auto;
+      max-width: none;
+      display: inline-flex;
     }
     
     .friendRatingSummary {
@@ -509,8 +510,8 @@
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
+      gap: 6px;
+      flex-wrap: nowrap;
     }
     
     .friendRatingSummary::-webkit-details-marker {
@@ -521,6 +522,7 @@
       content: "▾";
       font-size: 11px;
       opacity: 0.75;
+      margin-left: 4px;
     }
     
     .friendRatingBox[open] .friendRatingSummary::after {
@@ -528,6 +530,9 @@
     }
     
     .friendRatingDropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
       margin-top: 8px;
       width: min(360px, 90vw);
       border: 1px solid var(--accentSoft);
@@ -538,7 +543,7 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      z-index: 20;
+      z-index: 50;
     }
     
     .friendRatingItem {
@@ -1153,30 +1158,26 @@
 
                 <% if (meUser) { %>
                   <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                    <details class="friendRatingBox">
-                      <summary class="friendRatingSummary">
-                        <% if (friendRatingCountValue > 0) { %>
-                          <span class="badge good">Friend Avg. ★ <%= friendRatingAvgValue.toFixed(2) %></span>
-                      
+                    <% if (friendRatingCountValue > 0) { %>
+                      <span class="badge good">Friend Avg. ★ <%= friendRatingAvgValue.toFixed(2) %></span>
+                
+                      <% if (friendRank > 0) { %>
+                        <span class="badge muted">
+                          Friend Rank #<%= friendRank %>
+                          <% if (friendTieRank > 0 && friendTieRank !== friendRank) { %>
+                            <span class="tie-rank">(T-<%= friendTieRank %>)</span>
+                          <% } %>
+                        </span>
+                      <% } %>
+                
+                      <details class="friendRatingBox" style="width:auto; max-width:none;">
+                        <summary class="friendRatingSummary">
                           <span class="badge muted">
                             <%= friendRatingCountValue %> friend rating<%= friendRatingCountValue === 1 ? '' : 's' %>
                           </span>
-                      
-                          <% if (friendRank > 0) { %>
-                            <span class="badge muted">
-                              Friend Rank #<%= friendRank %>
-                              <% if (friendTieRank > 0 && friendTieRank !== friendRank) { %>
-                                <span class="tie-rank">(T-<%= friendTieRank %>)</span>
-                              <% } %>
-                            </span>
-                          <% } %>
-                        <% } else { %>
-                          <span class="badge muted">No friend ratings yet</span>
-                        <% } %>
-                      </summary>
+                        </summary>
                 
-                      <div class="friendRatingDropdown">
-                        <% if (friendRatingCount > 0) { %>
+                        <div class="friendRatingDropdown">
                           <% for (const fr of friendRatings) {
                             const frHalf = Number(fr.rating_half || 0);
                             const frRatingText = (frHalf / 2).toFixed(frHalf % 2 ? 1 : 0);
@@ -1204,15 +1205,15 @@
                               </div>
                             </div>
                           <% } %>
-                        <% } else { %>
-                          <div class="muted small" style="padding:6px;">
-                            None of your friends have rated this show yet.
-                          </div>
-                        <% } %>
-                      </div>
-                    </details>
+                        </div>
+                      </details>
+                    <% } else { %>
+                      <span class="badge muted">No friend ratings yet</span>
+                    <% } %>
                   </div>
                 <% } %>
+                
+        
 
                 <% if (meUser && Number(meUser.is_admin) === 1) { %>
                   <a class="btn ghost" href="/admin/show/<%= showRow.id %>/edit">Edit show</a>
