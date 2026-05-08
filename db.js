@@ -2215,7 +2215,7 @@ function listFriendActivity(conn, userId, { limit = 8 } = {}) {
 
   return conn.prepare(`
     WITH visible_users AS (
-      SELECT following_id AS user_id
+      SELECT followed_id AS user_id
       FROM follows
       WHERE follower_id = @uid
     ),
