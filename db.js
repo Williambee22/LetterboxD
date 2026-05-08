@@ -2215,23 +2215,9 @@ function listFriendActivity(conn, userId, { limit = 8 } = {}) {
 
   return conn.prepare(`
     WITH visible_users AS (
-      -- Accepted friends, both directions
-      SELECT
-        CASE
-          WHEN f.user_id = @uid THEN f.friend_user_id
-          ELSE f.user_id
-        END AS user_id
-      FROM friendships f
-      WHERE
-        f.status = 'accepted'
-        AND (f.user_id = @uid OR f.friend_user_id = @uid)
-
-      UNION
-
-      -- People I follow
-      SELECT fo.following_id AS user_id
-      FROM follows fo
-      WHERE fo.follower_id = @uid
+      SELECT following_id AS user_id
+      FROM follows
+      WHERE follower_id = @uid
     ),
 
     activity AS (
