@@ -2209,68 +2209,76 @@ function listIncomingFriendRequests(conn, userId, opts = {}) {
   `).all(Number(userId), limit);
 }
 
-function listFriendActivity(conn, viewerId, opts = {}) {
-  const limit = Number(opts.limit || 10);
-  const friends = listFriends(conn, viewerId, { limit: 2000 });
-  const friendIds = [];
+function listFriendActivity(conn, userId, { limit = 8 } = {}) {
+  const uid = Number(userId);
+  const lim = Math.max(1, Math.min(50, Number(limit || 8)));
 
-  for (const f of friends || []) {
-    const d = { ...f };
-    for (const k of ['id', 'user_id', 'friend_id', 'other_user_id']) {
-      if (Object.prototype.hasOwnProperty.call(d, k) && d[k] != null) {
-        if (Number(d[k]) !== Number(viewerId)) friendIds.push(Number(d[k]));
-        break;
-      }
-    }
-  }
+  return conn.prepare(`
+    WITH visible_users AS (
+      -- Accepted friends, both directions
+      SELECT
+        CASE
+          WHEN f.user_id = @uid THEN f.friend_user_id
+          ELSE f.user_id
+        END AS user_id
+      FROM friendships f
+      WHERE
+        f.status = 'accepted'
+        AND (f.user_id = @uid OR f.friend_user_id = @uid)
 
-  const uniqueIds = [...new Set(friendIds)].sort((a, b) => a - b);
-  if (!uniqueIds.length) return [];
+      UNION
 
-  const qmarks = uniqueIds.map(() => '?').join(',');
-  const reviewCols = tableColumns(conn, 'reviews');
-  const ratingCols = tableColumns(conn, 'ratings');
-  const reviewTs = bestTsExpr(reviewCols, 'r');
-  const ratingTs = bestTsExpr(ratingCols, 'rt');
-  const reviewBodyCol = pickFirstExisting(reviewCols, ['text', 'review_text', 'body', 'content', 'comment', 'message']);
-  const reviewNonemptyWhere = reviewBodyCol ? `AND TRIM(COALESCE(r.${reviewBodyCol}, '')) <> ''` : '';
+      -- People I follow
+      SELECT fo.following_id AS user_id
+      FROM follows fo
+      WHERE fo.follower_id = @uid
+    ),
 
-  const reviews = conn.prepare(`
-    SELECT
-      'review' AS kind,
-      u.username AS actor_username,
-      s.id AS show_id,
-      s.corps AS corps,
-      s.year AS year,
-      s.poster_url AS poster_url,
-      NULL AS rating_half,
-      ${reviewTs} AS ts
-    FROM reviews r
-    JOIN users u ON u.id = r.user_id
-    JOIN shows s ON s.id = r.show_id
-    WHERE r.user_id IN (${qmarks})
-    ${reviewNonemptyWhere}
-  `).all(...uniqueIds);
+    activity AS (
+      SELECT
+        'rating' AS kind,
+        r.user_id AS actor_user_id,
+        u.username AS actor_username,
+        s.id AS show_id,
+        s.corps,
+        s.year,
+        s.title,
+        s.poster_url,
+        r.rating_half,
+        NULL AS body,
+        r.ts AS ts
+      FROM ratings r
+      JOIN visible_users vu ON vu.user_id = r.user_id
+      JOIN users u ON u.id = r.user_id
+      JOIN shows s ON s.id = r.show_id
+      WHERE r.user_id != @uid
 
-  const ratings = conn.prepare(`
-    SELECT
-      'rating' AS kind,
-      u.username AS actor_username,
-      s.id AS show_id,
-      s.corps AS corps,
-      s.year AS year,
-      s.poster_url AS poster_url,
-      rt.rating_half AS rating_half,
-      ${ratingTs} AS ts
-    FROM ratings rt
-    JOIN users u ON u.id = rt.user_id
-    JOIN shows s ON s.id = rt.show_id
-    WHERE rt.user_id IN (${qmarks})
-  `).all(...uniqueIds);
+      UNION ALL
 
-  const combined = [...reviews, ...ratings].map((x) => ({ ...x }));
-  combined.sort((a, b) => String(b.ts || '').localeCompare(String(a.ts || '')));
-  return combined.slice(0, limit);
+      SELECT
+        'review' AS kind,
+        rv.user_id AS actor_user_id,
+        u.username AS actor_username,
+        s.id AS show_id,
+        s.corps,
+        s.year,
+        s.title,
+        s.poster_url,
+        rv.rating_half,
+        rv.body AS body,
+        rv.ts AS ts
+      FROM reviews rv
+      JOIN visible_users vu ON vu.user_id = rv.user_id
+      JOIN users u ON u.id = rv.user_id
+      JOIN shows s ON s.id = rv.show_id
+      WHERE rv.user_id != @uid
+    )
+
+    SELECT *
+    FROM activity
+    ORDER BY ts DESC
+    LIMIT @lim
+  `).all({ uid, lim });
 }
 
 function ensureReviewCommentsTable(conn) {
