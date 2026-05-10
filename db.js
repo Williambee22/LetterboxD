@@ -2410,7 +2410,7 @@ function addReviewComment(conn, showId, reviewUserId, commenterUserId, commentTe
 function addReviewReply(conn, commentId, showId, reviewUserId, replierUserId, replyText, parentReplyId = null) {
   const text = String(replyText || '').trim();
   if (!text) throw new Error('Reply cannot be empty.');
-  if (text.length > 1000) throw new Error('Reply too long (max 1000 chars).');
+  if (text.length > 2000) throw new Error('Reply too long (max 2000 chars).');
 
   conn.prepare(`
     INSERT INTO review_comment_replies (
