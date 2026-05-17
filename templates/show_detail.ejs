@@ -3,7 +3,37 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title><%= row && row.title ? row.title : "Show Detail" %> - Pressboxd</title>
+  <%
+    const seoShow = row || {};
+    const seoTitle = seoShow.title
+      ? `${seoShow.corps ? `${seoShow.corps} - ` : ""}${seoShow.title}${seoShow.year ? ` (${seoShow.year})` : ""} - Pressboxd`
+      : "Show Detail - Pressboxd";
+  
+    const seoDescription = seoShow.title
+      ? `View ratings, reviews, rankings, and details for ${seoShow.corps ? `${seoShow.corps} - ` : ""}${seoShow.title}${seoShow.year ? ` (${seoShow.year})` : ""} on Pressboxd.`
+      : "View drum corps show ratings, reviews, rankings, and details on Pressboxd.";
+  
+    const seoUrl = seoShow.id
+      ? `https://www.pressboxd.com/show/${seoShow.id}`
+      : "https://www.pressboxd.com/shows";
+  
+    const seoImage = seoShow.poster_url || "https://www.pressboxd.com/static/posters/placeholder.png";
+  %>
+  
+  <title><%= seoTitle %></title>
+  <meta name="description" content="<%= seoDescription %>">
+  <link rel="canonical" href="<%= seoUrl %>">
+  
+  <meta property="og:title" content="<%= seoTitle %>">
+  <meta property="og:description" content="<%= seoDescription %>">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="<%= seoUrl %>">
+  <meta property="og:image" content="<%= seoImage %>">
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<%= seoTitle %>">
+  <meta name="twitter:description" content="<%= seoDescription %>">
+  <meta name="twitter:image" content="<%= seoImage %>">
 
   <link rel="icon" type="image/png" href="/static/favicon.png"/>
   <link rel="stylesheet" href="/static/styles.css"/>
