@@ -968,6 +968,7 @@
         timer = setTimeout(() => {
           isSubmitting = true;
           sessionStorage.setItem(restoreKey, "1");
+          sessionStorage.setItem("showsScrollY", String(window.scrollY || 0));
           form.submit();
         }, 400);
       }
@@ -981,8 +982,14 @@
       });
 
       window.addEventListener("load", () => {
+        const savedScrollY = sessionStorage.getItem("showsScrollY");
         const shouldRestoreYear = sessionStorage.getItem("restoreYearFocus");
         const shouldRestoreCorps = sessionStorage.getItem("restoreCorpsFocus");
+
+        if (savedScrollY !== null) {
+          sessionStorage.removeItem("showsScrollY");
+          window.scrollTo(0, Number(savedScrollY || 0));
+        }
 
         if (shouldRestoreYear === "1" && yearInput) {
           sessionStorage.removeItem("restoreYearFocus");
