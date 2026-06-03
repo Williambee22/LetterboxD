@@ -844,7 +844,7 @@
         </div>
         <div class="field" style="width:140px;">
           <label>Year</label>
-          <input name="year" value="<%= typeof year !== 'undefined' ? year : '' %>" placeholder="2014">
+          <input id="yearFilterInput" name="year" value="<%= typeof year !== 'undefined' ? year : '' %>" placeholder="2014" autocomplete="off">
         </div>
         <div class="field" style="min-width:240px;">
           <label>Corps</label>
@@ -855,31 +855,13 @@
           <a class="btn ghost" href="/shows">Reset</a>
 
           <% if (selectedYearForAvg && yearAverageRating != null) { %>
-            <span
-              class="muted small"
-              style="
-                padding: 8px 10px;
-                border-radius: 999px;
-                background: rgba(255,255,255,0.05);
-                border: 1px solid rgba(255,255,255,0.10);
-                white-space: nowrap;
-              "
-            >
+            <span class="muted small" style="white-space: nowrap;">
               <%= selectedYearForAvg %> average:
               <b style="color:#ffffff;">★ <%= yearAverageRating.toFixed(2) %></b>
               <span style="opacity:.65;">(<%= yearAverageRows.length %> eligible shows)</span>
             </span>
           <% } else if (selectedYearForAvg) { %>
-            <span
-              class="muted small"
-              style="
-                padding: 8px 10px;
-                border-radius: 999px;
-                background: rgba(255,255,255,0.05);
-                border: 1px solid rgba(255,255,255,0.10);
-                white-space: nowrap;
-              "
-            >
+            <span class="muted small" style="white-space: nowrap;">
               No eligible <%= selectedYearForAvg %> shows yet
             </span>
           <% } %>
@@ -972,26 +954,45 @@
 
     (() => {
       const form = document.getElementById("showsFilterForm");
+      const yearInput = document.getElementById("yearFilterInput");
       const corpsInput = document.getElementById("corpsFilterInput");
-      if (!form || !corpsInput) return;
+      if (!form || !yearInput || !corpsInput) return;
 
       let timer = null;
       let isSubmitting = false;
 
-      corpsInput.addEventListener("input", () => {
+      function autoSubmitAndRestore(input, restoreKey) {
         if (isSubmitting) return;
 
         clearTimeout(timer);
         timer = setTimeout(() => {
           isSubmitting = true;
-          sessionStorage.setItem("restoreCorpsFocus", "1");
+          sessionStorage.setItem(restoreKey, "1");
           form.submit();
         }, 400);
+      }
+
+      yearInput.addEventListener("input", () => {
+        autoSubmitAndRestore(yearInput, "restoreYearFocus");
+      });
+
+      corpsInput.addEventListener("input", () => {
+        autoSubmitAndRestore(corpsInput, "restoreCorpsFocus");
       });
 
       window.addEventListener("load", () => {
-        const shouldRestore = sessionStorage.getItem("restoreCorpsFocus");
-        if (shouldRestore === "1" && corpsInput) {
+        const shouldRestoreYear = sessionStorage.getItem("restoreYearFocus");
+        const shouldRestoreCorps = sessionStorage.getItem("restoreCorpsFocus");
+
+        if (shouldRestoreYear === "1" && yearInput) {
+          sessionStorage.removeItem("restoreYearFocus");
+          yearInput.focus();
+          const len = yearInput.value.length;
+          yearInput.setSelectionRange(len, len);
+          return;
+        }
+
+        if (shouldRestoreCorps === "1" && corpsInput) {
           sessionStorage.removeItem("restoreCorpsFocus");
           corpsInput.focus();
           const len = corpsInput.value.length;
