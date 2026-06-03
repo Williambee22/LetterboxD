@@ -548,6 +548,29 @@
     avg_rating: r?.avg_rating != null ? Number(r.avg_rating) : (r?.avg != null ? Number(r.avg) : 0),
     cnt: Number(r?.cnt || 0)
   })).filter(r => r.id);
+
+  const selectedYearForAvg = typeof year !== "undefined" ? String(year || "").trim() : "";
+
+  const yearAverageRows = selectedYearForAvg
+    ? safeRows.filter(r => {
+        const showYear = r?.year != null ? String(r.year).trim() : "";
+        const ratingCount = Number(r?.cnt || 0);
+        const avgValue = r?.avg_rating != null
+          ? Number(r.avg_rating)
+          : (r?.avg != null ? Number(r.avg) : 0);
+
+        return showYear === selectedYearForAvg && ratingCount >= 5 && avgValue > 0;
+      })
+    : [];
+
+  const yearAverageRating = yearAverageRows.length
+    ? yearAverageRows.reduce((sum, r) => {
+        const avgValue = r?.avg_rating != null
+          ? Number(r.avg_rating)
+          : (r?.avg != null ? Number(r.avg) : 0);
+        return sum + avgValue;
+      }, 0) / yearAverageRows.length
+    : null;
   %>
 <body class="app" style="--accent: <%= accent_color || '#3252b3' %>;">
   <header class="topbar">
@@ -827,9 +850,39 @@
           <label>Corps</label>
           <input id="corpsFilterInput" name="corps" value="<%= typeof corps !== 'undefined' ? corps : '' %>" placeholder="Blue Devils" autocomplete="off">
         </div>
-        <div class="actions">
+        <div class="actions" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
           <button class="btn green" type="submit">Apply</button>
           <a class="btn ghost" href="/shows">Reset</a>
+
+          <% if (selectedYearForAvg && yearAverageRating != null) { %>
+            <span
+              class="muted small"
+              style="
+                padding: 8px 10px;
+                border-radius: 999px;
+                background: rgba(255,255,255,0.05);
+                border: 1px solid rgba(255,255,255,0.10);
+                white-space: nowrap;
+              "
+            >
+              <%= selectedYearForAvg %> average:
+              <b style="color:#ffffff;">★ <%= yearAverageRating.toFixed(2) %></b>
+              <span style="opacity:.65;">(<%= yearAverageRows.length %> eligible shows)</span>
+            </span>
+          <% } else if (selectedYearForAvg) { %>
+            <span
+              class="muted small"
+              style="
+                padding: 8px 10px;
+                border-radius: 999px;
+                background: rgba(255,255,255,0.05);
+                border: 1px solid rgba(255,255,255,0.10);
+                white-space: nowrap;
+              "
+            >
+              No eligible <%= selectedYearForAvg %> shows yet
+            </span>
+          <% } %>
         </div>
       </form>
     </div>
@@ -1136,7 +1189,6 @@
   </script>
 </body>
 </html>
-
 
 
 
