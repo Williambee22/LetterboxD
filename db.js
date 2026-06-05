@@ -328,7 +328,11 @@ function addShow(conn, year, corps, title, opts = {}) {
   const yearI = Number(year);
   const corpsS = String(corps || '').trim();
   const titleS = String(title || '').trim();
-  const posterS = String(opts.posterUrl || '').trim() || null;
+  const rawPosterS = String(opts.posterUrl || '').trim();
+  
+  const posterS = rawPosterS
+    ? `${rawPosterS}${rawPosterS.includes('?') ? '&' : '?'}v=${Date.now()}`
+    : null;
 
   if (!corpsS || !titleS) return [false, null, 'Missing corps or title.'];
 
@@ -1354,7 +1358,11 @@ function updateShow(conn, showId, year, corps, title, opts = {}) {
   const yearI = Number(year);
   const corpsS = String(corps || '').trim();
   const titleS = String(title || '').trim();
-  const posterS = String(opts.posterUrl || '').trim() || null;
+  const rawPosterS = String(opts.posterUrl || '').trim();
+  
+  const posterS = rawPosterS
+    ? `${rawPosterS}${rawPosterS.includes('?') ? '&' : '?'}v=${Date.now()}`
+    : null;
 
   if (!corpsS || !titleS) throw new Error('Missing corps or title.');
 
@@ -1370,7 +1378,14 @@ function updateShow(conn, showId, year, corps, title, opts = {}) {
 }
 
 function updateShowPosterUrl(conn, showId, posterUrl) {
-  conn.prepare('UPDATE shows SET poster_url = ? WHERE id = ?').run(posterUrl || null, Number(showId));
+  const cleanUrl = String(posterUrl || '').trim();
+
+  const finalUrl = cleanUrl
+    ? `${cleanUrl}${cleanUrl.includes('?') ? '&' : '?'}v=${Date.now()}`
+    : null;
+
+  conn.prepare('UPDATE shows SET poster_url = ? WHERE id = ?')
+    .run(finalUrl, Number(showId));
 }
 
 function upsertReview(conn, showId, userId, reviewText) {
