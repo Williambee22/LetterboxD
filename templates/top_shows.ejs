@@ -343,15 +343,21 @@
                 const vs = r.top_review_score != null ? Number(r.top_review_score) : 0;
                 
                 let poster = POSTER_FALLBACK;
+
                 if (r.poster_url && String(r.poster_url).trim() !== "") {
-                    const raw = String(r.poster_url).trim();
-                    if (raw.startsWith('http') || raw.startsWith('/static/')) {
-                        poster = raw;
-                    } else if (raw.startsWith('posters/')) {
-                        poster = '/static/' + raw;
-                    } else {
-                        poster = '/static/posters/' + raw;
-                    }
+                  const raw = String(r.poster_url).trim();
+                
+                  if (
+                    raw.startsWith("http") ||
+                    raw.startsWith("/static/") ||
+                    raw.startsWith("/posters/")
+                  ) {
+                    poster = raw;
+                  } else if (raw.startsWith("posters/")) {
+                    poster = "/" + raw;
+                  } else {
+                    poster = "/posters/" + raw.replace(/\.(jpeg|jpg|png|webp|gif|avif)$/i, "");
+                  }
                 }
             %>
               <div class="ts_card">
@@ -367,7 +373,7 @@
                     src="<%= poster %>" 
                     alt="<%= r.title %> poster"
                     loading="lazy"
-                    onerror="this.src='<%= POSTER_FALLBACK %>';"
+                    onerror="this.onerror=null; this.src='<%= POSTER_FALLBACK %>';"
                   >
                 </a>
 
