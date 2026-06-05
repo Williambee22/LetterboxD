@@ -642,27 +642,47 @@
                          const created = n?.created_at || "";
                          const unread = Number(n?.is_read ?? 0) === 0;
                          const sid = n?.show_id || null;
+                         const showName = n?.show_title
+                           ? `${n.show_title}${n.show_corps ? " — " + n.show_corps : ""}${n.show_year ? " (" + n.show_year + ")" : ""}`
+                           : "";
                     %>
                       <div class="notifItem <%= unread ? 'unread' : '' %>">
                         <% if (kind === "friend_request") { %>
                           <div><b><%= actor %></b> sent you a friend request.</div>
+                        
                         <% } else if (kind === "follow") { %>
                           <div><b><%= actor %></b> followed you.</div>
+                        
                         <% } else if (kind === "review_upvote") { %>
                           <div>
                             <b><%= actor %></b> upvoted your review
-                            <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %>
+                            <% if (showName) { %>
+                              of <a href="/show/<%= sid %>"><%= showName %></a>
+                            <% } else if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
                           </div>
+                        
                         <% } else if (kind === "review_comment") { %>
                           <div>
                             <b><%= actor %></b> commented on your review
-                            <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %>
+                            <% if (showName) { %>
+                              of <a href="/show/<%= sid %>"><%= showName %></a>
+                            <% } else if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
                           </div>
+                        
                         <% } else if (kind === "comment_reply") { %>
                           <div>
                             <b><%= actor %></b> replied to your comment
-                            <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %>
+                            <% if (showName) { %>
+                              on <a href="/show/<%= sid %>"><%= showName %></a>
+                            <% } else if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
                           </div>
+                        
                         <% } else { %>
                           <div>New activity.</div>
                         <% } %>
