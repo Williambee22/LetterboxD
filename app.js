@@ -20,6 +20,10 @@ const STATIC_DIR = path.join(BASE_DIR, 'static');
 const DATA_DIR = process.env.DATA_DIR || '/data';
 const PFP_DIR = path.join(DATA_DIR, 'pfps');
 
+const posterLookupCache = new Map();
+const POSTER_CACHE_TTL_MS = 1000 * 60 * 60; // 1 hour
+
+
 fs.mkdirSync(PFP_DIR, { recursive: true });
 
 const ALLOWED_IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
@@ -210,12 +214,37 @@ function pfpUrlForUsername(username) {
 }
 
 function posterUrlForShow(corps, year) {
-  const key = slugify(corps);
+  const key = String(corps || '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
   const y = parseInt(year || 0, 10);
+  const exts = ['.webp', '.png', '.jpg', '.jpeg', '.gif', '.avif'];
 
   if (!key || !y) return '/static/posters/placeholder.png';
 
-  return `/posters/${key}${y}?v=${Date.now()}`;
+  for (const ext of exts) {
+    const rel = `posters/${key}${y}${ext}`;
+    const abs = path.join(__dirname, 'static', rel);
+    if (fs.existsSync(abs)) return `/static/${rel}`;
+  }
+
+  for (const ext of exts) {
+    const rel = `posters/${key}default${ext}`;
+    const abs = path.join(__dirname, 'static', rel);
+    if (fs.existsSync(abs)) return `/static/${rel}`;
+  }
+
+  for (const ext of exts) {
+    const rel = `posters/default${ext}`;
+    const abs = path.join(__dirname, 'static', rel);
+    if (fs.existsSync(abs)) return `/static/${rel}`;
+  }
+
+  return '/static/posters/placeholder.png';
 }
 
 function normalizeRow(row) {
@@ -563,11 +592,15 @@ function createApp() {
       return res.redirect('/static/posters/placeholder.png');
     }
   
-    res.setHeader('Cache-Control', 'no-store, max-age=0');
+    const now = Date.now();
+    const cached = posterLookupCache.get(name);
+  
+    if (cached && now - cached.ts < POSTER_CACHE_TTL_MS) {
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return res.redirect(302, cached.url);
+    }
   
     const exts = ['.webp', '.png', '.jpg', '.jpeg', '.gif', '.avif'];
-  
-    // carolina_crown2016 -> carolina_crown
     const corpsDefaultName = name.replace(/\d{4}$/, '') + 'default';
   
     const candidates = [
@@ -583,7 +616,13 @@ function createApp() {
           const r = await fetch(url, { method: 'HEAD' });
   
           if (r.ok) {
-            return res.redirect(302, `${url}?v=${Date.now()}`);
+            posterLookupCache.set(name, {
+              url,
+              ts: now
+            });
+  
+            res.setHeader('Cache-Control', 'public, max-age=3600');
+            return res.redirect(302, url);
           }
         }
       }
@@ -591,6 +630,12 @@ function createApp() {
       console.error('poster lookup failed:', err);
     }
   
+    posterLookupCache.set(name, {
+      url: '/static/posters/placeholder.png',
+      ts: now
+    });
+  
+    res.setHeader('Cache-Control', 'public, max-age=3600');
     return res.redirect('/static/posters/placeholder.png');
   });
   
@@ -914,7 +959,7 @@ function createApp() {
       const rows = await dbx.listShows(conn, { sort, year, corps });
       const rows2 = (rows || []).map((r) => {
         const d = normalizeRow(r);
-        d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+        if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
 
@@ -922,7 +967,7 @@ function createApp() {
       if (req.session.uid) {
         friendActivity = (await dbx.listFriendActivity(conn, Number(req.session.uid), { limit: 5 }) || []).map((x) => {
           const d = normalizeRow(x);
-          d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+          if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
           return d;
         });
       }
@@ -931,7 +976,7 @@ function createApp() {
       if (typeof dbx.getHotShows === 'function') {
         hotShows = (await dbx.getHotShows(conn, 3) || []).map((x) => {
           const d = normalizeRow(x);
-          d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+          if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
           return d;
         });
       }
@@ -965,7 +1010,7 @@ function createApp() {
   
       let row = normalizeRow(await dbx.getShowById(conn, showId));
       if (!row) return res.sendStatus(404);
-      row.poster_url = posterUrlForShow(row.corps || '', row.year || 0);
+      if (!row.poster_url) row.poster_url = posterUrlForShow(row.corps || '', row.year || 0);
   
       let me = viewerUid ? normalizeRow(await dbx.userById(conn, viewerUid)) : null;
       const myRating = viewerUid ? await dbx.userRatingForShow(conn, showId, viewerUid) : null;
@@ -2879,8 +2924,9 @@ function createApp() {
 
       let row = normalizeRow(await dbx.getShowById(conn, showId));
       if (!row) return res.sendStatus(404);
+      
       if (!row.poster_url) row.poster_url = posterUrlForShow(row.corps || '', row.year || 0);
-
+      
       let me = viewerUid ? normalizeRow(await dbx.userById(conn, viewerUid)) : null;
       if (me && !me.avatar_url) me.avatar_url = pfpUrlForUsername(me.username || '');
 
