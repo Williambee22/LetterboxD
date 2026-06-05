@@ -576,7 +576,7 @@ function createApp() {
       return res.redirect(302, cached.url);
     }
   
-    const exts = ['.jpeg', '.jpg', '.png', '.webp', '.gif', '.avif'];
+    const exts = ['.jpeg', '.png', '.webp', '.jpg', '.gif', '.avif'];
     const corpsDefaultName = name.replace(/\d{4}$/, '') + 'default';
   
     const candidates = [
