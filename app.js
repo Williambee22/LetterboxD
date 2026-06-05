@@ -210,37 +210,12 @@ function pfpUrlForUsername(username) {
 }
 
 function posterUrlForShow(corps, year) {
-  const key = String(corps || '')
-    .trim()
-    .toLowerCase()
-    .replace(/&/g, 'and')
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
-
+  const key = slugify(corps);
   const y = parseInt(year || 0, 10);
-  const exts = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.avif'];
 
   if (!key || !y) return '/static/posters/placeholder.png';
 
-  for (const ext of exts) {
-    const rel = `posters/${key}${y}${ext}`;
-    const abs = path.join(__dirname, 'static', rel);
-    if (fs.existsSync(abs)) return `/static/${rel}`;
-  }
-
-  for (const ext of exts) {
-    const rel = `posters/${key}default${ext}`;
-    const abs = path.join(__dirname, 'static', rel);
-    if (fs.existsSync(abs)) return `/static/${rel}`;
-  }
-
-  for (const ext of exts) {
-    const rel = `posters/default${ext}`;
-    const abs = path.join(__dirname, 'static', rel);
-    if (fs.existsSync(abs)) return `/static/${rel}`;
-  }
-
-  return '/static/posters/placeholder.png';
+  return `/posters/${key}${y}?v=${Date.now()}`;
 }
 
 function normalizeRow(row) {
@@ -577,34 +552,48 @@ function createApp() {
   }
 
   app.get('/posters/:name', async (req, res) => {
-    const name = String(req.params.name || '').trim();
+    const name = String(req.params.name || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, '');
+  
     const base = String(process.env.R2_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
-
+  
     if (!base || !name) {
       return res.redirect('/static/posters/placeholder.png');
     }
-
-    const exts = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
-
+  
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
+  
+    const exts = ['.webp', '.png', '.jpg', '.jpeg', '.gif', '.avif'];
+  
+    // carolina_crown2016 -> carolina_crown
+    const corpsDefaultName = name.replace(/\d{4}$/, '') + 'default';
+  
+    const candidates = [
+      name,
+      corpsDefaultName,
+      'default'
+    ];
+  
     try {
-      for (const ext of exts) {
-        const url = `${base}/posters/${name}${ext}`;
-        const r = await fetch(url, { method: 'HEAD' });
-        if (r.ok) return res.redirect(url);
-      }
-
-      for (const ext of exts) {
-        const url = `${base}/posters/default${ext}`;
-        const r = await fetch(url, { method: 'HEAD' });
-        if (r.ok) return res.redirect(url);
+      for (const candidate of candidates) {
+        for (const ext of exts) {
+          const url = `${base}/posters/${candidate}${ext}`;
+          const r = await fetch(url, { method: 'HEAD' });
+  
+          if (r.ok) {
+            return res.redirect(302, `${url}?v=${Date.now()}`);
+          }
+        }
       }
     } catch (err) {
       console.error('poster lookup failed:', err);
     }
-
+  
     return res.redirect('/static/posters/placeholder.png');
   });
-
+  
   app.get('/forgot-password', (req, res) => {
     res.render('forgot_password');
   });
@@ -925,7 +914,7 @@ function createApp() {
       const rows = await dbx.listShows(conn, { sort, year, corps });
       const rows2 = (rows || []).map((r) => {
         const d = normalizeRow(r);
-        if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+        d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
 
@@ -933,7 +922,7 @@ function createApp() {
       if (req.session.uid) {
         friendActivity = (await dbx.listFriendActivity(conn, Number(req.session.uid), { limit: 5 }) || []).map((x) => {
           const d = normalizeRow(x);
-          if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+          d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
           return d;
         });
       }
@@ -942,7 +931,7 @@ function createApp() {
       if (typeof dbx.getHotShows === 'function') {
         hotShows = (await dbx.getHotShows(conn, 3) || []).map((x) => {
           const d = normalizeRow(x);
-          if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+          d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
           return d;
         });
       }
@@ -976,7 +965,7 @@ function createApp() {
   
       let row = normalizeRow(await dbx.getShowById(conn, showId));
       if (!row) return res.sendStatus(404);
-      if (!row.poster_url) row.poster_url = posterUrlForShow(row.corps || '', row.year || 0);
+      row.poster_url = posterUrlForShow(row.corps || '', row.year || 0);
   
       let me = viewerUid ? normalizeRow(await dbx.userById(conn, viewerUid)) : null;
       const myRating = viewerUid ? await dbx.userRatingForShow(conn, showId, viewerUid) : null;
