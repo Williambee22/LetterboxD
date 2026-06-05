@@ -2647,18 +2647,18 @@ function createApp() {
       const rolesForMe = (await dbx.rolesForUser(conn, uid) || []).map(normalizeRow);
       const recentRatings = (await dbx.listRecentRatingsForUser(conn, uid, { limit: 8 }) || []).map((x) => {
         const d = normalizeRow(x);
-        if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+        d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
       const recentReviews = (await dbx.listRecentReviewsForUser(conn, uid, { limit: 8 }) || []).map((x) => {
         const d = normalizeRow(x);
-        if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+        d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
 
       const favoriteShows = (await dbx.getUserFavoriteShows(conn, uid, 5) || []).map((x) => {
         const d = normalizeRow(x);
-        if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+        d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
 
@@ -2699,18 +2699,18 @@ function createApp() {
       const rolesForUser = (await dbx.rolesForUser(conn, Number(profile.id)) || []).map(normalizeRow);
       const recentRatings = (await dbx.listRecentRatingsForUser(conn, Number(profile.id), { limit: 7 }) || []).map((x) => {
         const d = normalizeRow(x);
-        if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+        d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
       const recentReviews = (await dbx.listRecentReviewsForUser(conn, Number(profile.id), { limit: 8 }) || []).map((x) => {
         const d = normalizeRow(x);
-        if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+        d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
 
       const favoriteShows = (await dbx.getUserFavoriteShows(conn, Number(profile.id), 5) || []).map((x) => {
         const d = normalizeRow(x);
-        if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+        d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
 
