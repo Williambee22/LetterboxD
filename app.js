@@ -214,31 +214,11 @@ function pfpUrlForUsername(username) {
 }
 
 function posterUrlForShow(corps, year) {
-  const key = String(corps || '')
-    .trim()
-    .toLowerCase()
-    .replace(/&/g, 'and')
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
-
+  const key = slugify(corps);
   const y = parseInt(year || 0, 10);
-  const exts = ['.webp', '.png', '.jpg', '.jpeg', '.gif', '.avif'];
 
   if (!key || !y) return '/static/posters/placeholder.png';
 
-  for (const ext of exts) {
-    const rel = `posters/${key}${y}${ext}`;
-    const abs = path.join(__dirname, 'static', rel);
-    if (fs.existsSync(abs)) return `/static/${rel}`;
-  }
-
-  for (const ext of exts) {
-    const rel = `posters/${key}default${ext}`;
-    const abs = path.join(__dirname, 'static', rel);
-    if (fs.existsSync(abs)) return `/static/${rel}`;
-  }
-
-  // If it is not local, let your R2 poster route find it.
   return `/posters/${key}${y}`;
 }
 
@@ -584,6 +564,7 @@ function createApp() {
     const base = String(process.env.R2_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
   
     if (!base || !name) {
+      res.setHeader('Cache-Control', 'public, max-age=3600');
       return res.redirect('/static/posters/placeholder.png');
     }
   
@@ -591,11 +572,11 @@ function createApp() {
     const cached = posterLookupCache.get(name);
   
     if (cached && now - cached.ts < POSTER_CACHE_TTL_MS) {
-      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
       return res.redirect(302, cached.url);
     }
   
-    const exts = ['.webp', '.png', '.jpg', '.jpeg', '.gif', '.avif'];
+    const exts = ['.jpeg', '.jpg', '.png', '.webp', '.gif', '.avif'];
     const corpsDefaultName = name.replace(/\d{4}$/, '') + 'default';
   
     const candidates = [
@@ -616,7 +597,7 @@ function createApp() {
               ts: now
             });
   
-            res.setHeader('Cache-Control', 'public, max-age=3600');
+            res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
             return res.redirect(302, url);
           }
         }
@@ -630,7 +611,7 @@ function createApp() {
       ts: now
     });
   
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
     return res.redirect('/static/posters/placeholder.png');
   });
   
@@ -954,7 +935,7 @@ function createApp() {
       const rows = await dbx.listShows(conn, { sort, year, corps });
       const rows2 = (rows || []).map((r) => {
         const d = normalizeRow(r);
-        if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+        d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
       });
 
@@ -962,7 +943,7 @@ function createApp() {
       if (req.session.uid) {
         friendActivity = (await dbx.listFriendActivity(conn, Number(req.session.uid), { limit: 5 }) || []).map((x) => {
           const d = normalizeRow(x);
-          if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+          d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
           return d;
         });
       }
@@ -971,7 +952,7 @@ function createApp() {
       if (typeof dbx.getHotShows === 'function') {
         hotShows = (await dbx.getHotShows(conn, 3) || []).map((x) => {
           const d = normalizeRow(x);
-          if (!d.poster_url) d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+          d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
           return d;
         });
       }
@@ -1005,7 +986,7 @@ function createApp() {
   
       let row = normalizeRow(await dbx.getShowById(conn, showId));
       if (!row) return res.sendStatus(404);
-      if (!row.poster_url) row.poster_url = posterUrlForShow(row.corps || '', row.year || 0);
+      row.poster_url = posterUrlForShow(row.corps || '', row.year || 0);
   
       let me = viewerUid ? normalizeRow(await dbx.userById(conn, viewerUid)) : null;
       const myRating = viewerUid ? await dbx.userRatingForShow(conn, showId, viewerUid) : null;
@@ -2920,7 +2901,7 @@ function createApp() {
       let row = normalizeRow(await dbx.getShowById(conn, showId));
       if (!row) return res.sendStatus(404);
       
-      if (!row.poster_url) row.poster_url = posterUrlForShow(row.corps || '', row.year || 0);
+      row.poster_url = posterUrlForShow(row.corps || '', row.year || 0);
       
       let me = viewerUid ? normalizeRow(await dbx.userById(conn, viewerUid)) : null;
       if (me && !me.avatar_url) me.avatar_url = pfpUrlForUsername(me.username || '');
