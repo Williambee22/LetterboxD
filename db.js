@@ -6,6 +6,23 @@ function nowTs() {
   return Math.floor(Date.now() / 1000);
 }
 
+function versionPosterUrl(url) {
+  const clean = String(url || '').trim();
+  if (!clean) return null;
+
+  const [base, query = ''] = clean.split('?');
+  const keptParams = query
+    .split('&')
+    .filter(p => p && !p.startsWith('v='))
+    .join('&');
+
+  const version = `v=${Date.now()}`;
+  return keptParams
+    ? `${base}?${keptParams}&${version}`
+    : `${base}?${version}`;
+}
+
+
 function connect(dbPath) {
   const resolved = dbPath || '/data/site.db';
   fs.mkdirSync(path.dirname(resolved), { recursive: true });
@@ -328,11 +345,7 @@ function addShow(conn, year, corps, title, opts = {}) {
   const yearI = Number(year);
   const corpsS = String(corps || '').trim();
   const titleS = String(title || '').trim();
-  const rawPosterS = String(opts.posterUrl || '').trim();
-  
-  const posterS = rawPosterS
-    ? `${rawPosterS}${rawPosterS.includes('?') ? '&' : '?'}v=${Date.now()}`
-    : null;
+  const posterS = versionPosterUrl(opts.posterUrl);
 
   if (!corpsS || !titleS) return [false, null, 'Missing corps or title.'];
 
@@ -347,10 +360,14 @@ function addShow(conn, year, corps, title, opts = {}) {
     if (!String(err.message || '').includes('UNIQUE')) throw err;
 
     const row = conn.prepare('SELECT id, poster_url FROM shows WHERE norm_key = ?').get(key);
-    if (row && posterS && (!row.poster_url || !String(row.poster_url).trim())) {
-      conn.prepare('UPDATE shows SET poster_url = ? WHERE id = ?').run(posterS, Number(row.id));
+
+    if (row && posterS) {
+      conn.prepare('UPDATE shows SET poster_url = ? WHERE id = ?')
+        .run(posterS, Number(row.id));
+    
       return [false, Number(row.id), 'Duplicate (poster updated)'];
     }
+    
     return [false, row ? Number(row.id) : null, 'Duplicate'];
   }
 }
@@ -1358,11 +1375,7 @@ function updateShow(conn, showId, year, corps, title, opts = {}) {
   const yearI = Number(year);
   const corpsS = String(corps || '').trim();
   const titleS = String(title || '').trim();
-  const rawPosterS = String(opts.posterUrl || '').trim();
-  
-  const posterS = rawPosterS
-    ? `${rawPosterS}${rawPosterS.includes('?') ? '&' : '?'}v=${Date.now()}`
-    : null;
+  const posterS = versionPosterUrl(opts.posterUrl);
 
   if (!corpsS || !titleS) throw new Error('Missing corps or title.');
 
@@ -1378,11 +1391,7 @@ function updateShow(conn, showId, year, corps, title, opts = {}) {
 }
 
 function updateShowPosterUrl(conn, showId, posterUrl) {
-  const cleanUrl = String(posterUrl || '').trim();
-
-  const finalUrl = cleanUrl
-    ? `${cleanUrl}${cleanUrl.includes('?') ? '&' : '?'}v=${Date.now()}`
-    : null;
+  const finalUrl = versionPosterUrl(posterUrl);
 
   conn.prepare('UPDATE shows SET poster_url = ? WHERE id = ?')
     .run(finalUrl, Number(showId));
