@@ -238,13 +238,8 @@ function posterUrlForShow(corps, year) {
     if (fs.existsSync(abs)) return `/static/${rel}`;
   }
 
-  for (const ext of exts) {
-    const rel = `posters/default${ext}`;
-    const abs = path.join(__dirname, 'static', rel);
-    if (fs.existsSync(abs)) return `/static/${rel}`;
-  }
-
-  return '/static/posters/placeholder.png';
+  // If it is not local, let your R2 poster route find it.
+  return `/posters/${key}${y}`;
 }
 
 function normalizeRow(row) {
