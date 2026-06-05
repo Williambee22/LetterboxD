@@ -2977,30 +2977,31 @@ function createApp() {
 
   app.get('/top', (req, res, next) => {
     const mode = String(req.query.mode || 'top').trim().toLowerCase();
-
+  
     const allowedModes = new Set(['top', 'bottom', 'critic_top', 'critic_bottom']);
     const safeMode = allowedModes.has(mode) ? mode : 'top';
-
+  
     let conn;
     try {
       conn = getConn();
-
+  
       let rawRows = dbx.listTopShowsWithTopReview(conn, {
         mode: safeMode,
         limit: 100
       }) || [];
-
+  
       const rows = rawRows.map((r) => {
         const d = normalizeRow(r);
-        if (!d.poster_url || !String(d.poster_url).trim()) {
-          d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
-        }
+  
+        d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+  
         if (d.top_review_username && !d.top_review_avatar_url) {
           d.top_review_avatar_url = pfpUrlForUsername(d.top_review_username);
         }
+  
         return d;
       });
-
+  
       return res.render('top_shows', {
         me: res.locals.me || null,
         rows,
