@@ -21,7 +21,7 @@ const DATA_DIR = process.env.DATA_DIR || '/data';
 const PFP_DIR = path.join(DATA_DIR, 'pfps');
 
 const posterLookupCache = new Map();
-const POSTER_CACHE_TTL_MS = 1000 * 60 * 60; // 1 hour
+const POSTER_CACHE_TTL_MS = 1000 * 60 * 10;
 
 
 fs.mkdirSync(PFP_DIR, { recursive: true });
@@ -576,7 +576,7 @@ function createApp() {
       return res.redirect(302, cached.url);
     }
   
-    const exts = ['.jpeg', '.png', '.webp', '.jpg', '.gif', '.avif'];
+    const exts = ['.jpeg', '.jpg', '.png', '.webp'];
     const corpsDefaultName = name.replace(/\d{4}$/, '') + 'default';
   
     const candidates = [
