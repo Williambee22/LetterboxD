@@ -1169,6 +1169,7 @@ function listUnreadNotifications(conn, userId, opts = {}) {
 
   let actorExpr;
   let joinSql = '';
+
   if (hasActorUsername) {
     actorExpr = 'n.actor_username AS actor_username';
   } else if (hasActorUserId) {
@@ -1184,10 +1185,14 @@ function listUnreadNotifications(conn, userId, opts = {}) {
       ${kindExpr},
       ${actorExpr},
       ${showExpr},
+      s.title AS show_title,
+      s.corps AS show_corps,
+      s.year AS show_year,
       ${createdExpr},
       ${isReadExpr}
     FROM notifications n
     ${joinSql}
+    LEFT JOIN shows s ON s.id = n.show_id
     WHERE n.user_id = ?
       AND COALESCE(n.is_read, 0) = 0
     ORDER BY n.id DESC
