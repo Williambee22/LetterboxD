@@ -21,7 +21,7 @@ const DATA_DIR = process.env.DATA_DIR || '/data';
 const PFP_DIR = path.join(DATA_DIR, 'pfps');
 
 const posterLookupCache = new Map();
-const POSTER_CACHE_TTL_MS = 1000 * 10;
+const POSTER_CACHE_TTL_MS = 1000 * 60 * 60;
 
 
 fs.mkdirSync(PFP_DIR, { recursive: true });
