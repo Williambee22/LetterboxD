@@ -874,7 +874,7 @@
       <form id="showsFilterForm" method="get" action="/shows" class="row gap" style="flex-wrap:wrap; align-items:flex-end;">
         <div class="field" style="min-width:220px;">
           <label>Sort</label>
-          <select name="sort">
+          <select id="sortFilterSelect" name="sort">
             <option value="" <%= !typeof sort !== 'undefined' ? "selected" : "" %>>Default</option>
             <option value="year_desc" <%= typeof sort !== 'undefined' && sort === "year_desc" ? "selected" : "" %>>Year Newest to Oldest</option>
             <option value="year_asc" <%= typeof sort !== 'undefined' && sort === "year_asc" ? "selected" : "" %>>Year Oldest to Newest</option>
@@ -892,9 +892,6 @@
           <input id="corpsFilterInput" name="corps" value="<%= typeof corps !== 'undefined' ? corps : '' %>" placeholder="Blue Devils" autocomplete="off">
         </div>
         <div class="actions" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-          <button class="btn green" type="submit">Apply</button>
-          <a class="btn ghost" href="/shows">Reset</a>
-
           <% if (selectedYearForAvg && yearAverageRating != null) { %>
             <span class="muted small" style="white-space: nowrap;">
               <%= selectedYearForAvg %> average:
@@ -995,52 +992,66 @@
 
     (() => {
       const form = document.getElementById("showsFilterForm");
+      const sortSelect = document.getElementById("sortFilterSelect");
       const yearInput = document.getElementById("yearFilterInput");
       const corpsInput = document.getElementById("corpsFilterInput");
-      if (!form || !yearInput || !corpsInput) return;
-
+    
+      if (!form || !sortSelect || !yearInput || !corpsInput) return;
+    
       let timer = null;
       let isSubmitting = false;
-
-      function autoSubmitAndRestore(input, restoreKey) {
+    
+      function submitAndRestore(restoreKey, delay = 400) {
         if (isSubmitting) return;
-
+    
         clearTimeout(timer);
+    
         timer = setTimeout(() => {
           isSubmitting = true;
           sessionStorage.setItem(restoreKey, "1");
           sessionStorage.setItem("showsScrollY", String(window.scrollY || 0));
           form.submit();
-        }, 400);
+        }, delay);
       }
-
+    
+      sortSelect.addEventListener("change", () => {
+        submitAndRestore("restoreSortFocus", 0);
+      });
+    
       yearInput.addEventListener("input", () => {
-        autoSubmitAndRestore(yearInput, "restoreYearFocus");
+        submitAndRestore("restoreYearFocus", 400);
       });
-
+    
       corpsInput.addEventListener("input", () => {
-        autoSubmitAndRestore(corpsInput, "restoreCorpsFocus");
+        submitAndRestore("restoreCorpsFocus", 400);
       });
-
+    
       window.addEventListener("load", () => {
         const savedScrollY = sessionStorage.getItem("showsScrollY");
+        const shouldRestoreSort = sessionStorage.getItem("restoreSortFocus");
         const shouldRestoreYear = sessionStorage.getItem("restoreYearFocus");
         const shouldRestoreCorps = sessionStorage.getItem("restoreCorpsFocus");
-
+    
         if (savedScrollY !== null) {
           sessionStorage.removeItem("showsScrollY");
           window.scrollTo(0, Number(savedScrollY || 0));
         }
-
-        if (shouldRestoreYear === "1" && yearInput) {
+    
+        if (shouldRestoreSort === "1") {
+          sessionStorage.removeItem("restoreSortFocus");
+          sortSelect.focus();
+          return;
+        }
+    
+        if (shouldRestoreYear === "1") {
           sessionStorage.removeItem("restoreYearFocus");
           yearInput.focus();
           const len = yearInput.value.length;
           yearInput.setSelectionRange(len, len);
           return;
         }
-
-        if (shouldRestoreCorps === "1" && corpsInput) {
+    
+        if (shouldRestoreCorps === "1") {
           sessionStorage.removeItem("restoreCorpsFocus");
           corpsInput.focus();
           const len = corpsInput.value.length;
