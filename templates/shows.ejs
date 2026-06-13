@@ -770,18 +770,19 @@
         <div style="font-weight: 900; font-size: 42px; line-height: 1.1; letter-spacing: -1px; margin-top: 10px; margin-bottom: 10px; color: #ffffff;">
           Welcome to <span style="color: #3252b3;">Pressboxd</span>
         </div>
-        <div style="max-width: 600px; margin: 10px auto 0; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); color: #ffffff;">
-          <p style="margin-bottom: 8px; opacity: 0.9; font-size: 16px;">
-            <strong>WE ARE ALMOST READY TO OFFICIALLY TAKE THE WEBSITE OUT OF EARLY DEVELOPMENT!</strong>
-          </p>
-          <p style="margin-bottom: 10px; font-style: italic; color: #ffcc00; font-weight: 500; font-size: 14px; line-height: 1.4;">
-            If the site feels down or you are logged out, we are likely pushing live fixes. We apologize for the inconvenience! (likely development window times: 8am-9:30am, 9pm-10pm)
-          </p>
-          <p style="opacity: 0.8; font-size: 14px; margin-bottom: 0;">
-            Suggestions? Reach out at 
-            <a href="mailto:PressboxdContact@gmail.com" style="color: #3252b3; text-decoration: none; font-weight: bold;">PressboxdContact@gmail.com</a>
-          </p>
-        </div>
+      
+        <%
+          const showsWelcomeMessageSafe =
+            typeof shows_welcome_message !== "undefined" && shows_welcome_message
+              ? shows_welcome_message
+              : "";
+        %>
+      
+        <% if (showsWelcomeMessageSafe) { %>
+          <div style="max-width: 600px; margin: 10px auto 0; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); color: #ffffff; white-space: pre-line; line-height:1.45;">
+            <%- showsWelcomeMessageSafe %>
+          </div>
+        <% } %>
       </div>
     
       <div class="accentCard accentBorderSoft hotCard">
