@@ -1003,38 +1003,6 @@
                 <% if (meUser) { %>
                   <button class="reactionToggleBtn" type="button" title="React">＋</button>
             
-                  <div class="reactionPicker">
-                    <% for (const emoji of allowedReactions) { %>
-                      <% 
-                        const count = Number(postReactionData.counts?.[emoji] || 0);
-                        const isMine = postReactionData.mine === emoji;
-                      %>
-            
-                      <% if (count === 0 && !isMine) { %>
-                        <form
-                          method="post"
-                          action="/forums/post/<%= p.id %>/react"
-                          class="reactionForm reactionPickerForm"
-                        >
-                          <input type="hidden" name="emoji" value="<%= emoji %>">
-            
-                          <button
-                            class="reactionBtn"
-                            type="submit"
-                            data-emoji="<%= emoji %>"
-                          >
-                            <span><%= emoji %></span>
-                            <span class="reactionCount"></span>
-                          </button>
-                        </form>
-                      <% } %>
-                    <% } %>
-                  </div>
-                <% } else { %>
-                  <span class="reactionLoginHint">Login to react</span>
-                <% } %>
-              </div>
-            
               <div class="reactionBar" data-post-id="<%= p.id %>">
                 <% for (const emoji of allowedReactions) { %>
                   <% const count = Number(postReactionData.counts?.[emoji] || 0); %>
