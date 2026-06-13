@@ -556,6 +556,22 @@ function createApp() {
     };
   }
 
+  function forumViewerKey(req) {
+    if (req.session?.uid) {
+      return `user:${Number(req.session.uid)}`;
+    }
+  
+    const raw = [
+      req.ip || '',
+      req.get('user-agent') || '',
+      req.sessionID || ''
+    ].join('|');
+  
+    return `guest:${crypto.createHash('sha256').update(raw).digest('hex')}`;
+  }
+
+
+  
   app.get('/posters/:name', async (req, res) => {
     const name = String(req.params.name || '')
       .trim()
@@ -3474,7 +3490,7 @@ function createApp() {
   
       if (!topic) return res.sendStatus(404);
   
-      dbx.incrementForumTopicViews(conn, Number(topic.id));
+      dbx.recordForumTopicView(conn, Number(topic.id), forumViewerKey(req));
   
       const posts = dbx.listForumPosts(conn, Number(topic.id)).map((r) => {
         const row = normalizeRow(r);
@@ -3506,7 +3522,8 @@ function createApp() {
       dbx.addForumPost(conn, {
         topic_id: Number(req.params.topic_id),
         user_id: Number(req.session.uid),
-        body: req.body.body
+        body: req.body.body,
+        reply_to_post_id: req.body.reply_to_post_id
       });
   
       await dbx.commit(conn);
