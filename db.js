@@ -1242,6 +1242,8 @@ function listUnreadNotifications(conn, userId, opts = {}) {
       ${kindExpr},
       ${actorExpr},
       ${showExpr},
+      n.forum_topic_id AS forum_topic_id,
+      n.forum_post_id AS forum_post_id,
       s.title AS show_title,
       s.corps AS show_corps,
       s.year AS show_year,
