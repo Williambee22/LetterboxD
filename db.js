@@ -2996,31 +2996,132 @@ function updateForumTopicFlags(conn, topicId, args = {}) {
 function deleteForumTopic(conn, topicId) {
   ensureForumTables(conn);
 
-  conn.prepare(`
-    DELETE FROM forum_topics
-    WHERE id = ?
-  `).run(Number(topicId));
+  const cleanTopicId = Number(topicId);
+
+  const tx = conn.transaction(() => {
+    conn.prepare(`
+      DELETE FROM notifications
+      WHERE forum_topic_id = ?
+    `).run(cleanTopicId);
+
+    conn.prepare(`
+      DELETE FROM forum_topic_views
+      WHERE topic_id = ?
+    `).run(cleanTopicId);
+
+    conn.prepare(`
+      DELETE FROM forum_posts
+      WHERE topic_id = ?
+    `).run(cleanTopicId);
+
+    conn.prepare(`
+      DELETE FROM forum_topics
+      WHERE id = ?
+    `).run(cleanTopicId);
+  });
+
+  tx();
+  return true;
 }
+
+function deleteForumCategory(conn, categoryId) {
+  ensureForumTables(conn);
+
+  const cleanCategoryId = Number(categoryId);
+
+  const topicRows = conn.prepare(`
+    SELECT id
+    FROM forum_topics
+    WHERE category_id = ?
+  `).all(cleanCategoryId);
+
+  const tx = conn.transaction(() => {
+    for (const topic of topicRows) {
+      const topicId = Number(topic.id);
+
+      conn.prepare(`
+        DELETE FROM notifications
+        WHERE forum_topic_id = ?
+      `).run(topicId);
+
+      conn.prepare(`
+        DELETE FROM forum_topic_views
+        WHERE topic_id = ?
+      `).run(topicId);
+
+      conn.prepare(`
+        DELETE FROM forum_posts
+        WHERE topic_id = ?
+      `).run(topicId);
+
+      conn.prepare(`
+        DELETE FROM forum_topics
+        WHERE id = ?
+      `).run(topicId);
+    }
+
+    conn.prepare(`
+      DELETE FROM forum_categories
+      WHERE id = ?
+    `).run(cleanCategoryId);
+  });
+
+  tx();
+  return true;
+}
+
+
 
 function deleteForumPost(conn, postId) {
   ensureForumTables(conn);
+
+  const cleanPostId = Number(postId);
 
   const post = conn.prepare(`
     SELECT *
     FROM forum_posts
     WHERE id = ?
-  `).get(Number(postId));
+  `).get(cleanPostId);
 
   if (!post) return false;
 
-  conn.prepare(`
-    UPDATE forum_posts
-    SET is_deleted = 1,
-        body = '[deleted]',
-        updated_ts = strftime('%s','now')
-    WHERE id = ?
-  `).run(Number(postId));
+  const topicId = Number(post.topic_id);
 
+  const tx = conn.transaction(() => {
+    conn.prepare(`
+      DELETE FROM notifications
+      WHERE forum_post_id = ?
+    `).run(cleanPostId);
+
+    conn.prepare(`
+      UPDATE forum_posts
+      SET reply_to_post_id = NULL,
+          reply_to_user_id = NULL
+      WHERE reply_to_post_id = ?
+    `).run(cleanPostId);
+
+    conn.prepare(`
+      DELETE FROM forum_posts
+      WHERE id = ?
+    `).run(cleanPostId);
+
+    const latest = conn.prepare(`
+      SELECT created_ts
+      FROM forum_posts
+      WHERE topic_id = ?
+      ORDER BY created_ts DESC, id DESC
+      LIMIT 1
+    `).get(topicId);
+
+    conn.prepare(`
+      UPDATE forum_topics
+      SET last_post_ts = COALESCE(?, created_ts),
+          updated_ts = strftime('%s','now')
+      WHERE id = ?
+    `).run(latest?.created_ts || null, topicId);
+  });
+
+  tx();
   return true;
 }
 
