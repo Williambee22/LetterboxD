@@ -315,10 +315,7 @@
     }
 
     .forumTextarea {
-      min-height: 150px;
-      resize: vertical;
-      line-height: 1.5;
-    }
+      min-height: 90px;
 
     .forumInput:focus,
     .forumTextarea:focus {
@@ -333,38 +330,47 @@
     }
 
     .topicLayout {
-      display: grid;
-      gap: 7px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
     
     .forumPost {
-      display: grid;
-      grid-template-columns: 135px 1fr;
-      border: 1px solid rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.11);
       background: #050505;
-      align-items: start;
     }
     
-    .postSidebar {
-      padding: 9px 10px;
-      background: #0b0b0b;
-      border-right: 1px solid rgba(255,255,255,0.10);
-      min-height: 0;
+    .postHeader {
+      min-height: 34px;
+      padding: 6px 9px;
+      background: #0d0d0d;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    
+    .postUserLine {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
     }
     
     .postAvatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 6px;
+      width: 26px;
+      height: 26px;
+      border-radius: 5px;
       display: grid;
       place-items: center;
       overflow: hidden;
-      background: color-mix(in srgb, var(--accent) 16%, #1a1a1a 84%);
+      background: color-mix(in srgb, var(--accent) 18%, #181818 82%);
       border: 1px solid rgba(255,255,255,0.12);
       color: #fff;
-      font-size: 16px;
+      font-size: 13px;
       font-weight: 950;
-      margin-bottom: 6px;
+      flex: 0 0 auto;
     }
     
     .postAvatar img {
@@ -375,13 +381,10 @@
     }
     
     .postUsername {
-      display: block;
-      font-weight: 950;
+      font-weight: 900;
       color: #fff;
       text-decoration: none;
-      word-break: break-word;
-      font-size: 14px;
-      line-height: 1.15;
+      line-height: 1.1;
     }
     
     .postUsername:hover {
@@ -391,8 +394,7 @@
     
     .postRole {
       display: inline-flex;
-      margin-top: 5px;
-      padding: 2px 6px;
+      padding: 1px 5px;
       border-radius: 4px;
       font-size: 10px;
       font-weight: 950;
@@ -401,28 +403,28 @@
     }
     
     .postDate {
-      margin-top: 5px;
       color: rgba(229,231,235,0.52);
       font-size: 11px;
-      line-height: 1.25;
+      white-space: nowrap;
     }
     
-    .postMain {
-      min-width: 0;
-      display: block;
-    }
-    
-    .postTopline {
-      min-height: 24px;
-      padding: 4px 10px;
-      background: #0e0e0e;
-      border-bottom: 1px solid rgba(255,255,255,0.09);
+    .postMetaRight {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      gap: 9px;
+      color: rgba(229,231,235,0.55);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    
+    .postMetaRight a {
       color: rgba(229,231,235,0.62);
-      font-size: 12px;
+      text-decoration: none;
+    }
+    
+    .postMetaRight a:hover {
+      color: var(--accent);
+      text-decoration: underline;
     }
     
     .postContent {
@@ -430,28 +432,34 @@
       white-space: pre-wrap;
       line-height: 1.35;
       color: #e5e7eb;
-      min-height: 0;
       font-size: 14px;
     }
     
     .replyNotice {
-      margin: 0 0 7px 0;
-      padding: 6px 8px;
-      border-left: 3px solid var(--accent);
+      margin: 0 0 6px 0;
+      padding: 5px 7px;
+      border-left: 2px solid var(--accent);
       background: rgba(255,255,255,0.045);
       color: rgba(229,231,235,0.72);
       font-size: 12px;
-      line-height: 1.3;
+      line-height: 1.25;
       white-space: normal;
     }
     
     .postFooter {
-      padding: 6px 10px;
-      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 5px 9px;
+      border-top: 1px solid rgba(255,255,255,0.07);
       display: flex;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
       justify-content: flex-end;
+      background: #070707;
+    }
+    
+    .postFooter .forumBtn {
+      min-height: 28px;
+      padding: 0 9px;
+      font-size: 12px;
     }
 
     .modBox {
@@ -538,17 +546,14 @@
         grid-template-columns: 1fr;
       }
 
-      .postSidebar {
-        border-right: none;
-        border-bottom: 1px solid rgba(255,255,255,0.10);
-        display: grid;
-        grid-template-columns: 44px 1fr;
-        gap: 10px;
-        align-items: center;
+      .postHeader {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
       }
-
-      .postAvatar {
-        margin-bottom: 0;
+      
+      .postMetaRight {
+        white-space: normal;
       }
 
       .forumFormGrid {
@@ -924,78 +929,74 @@
       <section class="topicLayout">
         <% for (const p of posts) { %>
           <article class="forumPost" id="post-<%= p.id %>">
-            <aside class="postSidebar">
-              <div class="postAvatar">
-                <% if (p.avatar_url) { %>
-                  <img src="<%= p.avatar_url %>" alt="">
-                <% } else { %>
-                  <%= initials(p.username) %>
-                <% } %>
-              </div>
-
-              <div>
+            <div class="postHeader">
+              <div class="postUserLine">
+                <div class="postAvatar">
+                  <% if (p.avatar_url) { %>
+                    <img src="<%= p.avatar_url %>" alt="">
+                  <% } else { %>
+                    <%= initials(p.username) %>
+                  <% } %>
+                </div>
+      
                 <a class="postUsername" href="/u/<%= encodeURIComponent(p.username) %>">
                   <%= p.username %>
                 </a>
-
+      
                 <% if (Number(p.is_admin || 0) === 1) { %>
-                  <div class="postRole">Admin</div>
+                  <span class="postRole">Admin</span>
                 <% } %>
-
-                <div class="postDate">
-                  <%= fmtTs(p.created_ts) %>
-                </div>
+      
+                <span class="postDate"><%= fmtTs(p.created_ts) %></span>
               </div>
-            </aside>
-
-            <div class="postMain">
-              <div class="postTopline">
+      
+              <div class="postMetaRight">
                 <span>Post #<%= p.id %></span>
-
+      
                 <% if (Number(p.is_deleted || 0) !== 1) { %>
-                  <a href="#post-<%= p.id %>" style="color:rgba(229,231,235,0.62);text-decoration:none;">Link</a>
+                  <a href="#post-<%= p.id %>">Link</a>
                 <% } %>
               </div>
-
-              <div class="postContent">
-                <% 
-                  let visibleBody = String(p.body || '');
-                  if (p.reply_to_username) {
-                    const mentionPrefix = '@' + p.reply_to_username + ' ';
-                    if (visibleBody.startsWith(mentionPrefix)) {
-                      visibleBody = visibleBody.slice(mentionPrefix.length);
-                    }
+            </div>
+      
+            <div class="postContent">
+              <% 
+                let visibleBody = String(p.body || '');
+                if (p.reply_to_username) {
+                  const mentionPrefix = '@' + p.reply_to_username + ' ';
+                  if (visibleBody.startsWith(mentionPrefix)) {
+                    visibleBody = visibleBody.slice(mentionPrefix.length);
                   }
-                %>
-              
-                <% if (p.reply_to_username) { %>
-                  <div class="replyNotice">
-                    Replying to @<%= p.reply_to_username %>
-                  </div>
-                <% } %>
-              
-                <%= visibleBody %>
-              </div>
-
-              <div class="postFooter">
-                <% if (meUser && Number(topic.is_locked || 0) !== 1 && Number(topic.category_locked || 0) !== 1 && Number(p.is_deleted || 0) !== 1) { %>
-                  <button
-                    class="forumBtn forumBtnSecondary directReplyBtn"
-                    type="button"
-                    data-post-id="<%= p.id %>"
-                    data-username="<%= p.username %>"
-                  >
-                    Reply to @<%= p.username %>
-                  </button>
-                <% } %>
-
-                <% if (isAdmin && Number(p.is_deleted || 0) !== 1) { %>
-                  <form method="post" action="/forums/post/<%= p.id %>/delete" onsubmit="return confirm('Delete this post?');">
-                    <input type="hidden" name="topic_id" value="<%= topic.id %>">
-                    <button class="forumBtn forumBtnDanger" type="submit">Delete Post</button>
-                  </form>
-                <% } %>
-              </div>
+                }
+              %>
+      
+              <% if (p.reply_to_username) { %>
+                <div class="replyNotice">
+                  Replying to @<%= p.reply_to_username %>
+                </div>
+              <% } %>
+      
+              <%= visibleBody %>
+            </div>
+      
+            <div class="postFooter">
+              <% if (meUser && Number(topic.is_locked || 0) !== 1 && Number(topic.category_locked || 0) !== 1 && Number(p.is_deleted || 0) !== 1) { %>
+                <button
+                  class="forumBtn forumBtnSecondary directReplyBtn"
+                  type="button"
+                  data-post-id="<%= p.id %>"
+                  data-username="<%= p.username %>"
+                >
+                  Reply
+                </button>
+              <% } %>
+      
+              <% if (isAdmin && Number(p.is_deleted || 0) !== 1) { %>
+                <form method="post" action="/forums/post/<%= p.id %>/delete" onsubmit="return confirm('Delete this post?');">
+                  <input type="hidden" name="topic_id" value="<%= topic.id %>">
+                  <button class="forumBtn forumBtnDanger" type="submit">Delete</button>
+                </form>
+              <% } %>
             </div>
           </article>
         <% } %>
@@ -1023,6 +1024,7 @@
                 maxlength="8000"
                 required
                 placeholder="Write a reply..."
+                style="min-height:90px;"
               ></textarea>
 
               <div>
