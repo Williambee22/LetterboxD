@@ -460,9 +460,15 @@
       margin-top: 10px;
     }
     
-    .reactionBtn {
+    .reactionForm {
+      display: inline-flex;
+      margin: 0;
+    }
+    
+    .reactionBtn,
+    .reactionToggleBtn {
       appearance: none;
-      min-height: 28px;
+      min-height: 26px;
       padding: 0 8px;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.12);
@@ -476,7 +482,8 @@
       gap: 5px;
     }
     
-    .reactionBtn:hover {
+    .reactionBtn:hover,
+    .reactionToggleBtn:hover {
       background: rgba(255,255,255,0.08);
       border-color: color-mix(in srgb, var(--accent) 36%, rgba(255,255,255,0.14));
     }
@@ -489,6 +496,17 @@
     .reactionCount {
       color: rgba(255,255,255,0.72);
       font-size: 12px;
+    }
+    
+    .reactionPicker {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    
+    .reactionPicker.open {
+      display: flex;
     }
     
     .reactionLoginHint {
@@ -955,6 +973,70 @@
             
               <div class="reactionBar" data-post-id="<%= p.id %>">
                 <% for (const emoji of allowedReactions) { %>
+                  <% 
+                    const count = Number(postReactionData.counts?.[emoji] || 0);
+                    const isMine = postReactionData.mine === emoji;
+                  %>
+            
+                  <% if (count > 0 || isMine) { %>
+                    <form
+                      method="post"
+                      action="/forums/post/<%= p.id %>/react"
+                      class="reactionForm reactionExistingForm"
+                      <%= !meUser ? 'data-disabled="1"' : '' %>
+                    >
+                      <input type="hidden" name="emoji" value="<%= emoji %>">
+            
+                      <button
+                        class="reactionBtn <%= isMine ? 'active' : '' %>"
+                        type="<%= meUser ? 'submit' : 'button' %>"
+                        data-emoji="<%= emoji %>"
+                        <%= !meUser ? 'disabled' : '' %>
+                      >
+                        <span><%= emoji %></span>
+                        <span class="reactionCount"><%= count > 0 ? count : '' %></span>
+                      </button>
+                    </form>
+                  <% } %>
+                <% } %>
+            
+                <% if (meUser) { %>
+                  <button class="reactionToggleBtn" type="button" title="React">＋</button>
+            
+                  <div class="reactionPicker">
+                    <% for (const emoji of allowedReactions) { %>
+                      <% 
+                        const count = Number(postReactionData.counts?.[emoji] || 0);
+                        const isMine = postReactionData.mine === emoji;
+                      %>
+            
+                      <% if (count === 0 && !isMine) { %>
+                        <form
+                          method="post"
+                          action="/forums/post/<%= p.id %>/react"
+                          class="reactionForm reactionPickerForm"
+                        >
+                          <input type="hidden" name="emoji" value="<%= emoji %>">
+            
+                          <button
+                            class="reactionBtn"
+                            type="submit"
+                            data-emoji="<%= emoji %>"
+                          >
+                            <span><%= emoji %></span>
+                            <span class="reactionCount"></span>
+                          </button>
+                        </form>
+                      <% } %>
+                    <% } %>
+                  </div>
+                <% } else { %>
+                  <span class="reactionLoginHint">Login to react</span>
+                <% } %>
+              </div>
+            
+              <div class="reactionBar" data-post-id="<%= p.id %>">
+                <% for (const emoji of allowedReactions) { %>
                   <% const count = Number(postReactionData.counts?.[emoji] || 0); %>
             
                   <form
@@ -980,9 +1062,6 @@
                   <span class="reactionLoginHint">Login to react</span>
                 <% } %>
               </div>
-            </div>
-            
-              <div class="threadBodyText"><%= visibleBody %></div>
             </div>
 
             <div class="threadActions">
@@ -1087,17 +1166,32 @@
         });
       }
   
+      document.querySelectorAll('.reactionToggleBtn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const bar = btn.closest('.reactionBar');
+          const picker = bar ? bar.querySelector('.reactionPicker') : null;
+          if (picker) picker.classList.toggle('open');
+        });
+      });
+  
+      document.addEventListener('click', (e) => {
+        if (e.target.closest('.reactionBar')) return;
+  
+        document.querySelectorAll('.reactionPicker.open').forEach((picker) => {
+          picker.classList.remove('open');
+        });
+      });
+  
       document.querySelectorAll('.reactionForm').forEach((form) => {
         form.addEventListener('submit', async (e) => {
           e.preventDefault();
   
           if (form.dataset.disabled === '1') return;
   
-          const btn = form.querySelector('.reactionBtn');
           const bar = form.closest('.reactionBar');
           const emojiInput = form.querySelector('input[name="emoji"]');
   
-          if (!btn || !bar || !emojiInput) return;
+          if (!bar || !emojiInput) return;
   
           const emoji = emojiInput.value;
   
@@ -1120,23 +1214,115 @@
             const counts = data.reactions?.counts || {};
             const mine = data.reactions?.mine || null;
   
-            bar.querySelectorAll('.reactionBtn').forEach((reactionBtn) => {
-              const reactionEmoji = reactionBtn.dataset.emoji;
-              const countSpan = reactionBtn.querySelector('.reactionCount');
-              const count = Number(counts[reactionEmoji] || 0);
+            const allowedReactions = ['👍', '😂', '❤️', '👀', '🔥', '💀'];
   
-              reactionBtn.classList.toggle('active', mine === reactionEmoji);
+            const toggleBtn = bar.querySelector('.reactionToggleBtn');
+            const picker = bar.querySelector('.reactionPicker');
   
-              if (countSpan) {
-                countSpan.textContent = count > 0 ? String(count) : '';
-              }
+            bar.querySelectorAll('.reactionForm').forEach((oldForm) => {
+              oldForm.remove();
             });
+  
+            for (const reactionEmoji of allowedReactions) {
+              const count = Number(counts[reactionEmoji] || 0);
+              const isMine = mine === reactionEmoji;
+  
+              if (count > 0 || isMine) {
+                const newForm = document.createElement('form');
+                newForm.method = 'post';
+                newForm.action = `/forums/post/${bar.dataset.postId}/react`;
+                newForm.className = 'reactionForm reactionExistingForm';
+  
+                newForm.innerHTML = `
+                  <input type="hidden" name="emoji" value="${reactionEmoji}">
+                  <button
+                    class="reactionBtn ${isMine ? 'active' : ''}"
+                    type="submit"
+                    data-emoji="${reactionEmoji}"
+                  >
+                    <span>${reactionEmoji}</span>
+                    <span class="reactionCount">${count > 0 ? count : ''}</span>
+                  </button>
+                `;
+  
+                bar.insertBefore(newForm, toggleBtn);
+                attachReactionSubmit(newForm);
+              }
+            }
+  
+            if (picker) {
+              picker.innerHTML = '';
+  
+              for (const reactionEmoji of allowedReactions) {
+                const count = Number(counts[reactionEmoji] || 0);
+                const isMine = mine === reactionEmoji;
+  
+                if (count === 0 && !isMine) {
+                  const newForm = document.createElement('form');
+                  newForm.method = 'post';
+                  newForm.action = `/forums/post/${bar.dataset.postId}/react`;
+                  newForm.className = 'reactionForm reactionPickerForm';
+  
+                  newForm.innerHTML = `
+                    <input type="hidden" name="emoji" value="${reactionEmoji}">
+                    <button
+                      class="reactionBtn"
+                      type="submit"
+                      data-emoji="${reactionEmoji}"
+                    >
+                      <span>${reactionEmoji}</span>
+                      <span class="reactionCount"></span>
+                    </button>
+                  `;
+  
+                  picker.appendChild(newForm);
+                  attachReactionSubmit(newForm);
+                }
+              }
+  
+              picker.classList.remove('open');
+            }
           } catch (err) {
             console.error(err);
             alert(err.message || 'Reaction failed.');
           }
         });
       });
+  
+      function attachReactionSubmit(form) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+  
+          const bar = form.closest('.reactionBar');
+          const emojiInput = form.querySelector('input[name="emoji"]');
+  
+          if (!bar || !emojiInput) return;
+  
+          const emoji = emojiInput.value;
+  
+          try {
+            const res = await fetch(form.action, {
+              method: 'POST',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+              },
+              body: new URLSearchParams({ emoji })
+            });
+  
+            const data = await res.json();
+  
+            if (!res.ok || !data.ok) {
+              throw new Error(data.error || 'Reaction failed.');
+            }
+  
+            window.location.reload();
+          } catch (err) {
+            console.error(err);
+            alert(err.message || 'Reaction failed.');
+          }
+        });
+      }
     });
   </script>
 </body>
