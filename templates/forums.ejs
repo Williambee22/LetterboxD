@@ -397,11 +397,13 @@
 
     .threadBody {
       padding: 10px;
-      white-space: pre-wrap;
-      line-height: 1.45;
       color: #e5e7eb;
       font-size: 14px;
       min-height: 28px;
+    }
+    
+    .threadBodyText {
+      line-height: 1.45;
     }
 
     .threadReplyNotice {
@@ -888,15 +890,15 @@
             </div>
 
             <div class="threadBody">
-              <% const visibleBody = cleanReplyBody(p.body, p.reply_to_username); %>
-
+              <% const visibleBody = cleanReplyBody(p.body, p.reply_to_username).trim(); %>
+            
               <% if (p.reply_to_username) { %>
                 <div class="threadReplyNotice">
                   Replying to @<%= p.reply_to_username %>
                 </div>
               <% } %>
-
-              <%= visibleBody %>
+            
+              <div class="threadBodyText"><%= visibleBody %></div>
             </div>
 
             <div class="threadActions">
