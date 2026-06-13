@@ -519,6 +519,16 @@ function ensureNotificationsTable(conn) {
     CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications(user_id, is_read);
   `);
+
+  const notifCols = tableColumns(conn, 'notifications');
+
+  if (!notifCols.has('forum_topic_id')) {
+    conn.prepare('ALTER TABLE notifications ADD COLUMN forum_topic_id INTEGER').run();
+  }
+  
+  if (!notifCols.has('forum_post_id')) {
+    conn.prepare('ALTER TABLE notifications ADD COLUMN forum_post_id INTEGER').run();
+  }
 }
 
 function ensurePredictionTables(conn) {
@@ -1166,6 +1176,32 @@ function addNotification(conn, args = {}) {
     args.vote == null ? null : Number(args.vote),
   );
 }
+
+function addForumReplyNotification(conn, args = {}) {
+  ensureNotificationsTable(conn);
+
+  const userId = Number(args.userId);
+  const actorUserId = Number(args.actorUserId);
+  const topicId = Number(args.topicId);
+  const postId = Number(args.postId);
+
+  if (!userId || !actorUserId || !topicId || !postId) return false;
+  if (userId === actorUserId) return false;
+
+  conn.prepare(`
+    INSERT INTO notifications(
+      user_id,
+      actor_user_id,
+      kind,
+      forum_topic_id,
+      forum_post_id
+    )
+    VALUES (?, ?, 'forum_reply', ?, ?)
+  `).run(userId, actorUserId, topicId, postId);
+
+  return true;
+}
+
 
 function unreadNotificationsCount(conn, userId) {
   const row = conn.prepare(`
@@ -2918,15 +2954,26 @@ function addForumPost(conn, args = {}) {
       replyToPostId,
       replyToUserId
     );
-
+  
+    const newPostId = Number(info.lastInsertRowid);
+  
     conn.prepare(`
       UPDATE forum_topics
       SET last_post_ts = strftime('%s','now'),
           updated_ts = strftime('%s','now')
       WHERE id = ?
     `).run(topicId);
-
-    return Number(info.lastInsertRowid);
+  
+    if (replyToUserId && replyToUserId !== userId) {
+      addForumReplyNotification(conn, {
+        userId: replyToUserId,
+        actorUserId: userId,
+        topicId,
+        postId: newPostId
+      });
+    }
+  
+    return newPostId;
   });
 
   return tx();
@@ -3305,6 +3352,7 @@ module.exports = {
   updateForumTopicFlags,
   deleteForumTopic,
   deleteForumPost,
+  addForumReplyNotification,
 };
 
 
