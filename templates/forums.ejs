@@ -334,87 +334,88 @@
 
     .topicLayout {
       display: grid;
-      gap: 9px;
+      gap: 7px;
     }
-
+    
     .forumPost {
       display: grid;
-      grid-template-columns: 150px 1fr;
+      grid-template-columns: 135px 1fr;
       border: 1px solid rgba(255,255,255,0.12);
-      background: #070707;
+      background: #050505;
       align-items: start;
     }
-
+    
     .postSidebar {
-      padding: 10px;
-      background: #0d0d0d;
+      padding: 9px 10px;
+      background: #0b0b0b;
       border-right: 1px solid rgba(255,255,255,0.10);
       min-height: 0;
     }
-
+    
     .postAvatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 8px;
+      width: 38px;
+      height: 38px;
+      border-radius: 6px;
       display: grid;
       place-items: center;
       overflow: hidden;
       background: color-mix(in srgb, var(--accent) 16%, #1a1a1a 84%);
       border: 1px solid rgba(255,255,255,0.12);
       color: #fff;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 950;
-      margin-bottom: 7px;
+      margin-bottom: 6px;
     }
-
+    
     .postAvatar img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
-
+    
     .postUsername {
       display: block;
       font-weight: 950;
       color: #fff;
       text-decoration: none;
       word-break: break-word;
+      font-size: 14px;
+      line-height: 1.15;
     }
-
+    
     .postUsername:hover {
       color: var(--accent);
       text-decoration: underline;
     }
-
+    
     .postRole {
       display: inline-flex;
-      margin-top: 6px;
-      padding: 2px 7px;
+      margin-top: 5px;
+      padding: 2px 6px;
       border-radius: 4px;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 950;
       background: color-mix(in srgb, var(--accent) 20%, #171717 80%);
       border: 1px solid color-mix(in srgb, var(--accent) 32%, rgba(255,255,255,0.12));
     }
-
+    
     .postDate {
-      margin-top: 7px;
+      margin-top: 5px;
       color: rgba(229,231,235,0.52);
-      font-size: 12px;
-      line-height: 1.35;
+      font-size: 11px;
+      line-height: 1.25;
     }
-
+    
     .postMain {
       min-width: 0;
-      display: flex;
-      flex-direction: column;
+      display: block;
     }
-
+    
     .postTopline {
-      min-height: 28px;
-      padding: 6px 10px;
-      background: #101010;
+      min-height: 24px;
+      padding: 4px 10px;
+      background: #0e0e0e;
       border-bottom: 1px solid rgba(255,255,255,0.09);
       display: flex;
       align-items: center;
@@ -423,28 +424,29 @@
       color: rgba(229,231,235,0.62);
       font-size: 12px;
     }
-
+    
     .postContent {
-      padding: 10px;
+      padding: 8px 10px;
       white-space: pre-wrap;
-      line-height: 1.45;
+      line-height: 1.35;
       color: #e5e7eb;
-      flex: 0 0 auto;
       min-height: 0;
+      font-size: 14px;
     }
-
+    
     .replyNotice {
-      margin-bottom: 9px;
-      padding: 7px 9px;
+      margin: 0 0 7px 0;
+      padding: 6px 8px;
       border-left: 3px solid var(--accent);
       background: rgba(255,255,255,0.045);
       color: rgba(229,231,235,0.72);
-      font-size: 13px;
+      font-size: 12px;
+      line-height: 1.3;
       white-space: normal;
     }
-
+    
     .postFooter {
-      padding: 7px 10px;
+      padding: 6px 10px;
       border-top: 1px solid rgba(255,255,255,0.08);
       display: flex;
       gap: 8px;
@@ -956,13 +958,23 @@
               </div>
 
               <div class="postContent">
+                <% 
+                  let visibleBody = String(p.body || '');
+                  if (p.reply_to_username) {
+                    const mentionPrefix = '@' + p.reply_to_username + ' ';
+                    if (visibleBody.startsWith(mentionPrefix)) {
+                      visibleBody = visibleBody.slice(mentionPrefix.length);
+                    }
+                  }
+                %>
+              
                 <% if (p.reply_to_username) { %>
                   <div class="replyNotice">
                     Replying to @<%= p.reply_to_username %>
                   </div>
                 <% } %>
-
-                <%= p.body %>
+              
+                <%= visibleBody %>
               </div>
 
               <div class="postFooter">
