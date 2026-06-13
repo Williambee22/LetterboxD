@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
 
   <title>Forums — Pressboxd</title>
-  <meta name="description" content="Discuss drum corps shows, rankings, predictions, design, music, guard, percussion, brass, and more on the Pressboxd forums.">
+  <meta name="description" content="Pressboxd forums for drum corps discussion.">
 
   <link rel="stylesheet" href="/static/styles.css"/>
   <link rel="icon" type="image/png" href="/static/favicon.png"/>
@@ -14,7 +14,7 @@
     html,
     body,
     body.app {
-      background: #000000 !important;
+      background: #000 !important;
       background-image: none !important;
       color: #e5e7eb;
     }
@@ -23,239 +23,85 @@
       color: inherit;
     }
 
-    .forumShell {
-      width: min(1180px, calc(100% - 28px));
+    .forumPage {
+      width: min(1120px, calc(100% - 28px));
       margin: 0 auto;
       padding: 22px 0 70px;
     }
 
-    .forumHeader {
+    .forumTop {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      gap: 18px;
+      gap: 16px;
       margin-bottom: 18px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid rgba(255,255,255,0.10);
     }
 
-    .forumEyebrow {
-      color: var(--accent);
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-
-    .forumPageTitle {
+    .forumTitle {
       margin: 0;
-      font-size: 32px;
-      line-height: 1.1;
+      font-size: 30px;
+      line-height: 1.05;
       font-weight: 950;
       letter-spacing: -0.03em;
+      color: #fff;
     }
 
-    .forumPageSub {
+    .forumSubtitle {
       margin-top: 6px;
-      color: rgba(229,231,235,0.70);
-      font-size: 14px;
-      max-width: 720px;
-    }
-
-    .forumBreadcrumbs {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 18px;
       color: rgba(229,231,235,0.68);
       font-size: 14px;
     }
 
-    .forumBreadcrumbs a {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 700;
-    }
-
-    .forumBreadcrumbs a:hover {
-      text-decoration: underline;
-    }
-
-    .forumPanel {
-      border: 1px solid rgba(255,255,255,0.12);
-      background: #070707;
-      margin-bottom: 18px;
-    }
-
-    .forumPanelHeader {
+    .forumCrumbs {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 14px;
-      padding: 11px 14px;
-      background: linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--accent) 20%, #111 80%),
-        #111
-      );
-      border-bottom: 1px solid rgba(255,255,255,0.12);
-    }
-
-    .forumPanelTitle {
-      font-size: 14px;
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: #fff;
-      margin: 0;
-    }
-
-    .forumPanelBody {
-      padding: 14px;
-    }
-
-    .forumTable {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .forumTable th {
-      text-align: left;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: rgba(229,231,235,0.58);
-      background: #0d0d0d;
-      border-bottom: 1px solid rgba(255,255,255,0.10);
-      padding: 10px 12px;
-      white-space: nowrap;
-    }
-
-    .forumTable td {
-      padding: 14px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      vertical-align: middle;
-    }
-
-    .forumTable tr:last-child td {
-      border-bottom: none;
-    }
-
-    .forumTable tbody tr:hover {
-      background: rgba(255,255,255,0.035);
-    }
-
-    .forumMainCell {
-      width: 100%;
-    }
-
-    .forumIconCell {
-      width: 42px;
-    }
-
-    .forumIcon {
-      width: 34px;
-      height: 34px;
-      border-radius: 6px;
-      display: grid;
-      place-items: center;
-      font-weight: 950;
-      background: color-mix(in srgb, var(--accent) 18%, #151515 82%);
-      border: 1px solid color-mix(in srgb, var(--accent) 34%, rgba(255,255,255,0.12));
-      color: #fff;
-    }
-
-    .forumRowTitle {
-      display: inline-flex;
-      align-items: center;
       gap: 8px;
-      font-size: 16px;
-      font-weight: 900;
-      color: #f9fafb;
-      text-decoration: none;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: rgba(229,231,235,0.6);
     }
 
-    .forumRowTitle:hover {
+    .forumCrumbs a {
       color: var(--accent);
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .forumCrumbs a:hover {
       text-decoration: underline;
     }
 
-    .forumRowDesc {
-      margin-top: 4px;
-      font-size: 13px;
-      color: rgba(229,231,235,0.66);
-      line-height: 1.35;
+    .forumBox {
+      background: #080808;
+      border: 1px solid rgba(255,255,255,0.12);
+      margin-bottom: 16px;
     }
 
-    .forumRowMeta {
-      margin-top: 5px;
-      font-size: 12px;
-      color: rgba(229,231,235,0.48);
-    }
-
-    .forumStatCell {
-      width: 88px;
-      text-align: center;
-      color: rgba(229,231,235,0.70);
-      white-space: nowrap;
-    }
-
-    .forumStatNum {
-      display: block;
-      color: #f9fafb;
-      font-size: 17px;
-      font-weight: 950;
-      line-height: 1.1;
-    }
-
-    .forumLatestCell {
-      width: 245px;
-      min-width: 210px;
-      font-size: 13px;
-      color: rgba(229,231,235,0.72);
-      line-height: 1.35;
-    }
-
-    .forumLatestTitle {
-      color: #f9fafb;
-      font-weight: 800;
-      display: block;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 230px;
-    }
-
-    .forumLatestBy {
-      color: rgba(229,231,235,0.52);
-      font-size: 12px;
-    }
-
-    .forumBadge {
-      display: inline-flex;
+    .forumBoxHead {
+      padding: 10px 12px;
+      background: #111;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      display: flex;
       align-items: center;
-      height: 20px;
-      padding: 0 7px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 950;
-      letter-spacing: .02em;
-      text-transform: uppercase;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .forumBoxTitle {
+      margin: 0;
       color: #fff;
-      background: color-mix(in srgb, var(--accent) 38%, #222 62%);
-      border: 1px solid color-mix(in srgb, var(--accent) 48%, rgba(255,255,255,0.15));
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
     }
 
-    .forumEmpty {
-      padding: 34px 16px;
-      text-align: center;
-      color: rgba(229,231,235,0.62);
-      font-size: 14px;
+    .forumBoxBody {
+      padding: 12px;
     }
 
-    .forumBtn,
-    .forumBtn:visited {
+    .forumBtn {
       appearance: none;
       display: inline-flex;
       align-items: center;
@@ -263,8 +109,8 @@
       min-height: 34px;
       padding: 0 12px;
       border-radius: 6px;
-      border: 1px solid color-mix(in srgb, var(--accent) 42%, rgba(255,255,255,0.16));
-      background: color-mix(in srgb, var(--accent) 28%, #111 72%);
+      border: 1px solid color-mix(in srgb, var(--accent) 38%, rgba(255,255,255,0.14));
+      background: color-mix(in srgb, var(--accent) 24%, #111 76%);
       color: #fff;
       font-size: 13px;
       font-weight: 900;
@@ -277,28 +123,156 @@
       text-decoration: none;
     }
 
-    .forumBtnSecondary {
+    .forumBtn.secondary {
       background: #111;
-      border-color: rgba(255,255,255,0.16);
+      border-color: rgba(255,255,255,0.15);
     }
 
-    .forumBtnDanger {
+    .forumBtn.danger {
+      background: rgba(127,29,29,.42);
+      border-color: rgba(248,113,113,.35);
       color: #fecaca;
-      background: rgba(127, 29, 29, 0.42);
-      border-color: rgba(248, 113, 113, 0.35);
+    }
+
+    .forumList {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .forumRow {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) 90px 90px 230px;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .forumRow:last-child {
+      border-bottom: none;
+    }
+
+    .forumRow:hover {
+      background: rgba(255,255,255,0.035);
+    }
+
+    .forumIcon {
+      width: 32px;
+      height: 32px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      background: color-mix(in srgb, var(--accent) 18%, #181818 82%);
+      border: 1px solid color-mix(in srgb, var(--accent) 30%, rgba(255,255,255,0.12));
+      color: #fff;
+      font-weight: 950;
+      font-size: 13px;
+    }
+
+    .forumRowMain {
+      min-width: 0;
+    }
+
+    .forumRowTitle {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 950;
+      text-decoration: none;
+      line-height: 1.25;
+    }
+
+    .forumRowTitle:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .forumRowDesc {
+      margin-top: 3px;
+      color: rgba(229,231,235,0.62);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .forumMeta {
+      margin-top: 4px;
+      color: rgba(229,231,235,0.46);
+      font-size: 12px;
+    }
+
+    .forumStat {
+      text-align: center;
+      color: rgba(229,231,235,0.60);
+      font-size: 12px;
+    }
+
+    .forumStat strong {
+      display: block;
+      color: #fff;
+      font-size: 16px;
+      line-height: 1.1;
+    }
+
+    .forumLatest {
+      min-width: 0;
+      color: rgba(229,231,235,0.64);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .forumLatest a,
+    .forumLatest strong {
+      display: block;
+      color: #fff;
+      font-weight: 850;
+      text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .forumLatest a:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .forumBadge {
+      display: inline-flex;
+      align-items: center;
+      height: 19px;
+      padding: 0 6px;
+      border-radius: 4px;
+      background: color-mix(in srgb, var(--accent) 30%, #222 70%);
+      border: 1px solid color-mix(in srgb, var(--accent) 42%, rgba(255,255,255,0.14));
+      color: #fff;
+      font-size: 10px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .forumEmpty {
+      padding: 28px 12px;
+      text-align: center;
+      color: rgba(229,231,235,0.58);
+      font-size: 14px;
     }
 
     .forumForm {
       display: grid;
-      gap: 11px;
+      gap: 10px;
     }
 
     .forumLabel {
+      display: block;
+      margin-bottom: 5px;
+      color: rgba(229,231,235,0.64);
       font-size: 12px;
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: .08em;
-      color: rgba(229,231,235,0.62);
     }
 
     .forumInput,
@@ -306,191 +280,155 @@
       width: 100%;
       box-sizing: border-box;
       background: #050505;
-      color: #f9fafb;
       border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 5px;
-      padding: 11px 12px;
+      color: #fff;
+      border-radius: 6px;
+      padding: 10px 11px;
       outline: none;
       font: inherit;
     }
 
     .forumTextarea {
-      min-height: 90px;
+      min-height: 115px;
+      resize: vertical;
+      line-height: 1.45;
+    }
 
     .forumInput:focus,
     .forumTextarea:focus {
-      border-color: color-mix(in srgb, var(--accent) 62%, rgba(255,255,255,0.20));
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+      border-color: color-mix(in srgb, var(--accent) 54%, rgba(255,255,255,0.18));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
     }
 
     .forumFormGrid {
       display: grid;
-      grid-template-columns: 1fr 120px;
-      gap: 11px;
+      grid-template-columns: 1fr 130px;
+      gap: 10px;
+      align-items: end;
     }
 
-    .topicLayout {
+    .threadList {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
-    
-    .forumPost {
-      display: grid;
-      grid-template-columns: 125px minmax(0, 1fr);
+
+    .threadPost {
+      background: #080808;
       border: 1px solid rgba(255,255,255,0.12);
-      background: #060606;
-      align-items: start;
     }
-    
-    .postSidebar {
-      padding: 8px;
-      background: #0c0c0c;
-      border-right: 1px solid rgba(255,255,255,0.10);
-      min-height: 0;
+
+    .threadPostHead {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 10px;
+      background: #111;
+      border-bottom: 1px solid rgba(255,255,255,0.09);
     }
-    
-    .postAvatar {
-      width: 38px !important;
-      height: 38px !important;
-      max-width: 38px !important;
-      max-height: 38px !important;
-      border-radius: 6px;
+
+    .threadUser {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .threadAvatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 7px;
       display: grid;
       place-items: center;
       overflow: hidden;
       background: color-mix(in srgb, var(--accent) 18%, #181818 82%);
-      border: 1px solid rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.13);
       color: #fff;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 950;
-      margin-bottom: 6px;
-      flex: 0 0 38px;
+      flex: 0 0 auto;
     }
-    
-    .postAvatar img {
-      width: 38px !important;
-      height: 38px !important;
-      max-width: 38px !important;
-      max-height: 38px !important;
+
+    .threadAvatar img {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       display: block;
     }
-    
-    .postUsername {
-      display: block;
-      font-size: 13px;
-      font-weight: 950;
-      line-height: 1.15;
+
+    .threadName {
       color: #fff;
+      font-size: 14px;
+      font-weight: 950;
       text-decoration: none;
-      word-break: break-word;
+      line-height: 1.2;
     }
-    
-    .postUsername:hover {
+
+    .threadName:hover {
       color: var(--accent);
       text-decoration: underline;
     }
-    
-    .postRole {
-      display: inline-flex;
-      margin-top: 5px;
-      padding: 1px 5px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 950;
-      background: color-mix(in srgb, var(--accent) 22%, #171717 78%);
-      border: 1px solid color-mix(in srgb, var(--accent) 35%, rgba(255,255,255,0.12));
-    }
-    
-    .postDate {
-      margin-top: 5px;
-      color: rgba(229,231,235,0.55);
-      font-size: 10px;
+
+    .threadInfo {
+      color: rgba(229,231,235,0.50);
+      font-size: 12px;
       line-height: 1.25;
     }
-    
-    .postMain {
-      min-width: 0;
-      display: grid;
-      grid-template-rows: auto auto auto;
-    }
-    
-    .postTopline {
-      min-height: 24px;
-      padding: 4px 8px;
-      background: #0f0f0f;
-      border-bottom: 1px solid rgba(255,255,255,0.09);
+
+    .threadRight {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      color: rgba(229,231,235,0.62);
-      font-size: 11px;
+      gap: 9px;
+      color: rgba(229,231,235,0.54);
+      font-size: 12px;
+      white-space: nowrap;
     }
-    
-    .postTopline a {
+
+    .threadRight a {
       color: rgba(229,231,235,0.62);
       text-decoration: none;
     }
-    
-    .postTopline a:hover {
+
+    .threadRight a:hover {
       color: var(--accent);
       text-decoration: underline;
     }
-    
-    .postContent {
-      padding: 8px 9px;
+
+    .threadBody {
+      padding: 10px;
       white-space: pre-wrap;
-      line-height: 1.35;
+      line-height: 1.45;
       color: #e5e7eb;
       font-size: 14px;
       min-height: 28px;
     }
-    
-    .replyNotice {
-      margin: 0 0 6px 0;
-      padding: 5px 7px;
-      border-left: 2px solid var(--accent);
+
+    .threadReplyNotice {
+      margin: 0 0 7px;
+      padding: 6px 8px;
+      border-left: 3px solid var(--accent);
       background: rgba(255,255,255,0.045);
-      color: rgba(229,231,235,0.75);
+      color: rgba(229,231,235,0.70);
       font-size: 12px;
-      line-height: 1.25;
+      line-height: 1.3;
       white-space: normal;
     }
-    
-    .postFooter {
-      min-height: 28px;
-      padding: 5px 8px;
+
+    .threadActions {
+      padding: 7px 10px;
+      background: #0b0b0b;
       border-top: 1px solid rgba(255,255,255,0.08);
-      background: #080808;
       display: flex;
-      align-items: center;
       justify-content: flex-end;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    
-    .postFooter .forumBtn {
-      min-height: 26px;
-      padding: 0 8px;
-      font-size: 11px;
-    }
-
-    .modBox {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      gap: 7px;
       flex-wrap: wrap;
     }
 
-    .modChecks {
-      display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
-      color: rgba(229,231,235,0.78);
-      font-size: 14px;
+    .threadActions .forumBtn {
+      min-height: 28px;
+      padding: 0 9px;
+      font-size: 12px;
     }
 
     .replyingToBox {
@@ -500,93 +438,65 @@
       padding: 7px 9px;
       background: rgba(255,255,255,0.045);
       border: 1px solid rgba(255,255,255,0.10);
-      color: rgba(229,231,235,0.76);
+      color: rgba(229,231,235,0.74);
       font-size: 13px;
     }
 
-    @media (max-width: 820px) {
-      .forumHeader {
+    .modTools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .modChecks {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      color: rgba(229,231,235,0.75);
+      font-size: 13px;
+    }
+
+    @media (max-width: 850px) {
+      .forumTop {
         align-items: flex-start;
         flex-direction: column;
       }
 
-      .forumTable,
-      .forumTable thead,
-      .forumTable tbody,
-      .forumTable tr,
-      .forumTable th,
-      .forumTable td {
-        display: block;
+      .forumRow {
+        grid-template-columns: 34px minmax(0, 1fr);
       }
 
-      .forumTable thead {
-        display: none;
-      }
-
-      .forumTable tr {
-        border-bottom: 1px solid rgba(255,255,255,0.10);
-        padding: 12px;
-      }
-
-      .forumTable tr:last-child {
-        border-bottom: none;
-      }
-
-      .forumTable td {
-        border: none;
-        padding: 5px 0;
-      }
-
-      .forumIconCell {
-        float: left;
-        margin-right: 10px;
-        width: auto;
-      }
-
-      .forumStatCell {
-        display: inline-block;
-        width: auto;
-        margin-right: 16px;
+      .forumStat,
+      .forumLatest {
+        grid-column: 2;
         text-align: left;
       }
 
-      .forumLatestCell {
-        width: auto;
-        min-width: 0;
-        clear: both;
-        padding-top: 10px !important;
+      .forumStat {
+        display: inline-block;
+        margin-right: 14px;
       }
 
-      .forumPost {
-        grid-template-columns: 1fr;
-      }
-      
-      .postSidebar {
-        border-right: none;
-        border-bottom: 1px solid rgba(255,255,255,0.10);
-        display: grid;
-        grid-template-columns: 38px 1fr;
-        gap: 8px;
-        align-items: center;
-      }
-      
-      .postAvatar {
-        width: 38px !important;
-        height: 38px !important;
-        max-width: 38px !important;
-        max-height: 38px !important;
-        margin-bottom: 0;
-      }
-      
-      .postAvatar img {
-        width: 38px !important;
-        height: 38px !important;
-        max-width: 38px !important;
-        max-height: 38px !important;
+      .forumStat strong {
+        display: inline;
+        margin-right: 4px;
       }
 
       .forumFormGrid {
         grid-template-columns: 1fr;
+      }
+
+      .threadPostHead {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .threadRight {
+        white-space: normal;
       }
     }
   </style>
@@ -599,9 +509,7 @@
   function fmtTs(ts) {
     if (!ts) return "";
     const n = Number(ts);
-    const d = Number.isFinite(n)
-      ? new Date(n * 1000)
-      : new Date(ts);
+    const d = Number.isFinite(n) ? new Date(n * 1000) : new Date(ts);
     if (Number.isNaN(d.getTime())) return "";
     return d.toLocaleString();
   }
@@ -609,14 +517,39 @@
   function initials(name) {
     return String(name || "?").trim().slice(0, 1).toUpperCase();
   }
+
+  function cleanReplyBody(body, replyUser) {
+    let visibleBody = String(body || "");
+    if (replyUser) {
+      const mentionPrefix = "@" + replyUser + " ";
+      if (visibleBody.startsWith(mentionPrefix)) {
+        visibleBody = visibleBody.slice(mentionPrefix.length);
+      }
+    }
+    return visibleBody;
+  }
 %>
 
 <body class="app" style="--accent:<%= accent_color || '#3252b3' %>;">
   <header class="topbar">
     <div class="wrap row between">
-      <div class="row" style="gap:10px;">
-        <a class="brand" href="/shows" style="display:flex;align-items:center;">
-          <img src="/static/pressboxd-wordmark.png" alt="Pressboxd" style="height:68px;width:auto;display:block;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display:flex; align-items:center;">
+          <img
+            src="/static/logo.png"
+            alt="Logo"
+            style="width:36px; height:36px; object-fit:contain; transition: transform 0.6s ease-in-out;"
+            onmouseover="this.style.transform='rotate(360deg)'"
+            onmouseout="this.style.transform='rotate(0deg)'"
+          >
+        </a>
+
+        <a class="brand" href="/shows" style="display:flex; align-items:center;">
+          <img
+            src="/static/pressboxd-wordmark.png"
+            alt="Pressboxd"
+            style="height:68px; width:auto; display:block;"
+          >
         </a>
       </div>
 
@@ -631,153 +564,140 @@
           <a href="/admin/bulk_add">Mass Add</a>
           <a href="/admin/roles">Roles</a>
           <a href="/admin/users">Users</a>
+          <a href="/admin/stats">Stats</a>
+          <a href="/admin/predictions">Predictions Admin</a>
         <% } %>
       </nav>
 
       <div class="auth row">
         <% if (meUser) { %>
-          <a href="/me">@<%= meUser.username %></a>
-          <form method="post" action="/logout" style="display:inline;">
-            <button class="btn" type="submit">Logout</button>
-          </form>
+          <a class="nav_user" href="/me">
+            <span class="avatar_sm">
+              <% if (meUser.avatar_url) { %>
+                <img src="<%= meUser.avatar_url %>" alt="avatar">
+              <% } else { %>
+                <span class="avatar_fallback"></span>
+              <% } %>
+            </span>
+            <span class="muted small"><%= meUser.username || "me" %></span>
+          </a>
+          <a href="/logout">Logout</a>
         <% } else { %>
           <a href="/login">Login</a>
-          <a href="/register">Register</a>
+          <a class="btn" href="/register">Register</a>
         <% } %>
       </div>
     </div>
   </header>
 
-  <main class="forumShell">
+  <main class="forumPage">
     <% if (Array.isArray(flashes) && flashes.length) { %>
       <% for (const f of flashes) { %>
         <div class="flash <%= f.category %>"><%= f.message %></div>
       <% } %>
     <% } %>
 
-    <% if (mode === 'index') { %>
-      <section class="forumHeader">
+    <% if (mode === "index") { %>
+      <section class="forumTop">
         <div>
-          <div class="forumEyebrow">Community</div>
-          <h1 class="forumPageTitle">Forums</h1>
-          <div class="forumPageSub">
-            Talk about shows, corps, predictions, captions, rankings, design, music, guard, percussion, brass, and drum corps history.
+          <h1 class="forumTitle">Forums</h1>
+          <div class="forumSubtitle">
+            Drum corps discussion, rankings, predictions, captions, design, music, guard, percussion, brass, and history.
           </div>
         </div>
       </section>
 
       <% if (isAdmin) { %>
-        <section class="forumPanel">
-          <div class="forumPanelHeader">
-            <h2 class="forumPanelTitle">Admin: Create Forum Category</h2>
+        <section class="forumBox">
+          <div class="forumBoxHead">
+            <h2 class="forumBoxTitle">Create Forum Category</h2>
           </div>
 
-          <div class="forumPanelBody">
+          <div class="forumBoxBody">
             <form class="forumForm" method="post" action="/forums/categories">
               <div>
-                <label class="forumLabel">Category Title</label>
+                <label class="forumLabel">Category title</label>
                 <input class="forumInput" name="title" maxlength="80" required placeholder="General Discussion">
               </div>
 
               <div>
                 <label class="forumLabel">Description</label>
-                <textarea class="forumTextarea" name="description" maxlength="500" placeholder="What this category is for..." style="min-height:90px;"></textarea>
+                <textarea class="forumTextarea" name="description" maxlength="500" style="min-height:80px;" placeholder="What this category is for..."></textarea>
               </div>
 
               <div class="forumFormGrid">
                 <div>
-                  <label class="forumLabel">Sort Order</label>
+                  <label class="forumLabel">Sort order</label>
                   <input class="forumInput" name="sort_order" type="number" value="0">
                 </div>
 
-                <div style="display:flex;align-items:end;">
-                  <button class="forumBtn" type="submit" style="width:100%;">Create</button>
-                </div>
+                <button class="forumBtn" type="submit">Create</button>
               </div>
             </form>
           </div>
         </section>
       <% } %>
 
-      <section class="forumPanel">
-        <div class="forumPanelHeader">
-          <h2 class="forumPanelTitle">Forum Categories</h2>
+      <section class="forumBox">
+        <div class="forumBoxHead">
+          <h2 class="forumBoxTitle">Categories</h2>
         </div>
 
         <% if (!categories || !categories.length) { %>
-          <div class="forumEmpty">
-            No forum categories yet.
-            <% if (isAdmin) { %>
-              Create one above.
+          <div class="forumEmpty">No forum categories yet.</div>
+        <% } else { %>
+          <div class="forumList">
+            <% for (const c of categories) { %>
+              <div class="forumRow">
+                <div class="forumIcon">#</div>
+
+                <div class="forumRowMain">
+                  <a class="forumRowTitle" href="/forums/category/<%= c.id %>">
+                    <%= c.title %>
+                  </a>
+
+                  <% if (c.description) { %>
+                    <div class="forumRowDesc"><%= c.description %></div>
+                  <% } %>
+                </div>
+
+                <div class="forumStat">
+                  <strong><%= c.topic_count || 0 %></strong>
+                  topics
+                </div>
+
+                <div class="forumStat">
+                  <strong><%= c.post_count || 0 %></strong>
+                  posts
+                </div>
+
+                <div class="forumLatest">
+                  <% if (c.latest_topic_id) { %>
+                    <a href="/forums/topic/<%= c.latest_topic_id %>"><%= c.latest_topic_title %></a>
+                    <span>by <%= c.latest_username || "Unknown" %></span>
+                  <% } else { %>
+                    <span>No posts yet</span>
+                  <% } %>
+                </div>
+              </div>
             <% } %>
           </div>
-        <% } else { %>
-          <table class="forumTable">
-            <thead>
-              <tr>
-                <th colspan="2">Forum</th>
-                <th>Topics</th>
-                <th>Posts</th>
-                <th>Latest</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <% for (const c of categories) { %>
-                <tr>
-                  <td class="forumIconCell">
-                    <div class="forumIcon">#</div>
-                  </td>
-
-                  <td class="forumMainCell">
-                    <a class="forumRowTitle" href="/forums/category/<%= c.id %>">
-                      <%= c.title %>
-                    </a>
-
-                    <% if (c.description) { %>
-                      <div class="forumRowDesc"><%= c.description %></div>
-                    <% } %>
-                  </td>
-
-                  <td class="forumStatCell">
-                    <span class="forumStatNum"><%= c.topic_count || 0 %></span>
-                    topics
-                  </td>
-
-                  <td class="forumStatCell">
-                    <span class="forumStatNum"><%= c.post_count || 0 %></span>
-                    posts
-                  </td>
-
-                  <td class="forumLatestCell">
-                    <% if (c.latest_topic_id) { %>
-                      <span class="forumLatestTitle"><%= c.latest_topic_title %></span>
-                      <span class="forumLatestBy">by <%= c.latest_username || 'Unknown' %></span>
-                    <% } else { %>
-                      <span class="forumLatestBy">No posts yet</span>
-                    <% } %>
-                  </td>
-                </tr>
-              <% } %>
-            </tbody>
-          </table>
         <% } %>
       </section>
     <% } %>
 
-    <% if (mode === 'category') { %>
-      <div class="forumBreadcrumbs">
+    <% if (mode === "category") { %>
+      <div class="forumCrumbs">
         <a href="/forums">Forums</a>
         <span>/</span>
         <span><%= category.title %></span>
       </div>
 
-      <section class="forumHeader">
+      <section class="forumTop">
         <div>
-          <div class="forumEyebrow">Forum Category</div>
-          <h1 class="forumPageTitle"><%= category.title %></h1>
+          <h1 class="forumTitle"><%= category.title %></h1>
           <% if (category.description) { %>
-            <div class="forumPageSub"><%= category.description %></div>
+            <div class="forumSubtitle"><%= category.description %></div>
           <% } %>
         </div>
 
@@ -788,73 +708,58 @@
         <% } %>
       </section>
 
-      <section class="forumPanel">
-        <div class="forumPanelHeader">
-          <h2 class="forumPanelTitle">Topics</h2>
+      <section class="forumBox">
+        <div class="forumBoxHead">
+          <h2 class="forumBoxTitle">Topics</h2>
         </div>
 
         <% if (!topics || !topics.length) { %>
-          <div class="forumEmpty">No topics in this category yet.</div>
+          <div class="forumEmpty">No topics yet.</div>
         <% } else { %>
-          <table class="forumTable">
-            <thead>
-              <tr>
-                <th colspan="2">Topic</th>
-                <th>Replies</th>
-                <th>Views</th>
-                <th>Latest</th>
-              </tr>
-            </thead>
+          <div class="forumList">
+            <% for (const t of topics) { %>
+              <div class="forumRow">
+                <div class="forumIcon"><%= Number(t.is_locked || 0) === 1 ? "L" : "T" %></div>
 
-            <tbody>
-              <% for (const t of topics) { %>
-                <tr>
-                  <td class="forumIconCell">
-                    <div class="forumIcon"><%= Number(t.is_locked || 0) === 1 ? 'L' : 'T' %></div>
-                  </td>
+                <div class="forumRowMain">
+                  <a class="forumRowTitle" href="/forums/topic/<%= t.id %>">
+                    <% if (Number(t.is_pinned || 0) === 1) { %>
+                      <span class="forumBadge">Pinned</span>
+                    <% } %>
+                    <% if (Number(t.is_locked || 0) === 1) { %>
+                      <span class="forumBadge">Locked</span>
+                    <% } %>
+                    <%= t.title %>
+                  </a>
 
-                  <td class="forumMainCell">
-                    <a class="forumRowTitle" href="/forums/topic/<%= t.id %>">
-                      <% if (Number(t.is_pinned || 0) === 1) { %>
-                        <span class="forumBadge">Pinned</span>
-                      <% } %>
+                  <div class="forumMeta">
+                    Started by <strong><%= t.username %></strong> · <%= fmtTs(t.created_ts) %>
+                  </div>
+                </div>
 
-                      <% if (Number(t.is_locked || 0) === 1) { %>
-                        <span class="forumBadge">Locked</span>
-                      <% } %>
+                <div class="forumStat">
+                  <strong><%= t.reply_count || 0 %></strong>
+                  replies
+                </div>
 
-                      <%= t.title %>
-                    </a>
+                <div class="forumStat">
+                  <strong><%= t.views || 0 %></strong>
+                  views
+                </div>
 
-                    <div class="forumRowMeta">
-                      Started by <strong><%= t.username %></strong> · <%= fmtTs(t.created_ts) %>
-                    </div>
-                  </td>
-
-                  <td class="forumStatCell">
-                    <span class="forumStatNum"><%= t.reply_count || 0 %></span>
-                    replies
-                  </td>
-
-                  <td class="forumStatCell">
-                    <span class="forumStatNum"><%= t.views || 0 %></span>
-                    views
-                  </td>
-
-                  <td class="forumLatestCell">
-                    <span class="forumLatestTitle"><%= t.title %></span>
-                    <span class="forumLatestBy">by <%= t.last_username || t.username %></span>
-                  </td>
-                </tr>
-              <% } %>
-            </tbody>
-          </table>
+                <div class="forumLatest">
+                  <strong><%= t.title %></strong>
+                  <span>by <%= t.last_username || t.username %></span>
+                </div>
+              </div>
+            <% } %>
+          </div>
         <% } %>
       </section>
     <% } %>
 
-    <% if (mode === 'new_topic') { %>
-      <div class="forumBreadcrumbs">
+    <% if (mode === "new_topic") { %>
+      <div class="forumCrumbs">
         <a href="/forums">Forums</a>
         <span>/</span>
         <a href="/forums/category/<%= category.id %>"><%= category.title %></a>
@@ -862,42 +767,41 @@
         <span>New Topic</span>
       </div>
 
-      <section class="forumHeader">
+      <section class="forumTop">
         <div>
-          <div class="forumEyebrow">New Topic</div>
-          <h1 class="forumPageTitle">Create Topic</h1>
-          <div class="forumPageSub">Posting in <strong><%= category.title %></strong></div>
+          <h1 class="forumTitle">Create Topic</h1>
+          <div class="forumSubtitle">Posting in <strong><%= category.title %></strong></div>
         </div>
       </section>
 
-      <section class="forumPanel">
-        <div class="forumPanelHeader">
-          <h2 class="forumPanelTitle">Topic Details</h2>
+      <section class="forumBox">
+        <div class="forumBoxHead">
+          <h2 class="forumBoxTitle">Topic Details</h2>
         </div>
 
-        <div class="forumPanelBody">
+        <div class="forumBoxBody">
           <form class="forumForm" method="post" action="/forums/category/<%= category.id %>/new">
             <div>
-              <label class="forumLabel">Topic Title</label>
+              <label class="forumLabel">Topic title</label>
               <input class="forumInput" name="title" maxlength="120" required placeholder="Topic title">
             </div>
 
             <div>
-              <label class="forumLabel">Message</label>
+              <label class="forumLabel">Post</label>
               <textarea class="forumTextarea" name="body" maxlength="8000" required placeholder="Write your post..."></textarea>
             </div>
 
             <div>
               <button class="forumBtn" type="submit">Create Topic</button>
-              <a class="forumBtn forumBtnSecondary" href="/forums/category/<%= category.id %>">Cancel</a>
+              <a class="forumBtn secondary" href="/forums/category/<%= category.id %>">Cancel</a>
             </div>
           </form>
         </div>
       </section>
     <% } %>
 
-    <% if (mode === 'topic') { %>
-      <div class="forumBreadcrumbs">
+    <% if (mode === "topic") { %>
+      <div class="forumCrumbs">
         <a href="/forums">Forums</a>
         <span>/</span>
         <a href="/forums/category/<%= topic.category_id %>"><%= topic.category_title %></a>
@@ -905,42 +809,35 @@
         <span><%= topic.title %></span>
       </div>
 
-      <section class="forumHeader">
+      <section class="forumTop">
         <div>
-          <div class="forumEyebrow">Topic</div>
-          <h1 class="forumPageTitle"><%= topic.title %></h1>
-          <div class="forumPageSub">
+          <h1 class="forumTitle"><%= topic.title %></h1>
+          <div class="forumSubtitle">
             Started by <strong><%= topic.username %></strong>
             · <%= fmtTs(topic.created_ts) %>
             · <%= topic.views || 0 %> views
-
-            <% if (Number(topic.is_pinned || 0) === 1) { %>
-              · Pinned
-            <% } %>
-
-            <% if (Number(topic.is_locked || 0) === 1) { %>
-              · Locked
-            <% } %>
+            <% if (Number(topic.is_pinned || 0) === 1) { %> · Pinned <% } %>
+            <% if (Number(topic.is_locked || 0) === 1) { %> · Locked <% } %>
           </div>
         </div>
       </section>
 
       <% if (isAdmin) { %>
-        <section class="forumPanel">
-          <div class="forumPanelHeader">
-            <h2 class="forumPanelTitle">Moderator Tools</h2>
+        <section class="forumBox">
+          <div class="forumBoxHead">
+            <h2 class="forumBoxTitle">Moderator Tools</h2>
           </div>
 
-          <div class="forumPanelBody">
-            <div class="modBox">
+          <div class="forumBoxBody">
+            <div class="modTools">
               <form class="modChecks" method="post" action="/forums/topic/<%= topic.id %>/mod">
                 <label>
-                  <input type="checkbox" name="is_pinned" value="1" <%= Number(topic.is_pinned || 0) === 1 ? 'checked' : '' %>>
+                  <input type="checkbox" name="is_pinned" value="1" <%= Number(topic.is_pinned || 0) === 1 ? "checked" : "" %>>
                   Pinned
                 </label>
 
                 <label>
-                  <input type="checkbox" name="is_locked" value="1" <%= Number(topic.is_locked || 0) === 1 ? 'checked' : '' %>>
+                  <input type="checkbox" name="is_locked" value="1" <%= Number(topic.is_locked || 0) === 1 ? "checked" : "" %>>
                   Locked
                 </label>
 
@@ -948,106 +845,96 @@
               </form>
 
               <form method="post" action="/forums/topic/<%= topic.id %>/delete" onsubmit="return confirm('Delete this entire topic?');">
-                <button class="forumBtn forumBtnDanger" type="submit">Delete Topic</button>
+                <button class="forumBtn danger" type="submit">Delete Topic</button>
               </form>
             </div>
           </div>
         </section>
       <% } %>
 
-      <section class="topicLayout">
+      <section class="threadList">
         <% for (const p of posts) { %>
-          <article class="forumPost" id="post-<%= p.id %>">
-            <aside class="postSidebar">
-              <div class="postAvatar">
-                <% if (p.avatar_url) { %>
-                  <img src="<%= p.avatar_url %>" alt="">
-                <% } else { %>
-                  <%= initials(p.username) %>
-                <% } %>
-              </div>
-      
-              <div>
-                <a class="postUsername" href="/u/<%= encodeURIComponent(p.username) %>">
-                  <%= p.username %>
-                </a>
-      
-                <% if (Number(p.is_admin || 0) === 1) { %>
-                  <div class="postRole">Admin</div>
-                <% } %>
-      
-                <div class="postDate">
-                  <%= fmtTs(p.created_ts) %>
+          <article class="threadPost" id="post-<%= p.id %>">
+            <div class="threadPostHead">
+              <div class="threadUser">
+                <div class="threadAvatar">
+                  <% if (p.avatar_url) { %>
+                    <img src="<%= p.avatar_url %>" alt="">
+                  <% } else { %>
+                    <%= initials(p.username) %>
+                  <% } %>
+                </div>
+
+                <div>
+                  <a class="threadName" href="/u/<%= encodeURIComponent(p.username) %>">
+                    <%= p.username %>
+                  </a>
+
+                  <div class="threadInfo">
+                    <%= fmtTs(p.created_ts) %>
+                    <% if (Number(p.is_admin || 0) === 1) { %>
+                      · Admin
+                    <% } %>
+                  </div>
                 </div>
               </div>
-            </aside>
-      
-            <div class="postMain">
-              <div class="postTopline">
+
+              <div class="threadRight">
                 <span>Post #<%= p.id %></span>
-      
                 <% if (Number(p.is_deleted || 0) !== 1) { %>
                   <a href="#post-<%= p.id %>">Link</a>
                 <% } %>
               </div>
-      
-              <div class="postContent">
-                <% 
-                  let visibleBody = String(p.body || '');
-                  if (p.reply_to_username) {
-                    const mentionPrefix = '@' + p.reply_to_username + ' ';
-                    if (visibleBody.startsWith(mentionPrefix)) {
-                      visibleBody = visibleBody.slice(mentionPrefix.length);
-                    }
-                  }
-                %>
-      
-                <% if (p.reply_to_username) { %>
-                  <div class="replyNotice">
-                    Replying to @<%= p.reply_to_username %>
-                  </div>
-                <% } %>
-      
-                <%= visibleBody %>
-              </div>
-      
-              <div class="postFooter">
-                <% if (meUser && Number(topic.is_locked || 0) !== 1 && Number(topic.category_locked || 0) !== 1 && Number(p.is_deleted || 0) !== 1) { %>
-                  <button
-                    class="forumBtn forumBtnSecondary directReplyBtn"
-                    type="button"
-                    data-post-id="<%= p.id %>"
-                    data-username="<%= p.username %>"
-                  >
-                    Reply
-                  </button>
-                <% } %>
-      
-                <% if (isAdmin && Number(p.is_deleted || 0) !== 1) { %>
-                  <form method="post" action="/forums/post/<%= p.id %>/delete" onsubmit="return confirm('Delete this post?');">
-                    <input type="hidden" name="topic_id" value="<%= topic.id %>">
-                    <button class="forumBtn forumBtnDanger" type="submit">Delete</button>
-                  </form>
-                <% } %>
-              </div>
+            </div>
+
+            <div class="threadBody">
+              <% const visibleBody = cleanReplyBody(p.body, p.reply_to_username); %>
+
+              <% if (p.reply_to_username) { %>
+                <div class="threadReplyNotice">
+                  Replying to @<%= p.reply_to_username %>
+                </div>
+              <% } %>
+
+              <%= visibleBody %>
+            </div>
+
+            <div class="threadActions">
+              <% if (meUser && Number(topic.is_locked || 0) !== 1 && Number(topic.category_locked || 0) !== 1 && Number(p.is_deleted || 0) !== 1) { %>
+                <button
+                  class="forumBtn secondary directReplyBtn"
+                  type="button"
+                  data-post-id="<%= p.id %>"
+                  data-username="<%= p.username %>"
+                >
+                  Reply
+                </button>
+              <% } %>
+
+              <% if (isAdmin && Number(p.is_deleted || 0) !== 1) { %>
+                <form method="post" action="/forums/post/<%= p.id %>/delete" onsubmit="return confirm('Delete this post?');">
+                  <input type="hidden" name="topic_id" value="<%= topic.id %>">
+                  <button class="forumBtn danger" type="submit">Delete</button>
+                </form>
+              <% } %>
             </div>
           </article>
         <% } %>
       </section>
 
       <% if (meUser && Number(topic.is_locked || 0) !== 1 && Number(topic.category_locked || 0) !== 1) { %>
-        <section class="forumPanel" style="margin-top:18px;">
-          <div class="forumPanelHeader">
-            <h2 class="forumPanelTitle">Post Reply</h2>
+        <section class="forumBox" style="margin-top:16px;">
+          <div class="forumBoxHead">
+            <h2 class="forumBoxTitle">Post Reply</h2>
           </div>
 
-          <div class="forumPanelBody">
+          <div class="forumBoxBody">
             <form class="forumForm" method="post" action="/forums/topic/<%= topic.id %>/reply">
               <input type="hidden" name="reply_to_post_id" id="replyToPostId" value="">
 
               <div id="replyingToBox" class="replyingToBox">
                 Replying to <strong id="replyingToName"></strong>
-                <button class="forumBtn forumBtnSecondary" type="button" id="cancelDirectReply">Cancel</button>
+                <button class="forumBtn secondary" type="button" id="cancelDirectReply">Cancel</button>
               </div>
 
               <textarea
@@ -1057,7 +944,6 @@
                 maxlength="8000"
                 required
                 placeholder="Write a reply..."
-                style="min-height:90px;"
               ></textarea>
 
               <div>
@@ -1067,16 +953,14 @@
           </div>
         </section>
       <% } else if (!meUser) { %>
-        <section class="forumPanel" style="margin-top:18px;">
-          <div class="forumPanelBody">
+        <section class="forumBox" style="margin-top:16px;">
+          <div class="forumBoxBody">
             <a class="forumBtn" href="/login?next=/forums/topic/<%= topic.id %>">Login to reply</a>
           </div>
         </section>
       <% } else { %>
-        <section class="forumPanel" style="margin-top:18px;">
-          <div class="forumPanelBody">
-            This topic is locked.
-          </div>
+        <section class="forumBox" style="margin-top:16px;">
+          <div class="forumBoxBody">This topic is locked.</div>
         </section>
       <% } %>
     <% } %>
