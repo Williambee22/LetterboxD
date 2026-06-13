@@ -768,11 +768,11 @@
           <% } %>
         </div>
 
-        <% if (meUser && Number(category.is_locked || 0) !== 1) { %>
-          <a class="forumBtn" href="/forums/category/<%= category.id %>/new">New Topic</a>
-        <% } else if (!meUser) { %>
-          <a class="forumBtn" href="/login?next=/forums/category/<%= category.id %>/new">Login to Post</a>
-        <% } %>
+       <% if (meUser && Number(category.is_locked || 0) !== 1) { %>
+        <a class="forumBtn" href="/forums/category/<%= category.id %>/new">New Topic</a>
+      <% } else if (!meUser) { %>
+        <a class="forumBtn" href="/login?next=/forums/category/<%= category.id %>/new">Login to Post</a>
+      <% } %>
       </section>
 
       <% if (isAdmin) { %>
