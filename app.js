@@ -23,7 +23,6 @@ const PFP_DIR = path.join(DATA_DIR, 'pfps');
 const posterLookupCache = new Map();
 const POSTER_CACHE_TTL_MS = 1000 * 60 * 60;
 
-
 fs.mkdirSync(PFP_DIR, { recursive: true });
 
 const ALLOWED_IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
@@ -518,6 +517,7 @@ function createApp() {
     dbx.ensureFavoriteShowsTable(conn);
     dbx.ensurePredictionTables(conn);
     dbx.ensureForumTables(conn);
+    dbx.ensureSiteSettingsTable(conn);
     return conn;
   }
 
@@ -974,6 +974,8 @@ function createApp() {
         });
       }
 
+      const showsWelcomeMessage = dbx.getSiteSetting(conn, 'shows_welcome_message', '');
+
       res.render('shows', {
         rows: rows2,
         sort,
@@ -981,13 +983,8 @@ function createApp() {
         corps,
         friend_activity: friendActivity,
         hot_shows: hotShows,
+        shows_welcome_message: showsWelcomeMessage,
       });
-    } catch (err) {
-      next(err);
-    } finally {
-      if (conn) dbx.close(conn);
-    }
-  });
 
   app.get('/show/:show_id', async (req, res, next) => {
     const showId = Number(req.params.show_id);
@@ -1544,7 +1541,48 @@ function createApp() {
         if (conn) dbx.close(conn);
       }
     }));
-  
+
+    app.get('/admin/site-message', adminRequired(async (req, res) => {
+      let conn;
+    
+      try {
+        conn = getConn();
+    
+        const message = dbx.getSiteSetting(conn, 'shows_welcome_message', '');
+    
+        return res.render('admin_site_message', {
+          me: res.locals.me,
+          message,
+          saved: req.query.saved === '1',
+        });
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+    }));
+    
+    app.post('/admin/site-message', adminRequired(async (req, res) => {
+      const message = String(req.body.message || '').trim();
+    
+      let conn;
+    
+      try {
+        conn = getConn();
+    
+        dbx.setSiteSetting(conn, 'shows_welcome_message', message);
+        await dbx.commit(conn);
+    
+        req.flash('ok', 'Site message updated.');
+        return res.redirect('/admin/site-message?saved=1');
+      } catch (err) {
+        req.flash('error', String(err.message || err));
+        return res.redirect('/admin/site-message');
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+    }));
+
+
+      
     app.post('/predictions', loginRequired(async (req, res) => {
       let conn;
     
