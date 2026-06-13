@@ -760,6 +760,7 @@
       </div>
 
       <section class="forumTop">
+    
         <div>
           <h1 class="forumTitle"><%= category.title %></h1>
           <% if (category.description) { %>
@@ -773,6 +774,65 @@
           <a class="forumBtn" href="/login?next=/forums/category/<%= category.id %>/new">Login to Post</a>
         <% } %>
       </section>
+
+      <% if (isAdmin) { %>
+        <section class="forumBox">
+          <div class="forumBoxHead">
+            <h2 class="forumBoxTitle">Edit Category</h2>
+          </div>
+      
+          <div class="forumBoxBody">
+            <form class="forumForm" method="post" action="/forums/category/<%= category.id %>/edit">
+              <div>
+                <label class="forumLabel">Category title</label>
+                <input
+                  class="forumInput"
+                  name="title"
+                  maxlength="80"
+                  required
+                  value="<%= category.title || '' %>"
+                >
+              </div>
+      
+              <div>
+                <label class="forumLabel">Description</label>
+                <textarea
+                  class="forumTextarea"
+                  name="description"
+                  maxlength="500"
+                  style="min-height:80px;"
+                ><%= category.description || '' %></textarea>
+              </div>
+      
+              <div class="forumFormGrid">
+                <div>
+                  <label class="forumLabel">Sort order</label>
+                  <input
+                    class="forumInput"
+                    name="sort_order"
+                    type="number"
+                    value="<%= category.sort_order || 0 %>"
+                  >
+                </div>
+      
+                <label style="display:flex; align-items:center; gap:8px; color:rgba(229,231,235,0.75); font-size:13px;">
+                  <input
+                    type="checkbox"
+                    name="is_locked"
+                    value="1"
+                    <%= Number(category.is_locked || 0) === 1 ? 'checked' : '' %>
+                  >
+                  Locked
+                </label>
+              </div>
+      
+              <div>
+                <button class="forumBtn" type="submit">Save Category</button>
+              </div>
+            </form>
+          </div>
+        </section>
+      <% } %>
 
       <section class="forumBox">
         <div class="forumBoxHead">
@@ -875,18 +935,73 @@
         <span><%= topic.title %></span>
       </div>
 
-      <section class="forumTop">
-        <div>
-          <h1 class="forumTitle"><%= topic.title %></h1>
-          <div class="forumSubtitle">
-            Started by <strong><%= topic.username %></strong>
-            · <%= fmtTs(topic.created_ts) %>
-            · <%= topic.views || 0 %> views
-            <% if (Number(topic.is_pinned || 0) === 1) { %> · Pinned <% } %>
-            <% if (Number(topic.is_locked || 0) === 1) { %> · Locked <% } %>
+      <% if (isAdmin) { %>
+        <section class="forumBox">
+          <div class="forumBoxHead">
+            <h2 class="forumBoxTitle">Edit Topic</h2>
           </div>
-        </div>
-      </section>
+      
+          <div class="forumBoxBody">
+            <form class="forumForm" method="post" action="/forums/topic/<%= topic.id %>/edit">
+              <div>
+                <label class="forumLabel">Topic title</label>
+                <input
+                  class="forumInput"
+                  name="title"
+                  maxlength="120"
+                  required
+                  value="<%= topic.title || '' %>"
+                >
+              </div>
+      
+              <div>
+                <label class="forumLabel">Topic body</label>
+                <textarea
+                  class="forumTextarea"
+                  name="body"
+                  maxlength="8000"
+                  required
+                ><%= topic.body || '' %></textarea>
+              </div>
+      
+              <div class="modTools">
+                <div class="modChecks">
+                  <label>
+                    <input
+                      type="checkbox"
+                      name="is_pinned"
+                      value="1"
+                      <%= Number(topic.is_pinned || 0) === 1 ? "checked" : "" %>
+                    >
+                    Pinned
+                  </label>
+      
+                  <label>
+                    <input
+                      type="checkbox"
+                      name="is_locked"
+                      value="1"
+                      <%= Number(topic.is_locked || 0) === 1 ? "checked" : "" %>
+                    >
+                    Locked
+                  </label>
+      
+                  <button class="forumBtn" type="submit">Save Topic</button>
+                </div>
+              </div>
+            </form>
+      
+            <form
+              method="post"
+              action="/forums/topic/<%= topic.id %>/delete"
+              onsubmit="return confirm('Delete this entire topic?');"
+              style="margin-top:12px;"
+            >
+              <button class="forumBtn danger" type="submit">Delete Topic</button>
+            </form>
+          </div>
+        </section>
+      <% } %>
 
       <% if (isAdmin) { %>
         <section class="forumBox">
