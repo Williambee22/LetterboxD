@@ -2839,9 +2839,11 @@ function listForumPosts(conn, topicId) {
       p.*,
       u.username,
       u.avatar_url,
-      u.is_admin
+      u.is_admin,
+      ru.username AS reply_to_username
     FROM forum_posts p
     JOIN users u ON u.id = p.user_id
+    LEFT JOIN users ru ON ru.id = p.reply_to_user_id
     WHERE p.topic_id = ?
     ORDER BY p.created_ts ASC, p.id ASC
   `).all(Number(topicId));
@@ -2852,7 +2854,9 @@ function addForumPost(conn, args = {}) {
 
   const topicId = Number(args.topic_id ?? args.topicId);
   const userId = Number(args.user_id ?? args.userId);
-  const body = String(args.body || '').trim();
+  const bodyRaw = String(args.body || '').trim();
+  const replyToPostId = Number(args.reply_to_post_id ?? args.replyToPostId ?? 0) || null;
+
   const topic = getForumTopic(conn, topicId);
 
   if (!topic) {
@@ -2867,15 +2871,53 @@ function addForumPost(conn, args = {}) {
     throw new Error('You must be logged in.');
   }
 
-  if (body.length < 3 || body.length > 8000) {
+  if (bodyRaw.length < 3 || bodyRaw.length > 8000) {
     throw new Error('Reply must be 3-8000 characters.');
   }
 
+  let replyToUserId = null;
+  let mentionPrefix = '';
+
+  if (replyToPostId) {
+    const replyPost = conn.prepare(`
+      SELECT
+        p.id,
+        p.user_id,
+        u.username
+      FROM forum_posts p
+      JOIN users u ON u.id = p.user_id
+      WHERE p.id = ?
+        AND p.topic_id = ?
+        AND COALESCE(p.is_deleted, 0) = 0
+      LIMIT 1
+    `).get(replyToPostId, topicId);
+
+    if (replyPost) {
+      replyToUserId = Number(replyPost.user_id);
+      mentionPrefix = `@${replyPost.username} `;
+    }
+  }
+
+  const finalBody = `${mentionPrefix}${bodyRaw}`.trim();
+
   const tx = conn.transaction(() => {
     const info = conn.prepare(`
-      INSERT INTO forum_posts(topic_id, user_id, body, created_ts)
-      VALUES (?, ?, ?, strftime('%s','now'))
-    `).run(topicId, userId, body);
+      INSERT INTO forum_posts(
+        topic_id,
+        user_id,
+        body,
+        reply_to_post_id,
+        reply_to_user_id,
+        created_ts
+      )
+      VALUES (?, ?, ?, ?, ?, strftime('%s','now'))
+    `).run(
+      topicId,
+      userId,
+      finalBody,
+      replyToPostId,
+      replyToUserId
+    );
 
     conn.prepare(`
       UPDATE forum_topics
