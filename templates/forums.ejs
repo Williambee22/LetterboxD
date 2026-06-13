@@ -574,10 +574,21 @@
 
   function fmtTs(ts) {
     if (!ts) return "";
+  
     const n = Number(ts);
     const d = Number.isFinite(n) ? new Date(n * 1000) : new Date(ts);
+  
     if (Number.isNaN(d.getTime())) return "";
-    return d.toLocaleString();
+  
+    return d.toLocaleString("en-US", {
+      timeZone: "America/Chicago",
+      month: "numeric",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true
+    });
   }
 
   function initials(name) {
@@ -1061,9 +1072,9 @@
               </div>
 
               <div class="threadRight">
-                <span>Post #<%= p.id %></span>
+                
                 <% if (Number(p.is_deleted || 0) !== 1) { %>
-                  <a href="#post-<%= p.id %>">Link</a>
+                  
                 <% } %>
               </div>
             </div>
