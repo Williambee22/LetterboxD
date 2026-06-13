@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+
+  <title>Forums — Pressboxd</title>
+  <meta name="description" content="Discuss drum corps shows, rankings, predictions, design, music, guard, percussion, brass, and more on the Pressboxd forums.">
+
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <link rel="icon" type="image/png" href="/static/favicon.png"/>
+
+  <style>
+    html,
+    body,
+    body.app {
+      background: #000000 !important;
+      background-image: none !important;
+    }
+
+    .forumWrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+    }
+
+    .forumHero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 18px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .forumTitle {
+      font-size: 34px;
+      line-height: 1.05;
+      font-weight: 950;
+      margin: 0;
+    }
+
+    .forumSub {
+      opacity: .75;
+      margin-top: 6px;
+      max-width: 700px;
+    }
+
+    .forumCrumbs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 0 0 16px;
+      opacity: .9;
+      font-size: 14px;
+    }
+
+    .forumCrumbs a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .forumCrumbs a:hover {
+      text-decoration: underline;
+    }
+
+    .forumCard {
+      background: #000;
+      border: 1px solid color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,0.12));
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .forumCardInner {
+      padding: 16px;
+    }
+
+    .categoryRow,
+    .topicRow {
+      display: grid;
+      grid-template-columns: 1fr 110px 110px 230px;
+      gap: 14px;
+      align-items: center;
+      padding: 16px;
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .topicRow {
+      grid-template-columns: 1fr 90px 90px 160px;
+    }
+
+    .categoryRow:last-child,
+    .topicRow:last-child {
+      border-bottom: none;
+    }
+
+    .categoryRow:hover,
+    .topicRow:hover {
+      background: rgba(255,255,255,0.045);
+    }
+
+    .forumName {
+      font-weight: 900;
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    .forumDesc,
+    .forumMeta,
+    .forumSmall {
+      opacity: .75;
+      font-size: 13px;
+    }
+
+    .forumStat {
+      text-align: center;
+    }
+
+    .forumStat strong {
+      display: block;
+      font-size: 18px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      background: color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,0.06));
+      border: 1px solid color-mix(in srgb, var(--accent) 24%, rgba(255,255,255,0.10));
+      margin-right: 6px;
+    }
+
+    .forumForm {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .forumInput,
+    .forumTextarea {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      color: inherit;
+      padding: 11px 12px;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    .forumTextarea {
+      min-height: 150px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    .forumInput:focus,
+    .forumTextarea:focus {
+      border-color: color-mix(in srgb, var(--accent) 40%, rgba(255,255,255,0.15));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+
+    .forumPost {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .forumPost:last-child {
+      border-bottom: none;
+    }
+
+    .postUser {
+      padding: 16px;
+      border-right: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.025);
+    }
+
+    .postBody {
+      padding: 16px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    .postAvatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.08);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+    }
+
+    .postAvatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .postUserName {
+      font-weight: 900;
+    }
+
+    .postActions {
+      margin-top: 12px;
+    }
+
+    .inlineActions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .dangerBtn {
+      border-color: rgba(255, 60, 60, .35) !important;
+      color: #ff7b7b !important;
+    }
+
+    .emptyForum {
+      padding: 24px;
+      text-align: center;
+      opacity: .75;
+    }
+
+    @media (max-width: 800px) {
+      .categoryRow,
+      .topicRow {
+        grid-template-columns: 1fr;
+      }
+
+      .forumStat {
+        text-align: left;
+      }
+
+      .forumPost {
+        grid-template-columns: 1fr;
+      }
+
+      .postUser {
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+      }
+    }
+  </style>
+</head>
+
+<%
+  const meUser = typeof me !== "undefined" ? me : null;
+  const isAdmin = meUser && Number(meUser.is_admin || 0) === 1;
+
+  function fmtTs(ts) {
+    if (!ts) return "";
+    const n = Number(ts);
+    const d = Number.isFinite(n)
+      ? new Date(n * 1000)
+      : new Date(ts);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleString();
+  }
+
+  function initials(name) {
+    return String(name || "?").trim().slice(0, 1).toUpperCase();
+  }
+%>
+
+<body class="app" style="--accent:<%= accent_color || '#3252b3' %>;">
+  <header class="topbar">
+    <div class="wrap row between">
+      <div class="row" style="gap:10px;">
+        <a class="brand" href="/shows" style="display:flex;align-items:center;">
+          <img src="/static/pressboxd-wordmark.png" alt="Pressboxd" style="height:68px;width:auto;display:block;">
+        </a>
+      </div>
+
+      <nav class="nav row">
+        <a href="/shows">Shows</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+        <a href="/predictions">Predictions</a>
+        <a href="/forums">Forums</a>
+
+        <% if (isAdmin) { %>
+          <a href="/admin/bulk_add">Mass Add</a>
+          <a href="/admin/roles">Roles</a>
+          <a href="/admin/users">Users</a>
+        <% } %>
+      </nav>
+
+      <div class="auth row">
+        <% if (meUser) { %>
+          <a href="/me">@<%= meUser.username %></a>
+          <form method="post" action="/logout" style="display:inline;">
+            <button class="btn" type="submit">Logout</button>
+          </form>
+        <% } else { %>
+          <a href="/login">Login</a>
+          <a href="/register">Register</a>
+        <% } %>
+      </div>
+    </div>
+  </header>
+
+  <main class="forumWrap">
+    <% if (Array.isArray(flashes) && flashes.length) { %>
+      <% for (const f of flashes) { %>
+        <div class="flash <%= f.category %>"><%= f.message %></div>
+      <% } %>
+    <% } %>
+
+    <% if (mode === 'index') { %>
+      <section class="forumHero">
+        <div>
+          <h1 class="forumTitle">Forums</h1>
+          <div class="forumSub">
+            Talk about shows, rankings, predictions, captions, design, brass, percussion, guard, history, and anything else drum corps.
+          </div>
+        </div>
+      </section>
+
+      <% if (isAdmin) { %>
+        <section class="forumCard">
+          <div class="forumCardInner">
+            <h2 style="margin-top:0;">Create broad forum category</h2>
+            <form class="forumForm" method="post" action="/forums/categories">
+              <input class="forumInput" name="title" maxlength="80" required placeholder="Category title, ex: General Discussion">
+              <textarea class="forumTextarea" name="description" maxlength="500" placeholder="Short description"></textarea>
+              <input class="forumInput" name="sort_order" type="number" value="0" placeholder="Sort order">
+              <button class="btn" type="submit">Create Category</button>
+            </form>
+          </div>
+        </section>
+      <% } %>
+
+      <section class="forumCard">
+        <% if (!categories || !categories.length) { %>
+          <div class="emptyForum">
+            No forum categories yet.
+            <% if (isAdmin) { %>
+              Create one above.
+            <% } %>
+          </div>
+        <% } else { %>
+          <% for (const c of categories) { %>
+            <a class="categoryRow" href="/forums/category/<%= c.id %>">
+              <div>
+                <div class="forumName"><%= c.title %></div>
+                <% if (c.description) { %>
+                  <div class="forumDesc"><%= c.description %></div>
+                <% } %>
+              </div>
+
+              <div class="forumStat">
+                <strong><%= c.topic_count || 0 %></strong>
+                <span class="forumSmall">Topics</span>
+              </div>
+
+              <div class="forumStat">
+                <strong><%= c.post_count || 0 %></strong>
+                <span class="forumSmall">Posts</span>
+              </div>
+
+              <div class="forumMeta">
+                <% if (c.latest_topic_id) { %>
+                  Latest: <strong><%= c.latest_topic_title %></strong><br>
+                  by <%= c.latest_username || 'Unknown' %>
+                <% } else { %>
+                  No posts yet
+                <% } %>
+              </div>
+            </a>
+          <% } %>
+        <% } %>
+      </section>
+    <% } %>
+
+    <% if (mode === 'category') { %>
+      <div class="forumCrumbs">
+        <a href="/forums">Forums</a>
+        <span>/</span>
+        <span><%= category.title %></span>
+      </div>
+
+      <section class="forumHero">
+        <div>
+          <h1 class="forumTitle"><%= category.title %></h1>
+          <% if (category.description) { %>
+            <div class="forumSub"><%= category.description %></div>
+          <% } %>
+        </div>
+
+        <% if (meUser && Number(category.is_locked || 0) !== 1) { %>
+          <a class="btn" href="/forums/category/<%= category.id %>/new">New Topic</a>
+        <% } else if (!meUser) { %>
+          <a class="btn" href="/login?next=/forums/category/<%= category.id %>/new">Login to Post</a>
+        <% } %>
+      </section>
+
+      <section class="forumCard">
+        <% if (!topics || !topics.length) { %>
+          <div class="emptyForum">No topics in this category yet.</div>
+        <% } else { %>
+          <% for (const t of topics) { %>
+            <a class="topicRow" href="/forums/topic/<%= t.id %>">
+              <div>
+                <div class="forumName">
+                  <% if (Number(t.is_pinned || 0) === 1) { %>
+                    <span class="pill">Pinned</span>
+                  <% } %>
+                  <% if (Number(t.is_locked || 0) === 1) { %>
+                    <span class="pill">Locked</span>
+                  <% } %>
+                  <%= t.title %>
+                </div>
+                <div class="forumMeta">
+                  Started by <%= t.username %> · <%= fmtTs(t.created_ts) %>
+                </div>
+              </div>
+
+              <div class="forumStat">
+                <strong><%= t.reply_count || 0 %></strong>
+                <span class="forumSmall">Replies</span>
+              </div>
+
+              <div class="forumStat">
+                <strong><%= t.views || 0 %></strong>
+                <span class="forumSmall">Views</span>
+              </div>
+
+              <div class="forumMeta">
+                Last post:
+                <br>
+                <%= t.last_username || t.username %>
+              </div>
+            </a>
+          <% } %>
+        <% } %>
+      </section>
+    <% } %>
+
+    <% if (mode === 'new_topic') { %>
+      <div class="forumCrumbs">
+        <a href="/forums">Forums</a>
+        <span>/</span>
+        <a href="/forums/category/<%= category.id %>"><%= category.title %></a>
+        <span>/</span>
+        <span>New Topic</span>
+      </div>
+
+      <section class="forumCard">
+        <div class="forumCardInner">
+          <h1 style="margin-top:0;">Create topic in <%= category.title %></h1>
+
+          <form class="forumForm" method="post" action="/forums/category/<%= category.id %>/new">
+            <input class="forumInput" name="title" maxlength="120" required placeholder="Topic title">
+            <textarea class="forumTextarea" name="body" maxlength="8000" required placeholder="Write your post..."></textarea>
+            <button class="btn" type="submit">Create Topic</button>
+          </form>
+        </div>
+      </section>
+    <% } %>
+
+    <% if (mode === 'topic') { %>
+      <div class="forumCrumbs">
+        <a href="/forums">Forums</a>
+        <span>/</span>
+        <a href="/forums/category/<%= topic.category_id %>"><%= topic.category_title %></a>
+        <span>/</span>
+        <span><%= topic.title %></span>
+      </div>
+
+      <section class="forumHero">
+        <div>
+          <h1 class="forumTitle"><%= topic.title %></h1>
+          <div class="forumSub">
+            Started by <%= topic.username %> · <%= fmtTs(topic.created_ts) %> · <%= topic.views || 0 %> views
+            <% if (Number(topic.is_pinned || 0) === 1) { %>
+              · Pinned
+            <% } %>
+            <% if (Number(topic.is_locked || 0) === 1) { %>
+              · Locked
+            <% } %>
+          </div>
+        </div>
+      </section>
+
+      <% if (isAdmin) { %>
+        <section class="forumCard">
+          <div class="forumCardInner">
+            <form class="inlineActions" method="post" action="/forums/topic/<%= topic.id %>/mod">
+              <label>
+                <input type="checkbox" name="is_pinned" value="1" <%= Number(topic.is_pinned || 0) === 1 ? 'checked' : '' %>>
+                Pinned
+              </label>
+
+              <label>
+                <input type="checkbox" name="is_locked" value="1" <%= Number(topic.is_locked || 0) === 1 ? 'checked' : '' %>>
+                Locked
+              </label>
+
+              <button class="btn" type="submit">Save Mod Settings</button>
+            </form>
+
+            <form method="post" action="/forums/topic/<%= topic.id %>/delete" onsubmit="return confirm('Delete this entire topic?');" style="margin-top:10px;">
+              <button class="btn dangerBtn" type="submit">Delete Topic</button>
+            </form>
+          </div>
+        </section>
+      <% } %>
+
+      <section class="forumCard">
+        <% for (const p of posts) { %>
+          <article class="forumPost">
+            <aside class="postUser">
+              <div class="postAvatar">
+                <% if (p.avatar_url) { %>
+                  <img src="<%= p.avatar_url %>" alt="">
+                <% } else { %>
+                  <%= initials(p.username) %>
+                <% } %>
+              </div>
+
+              <div class="postUserName">
+                <a href="/u/<%= encodeURIComponent(p.username) %>"><%= p.username %></a>
+              </div>
+
+              <% if (Number(p.is_admin || 0) === 1) { %>
+                <div class="forumSmall">Admin</div>
+              <% } %>
+
+              <div class="forumSmall"><%= fmtTs(p.created_ts) %></div>
+
+              <% if (isAdmin && Number(p.is_deleted || 0) !== 1) { %>
+                <form class="postActions" method="post" action="/forums/post/<%= p.id %>/delete" onsubmit="return confirm('Delete this post?');">
+                  <input type="hidden" name="topic_id" value="<%= topic.id %>">
+                  <button class="btn dangerBtn" type="submit">Delete Post</button>
+                </form>
+              <% } %>
+            </aside>
+
+            <div class="postBody"><%= p.body %></div>
+          </article>
+        <% } %>
+      </section>
+
+      <% if (meUser && Number(topic.is_locked || 0) !== 1 && Number(topic.category_locked || 0) !== 1) { %>
+        <section class="forumCard">
+          <div class="forumCardInner">
+            <h2 style="margin-top:0;">Reply</h2>
+
+            <form class="forumForm" method="post" action="/forums/topic/<%= topic.id %>/reply">
+              <textarea class="forumTextarea" name="body" maxlength="8000" required placeholder="Write a reply..."></textarea>
+              <button class="btn" type="submit">Post Reply</button>
+            </form>
+          </div>
+        </section>
+      <% } else if (!meUser) { %>
+        <section class="forumCard">
+          <div class="forumCardInner">
+            <a class="btn" href="/login?next=/forums/topic/<%= topic.id %>">Login to reply</a>
+          </div>
+        </section>
+      <% } else { %>
+        <section class="forumCard">
+          <div class="forumCardInner">
+            This topic is locked.
+          </div>
+        </section>
+      <% } %>
+    <% } %>
+  </main>
+</body>
+</html>
