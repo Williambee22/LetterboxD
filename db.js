@@ -2528,6 +2528,343 @@ function deleteReviewComment(conn, commentId, opts = {}) {
   return true;
 }
 
+function ensureForumTables(conn) {
+  conn.exec(`
+    CREATE TABLE IF NOT EXISTS forum_categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      description TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_by INTEGER,
+      created_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      is_locked INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_forum_categories_sort
+    ON forum_categories(sort_order ASC, title COLLATE NOCASE ASC);
+
+    CREATE TABLE IF NOT EXISTS forum_topics (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      category_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      created_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      updated_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      last_post_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      is_pinned INTEGER NOT NULL DEFAULT 0,
+      is_locked INTEGER NOT NULL DEFAULT 0,
+      views INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY(category_id) REFERENCES forum_categories(id) ON DELETE CASCADE,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_forum_topics_category_last
+    ON forum_topics(category_id, is_pinned DESC, last_post_ts DESC);
+
+    CREATE TABLE IF NOT EXISTS forum_posts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      topic_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      body TEXT NOT NULL,
+      created_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      updated_ts INTEGER,
+      is_deleted INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY(topic_id) REFERENCES forum_topics(id) ON DELETE CASCADE,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_forum_posts_topic_created
+    ON forum_posts(topic_id, created_ts ASC);
+  `);
+}
+
+function listForumCategoriesWithStats(conn) {
+  ensureForumTables(conn);
+
+  return conn.prepare(`
+    SELECT
+      c.*,
+      COALESCE(t.topic_count, 0) AS topic_count,
+      COALESCE(p.post_count, 0) AS post_count,
+      lt.id AS latest_topic_id,
+      lt.title AS latest_topic_title,
+      lu.username AS latest_username,
+      lt.last_post_ts AS latest_ts
+    FROM forum_categories c
+    LEFT JOIN (
+      SELECT category_id, COUNT(*) AS topic_count
+      FROM forum_topics
+      GROUP BY category_id
+    ) t ON t.category_id = c.id
+    LEFT JOIN (
+      SELECT ft.category_id, COUNT(fp.id) AS post_count
+      FROM forum_topics ft
+      LEFT JOIN forum_posts fp ON fp.topic_id = ft.id AND fp.is_deleted = 0
+      GROUP BY ft.category_id
+    ) p ON p.category_id = c.id
+    LEFT JOIN forum_topics lt ON lt.id = (
+      SELECT id
+      FROM forum_topics
+      WHERE category_id = c.id
+      ORDER BY last_post_ts DESC, id DESC
+      LIMIT 1
+    )
+    LEFT JOIN forum_posts lp ON lp.id = (
+      SELECT id
+      FROM forum_posts
+      WHERE topic_id = lt.id AND is_deleted = 0
+      ORDER BY created_ts DESC, id DESC
+      LIMIT 1
+    )
+    LEFT JOIN users lu ON lu.id = COALESCE(lp.user_id, lt.user_id)
+    ORDER BY c.sort_order ASC, c.title COLLATE NOCASE ASC
+  `).all();
+}
+
+function createForumCategory(conn, args = {}) {
+  ensureForumTables(conn);
+
+  const title = String(args.title || '').trim();
+  const description = String(args.description || '').trim();
+  const sortOrder = Number.parseInt(args.sort_order ?? args.sortOrder ?? 0, 10) || 0;
+  const createdBy = Number(args.created_by ?? args.createdBy ?? 0) || null;
+
+  if (title.length < 3 || title.length > 80) {
+    throw new Error('Category title must be 3-80 characters.');
+  }
+
+  if (description.length > 500) {
+    throw new Error('Category description must be 500 characters or less.');
+  }
+
+  const info = conn.prepare(`
+    INSERT INTO forum_categories(title, description, sort_order, created_by, created_ts)
+    VALUES (?, ?, ?, ?, strftime('%s','now'))
+  `).run(title, description || null, sortOrder, createdBy);
+
+  return Number(info.lastInsertRowid);
+}
+
+function getForumCategory(conn, categoryId) {
+  ensureForumTables(conn);
+
+  return conn.prepare(`
+    SELECT *
+    FROM forum_categories
+    WHERE id = ?
+  `).get(Number(categoryId)) || null;
+}
+
+function listForumTopics(conn, categoryId, opts = {}) {
+  ensureForumTables(conn);
+
+  const limit = Math.min(Math.max(Number(opts.limit || 50), 1), 100);
+  const offset = Math.max(Number(opts.offset || 0), 0);
+
+  return conn.prepare(`
+    SELECT
+      t.*,
+      u.username,
+      u.avatar_url,
+      COUNT(p.id) AS post_count,
+      lu.username AS last_username
+    FROM forum_topics t
+    JOIN users u ON u.id = t.user_id
+    LEFT JOIN forum_posts p ON p.topic_id = t.id AND p.is_deleted = 0
+    LEFT JOIN forum_posts lp ON lp.id = (
+      SELECT id
+      FROM forum_posts
+      WHERE topic_id = t.id AND is_deleted = 0
+      ORDER BY created_ts DESC, id DESC
+      LIMIT 1
+    )
+    LEFT JOIN users lu ON lu.id = lp.user_id
+    WHERE t.category_id = ?
+    GROUP BY t.id
+    ORDER BY t.is_pinned DESC, t.last_post_ts DESC, t.id DESC
+    LIMIT ? OFFSET ?
+  `).all(Number(categoryId), limit, offset).map((r) => ({
+    ...r,
+    reply_count: Math.max(0, Number(r.post_count || 0) - 1)
+  }));
+}
+
+function createForumTopic(conn, args = {}) {
+  ensureForumTables(conn);
+
+  const categoryId = Number(args.category_id ?? args.categoryId);
+  const userId = Number(args.user_id ?? args.userId);
+  const title = String(args.title || '').trim();
+  const body = String(args.body || '').trim();
+
+  if (!getForumCategory(conn, categoryId)) {
+    throw new Error('Forum category not found.');
+  }
+
+  if (!userId) {
+    throw new Error('You must be logged in.');
+  }
+
+  if (title.length < 3 || title.length > 120) {
+    throw new Error('Topic title must be 3-120 characters.');
+  }
+
+  if (body.length < 3 || body.length > 8000) {
+    throw new Error('Post must be 3-8000 characters.');
+  }
+
+  const tx = conn.transaction(() => {
+    const info = conn.prepare(`
+      INSERT INTO forum_topics(category_id, user_id, title, body, created_ts, updated_ts, last_post_ts)
+      VALUES (?, ?, ?, ?, strftime('%s','now'), strftime('%s','now'), strftime('%s','now'))
+    `).run(categoryId, userId, title, body);
+
+    const topicId = Number(info.lastInsertRowid);
+
+    conn.prepare(`
+      INSERT INTO forum_posts(topic_id, user_id, body, created_ts)
+      VALUES (?, ?, ?, strftime('%s','now'))
+    `).run(topicId, userId, body);
+
+    return topicId;
+  });
+
+  return tx();
+}
+
+function getForumTopic(conn, topicId) {
+  ensureForumTables(conn);
+
+  return conn.prepare(`
+    SELECT
+      t.*,
+      c.title AS category_title,
+      c.is_locked AS category_locked,
+      u.username,
+      u.avatar_url
+    FROM forum_topics t
+    JOIN forum_categories c ON c.id = t.category_id
+    JOIN users u ON u.id = t.user_id
+    WHERE t.id = ?
+  `).get(Number(topicId)) || null;
+}
+
+function incrementForumTopicViews(conn, topicId) {
+  ensureForumTables(conn);
+
+  conn.prepare(`
+    UPDATE forum_topics
+    SET views = views + 1
+    WHERE id = ?
+  `).run(Number(topicId));
+}
+
+function listForumPosts(conn, topicId) {
+  ensureForumTables(conn);
+
+  return conn.prepare(`
+    SELECT
+      p.*,
+      u.username,
+      u.avatar_url,
+      u.is_admin
+    FROM forum_posts p
+    JOIN users u ON u.id = p.user_id
+    WHERE p.topic_id = ?
+    ORDER BY p.created_ts ASC, p.id ASC
+  `).all(Number(topicId));
+}
+
+function addForumPost(conn, args = {}) {
+  ensureForumTables(conn);
+
+  const topicId = Number(args.topic_id ?? args.topicId);
+  const userId = Number(args.user_id ?? args.userId);
+  const body = String(args.body || '').trim();
+  const topic = getForumTopic(conn, topicId);
+
+  if (!topic) {
+    throw new Error('Forum topic not found.');
+  }
+
+  if (Number(topic.is_locked || 0) === 1 || Number(topic.category_locked || 0) === 1) {
+    throw new Error('This topic is locked.');
+  }
+
+  if (!userId) {
+    throw new Error('You must be logged in.');
+  }
+
+  if (body.length < 3 || body.length > 8000) {
+    throw new Error('Reply must be 3-8000 characters.');
+  }
+
+  const tx = conn.transaction(() => {
+    const info = conn.prepare(`
+      INSERT INTO forum_posts(topic_id, user_id, body, created_ts)
+      VALUES (?, ?, ?, strftime('%s','now'))
+    `).run(topicId, userId, body);
+
+    conn.prepare(`
+      UPDATE forum_topics
+      SET last_post_ts = strftime('%s','now'),
+          updated_ts = strftime('%s','now')
+      WHERE id = ?
+    `).run(topicId);
+
+    return Number(info.lastInsertRowid);
+  });
+
+  return tx();
+}
+
+function updateForumTopicFlags(conn, topicId, args = {}) {
+  ensureForumTables(conn);
+
+  conn.prepare(`
+    UPDATE forum_topics
+    SET is_pinned = ?,
+        is_locked = ?,
+        updated_ts = strftime('%s','now')
+    WHERE id = ?
+  `).run(args.is_pinned ? 1 : 0, args.is_locked ? 1 : 0, Number(topicId));
+}
+
+function deleteForumTopic(conn, topicId) {
+  ensureForumTables(conn);
+
+  conn.prepare(`
+    DELETE FROM forum_topics
+    WHERE id = ?
+  `).run(Number(topicId));
+}
+
+function deleteForumPost(conn, postId) {
+  ensureForumTables(conn);
+
+  const post = conn.prepare(`
+    SELECT *
+    FROM forum_posts
+    WHERE id = ?
+  `).get(Number(postId));
+
+  if (!post) return false;
+
+  conn.prepare(`
+    UPDATE forum_posts
+    SET is_deleted = 1,
+        body = '[deleted]',
+        updated_ts = strftime('%s','now')
+    WHERE id = ?
+  `).run(Number(postId));
+
+  return true;
+}
+
+
+
 function softDeleteReviewComment(conn, commentId, opts = {}) {
   const cid = Number(commentId);
   const uid = Number(opts.requesterUserId);
@@ -2843,6 +3180,19 @@ module.exports = {
   deletePredictionSeasonResults,
   listPredictionSeasons,
   listFriendRatingsForShow,
+  ensureForumTables,
+  listForumCategoriesWithStats,
+  createForumCategory,
+  getForumCategory,
+  listForumTopics,
+  createForumTopic,
+  getForumTopic,
+  incrementForumTopicViews,
+  listForumPosts,
+  addForumPost,
+  updateForumTopicFlags,
+  deleteForumTopic,
+  deleteForumPost,
 };
 
 
