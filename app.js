@@ -1550,8 +1550,9 @@ function createApp() {
     
         const message = dbx.getSiteSetting(conn, 'shows_welcome_message', '');
     
-        return res.render('admin_site_message', {
+        return res.render('site-message', {
           me: res.locals.me,
+          accent_color: res.locals.accent_color,
           message,
           saved: req.query.saved === '1',
         });
@@ -1580,7 +1581,6 @@ function createApp() {
         if (conn) dbx.close(conn);
       }
     }));
-
 
       
     app.post('/predictions', loginRequired(async (req, res) => {
