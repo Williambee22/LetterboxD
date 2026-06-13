@@ -517,6 +517,7 @@ function createApp() {
     dbx.ensureAuthColumns(conn);
     dbx.ensureFavoriteShowsTable(conn);
     dbx.ensurePredictionTables(conn);
+    dbx.ensureForumTables(conn);
     return conn;
   }
 
@@ -3325,6 +3326,271 @@ function createApp() {
     }
   }));
 
+  app.get('/forums', async (req, res, next) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      const categories = dbx.listForumCategoriesWithStats(conn).map(normalizeRow);
+  
+      return res.render('forums', {
+        mode: 'index',
+        categories,
+        category: null,
+        topics: [],
+        topic: null,
+        posts: []
+      });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  });
+  
+  app.post('/forums/categories', adminRequired(async (req, res) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      dbx.createForumCategory(conn, {
+        title: req.body.title,
+        description: req.body.description,
+        sort_order: req.body.sort_order,
+        created_by: Number(req.session.uid)
+      });
+  
+      await dbx.commit(conn);
+      req.flash('ok', 'Forum category created.');
+    } catch (err) {
+      req.flash('error', String(err.message || err));
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  
+    return res.redirect('/forums');
+  }));
+  
+  app.get('/forums/category/:category_id', async (req, res, next) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      const category = normalizeRow(
+        dbx.getForumCategory(conn, Number(req.params.category_id))
+      );
+  
+      if (!category) return res.sendStatus(404);
+  
+      const topics = dbx.listForumTopics(conn, Number(category.id), { limit: 100 }).map((r) => {
+        const row = normalizeRow(r);
+        if (!row.avatar_url) row.avatar_url = pfpUrlForUsername(row.username || '');
+        return row;
+      });
+  
+      return res.render('forums', {
+        mode: 'category',
+        categories: [],
+        category,
+        topics,
+        topic: null,
+        posts: []
+      });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  });
+  
+  app.get('/forums/category/:category_id/new', loginRequired(async (req, res, next) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      const category = normalizeRow(
+        dbx.getForumCategory(conn, Number(req.params.category_id))
+      );
+  
+      if (!category) return res.sendStatus(404);
+  
+      if (Number(category.is_locked || 0) === 1) {
+        req.flash('error', 'This forum category is locked.');
+        return res.redirect(`/forums/category/${category.id}`);
+      }
+  
+      return res.render('forums', {
+        mode: 'new_topic',
+        categories: [],
+        category,
+        topics: [],
+        topic: null,
+        posts: []
+      });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+  
+  app.post('/forums/category/:category_id/new', loginRequired(async (req, res) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      const topicId = dbx.createForumTopic(conn, {
+        category_id: Number(req.params.category_id),
+        user_id: Number(req.session.uid),
+        title: req.body.title,
+        body: req.body.body
+      });
+  
+      await dbx.commit(conn);
+      req.flash('ok', 'Topic created.');
+      return res.redirect(`/forums/topic/${topicId}`);
+    } catch (err) {
+      req.flash('error', String(err.message || err));
+      return res.redirect(`/forums/category/${Number(req.params.category_id)}/new`);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+  
+  app.get('/forums/topic/:topic_id', async (req, res, next) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      const topic = normalizeRow(
+        dbx.getForumTopic(conn, Number(req.params.topic_id))
+      );
+  
+      if (!topic) return res.sendStatus(404);
+  
+      dbx.incrementForumTopicViews(conn, Number(topic.id));
+  
+      const posts = dbx.listForumPosts(conn, Number(topic.id)).map((r) => {
+        const row = normalizeRow(r);
+        if (!row.avatar_url) row.avatar_url = pfpUrlForUsername(row.username || '');
+        return row;
+      });
+  
+      return res.render('forums', {
+        mode: 'topic',
+        categories: [],
+        category: null,
+        topics: [],
+        topic,
+        posts
+      });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  });
+  
+  app.post('/forums/topic/:topic_id/reply', loginRequired(async (req, res) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      dbx.addForumPost(conn, {
+        topic_id: Number(req.params.topic_id),
+        user_id: Number(req.session.uid),
+        body: req.body.body
+      });
+  
+      await dbx.commit(conn);
+      req.flash('ok', 'Reply posted.');
+    } catch (err) {
+      req.flash('error', String(err.message || err));
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  
+    return res.redirect(`/forums/topic/${Number(req.params.topic_id)}`);
+  }));
+  
+  app.post('/forums/topic/:topic_id/mod', adminRequired(async (req, res) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      dbx.updateForumTopicFlags(conn, Number(req.params.topic_id), {
+        is_pinned: req.body.is_pinned === '1',
+        is_locked: req.body.is_locked === '1'
+      });
+  
+      await dbx.commit(conn);
+      req.flash('ok', 'Topic moderation settings updated.');
+    } catch (err) {
+      req.flash('error', String(err.message || err));
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  
+    return res.redirect(`/forums/topic/${Number(req.params.topic_id)}`);
+  }));
+  
+  app.post('/forums/topic/:topic_id/delete', adminRequired(async (req, res) => {
+    let conn;
+    let categoryId = null;
+  
+    try {
+      conn = getConn();
+  
+      const topic = dbx.getForumTopic(conn, Number(req.params.topic_id));
+      categoryId = topic ? Number(topic.category_id) : null;
+  
+      dbx.deleteForumTopic(conn, Number(req.params.topic_id));
+  
+      await dbx.commit(conn);
+      req.flash('ok', 'Topic deleted.');
+    } catch (err) {
+      req.flash('error', String(err.message || err));
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  
+    return res.redirect(categoryId ? `/forums/category/${categoryId}` : '/forums');
+  }));
+  
+  app.post('/forums/post/:post_id/delete', adminRequired(async (req, res) => {
+    let conn;
+    const topicId = Number(req.body.topic_id || 0);
+  
+    try {
+      conn = getConn();
+  
+      dbx.deleteForumPost(conn, Number(req.params.post_id));
+  
+      await dbx.commit(conn);
+      req.flash('ok', 'Post deleted.');
+    } catch (err) {
+      req.flash('error', String(err.message || err));
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  
+    return res.redirect(topicId ? `/forums/topic/${topicId}` : '/forums');
+  }));
+
+
+
+
+
+
+  
   app.get('/debug-session', (req, res) => {
     res.json({
       sessionID: req.sessionID,
