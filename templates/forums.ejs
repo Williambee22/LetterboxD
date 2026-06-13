@@ -260,8 +260,8 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 36px;
-      padding: 0 13px;
+      min-height: 34px;
+      padding: 0 12px;
       border-radius: 6px;
       border: 1px solid color-mix(in srgb, var(--accent) 42%, rgba(255,255,255,0.16));
       background: color-mix(in srgb, var(--accent) 28%, #111 72%);
@@ -315,7 +315,7 @@
     }
 
     .forumTextarea {
-      min-height: 190px;
+      min-height: 150px;
       resize: vertical;
       line-height: 1.5;
     }
@@ -334,25 +334,27 @@
 
     .topicLayout {
       display: grid;
-      gap: 14px;
+      gap: 9px;
     }
 
     .forumPost {
       display: grid;
-      grid-template-columns: 180px 1fr;
+      grid-template-columns: 150px 1fr;
       border: 1px solid rgba(255,255,255,0.12);
       background: #070707;
+      align-items: start;
     }
 
     .postSidebar {
-      padding: 15px;
+      padding: 10px;
       background: #0d0d0d;
       border-right: 1px solid rgba(255,255,255,0.10);
+      min-height: 0;
     }
 
     .postAvatar {
-      width: 62px;
-      height: 62px;
+      width: 44px;
+      height: 44px;
       border-radius: 8px;
       display: grid;
       place-items: center;
@@ -360,9 +362,9 @@
       background: color-mix(in srgb, var(--accent) 16%, #1a1a1a 84%);
       border: 1px solid rgba(255,255,255,0.12);
       color: #fff;
-      font-size: 24px;
+      font-size: 18px;
       font-weight: 950;
-      margin-bottom: 10px;
+      margin-bottom: 7px;
     }
 
     .postAvatar img {
@@ -387,7 +389,7 @@
 
     .postRole {
       display: inline-flex;
-      margin-top: 7px;
+      margin-top: 6px;
       padding: 2px 7px;
       border-radius: 4px;
       font-size: 11px;
@@ -397,7 +399,7 @@
     }
 
     .postDate {
-      margin-top: 8px;
+      margin-top: 7px;
       color: rgba(229,231,235,0.52);
       font-size: 12px;
       line-height: 1.35;
@@ -410,8 +412,8 @@
     }
 
     .postTopline {
-      min-height: 38px;
-      padding: 10px 14px;
+      min-height: 28px;
+      padding: 6px 10px;
       background: #101010;
       border-bottom: 1px solid rgba(255,255,255,0.09);
       display: flex;
@@ -423,16 +425,17 @@
     }
 
     .postContent {
-      padding: 17px 14px;
+      padding: 10px;
       white-space: pre-wrap;
-      line-height: 1.55;
+      line-height: 1.45;
       color: #e5e7eb;
-      flex: 1;
+      flex: 0 0 auto;
+      min-height: 0;
     }
 
     .replyNotice {
-      margin-bottom: 12px;
-      padding: 8px 10px;
+      margin-bottom: 9px;
+      padding: 7px 9px;
       border-left: 3px solid var(--accent);
       background: rgba(255,255,255,0.045);
       color: rgba(229,231,235,0.72);
@@ -441,7 +444,7 @@
     }
 
     .postFooter {
-      padding: 10px 14px;
+      padding: 7px 10px;
       border-top: 1px solid rgba(255,255,255,0.08);
       display: flex;
       gap: 8px;
@@ -469,7 +472,7 @@
       display: none;
       align-items: center;
       gap: 8px;
-      padding: 9px 10px;
+      padding: 7px 9px;
       background: rgba(255,255,255,0.045);
       border: 1px solid rgba(255,255,255,0.10);
       color: rgba(229,231,235,0.76);
@@ -537,8 +540,8 @@
         border-right: none;
         border-bottom: 1px solid rgba(255,255,255,0.10);
         display: grid;
-        grid-template-columns: 62px 1fr;
-        gap: 12px;
+        grid-template-columns: 44px 1fr;
+        gap: 10px;
         align-items: center;
       }
 
@@ -682,6 +685,7 @@
                 <th>Latest</th>
               </tr>
             </thead>
+
             <tbody>
               <% for (const c of categories) { %>
                 <tr>
@@ -778,9 +782,11 @@
                       <% if (Number(t.is_pinned || 0) === 1) { %>
                         <span class="forumBadge">Pinned</span>
                       <% } %>
+
                       <% if (Number(t.is_locked || 0) === 1) { %>
                         <span class="forumBadge">Locked</span>
                       <% } %>
+
                       <%= t.title %>
                     </a>
 
@@ -871,9 +877,11 @@
             Started by <strong><%= topic.username %></strong>
             · <%= fmtTs(topic.created_ts) %>
             · <%= topic.views || 0 %> views
+
             <% if (Number(topic.is_pinned || 0) === 1) { %>
               · Pinned
             <% } %>
+
             <% if (Number(topic.is_locked || 0) === 1) { %>
               · Locked
             <% } %>
@@ -941,6 +949,7 @@
             <div class="postMain">
               <div class="postTopline">
                 <span>Post #<%= p.id %></span>
+
                 <% if (Number(p.is_deleted || 0) !== 1) { %>
                   <a href="#post-<%= p.id %>" style="color:rgba(229,231,235,0.62);text-decoration:none;">Link</a>
                 <% } %>
