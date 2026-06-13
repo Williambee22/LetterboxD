@@ -452,6 +452,52 @@
       flex-wrap: wrap;
     }
 
+    .reactionBar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    
+    .reactionBtn {
+      appearance: none;
+      min-height: 28px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.045);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .reactionBtn:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: color-mix(in srgb, var(--accent) 36%, rgba(255,255,255,0.14));
+    }
+    
+    .reactionBtn.active {
+      background: color-mix(in srgb, var(--accent) 26%, rgba(255,255,255,0.06));
+      border-color: color-mix(in srgb, var(--accent) 52%, rgba(255,255,255,0.18));
+    }
+    
+    .reactionCount {
+      color: rgba(255,255,255,0.72);
+      font-size: 12px;
+    }
+    
+    .reactionLoginHint {
+      color: rgba(229,231,235,0.48);
+      font-size: 12px;
+    }
+
+
+
     .modChecks {
       display: flex;
       align-items: center;
@@ -890,13 +936,51 @@
             </div>
 
             <div class="threadBody">
-              <% const visibleBody = cleanReplyBody(p.body, p.reply_to_username).trim(); %>
+              <% 
+                const visibleBody = cleanReplyBody(p.body, p.reply_to_username).trim();
+                const postReactionData = reactions && reactions[p.id]
+                  ? reactions[p.id]
+                  : { counts: {}, mine: null };
+            
+                const allowedReactions = ['👍', '😂', '❤️', '👀', '🔥', '💀'];
+              %>
             
               <% if (p.reply_to_username) { %>
                 <div class="threadReplyNotice">
                   Replying to @<%= p.reply_to_username %>
                 </div>
               <% } %>
+            
+              <div class="threadBodyText"><%= visibleBody %></div>
+            
+              <div class="reactionBar" data-post-id="<%= p.id %>">
+                <% for (const emoji of allowedReactions) { %>
+                  <% const count = Number(postReactionData.counts?.[emoji] || 0); %>
+            
+                  <form
+                    method="post"
+                    action="/forums/post/<%= p.id %>/react"
+                    class="reactionForm"
+                    <%= !meUser ? 'data-disabled="1"' : '' %>
+                  >
+                    <input type="hidden" name="emoji" value="<%= emoji %>">
+                    <button
+                      class="reactionBtn <%= postReactionData.mine === emoji ? 'active' : '' %>"
+                      type="<%= meUser ? 'submit' : 'button' %>"
+                      data-emoji="<%= emoji %>"
+                      <%= !meUser ? 'disabled' : '' %>
+                    >
+                      <span><%= emoji %></span>
+                      <span class="reactionCount"><%= count > 0 ? count : '' %></span>
+                    </button>
+                  </form>
+                <% } %>
+            
+                <% if (!meUser) { %>
+                  <span class="reactionLoginHint">Login to react</span>
+                <% } %>
+              </div>
+            </div>
             
               <div class="threadBodyText"><%= visibleBody %></div>
             </div>
@@ -977,23 +1061,23 @@
       const replyingToName = document.getElementById('replyingToName');
       const cancelBtn = document.getElementById('cancelDirectReply');
       const textarea = document.getElementById('replyTextarea');
-
+  
       document.querySelectorAll('.directReplyBtn').forEach((btn) => {
         btn.addEventListener('click', () => {
           const postId = btn.dataset.postId || '';
           const username = btn.dataset.username || '';
-
+  
           if (replyToPostId) replyToPostId.value = postId;
           if (replyingToName) replyingToName.textContent = '@' + username;
           if (replyingToBox) replyingToBox.style.display = 'flex';
-
+  
           if (textarea) {
             textarea.focus();
             textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
         });
       });
-
+  
       if (cancelBtn) {
         cancelBtn.addEventListener('click', () => {
           if (replyToPostId) replyToPostId.value = '';
@@ -1002,6 +1086,57 @@
           if (textarea) textarea.focus();
         });
       }
+  
+      document.querySelectorAll('.reactionForm').forEach((form) => {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+  
+          if (form.dataset.disabled === '1') return;
+  
+          const btn = form.querySelector('.reactionBtn');
+          const bar = form.closest('.reactionBar');
+          const emojiInput = form.querySelector('input[name="emoji"]');
+  
+          if (!btn || !bar || !emojiInput) return;
+  
+          const emoji = emojiInput.value;
+  
+          try {
+            const res = await fetch(form.action, {
+              method: 'POST',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+              },
+              body: new URLSearchParams({ emoji })
+            });
+  
+            const data = await res.json();
+  
+            if (!res.ok || !data.ok) {
+              throw new Error(data.error || 'Reaction failed.');
+            }
+  
+            const counts = data.reactions?.counts || {};
+            const mine = data.reactions?.mine || null;
+  
+            bar.querySelectorAll('.reactionBtn').forEach((reactionBtn) => {
+              const reactionEmoji = reactionBtn.dataset.emoji;
+              const countSpan = reactionBtn.querySelector('.reactionCount');
+              const count = Number(counts[reactionEmoji] || 0);
+  
+              reactionBtn.classList.toggle('active', mine === reactionEmoji);
+  
+              if (countSpan) {
+                countSpan.textContent = count > 0 ? String(count) : '';
+              }
+            });
+          } catch (err) {
+            console.error(err);
+            alert(err.message || 'Reaction failed.');
+          }
+        });
+      });
     });
   </script>
 </body>
