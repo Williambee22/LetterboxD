@@ -664,6 +664,8 @@
                          const created = n?.created_at || "";
                          const unread = Number(n?.is_read ?? 0) === 0;
                          const sid = n?.show_id || null;
+                         const forumTopicId = n?.forum_topic_id || null;
+                         const forumPostId = n?.forum_post_id || null;
                          const showName = n?.show_title
                            ? `${n.show_title}${n.show_corps ? " — " + n.show_corps : ""}${n.show_year ? " (" + n.show_year + ")" : ""}`
                            : "";
@@ -707,7 +709,7 @@
                         
                         <% } else if (kind === "forum_reply") { %>
                           <div>
-                            <a href="/forums/topic/<%= n.forum_topic_id %>#post-<%= n.forum_post_id %>">
+                            <a href="/forums/topic/<%= forumTopicId %>#post-<%= forumPostId %>">
                               <b><%= actor %></b> replied to your forum post.
                             </a>
                           </div>
