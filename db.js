@@ -3456,6 +3456,7 @@ module.exports = {
   deleteForumTopic,
   deleteForumPost,
   addForumReplyNotification,
+  deleteForumCategory,
 };
 
 
