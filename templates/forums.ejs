@@ -553,7 +553,28 @@
               <% } %>
             </aside>
 
-            <div class="postBody"><%= p.body %></div>
+            <div class="postBody">
+              <% if (p.reply_to_username) { %>
+                <div class="forumSmall" style="margin-bottom:8px;">
+                  Replying to @<%= p.reply_to_username %>
+                </div>
+              <% } %>
+            
+              <%= p.body %>
+            
+              <% if (meUser && Number(topic.is_locked || 0) !== 1 && Number(topic.category_locked || 0) !== 1 && Number(p.is_deleted || 0) !== 1) { %>
+                <div class="inlineActions" style="margin-top:14px;">
+                  <button
+                    class="btn directReplyBtn"
+                    type="button"
+                    data-post-id="<%= p.id %>"
+                    data-username="<%= p.username %>"
+                  >
+                    Reply to @<%= p.username %>
+                  </button>
+                </div>
+              <% } %>
+            </div>
           </article>
         <% } %>
       </section>
@@ -564,7 +585,22 @@
             <h2 style="margin-top:0;">Reply</h2>
 
             <form class="forumForm" method="post" action="/forums/topic/<%= topic.id %>/reply">
-              <textarea class="forumTextarea" name="body" maxlength="8000" required placeholder="Write a reply..."></textarea>
+              <input type="hidden" name="reply_to_post_id" id="replyToPostId" value="">
+            
+              <div id="replyingToBox" class="forumSmall" style="display:none;">
+                Replying to <strong id="replyingToName"></strong>
+                <button class="btn" type="button" id="cancelDirectReply" style="margin-left:8px;">Cancel</button>
+              </div>
+            
+              <textarea
+                class="forumTextarea"
+                name="body"
+                id="replyTextarea"
+                maxlength="8000"
+                required
+                placeholder="Write a reply..."
+              ></textarea>
+            
               <button class="btn" type="submit">Post Reply</button>
             </form>
           </div>
@@ -584,5 +620,39 @@
       <% } %>
     <% } %>
   </main>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const replyToPostId = document.getElementById('replyToPostId');
+    const replyingToBox = document.getElementById('replyingToBox');
+    const replyingToName = document.getElementById('replyingToName');
+    const cancelBtn = document.getElementById('cancelDirectReply');
+    const textarea = document.getElementById('replyTextarea');
+
+    document.querySelectorAll('.directReplyBtn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const postId = btn.dataset.postId || '';
+        const username = btn.dataset.username || '';
+
+        if (replyToPostId) replyToPostId.value = postId;
+        if (replyingToName) replyingToName.textContent = '@' + username;
+        if (replyingToBox) replyingToBox.style.display = 'block';
+
+        if (textarea) {
+          textarea.focus();
+          textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    });
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        if (replyToPostId) replyToPostId.value = '';
+        if (replyingToName) replyingToName.textContent = '';
+        if (replyingToBox) replyingToBox.style.display = 'none';
+        if (textarea) textarea.focus();
+      });
+    }
+  });
+</script>
 </body>
 </html>
