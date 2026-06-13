@@ -3421,6 +3421,39 @@ function createApp() {
       if (conn) dbx.close(conn);
     }
   });
+
+
+  app.post('/forums/category/:category_id/edit', adminRequired(async (req, res) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      dbx.updateForumCategory(conn, {
+        categoryId: Number(req.params.category_id),
+        title: req.body.title,
+        description: req.body.description,
+        sort_order: req.body.sort_order,
+        is_locked: req.body.is_locked
+      });
+  
+      await dbx.commit(conn);
+  
+      req.flash('success', 'Forum category updated.');
+      return res.redirect('/forums/category/' + Number(req.params.category_id));
+    } catch (err) {
+      if (conn) {
+        try { dbx.rollback(conn); } catch {}
+      }
+  
+      req.flash('error', String(err.message || err));
+      return res.redirect('/forums/category/' + Number(req.params.category_id));
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+
+
   
   app.get('/forums/category/:category_id/new', loginRequired(async (req, res, next) => {
     let conn;
@@ -3649,6 +3682,38 @@ function createApp() {
   
     return res.redirect(categoryId ? `/forums/category/${categoryId}` : '/forums');
   }));
+
+  app.post('/forums/topic/:topic_id/edit', adminRequired(async (req, res) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      dbx.updateForumTopicInfo(conn, {
+        topicId: Number(req.params.topic_id),
+        title: req.body.title,
+        body: req.body.body,
+        is_pinned: req.body.is_pinned,
+        is_locked: req.body.is_locked
+      });
+  
+      await dbx.commit(conn);
+  
+      req.flash('success', 'Topic updated.');
+      return res.redirect('/forums/topic/' + Number(req.params.topic_id));
+    } catch (err) {
+      if (conn) {
+        try { dbx.rollback(conn); } catch {}
+      }
+  
+      req.flash('error', String(err.message || err));
+      return res.redirect('/forums/topic/' + Number(req.params.topic_id));
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+
+
   
   app.post('/forums/post/:post_id/delete', adminRequired(async (req, res) => {
     let conn;
