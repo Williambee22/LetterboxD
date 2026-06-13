@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Edit Site Message — Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+</head>
+
+<body class="app" style="--accent: <%= accent_color || '#3252b3' %>;">
+  <header class="topbar">
+    <div class="wrap row between">
+      <a class="brand" href="/shows">Pressboxd</a>
+
+      <nav class="nav row">
+        <a href="/shows">Shows</a>
+        <a href="/admin/bulk_add">Mass Add</a>
+        <a href="/admin/roles">Roles</a>
+        <a href="/admin/users">Users</a>
+        <a href="/admin/stats">Stats</a>
+        <a href="/admin/predictions">Predictions Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="panel" style="margin-top:24px;">
+      <h1 style="margin-top:0;">Edit Shows Page Message</h1>
+
+      <% if (saved) { %>
+        <div style="margin-bottom:14px; color:#7CFF8A; font-weight:800;">
+          Saved successfully.
+        </div>
+      <% } %>
+
+      <form method="post" action="/admin/site-message">
+        <div class="field">
+          <label>Message</label>
+          <textarea
+            name="message"
+            rows="10"
+            style="width:100%; min-height:220px; border-radius:12px; padding:12px; background:#111; color:#fff; border:1px solid rgba(255,255,255,0.14);"
+          ><%= message || '' %></textarea>
+        </div>
+
+        <div class="muted small" style="margin-top:8px;">
+          You can use simple HTML like &lt;strong&gt;, &lt;br&gt;, and &lt;a&gt;.
+        </div>
+
+        <div style="margin-top:16px; display:flex; gap:10px;">
+          <button class="btn" type="submit">Save Message</button>
+          <a class="btn ghost" href="/shows">View Shows Page</a>
+        </div>
+      </form>
+    </div>
+  </main>
+</body>
+</html>
