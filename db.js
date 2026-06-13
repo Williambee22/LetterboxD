@@ -616,6 +616,61 @@ function ensureNotificationsTable(conn) {
   }
 }
 
+function ensureSiteSettingsTable(conn) {
+  conn.exec(`
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL DEFAULT '',
+      updated_ts INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+    );
+  `);
+
+  const defaultShowsWelcome = `
+<strong>WE ARE ALMOST READY TO OFFICIALLY TAKE THE WEBSITE OUT OF EARLY DEVELOPMENT!</strong>
+
+If the site feels down or you are logged out, we are likely pushing live fixes. We apologize for the inconvenience! (likely development window times: 8am-9:30am, 9pm-10pm)
+
+Suggestions? Reach out at <a href="mailto:PressboxdContact@gmail.com" style="color:#3252b3; text-decoration:none; font-weight:bold;">PressboxdContact@gmail.com</a>
+`.trim();
+
+  conn.prepare(`
+    INSERT OR IGNORE INTO site_settings (key, value, updated_ts)
+    VALUES ('shows_welcome_message', ?, strftime('%s','now'))
+  `).run(defaultShowsWelcome);
+}
+
+function getSiteSetting(conn, key, fallback = '') {
+  ensureSiteSettingsTable(conn);
+
+  const row = conn.prepare(`
+    SELECT value
+    FROM site_settings
+    WHERE key = ?
+    LIMIT 1
+  `).get(String(key || '').trim());
+
+  return row ? String(row.value || '') : String(fallback || '');
+}
+
+function setSiteSetting(conn, key, value) {
+  ensureSiteSettingsTable(conn);
+
+  conn.prepare(`
+    INSERT INTO site_settings (key, value, updated_ts)
+    VALUES (?, ?, strftime('%s','now'))
+    ON CONFLICT(key) DO UPDATE SET
+      value = excluded.value,
+      updated_ts = strftime('%s','now')
+  `).run(
+    String(key || '').trim(),
+    String(value || '').trim()
+  );
+
+  return true;
+}
+
+
+
 function ensurePredictionTables(conn) {
   conn.exec(`
     CREATE TABLE IF NOT EXISTS prediction_settings (
@@ -3700,6 +3755,9 @@ module.exports = {
   listForumPostReactionSummary,
   updateForumCategory,
   updateForumTopicInfo,
+  ensureSiteSettingsTable,
+  getSiteSetting,
+  setSiteSetting,
 };
 
 
