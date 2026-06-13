@@ -149,6 +149,91 @@ function getVerifiedRatingHistogram(conn, showId) {
   return out;
 }
 
+function updateForumCategory(conn, args = {}) {
+  ensureForumTables(conn);
+
+  const categoryId = Number(args.categoryId ?? args.category_id);
+  const title = String(args.title || '').trim();
+  const description = String(args.description || '').trim();
+  const sortOrder = Number(args.sort_order ?? args.sortOrder ?? 0);
+  const isLocked = args.is_locked ? 1 : 0;
+
+  if (!categoryId) throw new Error('Missing category.');
+  if (title.length < 2 || title.length > 80) {
+    throw new Error('Category title must be 2-80 characters.');
+  }
+
+  conn.prepare(`
+    UPDATE forum_categories
+    SET title = ?,
+        description = ?,
+        sort_order = ?,
+        is_locked = ?
+    WHERE id = ?
+  `).run(title, description, sortOrder, isLocked, categoryId);
+
+  return true;
+}
+
+
+function updateForumTopicInfo(conn, args = {}) {
+  ensureForumTables(conn);
+
+  const topicId = Number(args.topicId ?? args.topic_id);
+  const title = String(args.title || '').trim();
+  const body = String(args.body || '').trim();
+  const isPinned = args.is_pinned ? 1 : 0;
+  const isLocked = args.is_locked ? 1 : 0;
+
+  if (!topicId) throw new Error('Missing topic.');
+  if (title.length < 3 || title.length > 120) {
+    throw new Error('Topic title must be 3-120 characters.');
+  }
+  if (body.length < 3 || body.length > 8000) {
+    throw new Error('Topic body must be 3-8000 characters.');
+  }
+
+  const topic = conn.prepare(`
+    SELECT id
+    FROM forum_topics
+    WHERE id = ?
+  `).get(topicId);
+
+  if (!topic) throw new Error('Topic not found.');
+
+  const firstPost = conn.prepare(`
+    SELECT id
+    FROM forum_posts
+    WHERE topic_id = ?
+    ORDER BY created_ts ASC, id ASC
+    LIMIT 1
+  `).get(topicId);
+
+  const tx = conn.transaction(() => {
+    conn.prepare(`
+      UPDATE forum_topics
+      SET title = ?,
+          body = ?,
+          is_pinned = ?,
+          is_locked = ?,
+          updated_ts = strftime('%s','now')
+      WHERE id = ?
+    `).run(title, body, isPinned, isLocked, topicId);
+
+    if (firstPost) {
+      conn.prepare(`
+        UPDATE forum_posts
+        SET body = ?,
+            updated_ts = strftime('%s','now')
+        WHERE id = ?
+      `).run(body, Number(firstPost.id));
+    }
+  });
+
+  tx();
+
+  return true;
+}
 
 
 function usersPasswordCol(conn) {
@@ -3613,6 +3698,8 @@ module.exports = {
   deleteForumCategory,
   toggleForumPostReaction,
   listForumPostReactionSummary,
+  updateForumCategory,
+  updateForumTopicInfo,
 };
 
 
