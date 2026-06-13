@@ -3469,7 +3469,7 @@ function createApp() {
   
       if (Number(category.is_locked || 0) === 1) {
         req.flash('error', 'This forum category is locked.');
-        return res.redirect(`/forums/category/${category.id}`);
+        return res.redirect('/forums/category/' + Number(category.id));
       }
   
       return res.render('forums', {
@@ -3478,7 +3478,8 @@ function createApp() {
         category,
         topics: [],
         topic: null,
-        posts: []
+        posts: [],
+        reactions: {}
       });
     } catch (err) {
       return next(err);
@@ -3494,18 +3495,22 @@ function createApp() {
       conn = getConn();
   
       const topicId = dbx.createForumTopic(conn, {
-        category_id: Number(req.params.category_id),
-        user_id: Number(req.session.uid),
+        categoryId: Number(req.params.category_id),
+        userId: Number(req.session.uid),
         title: req.body.title,
         body: req.body.body
       });
   
       await dbx.commit(conn);
-      req.flash('ok', 'Topic created.');
-      return res.redirect(`/forums/topic/${topicId}`);
+  
+      return res.redirect('/forums/topic/' + Number(topicId));
     } catch (err) {
+      if (conn) {
+        try { dbx.rollback(conn); } catch {}
+      }
+  
       req.flash('error', String(err.message || err));
-      return res.redirect(`/forums/category/${Number(req.params.category_id)}/new`);
+      return res.redirect('/forums/category/' + Number(req.params.category_id));
     } finally {
       if (conn) dbx.close(conn);
     }
