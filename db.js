@@ -2577,7 +2577,28 @@ function ensureForumTables(conn) {
 
     CREATE INDEX IF NOT EXISTS idx_forum_posts_topic_created
     ON forum_posts(topic_id, created_ts ASC);
+
+    CREATE TABLE IF NOT EXISTS forum_topic_views (
+      topic_id INTEGER NOT NULL,
+      viewer_key TEXT NOT NULL,
+      last_viewed_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      PRIMARY KEY (topic_id, viewer_key),
+      FOREIGN KEY(topic_id) REFERENCES forum_topics(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_forum_topic_views_topic
+    ON forum_topic_views(topic_id);
   `);
+
+  const postCols = tableColumns(conn, 'forum_posts');
+
+  if (!postCols.has('reply_to_post_id')) {
+    conn.prepare('ALTER TABLE forum_posts ADD COLUMN reply_to_post_id INTEGER').run();
+  }
+
+  if (!postCols.has('reply_to_user_id')) {
+    conn.prepare('ALTER TABLE forum_posts ADD COLUMN reply_to_user_id INTEGER').run();
+  }
 }
 
 function listForumCategoriesWithStats(conn) {
@@ -2751,14 +2772,63 @@ function getForumTopic(conn, topicId) {
   `).get(Number(topicId)) || null;
 }
 
-function incrementForumTopicViews(conn, topicId) {
+function recordForumTopicView(conn, topicId, viewerKey) {
   ensureForumTables(conn);
 
-  conn.prepare(`
-    UPDATE forum_topics
-    SET views = views + 1
-    WHERE id = ?
-  `).run(Number(topicId));
+  const cleanViewerKey = String(viewerKey || '').trim();
+  const cleanTopicId = Number(topicId);
+
+  if (!cleanTopicId || !cleanViewerKey) return false;
+
+  const now = nowTs();
+  const twelveHoursAgo = now - (12 * 60 * 60);
+
+  const existing = conn.prepare(`
+    SELECT last_viewed_ts
+    FROM forum_topic_views
+    WHERE topic_id = ?
+      AND viewer_key = ?
+  `).get(cleanTopicId, cleanViewerKey);
+
+  if (!existing) {
+    const tx = conn.transaction(() => {
+      conn.prepare(`
+        INSERT INTO forum_topic_views(topic_id, viewer_key, last_viewed_ts)
+        VALUES (?, ?, ?)
+      `).run(cleanTopicId, cleanViewerKey, now);
+
+      conn.prepare(`
+        UPDATE forum_topics
+        SET views = views + 1
+        WHERE id = ?
+      `).run(cleanTopicId);
+    });
+
+    tx();
+    return true;
+  }
+
+  if (Number(existing.last_viewed_ts || 0) <= twelveHoursAgo) {
+    const tx = conn.transaction(() => {
+      conn.prepare(`
+        UPDATE forum_topic_views
+        SET last_viewed_ts = ?
+        WHERE topic_id = ?
+          AND viewer_key = ?
+      `).run(now, cleanTopicId, cleanViewerKey);
+
+      conn.prepare(`
+        UPDATE forum_topics
+        SET views = views + 1
+        WHERE id = ?
+      `).run(cleanTopicId);
+    });
+
+    tx();
+    return true;
+  }
+
+  return false;
 }
 
 function listForumPosts(conn, topicId) {
@@ -3187,7 +3257,7 @@ module.exports = {
   listForumTopics,
   createForumTopic,
   getForumTopic,
-  incrementForumTopicViews,
+  recordForumTopicView,
   listForumPosts,
   addForumPost,
   updateForumTopicFlags,
