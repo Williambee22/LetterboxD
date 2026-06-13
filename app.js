@@ -3498,13 +3498,20 @@ function createApp() {
         return row;
       });
   
+      const reactions = dbx.listForumPostReactionSummary(
+        conn,
+        Number(topic.id),
+        req.session?.uid ? Number(req.session.uid) : null
+      );
+  
       return res.render('forums', {
         mode: 'topic',
         categories: [],
         category: null,
         topics: [],
         topic,
-        posts
+        posts,
+        reactions
       });
     } catch (err) {
       return next(err);
@@ -3512,6 +3519,67 @@ function createApp() {
       if (conn) dbx.close(conn);
     }
   });
+
+  app.post('/forums/post/:post_id/react', loginRequired(async (req, res) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      const postId = Number(req.params.post_id);
+      const emoji = String(req.body.emoji || '').trim();
+  
+      dbx.toggleForumPostReaction(conn, {
+        postId,
+        userId: Number(req.session.uid),
+        emoji
+      });
+  
+      await dbx.commit(conn);
+  
+      const wantsJson = String(req.get('accept') || '').includes('application/json');
+  
+      if (wantsJson) {
+        const post = conn.prepare(`
+          SELECT topic_id
+          FROM forum_posts
+          WHERE id = ?
+        `).get(postId);
+  
+        const reactions = post
+          ? dbx.listForumPostReactionSummary(conn, Number(post.topic_id), Number(req.session.uid))
+          : {};
+  
+        return res.json({
+          ok: true,
+          post_id: postId,
+          reactions: reactions[postId] || { counts: {}, mine: null }
+        });
+      }
+  
+      return res.redirect(req.get('referer') || '/forums');
+    } catch (err) {
+      if (conn) {
+        try { dbx.rollback(conn); } catch {}
+      }
+  
+      const wantsJson = String(req.get('accept') || '').includes('application/json');
+  
+      if (wantsJson) {
+        return res.status(400).json({
+          ok: false,
+          error: String(err.message || err)
+        });
+      }
+  
+      req.flash('error', String(err.message || err));
+      return res.redirect(req.get('referer') || '/forums');
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+
+  
   
   app.post('/forums/topic/:topic_id/reply', loginRequired(async (req, res) => {
     let conn;
