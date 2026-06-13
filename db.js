@@ -2624,9 +2624,24 @@ function ensureForumTables(conn) {
       FOREIGN KEY(topic_id) REFERENCES forum_topics(id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS forum_post_reactions (
+      post_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      emoji TEXT NOT NULL,
+      created_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      PRIMARY KEY (post_id, user_id),
+      FOREIGN KEY(post_id) REFERENCES forum_posts(id) ON DELETE CASCADE,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    
+    CREATE INDEX IF NOT EXISTS idx_forum_post_reactions_post
+    ON forum_post_reactions(post_id);
+
     CREATE INDEX IF NOT EXISTS idx_forum_topic_views_topic
     ON forum_topic_views(topic_id);
   `);
+
+
 
   const postCols = tableColumns(conn, 'forum_posts');
 
@@ -2749,6 +2764,122 @@ function listForumTopics(conn, categoryId, opts = {}) {
     reply_count: Math.max(0, Number(r.post_count || 0) - 1)
   }));
 }
+
+const ALLOWED_FORUM_REACTIONS = new Set(['👍', '😂', '❤️', '👀', '🔥', '💀']);
+
+function toggleForumPostReaction(conn, args = {}) {
+  ensureForumTables(conn);
+
+  const postId = Number(args.postId ?? args.post_id);
+  const userId = Number(args.userId ?? args.user_id);
+  const emoji = String(args.emoji || '').trim();
+
+  if (!postId || !userId) {
+    throw new Error('Missing post or user.');
+  }
+
+  if (!ALLOWED_FORUM_REACTIONS.has(emoji)) {
+    throw new Error('Invalid reaction.');
+  }
+
+  const post = conn.prepare(`
+    SELECT id
+    FROM forum_posts
+    WHERE id = ?
+  `).get(postId);
+
+  if (!post) {
+    throw new Error('Post not found.');
+  }
+
+  const existing = conn.prepare(`
+    SELECT emoji
+    FROM forum_post_reactions
+    WHERE post_id = ?
+      AND user_id = ?
+  `).get(postId, userId);
+
+  if (existing && existing.emoji === emoji) {
+    conn.prepare(`
+      DELETE FROM forum_post_reactions
+      WHERE post_id = ?
+        AND user_id = ?
+    `).run(postId, userId);
+
+    return { active: false, emoji };
+  }
+
+  conn.prepare(`
+    INSERT INTO forum_post_reactions(post_id, user_id, emoji, created_ts)
+    VALUES (?, ?, ?, strftime('%s','now'))
+    ON CONFLICT(post_id, user_id)
+    DO UPDATE SET
+      emoji = excluded.emoji,
+      created_ts = excluded.created_ts
+  `).run(postId, userId, emoji);
+
+  return { active: true, emoji };
+}
+
+function listForumPostReactionSummary(conn, topicId, viewerUserId = null) {
+  ensureForumTables(conn);
+
+  const rows = conn.prepare(`
+    SELECT
+      r.post_id,
+      r.emoji,
+      COUNT(*) AS count
+    FROM forum_post_reactions r
+    JOIN forum_posts p ON p.id = r.post_id
+    WHERE p.topic_id = ?
+    GROUP BY r.post_id, r.emoji
+    ORDER BY r.post_id ASC, count DESC, r.emoji ASC
+  `).all(Number(topicId));
+
+  const mineRows = viewerUserId
+    ? conn.prepare(`
+        SELECT
+          r.post_id,
+          r.emoji
+        FROM forum_post_reactions r
+        JOIN forum_posts p ON p.id = r.post_id
+        WHERE p.topic_id = ?
+          AND r.user_id = ?
+      `).all(Number(topicId), Number(viewerUserId))
+    : [];
+
+  const byPost = {};
+
+  for (const row of rows) {
+    const postId = Number(row.post_id);
+
+    if (!byPost[postId]) {
+      byPost[postId] = {
+        counts: {},
+        mine: null
+      };
+    }
+
+    byPost[postId].counts[row.emoji] = Number(row.count || 0);
+  }
+
+  for (const row of mineRows) {
+    const postId = Number(row.post_id);
+
+    if (!byPost[postId]) {
+      byPost[postId] = {
+        counts: {},
+        mine: null
+      };
+    }
+
+    byPost[postId].mine = row.emoji;
+  }
+
+  return byPost;
+}
+
+
 
 function createForumTopic(conn, args = {}) {
   ensureForumTables(conn);
@@ -3015,6 +3146,15 @@ function deleteForumTopic(conn, topicId) {
     `).run(cleanTopicId);
 
     conn.prepare(`
+      DELETE FROM forum_post_reactions
+      WHERE post_id IN (
+        SELECT id
+        FROM forum_posts
+        WHERE topic_id = ?
+      )
+    `).run(cleanTopicId);
+    
+    conn.prepare(`
       DELETE FROM forum_topics
       WHERE id = ?
     `).run(cleanTopicId);
@@ -3054,6 +3194,15 @@ function deleteForumCategory(conn, categoryId) {
         WHERE topic_id = ?
       `).run(topicId);
 
+      conn.prepare(`
+        DELETE FROM forum_post_reactions
+        WHERE post_id IN (
+          SELECT id
+          FROM forum_posts
+          WHERE topic_id = ?
+        )
+      `).run(topicId);
+      
       conn.prepare(`
         DELETE FROM forum_topics
         WHERE id = ?
@@ -3113,6 +3262,11 @@ function deleteForumPost(conn, postId) {
       LIMIT 1
     `).get(topicId);
 
+    conn.prepare(`
+      DELETE FROM forum_post_reactions
+      WHERE post_id = ?
+    `).run(cleanPostId);
+    
     conn.prepare(`
       UPDATE forum_topics
       SET last_post_ts = COALESCE(?, created_ts),
@@ -3457,6 +3611,8 @@ module.exports = {
   deleteForumPost,
   addForumReplyNotification,
   deleteForumCategory,
+  toggleForumPostReaction,
+  listForumPostReactionSummary,
 };
 
 
