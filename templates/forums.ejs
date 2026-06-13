@@ -911,10 +911,12 @@
                 </button>
               <% } %>
 
-              <% if (isAdmin && Number(p.is_deleted || 0) !== 1) { %>
-                <form method="post" action="/forums/post/<%= p.id %>/delete" onsubmit="return confirm('Delete this post?');">
+              <% if (isAdmin) { %>
+                <form method="post" action="/forums/post/<%= p.id %>/delete" onsubmit="return confirm('Permanently delete this post? This cannot be undone.');">
                   <input type="hidden" name="topic_id" value="<%= topic.id %>">
-                  <button class="forumBtn danger" type="submit">Delete</button>
+                  <button class="forumBtn danger" type="submit">
+                    <%= Number(p.is_deleted || 0) === 1 ? 'Permanently Delete' : 'Delete' %>
+                  </button>
                 </form>
               <% } %>
             </div>
