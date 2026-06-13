@@ -3602,10 +3602,24 @@ function createApp() {
     return res.redirect(topicId ? `/forums/topic/${topicId}` : '/forums');
   }));
 
-
-
-
-
+  app.post('/forums/category/:category_id/delete', adminRequired(async (req, res) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      dbx.deleteForumCategory(conn, Number(req.params.category_id));
+  
+      await dbx.commit(conn);
+      req.flash('ok', 'Forum category permanently deleted.');
+    } catch (err) {
+      req.flash('error', String(err.message || err));
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  
+    return res.redirect('/forums');
+  }));
 
   
   app.get('/debug-session', (req, res) => {
