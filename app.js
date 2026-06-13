@@ -976,15 +976,22 @@ function createApp() {
 
       const showsWelcomeMessage = dbx.getSiteSetting(conn, 'shows_welcome_message', '');
 
-      res.render('shows', {
-        rows: rows2,
-        sort,
-        year,
-        corps,
-        friend_activity: friendActivity,
-        hot_shows: hotShows,
-        shows_welcome_message: showsWelcomeMessage,
-      });
+        return res.render('shows', {
+          rows: rows2,
+          sort,
+          year,
+          corps,
+          friend_activity: friendActivity,
+          hot_shows: hotShows,
+          shows_welcome_message: showsWelcomeMessage,
+        });
+      } catch (err) {
+        return next(err);
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+    });
+
 
   app.get('/show/:show_id', async (req, res, next) => {
     const showId = Number(req.params.show_id);
