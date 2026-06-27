@@ -1497,18 +1497,10 @@ function createApp() {
         if (!me) return res.sendStatus(404);
     
         if (!me.avatar_url) me.avatar_url = pfpUrlForUsername(me.username || '');
-    
-        const createdTs = Number(me.created_ts || 0);
-        const accountAgeSeconds = Math.floor(Date.now() / 1000) - createdTs;
-        const threeDaysSeconds = 3 * 24 * 60 * 60;
-    
-        const canSubmitPredictionSafe =
-          !!createdTs && accountAgeSeconds >= threeDaysSeconds;
-    
-        const predictionRemainingHours = canSubmitPredictionSafe
-          ? 0
-          : Math.ceil(Math.max(0, threeDaysSeconds - accountAgeSeconds) / 3600);
-    
+
+        const canSubmitPredictionSafe = true;
+        const predictionRemainingHours = 0;
+        
         const settings = normalizeRow(dbx.getPredictionSettings(conn));
         const seasonLabel = settings.season_label;
     
