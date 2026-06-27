@@ -1599,13 +1599,8 @@ function createApp() {
         const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
         if (!me) return res.sendStatus(404);
     
-        const createdTs = Number(me.created_ts || 0);
-        const accountAgeSeconds = Math.floor(Date.now() / 1000) - createdTs;
-        const threeDaysSeconds = 3 * 24 * 60 * 60;
-        const canSubmitPredictionSafe = !!createdTs && accountAgeSeconds >= threeDaysSeconds;
-        const predictionRemainingHours = canSubmitPredictionSafe
-          ? 0
-          : Math.ceil(Math.max(0, threeDaysSeconds - accountAgeSeconds) / 3600);
+        const canSubmitPredictionSafe = true;
+        const predictionRemainingHours = 0;
     
         if (!createdTs || accountAgeSeconds < threeDaysSeconds) {
           const remainingSeconds = Math.max(0, threeDaysSeconds - accountAgeSeconds);
