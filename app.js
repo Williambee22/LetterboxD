@@ -1599,17 +1599,6 @@ function createApp() {
         const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
         if (!me) return res.sendStatus(404);
     
-        const canSubmitPredictionSafe = true;
-        const predictionRemainingHours = 0;
-    
-        if (!createdTs || accountAgeSeconds < threeDaysSeconds) {
-          const remainingSeconds = Math.max(0, threeDaysSeconds - accountAgeSeconds);
-          const remainingHours = Math.ceil(remainingSeconds / 3600);
-    
-          req.flash('error', `Your account must be at least 3 days old before you can submit a prediction. Try again in about ${remainingHours} hour${remainingHours === 1 ? '' : 's'}.`);
-          return res.redirect('/predictions');
-        }
-    
         const settings = dbx.getPredictionSettings(conn);
         const picks = [];
     
