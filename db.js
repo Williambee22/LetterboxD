@@ -3608,6 +3608,214 @@ function searchUsers(conn, q, opts = {}) {
   `).all(contains, starts, limit);
 }
 
+function defaultTierlistData() {
+  return {
+    tiers: [
+      { id: "tier_s", label: "S", color: "#ff7f7f", items: [] },
+      { id: "tier_a", label: "A", color: "#ffbf7f", items: [] },
+      { id: "tier_b", label: "B", color: "#ffff7f", items: [] },
+      { id: "tier_c", label: "C", color: "#7fff7f", items: [] },
+      { id: "tier_d", label: "D", color: "#7fbfff", items: [] },
+      { id: "tier_f", label: "F", color: "#bf7fff", items: [] }
+    ]
+  };
+}
+
+function safeJsonParse(value, fallback) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
+
+function ensureTierlistTables(conn) {
+  conn.exec(`
+    CREATE TABLE IF NOT EXISTS tierlists (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL DEFAULT 'Untitled Tierlist',
+      filter_type TEXT NOT NULL DEFAULT 'all',
+      filter_value TEXT,
+      data_json TEXT NOT NULL,
+      created_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      updated_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_tierlists_user_updated
+    ON tierlists(user_id, updated_ts DESC);
+  `);
+}
+
+function createTierlist(conn, userId, name = "Untitled Tierlist") {
+  ensureTierlistTables(conn);
+
+  const cleanName = String(name || "Untitled Tierlist").trim() || "Untitled Tierlist";
+
+  const info = conn.prepare(`
+    INSERT INTO tierlists(user_id, name, data_json, created_ts, updated_ts)
+    VALUES (?, ?, ?, strftime('%s','now'), strftime('%s','now'))
+  `).run(
+    Number(userId),
+    cleanName,
+    JSON.stringify(defaultTierlistData())
+  );
+
+  return Number(info.lastInsertRowid);
+}
+
+function listTierlistsForUser(conn, userId) {
+  ensureTierlistTables(conn);
+
+  return conn.prepare(`
+    SELECT
+      id,
+      user_id,
+      name,
+      filter_type,
+      filter_value,
+      created_ts,
+      updated_ts
+    FROM tierlists
+    WHERE user_id = ?
+    ORDER BY updated_ts DESC, id DESC
+  `).all(Number(userId));
+}
+
+function getTierlistForUser(conn, tierlistId, userId) {
+  ensureTierlistTables(conn);
+
+  const row = conn.prepare(`
+    SELECT *
+    FROM tierlists
+    WHERE id = ?
+      AND user_id = ?
+    LIMIT 1
+  `).get(Number(tierlistId), Number(userId));
+
+  if (!row) return null;
+
+  row.data = safeJsonParse(row.data_json, defaultTierlistData());
+  return row;
+}
+
+function saveTierlist(conn, tierlistId, userId, args = {}) {
+  ensureTierlistTables(conn);
+
+  const name = String(args.name || "Untitled Tierlist").trim() || "Untitled Tierlist";
+
+  const filterTypeRaw = String(args.filter_type || "all").trim().toLowerCase();
+  const filterType = ["all", "corps", "year"].includes(filterTypeRaw)
+    ? filterTypeRaw
+    : "all";
+
+  const filterValue = args.filter_value == null || filterType === "all"
+    ? null
+    : String(args.filter_value).trim();
+
+  const data = args.data && typeof args.data === "object"
+    ? args.data
+    : defaultTierlistData();
+
+  const info = conn.prepare(`
+    UPDATE tierlists
+    SET name = ?,
+        filter_type = ?,
+        filter_value = ?,
+        data_json = ?,
+        updated_ts = strftime('%s','now')
+    WHERE id = ?
+      AND user_id = ?
+  `).run(
+    name,
+    filterType,
+    filterValue,
+    JSON.stringify(data),
+    Number(tierlistId),
+    Number(userId)
+  );
+
+  return info.changes > 0;
+}
+
+function deleteTierlist(conn, tierlistId, userId) {
+  ensureTierlistTables(conn);
+
+  conn.prepare(`
+    DELETE FROM tierlists
+    WHERE id = ?
+      AND user_id = ?
+  `).run(Number(tierlistId), Number(userId));
+
+  return true;
+}
+
+function listTierlistCorpsOptions(conn) {
+  return conn.prepare(`
+    SELECT DISTINCT TRIM(corps) AS corps
+    FROM shows
+    WHERE TRIM(COALESCE(corps, '')) <> ''
+    ORDER BY corps COLLATE NOCASE ASC
+  `).all();
+}
+
+function listTierlistYearOptions(conn) {
+  return conn.prepare(`
+    SELECT DISTINCT year
+    FROM shows
+    WHERE year IS NOT NULL
+    ORDER BY year DESC
+  `).all();
+}
+
+function listTierlistShows(conn, args = {}) {
+  const filterType = String(args.filter_type || "all").trim().toLowerCase();
+  const filterValue = String(args.filter_value || "").trim();
+
+  const params = [];
+  const where = [];
+
+  if (filterType === "corps" && filterValue) {
+    where.push("s.corps = ?");
+    params.push(filterValue);
+  } else if (filterType === "year" && filterValue) {
+    where.push("s.year = ?");
+    params.push(Number(filterValue));
+  }
+
+  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+  return conn.prepare(`
+    SELECT
+      s.id,
+      s.title,
+      s.corps,
+      s.year,
+      COALESCE(s.poster_url, '') AS poster_url
+    FROM shows s
+    ${whereSql}
+    ORDER BY s.year DESC, s.corps COLLATE NOCASE ASC, s.title COLLATE NOCASE ASC
+  `).all(...params).map(show => {
+    const posterUrl = String(show.poster_url || "").trim();
+
+    return {
+      id: Number(show.id),
+      name: show.title || `${show.corps} ${show.year}`,
+      corps: show.corps,
+      year: show.year,
+      poster_url: posterUrl || null,
+
+      // This is the key part:
+      // no poster_url = text-only card
+      is_default_poster: !posterUrl
+    };
+  });
+}
+
+
+
+
 module.exports = {
   nowTs,
   connect,
@@ -3758,6 +3966,16 @@ module.exports = {
   ensureSiteSettingsTable,
   getSiteSetting,
   setSiteSetting,
+  defaultTierlistData,
+  ensureTierlistTables,
+  createTierlist,
+  listTierlistsForUser,
+  getTierlistForUser,
+  saveTierlist,
+  deleteTierlist,
+  listTierlistCorpsOptions,
+  listTierlistYearOptions,
+  listTierlistShows,
 };
 
 
