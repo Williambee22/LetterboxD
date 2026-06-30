@@ -1,0 +1,60 @@
+<%- include('partials/header') %>
+
+<main
+  class="tierMakerPage"
+  data-tierlist-id="<%= tierlist.id %>"
+  data-initial-data='<%- JSON.stringify(data) %>'
+>
+  <div class="tierMakerTop">
+    <div>
+      <input id="tierlistName" class="tierTitleInput" value="<%= tierlist.name %>" maxlength="80">
+      <div id="saveStatus" class="muted">Saved</div>
+    </div>
+
+    <a href="/tierlists" class="backLink">Saved Tierlists</a>
+  </div>
+
+  <div class="tierFilters">
+    <label>
+      Show Pool
+      <select id="filterType">
+        <option value="all" <%= tierlist.filter_type === 'all' ? 'selected' : '' %>>All shows</option>
+        <option value="corps" <%= tierlist.filter_type === 'corps' ? 'selected' : '' %>>Specific corps</option>
+        <option value="year" <%= tierlist.filter_type === 'year' ? 'selected' : '' %>>Specific year</option>
+      </select>
+    </label>
+
+    <label id="corpsFilterWrap">
+      Corps
+      <select id="corpsFilter">
+        <% corps_options.forEach(c => { %>
+          <option value="<%= c.corps %>" <%= tierlist.filter_value === c.corps ? 'selected' : '' %>>
+            <%= c.corps %>
+          </option>
+        <% }) %>
+      </select>
+    </label>
+
+    <label id="yearFilterWrap">
+      Year
+      <select id="yearFilter">
+        <% year_options.forEach(y => { %>
+          <option value="<%= y.year %>" <%= String(tierlist.filter_value) === String(y.year) ? 'selected' : '' %>>
+            <%= y.year %>
+          </option>
+        <% }) %>
+      </select>
+    </label>
+
+    <button type="button" id="addTierBtn">Add Tier</button>
+  </div>
+
+  <section id="tierBoard" class="tierBoard"></section>
+
+  <h2 class="poolTitle">Available Shows</h2>
+  <section id="showPool" class="showPool tierDropZone"></section>
+</main>
+
+<script src="/static/js/tierlist-maker.js"></script>
+
+<%- include('partials/footer') %>
