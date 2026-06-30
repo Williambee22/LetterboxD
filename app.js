@@ -221,6 +221,55 @@ function posterUrlForShow(corps, year) {
   return `/posters/${key}${y}`;
 }
 
+const tierPosterExistsCache = new Map();
+const TIER_POSTER_EXISTS_TTL_MS = 1000 * 60 * 10;
+
+async function showSpecificPosterExists(corps, year) {
+  const key = slugify(corps);
+  const y = parseInt(year || 0, 10);
+
+  if (!key || !y) return false;
+
+  const name = `${key}${y}`;
+  const base = String(process.env.R2_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
+
+  if (!base) return false;
+
+  const cached = tierPosterExistsCache.get(name);
+  const now = Date.now();
+
+  if (cached && now - cached.ts < TIER_POSTER_EXISTS_TTL_MS) {
+    return cached.exists;
+  }
+
+  const exts = ['.jpeg', '.jpg', '.png', '.webp'];
+
+  try {
+    for (const ext of exts) {
+      const url = `${base}/posters/${name}${ext}`;
+      const r = await fetch(url, { method: 'HEAD' });
+
+      if (r.ok) {
+        tierPosterExistsCache.set(name, {
+          exists: true,
+          ts: now,
+        });
+
+        return true;
+      }
+    }
+  } catch (err) {
+    console.error('tierlist poster check failed:', err);
+  }
+
+  tierPosterExistsCache.set(name, {
+    exists: false,
+    ts: now,
+  });
+
+  return false;
+}
+
 function normalizeRow(row) {
   if (!row) return row;
   if (typeof row.toJSON === 'function') return row.toJSON();
@@ -1514,20 +1563,18 @@ function createApp() {
   
       if (!tierlist) return res.sendStatus(404);
   
-      const shows = dbx.listTierlistShows(conn, {
+      const rawShows = dbx.listTierlistShows(conn, {
         filter_type: req.query.filter_type || tierlist.filter_type,
         filter_value: req.query.filter_value || tierlist.filter_value,
-      }).map((show) => {
+      });
+  
+      const shows = await Promise.all(rawShows.map(async (show) => {
         const d = normalizeRow(show);
   
-        /*
-          Your app's poster route checks:
-          show-specific image -> corps default image -> default image.
-  
-          To avoid confusing default/corps-default images in tierlists,
-          only use an image when the DB has a direct poster_url.
-        */
-        const directPosterUrl = String(d.poster_url || '').trim();
+        const hasRealShowPoster = await showSpecificPosterExists(
+          d.corps || '',
+          d.year || 0
+        );
   
         return {
           id: Number(d.id),
@@ -1535,13 +1582,13 @@ function createApp() {
           corps: d.corps,
           year: d.year,
   
-          poster_url: directPosterUrl
+          poster_url: hasRealShowPoster
             ? posterUrlForShow(d.corps || '', d.year || 0)
             : null,
   
-          is_default_poster: !directPosterUrl,
+          is_default_poster: !hasRealShowPoster,
         };
-      });
+      }));
   
       return res.json({ shows });
     } catch (err) {
