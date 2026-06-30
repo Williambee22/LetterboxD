@@ -1,0 +1,38 @@
+<%- include('partials/header') %>
+
+<main class="tierPage">
+  <div class="tierHeader">
+    <div>
+      <h1>Tierlists</h1>
+      <p class="muted">Create and manage your saved tierlists.</p>
+    </div>
+
+    <form method="POST" action="/tierlists/new" class="newTierForm">
+      <input name="name" placeholder="Tierlist name" maxlength="80">
+      <button type="submit">New Tierlist</button>
+    </form>
+  </div>
+
+  <section class="savedTierlists">
+    <% if (!tierlists.length) { %>
+      <p class="muted">No saved tierlists yet.</p>
+    <% } %>
+
+    <% tierlists.forEach(t => { %>
+      <div class="savedTierCard">
+        <a href="/tierlists/<%= t.id %>">
+          <strong><%= t.name %></strong>
+          <span>
+            <%= t.filter_type === 'all' ? 'All shows' : `${t.filter_type}: ${t.filter_value}` %>
+          </span>
+        </a>
+
+        <form method="POST" action="/tierlists/<%= t.id %>/delete" onsubmit="return confirm('Delete this tierlist?')">
+          <button type="submit" class="dangerBtn">Delete</button>
+        </form>
+      </div>
+    <% }) %>
+  </section>
+</main>
+
+<%- include('partials/footer') %>
