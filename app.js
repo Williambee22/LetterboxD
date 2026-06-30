@@ -518,6 +518,7 @@ function createApp() {
     dbx.ensurePredictionTables(conn);
     dbx.ensureForumTables(conn);
     dbx.ensureSiteSettingsTable(conn);
+    dbx.ensureTierlistTables(conn);
     return conn;
   }
 
@@ -1424,6 +1425,191 @@ function createApp() {
   
     return res.redirect(`/show/${showId}`);
   }));
+
+  app.get('/tierlists', loginRequired(async (req, res, next) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      const tierlists = dbx.listTierlistsForUser(
+        conn,
+        Number(req.session.uid)
+      ).map(normalizeRow);
+  
+      return res.render('tierlists', {
+        tierlists,
+      });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+  
+  app.post('/tierlists/new', loginRequired(async (req, res) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      const name = String(req.body.name || 'Untitled Tierlist').trim() || 'Untitled Tierlist';
+  
+      const id = dbx.createTierlist(
+        conn,
+        Number(req.session.uid),
+        name
+      );
+  
+      await dbx.commit(conn);
+  
+      req.flash('ok', 'Tierlist created.');
+      return res.redirect(`/tierlists/${id}`);
+    } catch (err) {
+      req.flash('error', String(err.message || err));
+      return res.redirect('/tierlists');
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+  
+  app.get('/tierlists/:id', loginRequired(async (req, res, next) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      const tierlist = normalizeRow(dbx.getTierlistForUser(
+        conn,
+        Number(req.params.id),
+        Number(req.session.uid)
+      ));
+  
+      if (!tierlist) return res.sendStatus(404);
+  
+      return res.render('tierlist_maker', {
+        tierlist,
+        data: tierlist.data,
+        corps_options: dbx.listTierlistCorpsOptions(conn),
+        year_options: dbx.listTierlistYearOptions(conn),
+      });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+  
+  app.get('/tierlists/:id/shows.json', loginRequired(async (req, res, next) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      const tierlist = dbx.getTierlistForUser(
+        conn,
+        Number(req.params.id),
+        Number(req.session.uid)
+      );
+  
+      if (!tierlist) return res.sendStatus(404);
+  
+      const shows = dbx.listTierlistShows(conn, {
+        filter_type: req.query.filter_type || tierlist.filter_type,
+        filter_value: req.query.filter_value || tierlist.filter_value,
+      }).map((show) => {
+        const d = normalizeRow(show);
+  
+        /*
+          Your app's poster route checks:
+          show-specific image -> corps default image -> default image.
+  
+          To avoid confusing default/corps-default images in tierlists,
+          only use an image when the DB has a direct poster_url.
+        */
+        const directPosterUrl = String(d.poster_url || '').trim();
+  
+        return {
+          id: Number(d.id),
+          name: d.name || d.title || `${d.corps} ${d.year}`,
+          corps: d.corps,
+          year: d.year,
+  
+          poster_url: directPosterUrl
+            ? posterUrlForShow(d.corps || '', d.year || 0)
+            : null,
+  
+          is_default_poster: !directPosterUrl,
+        };
+      });
+  
+      return res.json({ shows });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+  
+  app.post('/tierlists/:id/save', loginRequired(async (req, res) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      const ok = dbx.saveTierlist(
+        conn,
+        Number(req.params.id),
+        Number(req.session.uid),
+        {
+          name: req.body.name,
+          filter_type: req.body.filter_type,
+          filter_value: req.body.filter_value,
+          data: req.body.data,
+        }
+      );
+  
+      if (!ok) return res.sendStatus(404);
+  
+      await dbx.commit(conn);
+  
+      return res.json({ ok: true });
+    } catch (err) {
+      return res.status(500).json({
+        ok: false,
+        error: String(err.message || err),
+      });
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+  
+  app.post('/tierlists/:id/delete', loginRequired(async (req, res) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      dbx.deleteTierlist(
+        conn,
+        Number(req.params.id),
+        Number(req.session.uid)
+      );
+  
+      await dbx.commit(conn);
+  
+      req.flash('ok', 'Tierlist deleted.');
+      return res.redirect('/tierlists');
+    } catch (err) {
+      req.flash('error', String(err.message || err));
+      return res.redirect('/tierlists');
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+
+
+
   
   app.post('/show/:show_id/reply/:reply_id/delete', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
