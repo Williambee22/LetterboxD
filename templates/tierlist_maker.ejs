@@ -1,60 +1,80 @@
-<%- include('partials/header') %>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title><%= tierlist.name %> - Pressboxd Tierlist</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/tierlists.css">
+</head>
+<body>
+  <nav class="topNav">
+    <a href="/shows">Shows</a>
+    <a href="/predictions">Predictions</a>
+    <a href="/forums">Forums</a>
+    <a href="/tierlists">Tierlists</a>
+    <% if (me) { %>
+      <a href="/me">Profile</a>
+      <a href="/logout">Logout</a>
+    <% } else { %>
+      <a href="/login">Login</a>
+    <% } %>
+  </nav>
 
-<main
-  class="tierMakerPage"
-  data-tierlist-id="<%= tierlist.id %>"
-  data-initial-data='<%- JSON.stringify(data) %>'
->
-  <div class="tierMakerTop">
-    <div>
-      <input id="tierlistName" class="tierTitleInput" value="<%= tierlist.name %>" maxlength="80">
-      <div id="saveStatus" class="muted">Saved</div>
+  <main
+    class="tierMakerPage"
+    data-tierlist-id="<%= tierlist.id %>"
+    data-initial-data='<%- JSON.stringify(data) %>'
+  >
+    <div class="tierMakerTop">
+      <div>
+        <input id="tierlistName" class="tierTitleInput" value="<%= tierlist.name %>" maxlength="80">
+        <div id="saveStatus" class="muted">Saved</div>
+      </div>
+
+      <a href="/tierlists" class="backLink">Saved Tierlists</a>
     </div>
 
-    <a href="/tierlists" class="backLink">Saved Tierlists</a>
-  </div>
+    <div class="tierFilters">
+      <label>
+        Show Pool
+        <select id="filterType">
+          <option value="all" <%= tierlist.filter_type === 'all' ? 'selected' : '' %>>All shows</option>
+          <option value="corps" <%= tierlist.filter_type === 'corps' ? 'selected' : '' %>>Specific corps</option>
+          <option value="year" <%= tierlist.filter_type === 'year' ? 'selected' : '' %>>Specific year</option>
+        </select>
+      </label>
 
-  <div class="tierFilters">
-    <label>
-      Show Pool
-      <select id="filterType">
-        <option value="all" <%= tierlist.filter_type === 'all' ? 'selected' : '' %>>All shows</option>
-        <option value="corps" <%= tierlist.filter_type === 'corps' ? 'selected' : '' %>>Specific corps</option>
-        <option value="year" <%= tierlist.filter_type === 'year' ? 'selected' : '' %>>Specific year</option>
-      </select>
-    </label>
+      <label id="corpsFilterWrap">
+        Corps
+        <select id="corpsFilter">
+          <% corps_options.forEach(c => { %>
+            <option value="<%= c.corps %>" <%= tierlist.filter_value === c.corps ? 'selected' : '' %>>
+              <%= c.corps %>
+            </option>
+          <% }) %>
+        </select>
+      </label>
 
-    <label id="corpsFilterWrap">
-      Corps
-      <select id="corpsFilter">
-        <% corps_options.forEach(c => { %>
-          <option value="<%= c.corps %>" <%= tierlist.filter_value === c.corps ? 'selected' : '' %>>
-            <%= c.corps %>
-          </option>
-        <% }) %>
-      </select>
-    </label>
+      <label id="yearFilterWrap">
+        Year
+        <select id="yearFilter">
+          <% year_options.forEach(y => { %>
+            <option value="<%= y.year %>" <%= String(tierlist.filter_value) === String(y.year) ? 'selected' : '' %>>
+              <%= y.year %>
+            </option>
+          <% }) %>
+        </select>
+      </label>
 
-    <label id="yearFilterWrap">
-      Year
-      <select id="yearFilter">
-        <% year_options.forEach(y => { %>
-          <option value="<%= y.year %>" <%= String(tierlist.filter_value) === String(y.year) ? 'selected' : '' %>>
-            <%= y.year %>
-          </option>
-        <% }) %>
-      </select>
-    </label>
+      <button type="button" id="addTierBtn">Add Tier</button>
+    </div>
 
-    <button type="button" id="addTierBtn">Add Tier</button>
-  </div>
+    <section id="tierBoard" class="tierBoard"></section>
 
-  <section id="tierBoard" class="tierBoard"></section>
+    <h2 class="poolTitle">Available Shows</h2>
+    <section id="showPool" class="showPool tierDropZone"></section>
+  </main>
 
-  <h2 class="poolTitle">Available Shows</h2>
-  <section id="showPool" class="showPool tierDropZone"></section>
-</main>
-
-<script src="/static/js/tierlist-maker.js"></script>
-
-<%- include('partials/footer') %>
+  <script src="/static/js/tierlist-maker.js"></script>
+</body>
+</html>
