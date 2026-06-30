@@ -1,0 +1,250 @@
+.tierPage,
+.tierMakerPage {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.tierHeader,
+.tierMakerTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.newTierForm,
+.tierFilters {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.newTierForm input,
+.tierTitleInput,
+.tierFilters select,
+.tierFilters input {
+  background: #111;
+  color: white;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.tierTitleInput {
+  font-size: 28px;
+  font-weight: 800;
+  width: min(500px, 90vw);
+}
+
+button,
+.backLink {
+  background: #222;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+button:hover,
+.backLink:hover {
+  background: #2d2d2d;
+}
+
+.dangerBtn {
+  background: #3a1111;
+  border-color: #713030;
+}
+
+.smallBtn {
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.muted {
+  color: #aaa;
+  font-size: 14px;
+}
+
+.savedTierlists {
+  display: grid;
+  gap: 10px;
+}
+
+.savedTierCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #111;
+  border: 1px solid #282828;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.savedTierCard a {
+  color: white;
+  text-decoration: none;
+  display: grid;
+  gap: 4px;
+}
+
+.savedTierCard span {
+  color: #aaa;
+  font-size: 13px;
+}
+
+.tierBoard {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.tierRow {
+  display: grid;
+  grid-template-columns: 110px 1fr 96px;
+  min-height: 110px;
+  background: #101010;
+  border: 1px solid #292929;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tierLabel {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 10px;
+}
+
+.tierNameInput {
+  width: 70px;
+  text-align: center;
+  font-weight: 900;
+  font-size: 24px;
+  background: rgba(0,0,0,.25);
+  color: white;
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.tierColorInput {
+  width: 42px;
+  height: 32px;
+  border: none;
+  background: transparent;
+}
+
+.tierItems,
+.showPool {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 10px;
+  padding: 12px;
+  min-height: 110px;
+}
+
+.tierDropZone.dragOver {
+  outline: 2px dashed #777;
+  outline-offset: -6px;
+  background: rgba(255,255,255,.04);
+}
+
+.tierActions {
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  padding: 8px;
+  border-left: 1px solid #292929;
+}
+
+.poolTitle {
+  margin-top: 28px;
+}
+
+.showPool {
+  background: #101010;
+  border: 1px solid #292929;
+  border-radius: 10px;
+}
+
+.showCard {
+  width: 92px;
+  min-height: 128px;
+  background: #181818;
+  border: 1px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+}
+
+.showCard:active {
+  cursor: grabbing;
+}
+
+.showCard img {
+  width: 100%;
+  height: 104px;
+  object-fit: cover;
+  display: block;
+}
+
+.showCard span {
+  display: block;
+  padding: 6px;
+  color: white;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.textOnlyShowCard {
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  padding: 8px;
+  min-height: 104px;
+  background: #202020;
+}
+
+.textOnlyShowCard strong {
+  font-size: 13px;
+  line-height: 1.2;
+  color: white;
+}
+
+.textOnlyShowCard span {
+  padding: 0;
+  color: #aaa;
+}
+
+@media (max-width: 800px) {
+  .tierRow {
+    grid-template-columns: 72px 1fr;
+  }
+
+  .tierActions {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(3, max-content);
+    border-left: none;
+    border-top: 1px solid #292929;
+  }
+
+  .tierNameInput {
+    width: 52px;
+    font-size: 18px;
+  }
+
+  .showCard {
+    width: 78px;
+  }
+
+  .showCard img {
+    height: 88px;
+  }
+}
