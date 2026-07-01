@@ -1575,31 +1575,26 @@ function createApp() {
         filter_decade: req.query.filter_decade || '',
       });
   
-      const shows = await Promise.all(rawShows.map(async (show) => {
+      const shows = rawShows.map((show) => {
         const d = normalizeRow(show);
-  
-        const hasRealShowPoster = await showSpecificPosterExists(
-          d.corps || '',
-          d.year || 0
-        );
   
         return {
           id: Number(d.id),
           name: d.name || d.title || `${d.corps} ${d.year}`,
           corps: d.corps,
           year: d.year,
-  
-          poster_url: hasRealShowPoster
-            ? posterUrlForShow(d.corps || '', d.year || 0)
-            : null,
-  
-          is_default_poster: !hasRealShowPoster,
+          poster_url: posterUrlForShow(d.corps || '', d.year || 0),
+          is_default_poster: false,
         };
-      }));
+      });
   
       return res.json({ shows });
     } catch (err) {
-      return next(err);
+      console.error('tierlist shows json failed:', err);
+      return res.status(500).json({
+        shows: [],
+        error: String(err.message || err),
+      });
     } finally {
       if (conn) dbx.close(conn);
     }
