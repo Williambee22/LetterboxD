@@ -112,7 +112,41 @@
       <% } %>
 
       <% if (public_tierlists.length) { %>
-        <div class="publicTierColumns">
+        <div class="publicTierColumns publicTierColumnsFour">
+          <div class="publicTierColumn">
+            <h3>No Category</h3>
+
+            <% if (public_groups.all.length === 0) { %>
+              <div class="muted small">No uncategorized tierlists yet.</div>
+            <% } %>
+
+            <% if (public_groups.all.length) { %>
+              <div class="publicTierGroup">
+                <h4>All Shows</h4>
+
+                <div class="publicTierList">
+                  <% public_groups.all.forEach(t => { %>
+                    <a class="publicTierCard" href="/tierlists/public/<%= t.id %>">
+                      <strong><%= t.name %></strong>
+
+                      <span class="publicTierUser">
+                        <span class="avatar_sm">
+                          <% if (t.avatar_url) { %>
+                            <img src="<%= t.avatar_url %>" alt="avatar">
+                          <% } else { %>
+                            <span class="avatar_fallback"></span>
+                          <% } %>
+                        </span>
+
+                        <span>by <%= t.username %></span>
+                      </span>
+                    </a>
+                  <% }) %>
+                </div>
+              </div>
+            <% } %>
+          </div>
+
           <div class="publicTierColumn">
             <h3>Corps</h3>
 
