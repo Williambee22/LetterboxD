@@ -112,10 +112,15 @@ button:hover,
   margin-top: 18px;
 }
 
+.publicTierColumnsFour {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .publicTierColumn {
   border: 1px solid var(--accentSoft);
   background: rgba(255,255,255,.025);
   padding: 14px;
+  min-width: 0;
 }
 
 .publicTierColumn h3 {
@@ -154,6 +159,7 @@ button:hover,
   background: rgba(255,255,255,.03);
   color: inherit;
   text-decoration: none;
+  min-width: 0;
 }
 
 .publicTierCard:hover {
@@ -164,6 +170,7 @@ button:hover,
 .publicTierCard strong {
   color: var(--text);
   line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .publicTierUser {
@@ -172,6 +179,7 @@ button:hover,
   gap: 8px;
   color: var(--muted);
   font-size: 13px;
+  min-width: 0;
 }
 
 .publicTierUser .avatar_sm {
@@ -324,8 +332,15 @@ button:hover,
   color: #aaa;
 }
 
+@media (max-width: 1100px) {
+  .publicTierColumnsFour {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 950px) {
-  .publicTierColumns {
+  .publicTierColumns,
+  .publicTierColumnsFour {
     grid-template-columns: 1fr;
   }
 }
