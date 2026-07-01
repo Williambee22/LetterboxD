@@ -87,48 +87,50 @@
 
     <div class="tierFilters panel">
       <label class="field">
-        <span>Show Pool</span>
-        <select id="filterType">
-          <option value="all" <%= tierlist.filter_type === 'all' ? 'selected' : '' %>>All shows</option>
-          <option value="corps" <%= tierlist.filter_type === 'corps' ? 'selected' : '' %>>Specific corps</option>
-          <option value="year" <%= tierlist.filter_type === 'year' ? 'selected' : '' %>>Specific year</option>
-          <option value="decade" <%= tierlist.filter_type === 'decade' ? 'selected' : '' %>>Specific decade</option>
-        </select>
-      </label>
-
-      <label id="corpsFilterWrap" class="field">
         <span>Corps</span>
         <select id="corpsFilter">
+          <option value="">All corps</option>
           <% corps_options.forEach(c => { %>
-            <option value="<%= c.corps %>" <%= tierlist.filter_value === c.corps ? 'selected' : '' %>>
+            <option
+              value="<%= c.corps %>"
+              <%= tierlist.filter_corps === c.corps ? 'selected' : '' %>
+            >
               <%= c.corps %>
             </option>
           <% }) %>
         </select>
       </label>
-
-      <label id="yearFilterWrap" class="field">
+    
+      <label class="field">
         <span>Year</span>
         <select id="yearFilter">
+          <option value="">All years</option>
           <% year_options.forEach(y => { %>
-            <option value="<%= y.year %>" <%= String(tierlist.filter_value) === String(y.year) ? 'selected' : '' %>>
+            <option
+              value="<%= y.year %>"
+              <%= String(tierlist.filter_year || '') === String(y.year) ? 'selected' : '' %>
+            >
               <%= y.year %>
             </option>
           <% }) %>
         </select>
       </label>
-
-      <label id="decadeFilterWrap" class="field">
+    
+      <label class="field">
         <span>Decade</span>
         <select id="decadeFilter">
+          <option value="">All decades</option>
           <% decade_options.forEach(d => { %>
-            <option value="<%= d %>" <%= String(tierlist.filter_value) === String(d) ? 'selected' : '' %>>
+            <option
+              value="<%= d %>"
+              <%= String(tierlist.filter_decade || '') === String(d) ? 'selected' : '' %>
+            >
               <%= d %>s
             </option>
           <% }) %>
         </select>
       </label>
-
+    
       <button type="button" id="addTierBtn" class="btn">Add Tier</button>
     </div>
 
