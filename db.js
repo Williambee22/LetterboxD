@@ -3836,7 +3836,7 @@ function listTierlistShows(conn, args = {}) {
   const where = [];
 
   if (filterCorps) {
-    where.push("s.corps = ?");
+    where.push("TRIM(s.corps) = ?");
     params.push(filterCorps);
   }
 
@@ -3866,20 +3866,17 @@ function listTierlistShows(conn, args = {}) {
     ${whereSql}
     ORDER BY CAST(s.year AS INTEGER) DESC, s.corps COLLATE NOCASE ASC, s.title COLLATE NOCASE ASC
   `).all(...params).map(show => {
-    const posterUrl = String(show.poster_url || "").trim();
-
     return {
       id: Number(show.id),
       title: show.title,
       name: show.title || `${show.corps} ${show.year}`,
       corps: show.corps,
       year: show.year,
-      poster_url: posterUrl || null,
-      is_default_poster: !posterUrl
+      poster_url: show.poster_url || null,
+      is_default_poster: !show.poster_url
     };
   });
 }
-
 
 function listTierlistDecadeOptions(conn) {
   const rows = conn.prepare(`
