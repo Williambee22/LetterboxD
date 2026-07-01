@@ -6,7 +6,7 @@
   <title><%= tierlist.name %> - Public Tierlist</title>
 
   <link rel="stylesheet" href="/static/styles.css">
-  <link rel="stylesheet" href="/static/css/tierlists.css">
+  <link rel="stylesheet" href="/static/css/tierlists.css?v=20260701e">
   <link rel="icon" type="image/png" href="/static/favicon.png">
 </head>
 
@@ -92,7 +92,7 @@
       <% safeData.tiers.forEach(tier => { %>
         <div class="tierRow">
           <div class="tierLabel" style="background:<%= tier.color || '#777777' %>;">
-            <strong><%= tier.label || 'Tier' %></strong>
+            <strong class="publicTierLabelText"><%= tier.label || 'Tier' %></strong>
           </div>
 
           <div class="tierItems">
