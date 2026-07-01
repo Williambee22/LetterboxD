@@ -3638,6 +3638,7 @@ function ensureTierlistTables(conn) {
       filter_type TEXT NOT NULL DEFAULT 'all',
       filter_value TEXT,
       data_json TEXT NOT NULL,
+      is_public INTEGER NOT NULL DEFAULT 0,
       created_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
       updated_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -3645,7 +3646,19 @@ function ensureTierlistTables(conn) {
 
     CREATE INDEX IF NOT EXISTS idx_tierlists_user_updated
     ON tierlists(user_id, updated_ts DESC);
+
+    CREATE INDEX IF NOT EXISTS idx_tierlists_public
+    ON tierlists(is_public, filter_type, filter_value, updated_ts DESC);
   `);
+
+  const cols = tableColumns(conn, 'tierlists');
+
+  if (!cols.has('is_public')) {
+    conn.prepare(`
+      ALTER TABLE tierlists
+      ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0
+    `).run();
+  }
 }
 
 function createTierlist(conn, userId, name = "Untitled Tierlist") {
@@ -3706,13 +3719,15 @@ function saveTierlist(conn, tierlistId, userId, args = {}) {
   const name = String(args.name || "Untitled Tierlist").trim() || "Untitled Tierlist";
 
   const filterTypeRaw = String(args.filter_type || "all").trim().toLowerCase();
-  const filterType = ["all", "corps", "year"].includes(filterTypeRaw)
+  const filterType = ["all", "corps", "year", "decade"].includes(filterTypeRaw)
     ? filterTypeRaw
     : "all";
 
   const filterValue = args.filter_value == null || filterType === "all"
     ? null
     : String(args.filter_value).trim();
+
+  const isPublic = args.is_public ? 1 : 0;
 
   const data = args.data && typeof args.data === "object"
     ? args.data
@@ -3723,6 +3738,7 @@ function saveTierlist(conn, tierlistId, userId, args = {}) {
     SET name = ?,
         filter_type = ?,
         filter_value = ?,
+        is_public = ?,
         data_json = ?,
         updated_ts = strftime('%s','now')
     WHERE id = ?
@@ -3731,6 +3747,7 @@ function saveTierlist(conn, tierlistId, userId, args = {}) {
     name,
     filterType,
     filterValue,
+    isPublic,
     JSON.stringify(data),
     Number(tierlistId),
     Number(userId)
@@ -3782,6 +3799,12 @@ function listTierlistShows(conn, args = {}) {
   } else if (filterType === "year" && filterValue) {
     where.push("s.year = ?");
     params.push(Number(filterValue));
+  } else if (filterType === "decade" && filterValue) {
+    const decadeStart = Number(filterValue);
+    const decadeEnd = decadeStart + 9;
+
+    where.push("s.year BETWEEN ? AND ?");
+    params.push(decadeStart, decadeEnd);
   }
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
@@ -3801,17 +3824,93 @@ function listTierlistShows(conn, args = {}) {
 
     return {
       id: Number(show.id),
+      title: show.title,
       name: show.title || `${show.corps} ${show.year}`,
       corps: show.corps,
       year: show.year,
       poster_url: posterUrl || null,
-
-      // This is the key part:
-      // no poster_url = text-only card
       is_default_poster: !posterUrl
     };
   });
 }
+
+
+function listTierlistDecadeOptions(conn) {
+  const rows = conn.prepare(`
+    SELECT DISTINCT
+      (CAST(year AS INTEGER) / 10) * 10 AS decade
+    FROM shows
+    WHERE year IS NOT NULL
+    ORDER BY decade DESC
+  `).all();
+
+  return rows
+    .map(r => Number(r.decade))
+    .filter(n => Number.isFinite(n) && n > 0);
+}
+
+function listPublicTierlists(conn) {
+  ensureTierlistTables(conn);
+
+  const rows = conn.prepare(`
+    SELECT
+      t.id,
+      t.user_id,
+      t.name,
+      t.filter_type,
+      t.filter_value,
+      t.data_json,
+      t.is_public,
+      t.created_ts,
+      t.updated_ts,
+      u.username,
+      u.avatar_url
+    FROM tierlists t
+    JOIN users u ON u.id = t.user_id
+    WHERE t.is_public = 1
+    ORDER BY
+      t.filter_type ASC,
+      t.filter_value DESC,
+      t.updated_ts DESC
+  `).all();
+
+  return rows.map(row => {
+    row.data = safeJsonParse(row.data_json, defaultTierlistData());
+    return row;
+  });
+}
+
+function groupPublicTierlists(publicTierlists = []) {
+  const groups = {
+    all: [],
+    decades: new Map(),
+    years: new Map(),
+    corps: new Map()
+  };
+
+  for (const t of publicTierlists) {
+    const type = String(t.filter_type || 'all');
+
+    if (type === 'year') {
+      const key = String(t.filter_value || 'Unknown Year');
+      if (!groups.years.has(key)) groups.years.set(key, []);
+      groups.years.get(key).push(t);
+    } else if (type === 'decade') {
+      const key = String(t.filter_value || 'Unknown Decade');
+      if (!groups.decades.has(key)) groups.decades.set(key, []);
+      groups.decades.get(key).push(t);
+    } else if (type === 'corps') {
+      const key = String(t.filter_value || 'Unknown Corps');
+      if (!groups.corps.has(key)) groups.corps.set(key, []);
+      groups.corps.get(key).push(t);
+    } else {
+      groups.all.push(t);
+    }
+  }
+
+  return groups;
+}
+
 
 
 
@@ -3976,6 +4075,9 @@ module.exports = {
   listTierlistCorpsOptions,
   listTierlistYearOptions,
   listTierlistShows,
+  listTierlistDecadeOptions,
+  listPublicTierlists,
+  groupPublicTierlists,
 };
 
 
