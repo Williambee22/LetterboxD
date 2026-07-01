@@ -1,6 +1,7 @@
 (() => {
   const page = document.querySelector(".tierMakerPage");
   if (!page) return;
+  console.log("tierlist-maker.js loaded 20260701c");
 
   const tierlistId = page.dataset.tierlistId;
 
