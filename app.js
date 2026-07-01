@@ -1570,8 +1570,9 @@ function createApp() {
       if (!tierlist) return res.sendStatus(404);
   
       const rawShows = dbx.listTierlistShows(conn, {
-        filter_type: req.query.filter_type || tierlist.filter_type,
-        filter_value: req.query.filter_value || tierlist.filter_value,
+        filter_corps: req.query.filter_corps || tierlist.filter_corps,
+        filter_year: req.query.filter_year || tierlist.filter_year,
+        filter_decade: req.query.filter_decade || tierlist.filter_decade,
       });
   
       const shows = await Promise.all(rawShows.map(async (show) => {
@@ -1616,10 +1617,11 @@ function createApp() {
         Number(req.session.uid),
         {
           name: req.body.name,
-          filter_type: req.body.filter_type,
-          filter_value: req.body.filter_value,
-          data: req.body.data,
+          filter_corps: req.body.filter_corps,
+          filter_year: req.body.filter_year,
+          filter_decade: req.body.filter_decade,
           is_public: req.body.is_public,
+          data: req.body.data,
         }
       );
   
