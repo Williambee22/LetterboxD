@@ -3637,7 +3637,11 @@ function ensureTierlistTables(conn) {
       name TEXT NOT NULL DEFAULT 'Untitled Tierlist',
       filter_type TEXT NOT NULL DEFAULT 'all',
       filter_value TEXT,
+      filter_corps TEXT,
+      filter_year TEXT,
+      filter_decade TEXT,
       data_json TEXT NOT NULL,
+      is_public INTEGER NOT NULL DEFAULT 0,
       created_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
       updated_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -3656,9 +3660,30 @@ function ensureTierlistTables(conn) {
     `).run();
   }
 
+  if (!cols.has('filter_corps')) {
+    conn.prepare(`
+      ALTER TABLE tierlists
+      ADD COLUMN filter_corps TEXT
+    `).run();
+  }
+
+  if (!cols.has('filter_year')) {
+    conn.prepare(`
+      ALTER TABLE tierlists
+      ADD COLUMN filter_year TEXT
+    `).run();
+  }
+
+  if (!cols.has('filter_decade')) {
+    conn.prepare(`
+      ALTER TABLE tierlists
+      ADD COLUMN filter_decade TEXT
+    `).run();
+  }
+
   conn.exec(`
     CREATE INDEX IF NOT EXISTS idx_tierlists_public
-    ON tierlists(is_public, filter_type, filter_value, updated_ts);
+    ON tierlists(is_public, filter_type, filter_value, updated_ts DESC);
   `);
 }
 
@@ -3719,16 +3744,25 @@ function saveTierlist(conn, tierlistId, userId, args = {}) {
 
   const name = String(args.name || "Untitled Tierlist").trim() || "Untitled Tierlist";
 
-  const filterTypeRaw = String(args.filter_type || "all").trim().toLowerCase();
-  const filterType = ["all", "corps", "year", "decade"].includes(filterTypeRaw)
-    ? filterTypeRaw
-    : "all";
-
-  const filterValue = args.filter_value == null || filterType === "all"
-    ? null
-    : String(args.filter_value).trim();
+  const filterCorps = String(args.filter_corps || "").trim() || null;
+  const filterYear = String(args.filter_year || "").trim() || null;
+  const filterDecade = String(args.filter_decade || "").trim() || null;
 
   const isPublic = args.is_public ? 1 : 0;
+
+  let filterType = "all";
+  let filterValue = null;
+
+  if (filterYear) {
+    filterType = "year";
+    filterValue = filterYear;
+  } else if (filterDecade) {
+    filterType = "decade";
+    filterValue = filterDecade;
+  } else if (filterCorps) {
+    filterType = "corps";
+    filterValue = filterCorps;
+  }
 
   const data = args.data && typeof args.data === "object"
     ? args.data
@@ -3739,6 +3773,9 @@ function saveTierlist(conn, tierlistId, userId, args = {}) {
     SET name = ?,
         filter_type = ?,
         filter_value = ?,
+        filter_corps = ?,
+        filter_year = ?,
+        filter_decade = ?,
         is_public = ?,
         data_json = ?,
         updated_ts = strftime('%s','now')
@@ -3748,6 +3785,9 @@ function saveTierlist(conn, tierlistId, userId, args = {}) {
     name,
     filterType,
     filterValue,
+    filterCorps,
+    filterYear,
+    filterDecade,
     isPublic,
     JSON.stringify(data),
     Number(tierlistId),
@@ -3788,20 +3828,23 @@ function listTierlistYearOptions(conn) {
 }
 
 function listTierlistShows(conn, args = {}) {
-  const filterType = String(args.filter_type || "all").trim().toLowerCase();
-  const filterValue = String(args.filter_value || "").trim();
+  const filterCorps = String(args.filter_corps || "").trim();
+  const filterYear = String(args.filter_year || "").trim();
+  const filterDecade = String(args.filter_decade || "").trim();
 
   const params = [];
   const where = [];
 
-  if (filterType === "corps" && filterValue) {
+  if (filterCorps) {
     where.push("s.corps = ?");
-    params.push(filterValue);
-  } else if (filterType === "year" && filterValue) {
+    params.push(filterCorps);
+  }
+
+  if (filterYear) {
     where.push("s.year = ?");
-    params.push(Number(filterValue));
-  } else if (filterType === "decade" && filterValue) {
-    const decadeStart = Number(filterValue);
+    params.push(Number(filterYear));
+  } else if (filterDecade) {
+    const decadeStart = Number(filterDecade);
     const decadeEnd = decadeStart + 9;
 
     where.push("s.year BETWEEN ? AND ?");
