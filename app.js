@@ -1526,6 +1526,76 @@ function createApp() {
       if (conn) dbx.close(conn);
     }
   }));
+
+
+  app.get('/tierlists/public/:id', async (req, res, next) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      const row = conn.prepare(`
+        SELECT
+          t.*,
+          u.username,
+          u.avatar_url
+        FROM tierlists t
+        JOIN users u ON u.id = t.user_id
+        WHERE t.id = ?
+          AND t.is_public = 1
+        LIMIT 1
+      `).get(Number(req.params.id));
+  
+      const tierlist = normalizeRow(row);
+  
+      if (!tierlist) return res.sendStatus(404);
+  
+      let data = dbx.defaultTierlistData();
+  
+      try {
+        data = JSON.parse(tierlist.data_json || '');
+      } catch {
+        data = dbx.defaultTierlistData();
+      }
+  
+      const rawShows = dbx.listTierlistShows(conn, {
+        filter_corps: tierlist.filter_corps || '',
+        filter_year: tierlist.filter_year || '',
+        filter_decade: tierlist.filter_decade || '',
+      });
+  
+      const shows = rawShows.map((show) => {
+        const d = normalizeRow(show);
+  
+        return {
+          id: Number(d.id),
+          name: d.name || d.title || `${d.corps} ${d.year}`,
+          corps: d.corps,
+          year: d.year,
+          poster_url: posterUrlForShow(d.corps || '', d.year || 0),
+          is_default_poster: false,
+        };
+      });
+  
+      return res.render('tierlist_public_view', {
+        tierlist,
+        data,
+        shows,
+        owner: {
+          username: tierlist.username,
+          avatar_url: tierlist.avatar_url,
+        },
+      });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  });
+
+
+
+
   
   app.get('/tierlists/:id', loginRequired(async (req, res, next) => {
     let conn;
