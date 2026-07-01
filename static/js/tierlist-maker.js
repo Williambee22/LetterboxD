@@ -34,8 +34,11 @@
   const saveStatus = document.getElementById("saveStatus");
 
   const corpsFilter = document.getElementById("corpsFilter");
+  const timeFilterType = document.getElementById("timeFilterType");
   const yearFilter = document.getElementById("yearFilter");
   const decadeFilter = document.getElementById("decadeFilter");
+  const yearFilterWrap = document.getElementById("yearFilterWrap");
+  const decadeFilterWrap = document.getElementById("decadeFilterWrap");
   const publicInput = document.getElementById("tierlistPublic");
   const addTierBtn = document.getElementById("addTierBtn");
 
@@ -48,14 +51,33 @@
       .replaceAll("'", "&#039;");
   }
 
+  function updateTimeFilterVisibility() {
+    const mode = timeFilterType ? timeFilterType.value : "none";
+
+    if (yearFilterWrap) {
+      yearFilterWrap.style.display = mode === "year" ? "" : "none";
+    }
+
+    if (decadeFilterWrap) {
+      decadeFilterWrap.style.display = mode === "decade" ? "" : "none";
+    }
+
+    if (mode !== "year" && yearFilter) {
+      yearFilter.value = "";
+    }
+
+    if (mode !== "decade" && decadeFilter) {
+      decadeFilter.value = "";
+    }
+  }
+
   function currentFilters() {
-    const yearValue = yearFilter ? yearFilter.value : "";
-    const decadeValue = decadeFilter ? decadeFilter.value : "";
+    const mode = timeFilterType ? timeFilterType.value : "none";
 
     return {
       filter_corps: corpsFilter ? corpsFilter.value : "",
-      filter_year: yearValue,
-      filter_decade: yearValue ? "" : decadeValue
+      filter_year: mode === "year" && yearFilter ? yearFilter.value : "",
+      filter_decade: mode === "decade" && decadeFilter ? decadeFilter.value : ""
     };
   }
 
@@ -285,6 +307,8 @@
   }
 
   async function loadShows() {
+    updateTimeFilterVisibility();
+
     const params = new URLSearchParams(currentFilters());
 
     try {
@@ -331,29 +355,25 @@
     corpsFilter.addEventListener("change", loadShows);
   }
 
-  if (yearFilter) {
-    yearFilter.addEventListener("change", () => {
-      if (yearFilter.value && decadeFilter) {
-        decadeFilter.value = "";
-      }
-
+  if (timeFilterType) {
+    timeFilterType.addEventListener("change", () => {
+      updateTimeFilterVisibility();
       loadShows();
     });
   }
 
-  if (decadeFilter) {
-    decadeFilter.addEventListener("change", () => {
-      if (decadeFilter.value && yearFilter) {
-        yearFilter.value = "";
-      }
+  if (yearFilter) {
+    yearFilter.addEventListener("change", loadShows);
+  }
 
-      loadShows();
-    });
+  if (decadeFilter) {
+    decadeFilter.addEventListener("change", loadShows);
   }
 
   if (publicInput) {
     publicInput.addEventListener("change", scheduleSave);
   }
 
+  updateTimeFilterVisibility();
   loadShows();
 })();
