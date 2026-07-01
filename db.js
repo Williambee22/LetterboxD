@@ -3841,14 +3841,16 @@ function listTierlistShows(conn, args = {}) {
   }
 
   if (filterYear) {
-    where.push("s.year = ?");
+    where.push("CAST(s.year AS INTEGER) = ?");
     params.push(Number(filterYear));
   } else if (filterDecade) {
     const decadeStart = Number(filterDecade);
     const decadeEnd = decadeStart + 9;
 
-    where.push("s.year BETWEEN ? AND ?");
-    params.push(decadeStart, decadeEnd);
+    if (Number.isFinite(decadeStart)) {
+      where.push("CAST(s.year AS INTEGER) BETWEEN ? AND ?");
+      params.push(decadeStart, decadeEnd);
+    }
   }
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
@@ -3862,7 +3864,7 @@ function listTierlistShows(conn, args = {}) {
       COALESCE(s.poster_url, '') AS poster_url
     FROM shows s
     ${whereSql}
-    ORDER BY s.year DESC, s.corps COLLATE NOCASE ASC, s.title COLLATE NOCASE ASC
+    ORDER BY CAST(s.year AS INTEGER) DESC, s.corps COLLATE NOCASE ASC, s.title COLLATE NOCASE ASC
   `).all(...params).map(show => {
     const posterUrl = String(show.poster_url || "").trim();
 
