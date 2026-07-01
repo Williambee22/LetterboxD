@@ -1481,13 +1481,18 @@ function createApp() {
     try {
       conn = getConn();
   
-      const tierlists = dbx.listTierlistsForUser(
+      const myTierlists = dbx.listTierlistsForUser(
         conn,
         Number(req.session.uid)
       ).map(normalizeRow);
   
+      const publicTierlists = dbx.listPublicTierlists(conn).map(normalizeRow);
+      const publicGroups = dbx.groupPublicTierlists(publicTierlists);
+  
       return res.render('tierlists', {
-        tierlists,
+        tierlists: myTierlists,
+        public_tierlists: publicTierlists,
+        public_groups: publicGroups,
       });
     } catch (err) {
       return next(err);
@@ -1541,6 +1546,7 @@ function createApp() {
         data: tierlist.data,
         corps_options: dbx.listTierlistCorpsOptions(conn),
         year_options: dbx.listTierlistYearOptions(conn),
+        decade_options: dbx.listTierlistDecadeOptions(conn),
       });
     } catch (err) {
       return next(err);
@@ -1613,6 +1619,7 @@ function createApp() {
           filter_type: req.body.filter_type,
           filter_value: req.body.filter_value,
           data: req.body.data,
+          is_public: req.body.is_public,
         }
       );
   
