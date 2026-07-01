@@ -3638,7 +3638,6 @@ function ensureTierlistTables(conn) {
       filter_type TEXT NOT NULL DEFAULT 'all',
       filter_value TEXT,
       data_json TEXT NOT NULL,
-      is_public INTEGER NOT NULL DEFAULT 0,
       created_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
       updated_ts INTEGER NOT NULL DEFAULT (strftime('%s','now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -3646,9 +3645,6 @@ function ensureTierlistTables(conn) {
 
     CREATE INDEX IF NOT EXISTS idx_tierlists_user_updated
     ON tierlists(user_id, updated_ts DESC);
-
-    CREATE INDEX IF NOT EXISTS idx_tierlists_public
-    ON tierlists(is_public, filter_type, filter_value, updated_ts DESC);
   `);
 
   const cols = tableColumns(conn, 'tierlists');
@@ -3659,6 +3655,11 @@ function ensureTierlistTables(conn) {
       ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0
     `).run();
   }
+
+  conn.exec(`
+    CREATE INDEX IF NOT EXISTS idx_tierlists_public
+    ON tierlists(is_public, filter_type, filter_value, updated_ts);
+  `);
 }
 
 function createTierlist(conn, userId, name = "Untitled Tierlist") {
