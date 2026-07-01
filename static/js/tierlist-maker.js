@@ -12,7 +12,7 @@
     state = {};
   }
 
-  if (!state.tiers) {
+  if (!state.tiers || !Array.isArray(state.tiers)) {
     state = {
       tiers: [
         { id: "tier_s", label: "S", color: "#ff7f7f", items: [] },
@@ -34,11 +34,12 @@
   const saveStatus = document.getElementById("saveStatus");
 
   const corpsFilter = document.getElementById("corpsFilter");
-  const timeFilterType = document.getElementById("timeFilterType");
   const yearFilter = document.getElementById("yearFilter");
   const decadeFilter = document.getElementById("decadeFilter");
+
   const yearFilterWrap = document.getElementById("yearFilterWrap");
   const decadeFilterWrap = document.getElementById("decadeFilterWrap");
+
   const publicInput = document.getElementById("tierlistPublic");
   const addTierBtn = document.getElementById("addTierBtn");
 
@@ -51,33 +52,34 @@
       .replaceAll("'", "&#039;");
   }
 
-  function updateTimeFilterVisibility() {
-    const mode = timeFilterType ? timeFilterType.value : "none";
+  function updateYearDecadeVisibility() {
+    const hasYear = yearFilter && yearFilter.value;
+    const hasDecade = decadeFilter && decadeFilter.value;
 
-    if (yearFilterWrap) {
-      yearFilterWrap.style.display = mode === "year" ? "" : "none";
+    if (hasYear) {
+      if (decadeFilterWrap) decadeFilterWrap.style.display = "none";
+      if (yearFilterWrap) yearFilterWrap.style.display = "";
+      return;
     }
 
-    if (decadeFilterWrap) {
-      decadeFilterWrap.style.display = mode === "decade" ? "" : "none";
+    if (hasDecade) {
+      if (yearFilterWrap) yearFilterWrap.style.display = "none";
+      if (decadeFilterWrap) decadeFilterWrap.style.display = "";
+      return;
     }
 
-    if (mode !== "year" && yearFilter) {
-      yearFilter.value = "";
-    }
-
-    if (mode !== "decade" && decadeFilter) {
-      decadeFilter.value = "";
-    }
+    if (yearFilterWrap) yearFilterWrap.style.display = "";
+    if (decadeFilterWrap) decadeFilterWrap.style.display = "";
   }
 
   function currentFilters() {
-    const mode = timeFilterType ? timeFilterType.value : "none";
+    const yearValue = yearFilter ? yearFilter.value : "";
+    const decadeValue = decadeFilter ? decadeFilter.value : "";
 
     return {
       filter_corps: corpsFilter ? corpsFilter.value : "",
-      filter_year: mode === "year" && yearFilter ? yearFilter.value : "",
-      filter_decade: mode === "decade" && decadeFilter ? decadeFilter.value : ""
+      filter_year: yearValue,
+      filter_decade: yearValue ? "" : decadeValue
     };
   }
 
@@ -108,9 +110,7 @@
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) {
-        throw new Error("Save failed");
-      }
+      if (!res.ok) throw new Error("Save failed");
 
       setSaveStatus("Saved");
     } catch (err) {
@@ -230,8 +230,14 @@
 
       for (const showId of tier.items) {
         const show = showMap.get(Number(showId));
+
         if (show) {
           zone.appendChild(createShowCard(show));
+        } else {
+          const missing = document.createElement("div");
+          missing.className = "showCard textOnlyShowCard";
+          missing.innerHTML = `<strong>Saved show #${escapeHtml(showId)}</strong>`;
+          zone.appendChild(missing);
         }
       }
 
@@ -270,7 +276,6 @@
         if (!confirm("Delete this tier? Shows in it will return to the pool.")) return;
 
         state.tiers.splice(index, 1);
-
         render();
         scheduleSave();
       });
@@ -294,6 +299,10 @@
       }
     }
 
+    if (showMap.size === 0) {
+      showPool.innerHTML = `<p class="muted">No shows loaded.</p>`;
+    }
+
     setupDropZone(showPool, showId => {
       removeShowFromEverywhere(showId);
       render();
@@ -307,73 +316,78 @@
   }
 
   async function loadShows() {
-    updateTimeFilterVisibility();
+    updateYearDecadeVisibility();
 
     const params = new URLSearchParams(currentFilters());
 
     try {
       const res = await fetch(`/tierlists/${tierlistId}/shows.json?${params.toString()}`);
 
-      if (!res.ok) {
-        throw new Error("Could not load shows");
-      }
+      if (!res.ok) throw new Error("Could not load shows");
 
       const json = await res.json();
       const shows = Array.isArray(json.shows) ? json.shows : [];
 
       showMap = new Map(shows.map(show => [Number(show.id), show]));
 
-      const allowedShowIds = new Set(shows.map(show => Number(show.id)));
-
-      for (const tier of state.tiers) {
-        tier.items = (tier.items || []).filter(id => allowedShowIds.has(Number(id)));
-      }
-
       render();
       scheduleSave();
     } catch (err) {
       console.error(err);
+      render();
       showPool.innerHTML = `<p class="muted">Could not load shows.</p>`;
     }
   }
 
-  addTierBtn.addEventListener("click", () => {
-    state.tiers.push({
-      id: `tier_${Date.now()}`,
-      label: "New",
-      color: "#999999",
-      items: []
+  if (addTierBtn) {
+    addTierBtn.addEventListener("click", () => {
+      state.tiers.push({
+        id: `tier_${Date.now()}`,
+        label: "New",
+        color: "#999999",
+        items: []
+      });
+
+      render();
+      scheduleSave();
     });
+  }
 
-    render();
-    scheduleSave();
-  });
-
-  nameInput.addEventListener("input", scheduleSave);
+  if (nameInput) {
+    nameInput.addEventListener("input", scheduleSave);
+  }
 
   if (corpsFilter) {
     corpsFilter.addEventListener("change", loadShows);
   }
 
-  if (timeFilterType) {
-    timeFilterType.addEventListener("change", () => {
-      updateTimeFilterVisibility();
+  if (yearFilter) {
+    yearFilter.addEventListener("change", () => {
+      if (yearFilter.value && decadeFilter) {
+        decadeFilter.value = "";
+      }
+
+      updateYearDecadeVisibility();
       loadShows();
     });
   }
 
-  if (yearFilter) {
-    yearFilter.addEventListener("change", loadShows);
-  }
-
   if (decadeFilter) {
-    decadeFilter.addEventListener("change", loadShows);
+    decadeFilter.addEventListener("change", () => {
+      if (decadeFilter.value && yearFilter) {
+        yearFilter.value = "";
+      }
+
+      updateYearDecadeVisibility();
+      loadShows();
+    });
   }
 
   if (publicInput) {
     publicInput.addEventListener("change", scheduleSave);
   }
 
-  updateTimeFilterVisibility();
+  render();
+  updateYearDecadeVisibility();
   loadShows();
 })();
