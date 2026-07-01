@@ -3902,6 +3902,9 @@ function listPublicTierlists(conn) {
       t.name,
       t.filter_type,
       t.filter_value,
+      t.filter_corps,
+      t.filter_year,
+      t.filter_decade,
       t.data_json,
       t.is_public,
       t.created_ts,
@@ -3911,10 +3914,7 @@ function listPublicTierlists(conn) {
     FROM tierlists t
     JOIN users u ON u.id = t.user_id
     WHERE t.is_public = 1
-    ORDER BY
-      t.filter_type ASC,
-      t.filter_value DESC,
-      t.updated_ts DESC
+    ORDER BY t.updated_ts DESC
   `).all();
 
   return rows.map(row => {
@@ -3932,18 +3932,16 @@ function groupPublicTierlists(publicTierlists = []) {
   };
 
   for (const t of publicTierlists) {
-    const type = String(t.filter_type || 'all');
-
-    if (type === 'year') {
-      const key = String(t.filter_value || 'Unknown Year');
+    if (t.filter_year) {
+      const key = String(t.filter_year);
       if (!groups.years.has(key)) groups.years.set(key, []);
       groups.years.get(key).push(t);
-    } else if (type === 'decade') {
-      const key = String(t.filter_value || 'Unknown Decade');
+    } else if (t.filter_decade) {
+      const key = String(t.filter_decade);
       if (!groups.decades.has(key)) groups.decades.set(key, []);
       groups.decades.get(key).push(t);
-    } else if (type === 'corps') {
-      const key = String(t.filter_value || 'Unknown Corps');
+    } else if (t.filter_corps) {
+      const key = String(t.filter_corps);
       if (!groups.corps.has(key)) groups.corps.set(key, []);
       groups.corps.get(key).push(t);
     } else {
@@ -3953,7 +3951,6 @@ function groupPublicTierlists(publicTierlists = []) {
 
   return groups;
 }
-
 
 
 
