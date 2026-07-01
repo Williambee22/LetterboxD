@@ -101,19 +101,10 @@
         </select>
       </label>
     
-      <label class="field">
-        <span>Time Filter</span>
-        <select id="timeFilterType">
-          <option value="none" <%= !tierlist.filter_year && !tierlist.filter_decade ? 'selected' : '' %>>All years</option>
-          <option value="year" <%= tierlist.filter_year ? 'selected' : '' %>>Specific year</option>
-          <option value="decade" <%= tierlist.filter_decade ? 'selected' : '' %>>Specific decade</option>
-        </select>
-      </label>
-    
       <label id="yearFilterWrap" class="field">
         <span>Year</span>
         <select id="yearFilter">
-          <option value="">Choose year</option>
+          <option value="">All years</option>
           <% year_options.forEach(y => { %>
             <option
               value="<%= y.year %>"
@@ -128,7 +119,7 @@
       <label id="decadeFilterWrap" class="field">
         <span>Decade</span>
         <select id="decadeFilter">
-          <option value="">Choose decade</option>
+          <option value="">All decades</option>
           <% decade_options.forEach(d => { %>
             <option
               value="<%= d %>"
