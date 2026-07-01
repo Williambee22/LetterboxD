@@ -205,10 +205,10 @@ button:hover,
 }
 
 .publicTierLabelText {
-  font-size: 30px !important;
-  font-weight: 1000 !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
   color: #ffffff !important;
-  -webkit-text-stroke: 1.5px #000000;
+  -webkit-text-stroke: 1px #000000;
   paint-order: stroke fill;
   text-shadow:
     2px 0 0 #000,
