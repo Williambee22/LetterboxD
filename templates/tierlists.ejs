@@ -6,7 +6,7 @@
   <title>Tierlists - Pressboxd</title>
 
   <link rel="stylesheet" href="/static/styles.css">
-  <link rel="stylesheet" href="/static/css/tierlists.css">
+  <link rel="stylesheet" href="/static/css/tierlists.css?v=20260701a">
   <link rel="icon" type="image/png" href="/static/favicon.png">
 </head>
 
@@ -111,58 +111,108 @@
         <div class="empty_state">No public tierlists yet.</div>
       <% } %>
 
-      <% if (public_groups.all.length) { %>
-        <div class="publicTierGroup">
-          <h3>All Shows</h3>
-          <div class="publicTierGrid">
-            <% public_groups.all.forEach(t => { %>
-              <a class="publicTierCard" href="/tierlists/public/<%= t.id %>">
-                <strong><%= t.name %></strong>
-                <span>by <%= t.username %></span>
-              </a>
-            <% }) %>
-          </div>
-        </div>
-      <% } %>
+      <% if (public_tierlists.length) { %>
+        <div class="publicTierColumns">
+          <div class="publicTierColumn">
+            <h3>Corps</h3>
 
-      <% for (const [decade, items] of public_groups.decades) { %>
-        <div class="publicTierGroup">
-          <h3><%= decade %>s</h3>
-          <div class="publicTierGrid">
-            <% items.forEach(t => { %>
-              <a class="publicTierCard" href="/tierlists/public/<%= t.id %>">
-                <strong><%= t.name %></strong>
-                <span>by <%= t.username %></span>
-              </a>
-            <% }) %>
-          </div>
-        </div>
-      <% } %>
+            <% if (public_groups.corps.size === 0) { %>
+              <div class="muted small">No corps tierlists yet.</div>
+            <% } %>
 
-      <% for (const [yearName, items] of public_groups.years) { %>
-        <div class="publicTierGroup">
-          <h3><%= yearName %></h3>
-          <div class="publicTierGrid">
-            <% items.forEach(t => { %>
-              <a class="publicTierCard" href="/tierlists/public/<%= t.id %>">
-                <strong><%= t.name %></strong>
-                <span>by <%= t.username %></span>
-              </a>
-            <% }) %>
-          </div>
-        </div>
-      <% } %>
+            <% for (const [corpsName, items] of public_groups.corps) { %>
+              <div class="publicTierGroup">
+                <h4><%= corpsName %></h4>
 
-      <% for (const [corpsName, items] of public_groups.corps) { %>
-        <div class="publicTierGroup">
-          <h3><%= corpsName %></h3>
-          <div class="publicTierGrid">
-            <% items.forEach(t => { %>
-              <a class="publicTierCard" href="/tierlists/public/<%= t.id %>">
-                <strong><%= t.name %></strong>
-                <span>by <%= t.username %></span>
-              </a>
-            <% }) %>
+                <div class="publicTierList">
+                  <% items.forEach(t => { %>
+                    <a class="publicTierCard" href="/tierlists/public/<%= t.id %>">
+                      <strong><%= t.name %></strong>
+
+                      <span class="publicTierUser">
+                        <span class="avatar_sm">
+                          <% if (t.avatar_url) { %>
+                            <img src="<%= t.avatar_url %>" alt="avatar">
+                          <% } else { %>
+                            <span class="avatar_fallback"></span>
+                          <% } %>
+                        </span>
+
+                        <span>by <%= t.username %></span>
+                      </span>
+                    </a>
+                  <% }) %>
+                </div>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="publicTierColumn">
+            <h3>Year</h3>
+
+            <% if (public_groups.years.size === 0) { %>
+              <div class="muted small">No year tierlists yet.</div>
+            <% } %>
+
+            <% for (const [yearName, items] of public_groups.years) { %>
+              <div class="publicTierGroup">
+                <h4><%= yearName %></h4>
+
+                <div class="publicTierList">
+                  <% items.forEach(t => { %>
+                    <a class="publicTierCard" href="/tierlists/public/<%= t.id %>">
+                      <strong><%= t.name %></strong>
+
+                      <span class="publicTierUser">
+                        <span class="avatar_sm">
+                          <% if (t.avatar_url) { %>
+                            <img src="<%= t.avatar_url %>" alt="avatar">
+                          <% } else { %>
+                            <span class="avatar_fallback"></span>
+                          <% } %>
+                        </span>
+
+                        <span>by <%= t.username %></span>
+                      </span>
+                    </a>
+                  <% }) %>
+                </div>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="publicTierColumn">
+            <h3>Decade</h3>
+
+            <% if (public_groups.decades.size === 0) { %>
+              <div class="muted small">No decade tierlists yet.</div>
+            <% } %>
+
+            <% for (const [decade, items] of public_groups.decades) { %>
+              <div class="publicTierGroup">
+                <h4><%= decade %>s</h4>
+
+                <div class="publicTierList">
+                  <% items.forEach(t => { %>
+                    <a class="publicTierCard" href="/tierlists/public/<%= t.id %>">
+                      <strong><%= t.name %></strong>
+
+                      <span class="publicTierUser">
+                        <span class="avatar_sm">
+                          <% if (t.avatar_url) { %>
+                            <img src="<%= t.avatar_url %>" alt="avatar">
+                          <% } else { %>
+                            <span class="avatar_fallback"></span>
+                          <% } %>
+                        </span>
+
+                        <span>by <%= t.username %></span>
+                      </span>
+                    </a>
+                  <% }) %>
+                </div>
+              </div>
+            <% } %>
           </div>
         </div>
       <% } %>
