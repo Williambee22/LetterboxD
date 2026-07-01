@@ -1,51 +1,103 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title><%= tierlist.name %> - Pressboxd Tierlist</title>
+
   <link rel="stylesheet" href="/static/styles.css">
   <link rel="stylesheet" href="/static/css/tierlists.css">
+  <link rel="icon" type="image/png" href="/static/favicon.png">
 </head>
-<body>
-  <nav class="topNav">
-    <a href="/shows">Shows</a>
-    <a href="/predictions">Predictions</a>
-    <a href="/forums">Forums</a>
-    <a href="/tierlists">Tierlists</a>
-    <% if (me) { %>
-      <a href="/me">Profile</a>
-      <a href="/logout">Logout</a>
-    <% } else { %>
-      <a href="/login">Login</a>
-    <% } %>
-  </nav>
+
+<body class="app" style="--accent: <%= accent_color || '#3252b3' %>;">
+  <header class="topbar">
+    <div class="wrap row between">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <a href="/shows" class="brand" style="display:flex; align-items:center;">
+          <img
+            src="/static/pressboxd-wordmark.png"
+            alt="Pressboxd"
+            style="height:68px; width:auto; display:block;"
+          >
+        </a>
+      </div>
+
+      <nav class="nav row">
+        <a href="/shows">Shows</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+        <a href="/predictions">Predictions</a>
+        <a href="/forums">Forums</a>
+        <a href="/tierlists">Tierlists</a>
+
+        <% if (me && Number(me.is_admin) === 1) { %>
+          <a href="/admin/bulk_add">Mass Add</a>
+          <a href="/admin/roles">Roles</a>
+          <a href="/admin/users">Users</a>
+          <a href="/admin/stats">Stats</a>
+          <a href="/admin/predictions">Predictions Admin</a>
+          <a href="/admin/site-message">Site Message</a>
+        <% } %>
+      </nav>
+
+      <div class="auth row">
+        <% if (me) { %>
+          <a class="nav_user" href="/me">
+            <span class="avatar_sm">
+              <% if (me.avatar_url) { %>
+                <img src="<%= me.avatar_url %>" alt="avatar">
+              <% } else { %>
+                <span class="avatar_fallback"></span>
+              <% } %>
+            </span>
+            <span class="muted small"><%= me.username || "me" %></span>
+          </a>
+          <a href="/logout">Logout</a>
+        <% } else { %>
+          <a href="/login">Login</a>
+          <a class="btn" href="/register">Register</a>
+        <% } %>
+      </div>
+    </div>
+  </header>
 
   <main
-    class="tierMakerPage"
+    class="wrap tierMakerPage"
     data-tierlist-id="<%= tierlist.id %>"
     data-initial-data='<%- JSON.stringify(data) %>'
   >
-    <div class="tierMakerTop">
+    <div class="tierMakerTop panel">
       <div>
         <input id="tierlistName" class="tierTitleInput" value="<%= tierlist.name %>" maxlength="80">
-        <div id="saveStatus" class="muted">Saved</div>
+        <div id="saveStatus" class="muted small">Saved</div>
+
+        <label class="tierPublicToggle">
+          <input
+            id="tierlistPublic"
+            type="checkbox"
+            <%= Number(tierlist.is_public || 0) === 1 ? 'checked' : '' %>
+          >
+          Public tierlist
+        </label>
       </div>
 
-      <a href="/tierlists" class="backLink">Saved Tierlists</a>
+      <a href="/tierlists" class="btn ghost">Back to Tierlists</a>
     </div>
 
-    <div class="tierFilters">
-      <label>
-        Show Pool
+    <div class="tierFilters panel">
+      <label class="field">
+        <span>Show Pool</span>
         <select id="filterType">
           <option value="all" <%= tierlist.filter_type === 'all' ? 'selected' : '' %>>All shows</option>
           <option value="corps" <%= tierlist.filter_type === 'corps' ? 'selected' : '' %>>Specific corps</option>
           <option value="year" <%= tierlist.filter_type === 'year' ? 'selected' : '' %>>Specific year</option>
+          <option value="decade" <%= tierlist.filter_type === 'decade' ? 'selected' : '' %>>Specific decade</option>
         </select>
       </label>
 
-      <label id="corpsFilterWrap">
-        Corps
+      <label id="corpsFilterWrap" class="field">
+        <span>Corps</span>
         <select id="corpsFilter">
           <% corps_options.forEach(c => { %>
             <option value="<%= c.corps %>" <%= tierlist.filter_value === c.corps ? 'selected' : '' %>>
@@ -55,8 +107,8 @@
         </select>
       </label>
 
-      <label id="yearFilterWrap">
-        Year
+      <label id="yearFilterWrap" class="field">
+        <span>Year</span>
         <select id="yearFilter">
           <% year_options.forEach(y => { %>
             <option value="<%= y.year %>" <%= String(tierlist.filter_value) === String(y.year) ? 'selected' : '' %>>
@@ -66,7 +118,18 @@
         </select>
       </label>
 
-      <button type="button" id="addTierBtn">Add Tier</button>
+      <label id="decadeFilterWrap" class="field">
+        <span>Decade</span>
+        <select id="decadeFilter">
+          <% decade_options.forEach(d => { %>
+            <option value="<%= d %>" <%= String(tierlist.filter_value) === String(d) ? 'selected' : '' %>>
+              <%= d %>s
+            </option>
+          <% }) %>
+        </select>
+      </label>
+
+      <button type="button" id="addTierBtn" class="btn">Add Tier</button>
     </div>
 
     <section id="tierBoard" class="tierBoard"></section>
