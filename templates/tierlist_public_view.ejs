@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title><%= tierlist.name %> - Public Tierlist</title>
+
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/css/tierlists.css">
+  <link rel="icon" type="image/png" href="/static/favicon.png">
+</head>
+
+<body class="app" style="--accent: <%= accent_color || '#3252b3' %>;">
+  <header class="topbar">
+    <div class="wrap row between">
+      <a href="/shows" class="brand" style="display:flex; align-items:center;">
+        <img
+          src="/static/pressboxd-wordmark.png"
+          alt="Pressboxd"
+          style="height:68px; width:auto; display:block;"
+        >
+      </a>
+
+      <nav class="nav row">
+        <a href="/shows">Shows</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+        <a href="/predictions">Predictions</a>
+        <a href="/forums">Forums</a>
+        <a href="/tierlists">Tierlists</a>
+      </nav>
+
+      <div class="auth row">
+        <% if (me) { %>
+          <a class="nav_user" href="/me">
+            <span class="avatar_sm">
+              <% if (me.avatar_url) { %>
+                <img src="<%= me.avatar_url %>" alt="avatar">
+              <% } else { %>
+                <span class="avatar_fallback"></span>
+              <% } %>
+            </span>
+            <span class="muted small"><%= me.username || "me" %></span>
+          </a>
+          <a href="/logout">Logout</a>
+        <% } else { %>
+          <a href="/login">Login</a>
+          <a class="btn" href="/register">Register</a>
+        <% } %>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap tierMakerPage">
+    <div class="tierMakerTop panel">
+      <div>
+        <h1 style="margin:0;"><%= tierlist.name %></h1>
+        <div class="muted small">
+          Public tierlist by <%= owner.username %>
+        </div>
+
+        <div class="muted small" style="margin-top:6px;">
+          <% if (tierlist.filter_year) { %>
+            Year: <%= tierlist.filter_year %>
+          <% } else if (tierlist.filter_decade) { %>
+            Decade: <%= tierlist.filter_decade %>s
+          <% } else { %>
+            All years
+          <% } %>
+
+          <% if (tierlist.filter_corps) { %>
+            • Corps: <%= tierlist.filter_corps %>
+          <% } else { %>
+            • All corps
+          <% } %>
+        </div>
+      </div>
+
+      <a href="/tierlists" class="btn ghost">Back to Tierlists</a>
+    </div>
+
+    <section class="tierBoard">
+      <%
+        const showMap = new Map();
+        shows.forEach(s => showMap.set(Number(s.id), s));
+
+        const safeData = data && Array.isArray(data.tiers)
+          ? data
+          : { tiers: [] };
+      %>
+
+      <% safeData.tiers.forEach(tier => { %>
+        <div class="tierRow">
+          <div class="tierLabel" style="background:<%= tier.color || '#777777' %>;">
+            <strong><%= tier.label || 'Tier' %></strong>
+          </div>
+
+          <div class="tierItems">
+            <% (tier.items || []).forEach(showId => {
+                 const show = showMap.get(Number(showId));
+                 if (!show) return;
+            %>
+              <a class="showCard" href="/show/<%= show.id %>">
+                <% if (show.poster_url) { %>
+                  <img src="<%= show.poster_url %>" alt="">
+                  <span><%= show.name %></span>
+                <% } else { %>
+                  <div class="textOnlyShowCard">
+                    <strong><%= show.name %></strong>
+                    <span><%= show.corps || '' %> <%= show.year || '' %></span>
+                  </div>
+                <% } %>
+              </a>
+            <% }) %>
+          </div>
+
+          <div class="tierActions"></div>
+        </div>
+      <% }) %>
+    </section>
+  </main>
+</body>
+</html>
