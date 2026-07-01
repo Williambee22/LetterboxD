@@ -33,11 +33,10 @@
   const nameInput = document.getElementById("tierlistName");
   const saveStatus = document.getElementById("saveStatus");
 
-  const filterType = document.getElementById("filterType");
   const corpsFilter = document.getElementById("corpsFilter");
   const yearFilter = document.getElementById("yearFilter");
-  const corpsWrap = document.getElementById("corpsFilterWrap");
-  const yearWrap = document.getElementById("yearFilterWrap");
+  const decadeFilter = document.getElementById("decadeFilter");
+  const publicInput = document.getElementById("tierlistPublic");
   const addTierBtn = document.getElementById("addTierBtn");
 
   function escapeHtml(value) {
@@ -49,20 +48,15 @@
       .replaceAll("'", "&#039;");
   }
 
-  function currentFilterValue() {
-    if (filterType.value === "corps") return corpsFilter.value;
-    if (filterType.value === "year") return yearFilter.value;
-    return "";
-  }
+  function currentFilters() {
+    const yearValue = yearFilter ? yearFilter.value : "";
+    const decadeValue = decadeFilter ? decadeFilter.value : "";
 
-  function updateFilterVisibility() {
-    if (corpsWrap) {
-      corpsWrap.style.display = filterType.value === "corps" ? "" : "none";
-    }
-
-    if (yearWrap) {
-      yearWrap.style.display = filterType.value === "year" ? "" : "none";
-    }
+    return {
+      filter_corps: corpsFilter ? corpsFilter.value : "",
+      filter_year: yearValue,
+      filter_decade: yearValue ? "" : decadeValue
+    };
   }
 
   function setSaveStatus(text) {
@@ -79,8 +73,8 @@
     try {
       const payload = {
         name: nameInput.value,
-        filter_type: filterType.value,
-        filter_value: currentFilterValue(),
+        ...currentFilters(),
+        is_public: publicInput ? publicInput.checked : false,
         data: state
       };
 
@@ -291,12 +285,7 @@
   }
 
   async function loadShows() {
-    updateFilterVisibility();
-
-    const params = new URLSearchParams({
-      filter_type: filterType.value,
-      filter_value: currentFilterValue()
-    });
+    const params = new URLSearchParams(currentFilters());
 
     try {
       const res = await fetch(`/tierlists/${tierlistId}/shows.json?${params.toString()}`);
@@ -338,10 +327,33 @@
 
   nameInput.addEventListener("input", scheduleSave);
 
-  filterType.addEventListener("change", loadShows);
-  corpsFilter.addEventListener("change", loadShows);
-  yearFilter.addEventListener("change", loadShows);
+  if (corpsFilter) {
+    corpsFilter.addEventListener("change", loadShows);
+  }
 
-  updateFilterVisibility();
+  if (yearFilter) {
+    yearFilter.addEventListener("change", () => {
+      if (yearFilter.value && decadeFilter) {
+        decadeFilter.value = "";
+      }
+
+      loadShows();
+    });
+  }
+
+  if (decadeFilter) {
+    decadeFilter.addEventListener("change", () => {
+      if (decadeFilter.value && yearFilter) {
+        yearFilter.value = "";
+      }
+
+      loadShows();
+    });
+  }
+
+  if (publicInput) {
+    publicInput.addEventListener("change", scheduleSave);
+  }
+
   loadShows();
 })();
