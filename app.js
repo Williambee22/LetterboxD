@@ -1570,9 +1570,9 @@ function createApp() {
       if (!tierlist) return res.sendStatus(404);
   
       const rawShows = dbx.listTierlistShows(conn, {
-        filter_corps: req.query.filter_corps || tierlist.filter_corps,
-        filter_year: req.query.filter_year || tierlist.filter_year,
-        filter_decade: req.query.filter_decade || tierlist.filter_decade,
+        filter_corps: req.query.filter_corps || tierlist.filter_corps || '',
+        filter_year: req.query.filter_year || tierlist.filter_year || '',
+        filter_decade: req.query.filter_decade || tierlist.filter_decade || '',
       });
   
       const shows = await Promise.all(rawShows.map(async (show) => {
