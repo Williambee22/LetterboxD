@@ -2601,7 +2601,7 @@ function ensureReviewCommentsTable(conn) {
 function addReviewComment(conn, showId, reviewUserId, commenterUserId, commentText) {
   const text = String(commentText || '').trim();
   if (!text) throw new Error('Comment cannot be empty.');
-  if (text.length > 1000) throw new Error('Comment too long (max 1000 chars).');
+  if (text.length > 2000) throw new Error('Comment too long (max 2000 chars).');
 
   conn.prepare(`
     INSERT INTO review_comments(show_id, review_user_id, commenter_user_id, comment_text)
