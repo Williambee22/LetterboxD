@@ -1697,57 +1697,130 @@ function createApp() {
     return res.redirect(`/show/${showId}`);
   }));
 
-  app.get('/tierlists', loginRequired(async (req, res, next) => {
-    let conn;
+  app.get(
+    '/tierlists',
+    loginRequired(
+      async (req, res, next) => {
   
-    try {
-      conn = getConn();
+        let conn;
   
-      const myTierlists = dbx.listTierlistsForUser(
-        conn,
-        Number(req.session.uid)
-      ).map(normalizeRow);
+        try {
+          conn = getConn();
   
-      const publicTierlists = dbx.listPublicTierlists(conn).map(normalizeRow);
-      const publicGroups = dbx.groupPublicTierlists(publicTierlists);
+          const viewerUserId =
+            Number(req.session.uid);
   
-      return res.render('tierlists', {
-        tierlists: myTierlists,
-        public_tierlists: publicTierlists,
-        public_groups: publicGroups,
-      });
-    } catch (err) {
-      return next(err);
-    } finally {
-      if (conn) dbx.close(conn);
-    }
-  }));
   
-  app.post('/tierlists/new', loginRequired(async (req, res) => {
-    let conn;
+          const myTierlists =
+            dbx.listTierlistsForUser(
+              conn,
+              viewerUserId
+            ).map(normalizeRow);
   
-    try {
-      conn = getConn();
   
-      const name = String(req.body.name || 'Untitled Tierlist').trim() || 'Untitled Tierlist';
+          const publicTierlists =
+            dbx.listPublicTierlists(
+              conn,
+              {
+                viewerUserId
+              }
+            ).map(normalizeRow);
   
-      const id = dbx.createTierlist(
-        conn,
-        Number(req.session.uid),
-        name
-      );
   
-      await dbx.commit(conn);
+          const publicGroups =
+            dbx.groupPublicTierlists(
+              publicTierlists
+            );
   
-      req.flash('ok', 'Tierlist created.');
-      return res.redirect(`/tierlists/${id}`);
-    } catch (err) {
-      req.flash('error', String(err.message || err));
-      return res.redirect('/tierlists');
-    } finally {
-      if (conn) dbx.close(conn);
-    }
-  }));
+  
+          return res.render(
+            'tierlists',
+            {
+              tierlists:
+                myTierlists,
+  
+              public_tierlists:
+                publicTierlists,
+  
+              public_groups:
+                publicGroups,
+            }
+          );
+  
+        } catch (err) {
+  
+          return next(err);
+  
+        } finally {
+  
+          if (conn) {
+            dbx.close(conn);
+          }
+  
+        }
+      }
+    )
+  );
+  
+  app.post(
+    '/tierlists/public/:id/like',
+    loginRequired(
+      async (req, res) => {
+  
+        let conn;
+  
+        try {
+  
+          conn = getConn();
+  
+  
+          const result =
+            dbx.toggleTierlistLike(
+              conn,
+              Number(req.params.id),
+              Number(req.session.uid)
+            );
+  
+  
+          await dbx.commit(conn);
+  
+  
+          return res.json({
+            ok: true,
+  
+            liked:
+              result.liked,
+  
+            like_count:
+              result.like_count
+          });
+  
+  
+        } catch (err) {
+  
+          return res
+            .status(400)
+            .json({
+              ok: false,
+  
+              error:
+                String(
+                  err.message ||
+                  err
+                )
+            });
+  
+        } finally {
+  
+          if (conn) {
+            dbx.close(conn);
+          }
+  
+        }
+  
+      }
+    )
+  );
 
 
   app.get('/tierlists/public/:id', async (req, res, next) => {
