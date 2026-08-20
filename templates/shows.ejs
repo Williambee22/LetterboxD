@@ -451,50 +451,74 @@
       padding: 12px 2px;
     }
   
-    /* Logged-in user's activity indicators on show posters */
-    .myShowStatus {
-      position: absolute;
-      left: 8px;
-      top: 8px;
-      z-index: 5;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 5px;
-      pointer-events: none;
-    }
-
-    .myShowStatusPill {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 7px;
-      border-radius: 999px;
-      color: #ffffff;
-      font-size: 10px;
-      line-height: 1;
-      font-weight: 900;
-      letter-spacing: 0.1px;
-      border: 1px solid rgba(255,255,255,0.22);
-      box-shadow: 0 3px 10px rgba(0,0,0,0.45);
-      backdrop-filter: blur(4px);
-      white-space: nowrap;
-    }
-
-    .myShowStatusPill.rated {
-      background: color-mix(in srgb, var(--accent) 88%, #000000);
-    }
-
-    .myShowStatusPill.reviewed {
-      background: rgba(28, 125, 76, 0.94);
-    }
-
     @media (max-width: 768px) {
       .randomCard {
         max-width: none !important;
         width: 100% !important;
       }
     }
+
+    /* =========================================================
+       MY RATING / REVIEW STATUS
+       ========================================================= */
+    
+    .myShowStatus {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      z-index: 10;
+    
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    
+      gap: 5px;
+    
+      pointer-events: none;
+    }
+    
+    .myShowStatusPill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    
+      gap: 4px;
+    
+      padding: 5px 8px;
+    
+      border-radius: 999px;
+    
+      color: #ffffff;
+    
+      font-size: 10px;
+      line-height: 1;
+      font-weight: 900;
+    
+      white-space: nowrap;
+    
+      border: 1px solid rgba(255, 255, 255, 0.28);
+    
+      box-shadow:
+        0 3px 10px rgba(0, 0, 0, 0.65);
+    
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+    
+    .myShowStatusPill.rated {
+      background: rgba(45, 82, 190, 0.96);
+    }
+    
+    .myShowStatusPill.reviewed {
+      background: rgba(25, 135, 75, 0.96);
+    }
+    
+    .myShowStatusIcon {
+      font-size: 11px;
+      line-height: 1;
+    }
+
+
 
     @media (max-width: 768px) {
       .topbar .wrap {
