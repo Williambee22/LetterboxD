@@ -1476,37 +1476,86 @@ function listShows(conn, args = {}) {
   const year = String(args.year || '').trim();
   const corps = String(args.corps || '').trim();
 
+  const viewerUserId =
+    args.viewerUserId == null
+      ? null
+      : Number(args.viewerUserId);
+
   const params = [];
   const where = [];
-  if (year) { where.push('s.year = ?'); params.push(Number(year)); }
-  if (corps) { where.push('s.corps LIKE ? COLLATE NOCASE'); params.push(`%${corps}%`); }
-  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
-  // Logic: (cnt == 0) returns 1 (True) for unrated shows, 0 (False) for rated.
-  // Sorting by this first ensures 0s (rated) are always above 1s (unrated).
-  let orderSql = 's.year DESC, s.corps ASC'; // Default
-  
+  if (year) {
+    where.push('s.year = ?');
+    params.push(Number(year));
+  }
+
+  if (corps) {
+    where.push('s.corps LIKE ? COLLATE NOCASE');
+    params.push(`%${corps}%`);
+  }
+
+  const whereSql = where.length
+    ? `WHERE ${where.join(' AND ')}`
+    : '';
+
+  let orderSql = 's.year DESC, s.corps ASC';
+
   if (sort === 'top') {
-    orderSql = '(COUNT(r.rating_half) = 0) ASC, avg_rating DESC, cnt DESC';
+    orderSql =
+      '(COUNT(r.rating_half) = 0) ASC, avg_rating DESC, cnt DESC';
   } else if (sort === 'bottom') {
-    orderSql = '(COUNT(r.rating_half) = 0) ASC, avg_rating ASC, cnt DESC';
+    orderSql =
+      '(COUNT(r.rating_half) = 0) ASC, avg_rating ASC, cnt DESC';
   } else if (sort === 'year_asc') {
-    orderSql = 's.year ASC, s.corps ASC';
+    orderSql =
+      's.year ASC, s.corps ASC';
   } else if (sort === 'corps') {
-    orderSql = 's.corps ASC, s.year DESC';
+    orderSql =
+      's.corps ASC, s.year DESC';
   }
 
   return conn.prepare(`
     SELECT
       s.*,
+
       COUNT(r.rating_half) AS cnt,
-      COALESCE(ROUND(AVG(r.rating_half) / 2.0, 2), 0) AS avg_rating
+
+      COALESCE(
+        ROUND(AVG(r.rating_half) / 2.0, 2),
+        0
+      ) AS avg_rating,
+
+      (
+        SELECT myr.rating_half
+        FROM ratings myr
+        WHERE myr.show_id = s.id
+          AND myr.user_id = ?
+        LIMIT 1
+      ) AS my_rating_half,
+
+      EXISTS (
+        SELECT 1
+        FROM reviews myrv
+        WHERE myrv.show_id = s.id
+          AND myrv.user_id = ?
+        LIMIT 1
+      ) AS has_review
+
     FROM shows s
-    LEFT JOIN ratings r ON r.show_id = s.id
+
+    LEFT JOIN ratings r
+      ON r.show_id = s.id
+
     ${whereSql}
+
     GROUP BY s.id
+
     ORDER BY ${orderSql}
-  `).all(...params);
+  `).all(
+    viewerUserId,
+    viewerUserId,
+    ...params
+  );
 }
 
 function showDetail(conn, showId) {
