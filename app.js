@@ -1171,62 +1171,98 @@ function createApp() {
     const sort = String(req.query.sort || 'year_desc').trim();
     const year = String(req.query.year || '').trim();
     const corps = String(req.query.corps || '').trim();
-
+  
     let conn;
+  
     try {
       conn = getConn();
-
+  
+      // Logged-in user, used to determine whether each show
+      // has already been rated/reviewed by this person.
       const viewerUserId = req.session.uid
         ? Number(req.session.uid)
         : null;
-      
+  
       const rows = await dbx.listShows(conn, {
         sort,
         year,
         corps,
         viewerUserId
       });
+  
       const rows2 = (rows || []).map((r) => {
         const d = normalizeRow(r);
-        d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+  
+        d.poster_url = posterUrlForShow(
+          d.corps || '',
+          d.year || 0
+        );
+  
         return d;
       });
-
+  
       let friendActivity = [];
+  
       if (req.session.uid) {
-        friendActivity = (await dbx.listFriendActivity(conn, Number(req.session.uid), { limit: 5 }) || []).map((x) => {
+        friendActivity = (
+          await dbx.listFriendActivity(
+            conn,
+            Number(req.session.uid),
+            { limit: 5 }
+          ) || []
+        ).map((x) => {
           const d = normalizeRow(x);
-          d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+  
+          d.poster_url = posterUrlForShow(
+            d.corps || '',
+            d.year || 0
+          );
+  
           return d;
         });
       }
-
+  
       let hotShows = [];
+  
       if (typeof dbx.getHotShows === 'function') {
-        hotShows = (await dbx.getHotShows(conn, 3) || []).map((x) => {
+        hotShows = (
+          await dbx.getHotShows(conn, 3) || []
+        ).map((x) => {
           const d = normalizeRow(x);
-          d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
+  
+          d.poster_url = posterUrlForShow(
+            d.corps || '',
+            d.year || 0
+          );
+  
           return d;
         });
       }
-
-      const showsWelcomeMessage = dbx.getSiteSetting(conn, 'shows_welcome_message', '');
-
-        return res.render('shows', {
-          rows: rows2,
-          sort,
-          year,
-          corps,
-          friend_activity: friendActivity,
-          hot_shows: hotShows,
-          shows_welcome_message: showsWelcomeMessage,
-        });
-      } catch (err) {
-        return next(err);
-      } finally {
-        if (conn) dbx.close(conn);
-      }
-    });
+  
+      const showsWelcomeMessage =
+        dbx.getSiteSetting(
+          conn,
+          'shows_welcome_message',
+          ''
+        );
+  
+      return res.render('shows', {
+        rows: rows2,
+        sort,
+        year,
+        corps,
+        friend_activity: friendActivity,
+        hot_shows: hotShows,
+        shows_welcome_message: showsWelcomeMessage,
+      });
+  
+    } catch (err) {
+      return next(err);
+  
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  });
 
 
   app.get('/show/:show_id', async (req, res, next) => {
