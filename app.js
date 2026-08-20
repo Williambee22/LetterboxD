@@ -1176,7 +1176,16 @@ function createApp() {
     try {
       conn = getConn();
 
-      const rows = await dbx.listShows(conn, { sort, year, corps });
+      const viewerUserId = req.session.uid
+        ? Number(req.session.uid)
+        : null;
+      
+      const rows = await dbx.listShows(conn, {
+        sort,
+        year,
+        corps,
+        viewerUserId
+      });
       const rows2 = (rows || []).map((r) => {
         const d = normalizeRow(r);
         d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
