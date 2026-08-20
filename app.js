@@ -5,7 +5,6 @@ const crypto = require('crypto');
 const express = require('express');
 const session = require('express-session');
 const Database = require('better-sqlite3');
-const SqliteStore = require('better-sqlite3-session-store')(session);
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const { Resend } = require('resend');
@@ -40,25 +39,163 @@ const SESSION_DB_PATH =
   process.env.SESSION_DB_PATH ||
   path.join(DATA_DIR, 'sessions.db');
 
-console.log('APP DB_PATH =', DB_PATH);
-console.log('SESSION DB_PATH =', SESSION_DB_PATH);
-
-fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-fs.mkdirSync(path.dirname(SESSION_DB_PATH), { recursive: true });
+fs.mkdirSync(path.dirname(SESSION_DB_PATH), {
+  recursive: true
+});
 
 const sessionDb = new Database(SESSION_DB_PATH);
 
 sessionDb.pragma('journal_mode = WAL');
 sessionDb.pragma('busy_timeout = 5000');
 
-const sessionStore = new SqliteStore({
-  client: sessionDb,
+sessionDb.exec(`
+  CREATE TABLE IF NOT EXISTS sessions (
+    sid TEXT PRIMARY KEY,
+    sess TEXT NOT NULL,
+    expires INTEGER
+  );
 
-  expired: {
-    clear: true,
-    intervalMs: 1000 * 60 * 15
+  CREATE INDEX IF NOT EXISTS idx_sessions_expires
+  ON sessions(expires);
+`);
+
+class PersistentSessionStore extends session.Store {
+  constructor(db) {
+    super();
+
+    this.db = db;
+
+    this.getStmt = db.prepare(`
+      SELECT sess, expires
+      FROM sessions
+      WHERE sid = ?
+      LIMIT 1
+    `);
+
+    this.setStmt = db.prepare(`
+      INSERT INTO sessions (
+        sid,
+        sess,
+        expires
+      )
+      VALUES (?, ?, ?)
+
+      ON CONFLICT(sid)
+      DO UPDATE SET
+        sess = excluded.sess,
+        expires = excluded.expires
+    `);
+
+    this.destroyStmt = db.prepare(`
+      DELETE FROM sessions
+      WHERE sid = ?
+    `);
+
+    this.cleanupStmt = db.prepare(`
+      DELETE FROM sessions
+      WHERE expires IS NOT NULL
+        AND expires < ?
+    `);
   }
-});
+
+  get(sid, callback) {
+    try {
+      const row = this.getStmt.get(sid);
+
+      if (!row) {
+        return callback(null, null);
+      }
+
+      if (
+        row.expires != null &&
+        Number(row.expires) < Date.now()
+      ) {
+        this.destroyStmt.run(sid);
+        return callback(null, null);
+      }
+
+      const sess = JSON.parse(row.sess);
+
+      return callback(null, sess);
+
+    } catch (err) {
+      return callback(err);
+    }
+  }
+
+  set(sid, sess, callback) {
+    try {
+      let expires = null;
+
+      if (sess?.cookie?.expires) {
+        expires = new Date(
+          sess.cookie.expires
+        ).getTime();
+      }
+
+      if (
+        !expires &&
+        sess?.cookie?.originalMaxAge
+      ) {
+        expires =
+          Date.now() +
+          Number(sess.cookie.originalMaxAge);
+      }
+
+      this.setStmt.run(
+        sid,
+        JSON.stringify(sess),
+        expires
+      );
+
+      if (callback) callback(null);
+
+    } catch (err) {
+      if (callback) callback(err);
+    }
+  }
+
+  destroy(sid, callback) {
+    try {
+      this.destroyStmt.run(sid);
+
+      if (callback) callback(null);
+
+    } catch (err) {
+      if (callback) callback(err);
+    }
+  }
+
+  touch(sid, sess, callback) {
+    this.set(sid, sess, callback);
+  }
+
+  cleanup() {
+    try {
+      this.cleanupStmt.run(Date.now());
+    } catch (err) {
+      console.error(
+        'Session cleanup failed:',
+        err
+      );
+    }
+  }
+}
+
+const sessionStore =
+  new PersistentSessionStore(sessionDb);
+
+// Remove expired sessions every 15 minutes.
+setInterval(() => {
+  sessionStore.cleanup();
+}, 15 * 60 * 1000).unref();
+  
+
+console.log('APP DB_PATH =', DB_PATH);
+console.log('SESSION DB_PATH =', SESSION_DB_PATH);
+
+fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+
 if (!fs.existsSync(DB_PATH)) {
   if (fs.existsSync(SOURCE_DB_PATH)) {
     fs.copyFileSync(SOURCE_DB_PATH, DB_PATH);
@@ -553,7 +690,10 @@ function createApp() {
     secret: APP_SECRET,
   
     resave: false,
+  
     saveUninitialized: false,
+  
+    rolling: true,
   
     proxy: true,
   
@@ -561,11 +701,19 @@ function createApp() {
   
     cookie: {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
   
-      // Stay logged in for 14 days
-      maxAge: 1000 * 60 * 60 * 24 * 14,
+      sameSite: 'lax',
+  
+      secure:
+        process.env.NODE_ENV ===
+        'production',
+  
+      maxAge:
+        1000 *
+        60 *
+        60 *
+        24 *
+        14,
     },
   }));
 
