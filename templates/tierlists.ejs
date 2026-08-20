@@ -760,30 +760,61 @@
             <div class="publicTierScroll">
               <div id="publicTierGrid" class="publicTierGridHub">
                 <% publicTierlists.forEach(t => {
-                     let category = "allshows";
-                     let categoryLabel = "All Shows";
-                     let scope = "No filters";
-
-                     if (t.filter_year) {
-                       category = "year";
-                       categoryLabel = "Year";
-                       scope = String(t.filter_year);
-                     } else if (t.filter_decade) {
-                       category = "decade";
-                       categoryLabel = "Decade";
-                       scope = `${t.filter_decade}s`;
-                     } else if (t.filter_corps) {
-                       category = "corps";
-                       categoryLabel = "Corps";
-                       scope = t.filter_corps;
-                     }
-
-                     const searchText = [
-                       t.name || "",
-                       t.username || "",
-                       categoryLabel,
-                       scope
-                     ].join(" ").toLowerCase();
+                     const categories = [];
+                      const categoryTags = [];
+                      const scopes = [];
+                      
+                      if (t.filter_corps) {
+                        categories.push("corps");
+                      
+                        categoryTags.push({
+                          label: "Corps",
+                          value: t.filter_corps
+                        });
+                      
+                        scopes.push(t.filter_corps);
+                      }
+                      
+                      if (t.filter_year) {
+                        categories.push("year");
+                      
+                        categoryTags.push({
+                          label: "Year",
+                          value: String(t.filter_year)
+                        });
+                      
+                        scopes.push(String(t.filter_year));
+                      }
+                      
+                      if (t.filter_decade) {
+                        categories.push("decade");
+                      
+                        categoryTags.push({
+                          label: "Decade",
+                          value: `${t.filter_decade}s`
+                        });
+                      
+                        scopes.push(`${t.filter_decade}s`);
+                      }
+                      
+                      if (!categories.length) {
+                        categories.push("allshows");
+                      
+                        categoryTags.push({
+                          label: "All Shows",
+                          value: "No filters"
+                        });
+                      
+                        scopes.push("No filters");
+                      }
+                      
+                      const searchText = [
+                        t.name || "",
+                        t.username || "",
+                        t.filter_corps || "",
+                        t.filter_year || "",
+                        t.filter_decade ? `${t.filter_decade}s` : ""
+                      ].join(" ").toLowerCase();
 
                      const likeCount = Number(t.like_count || 0);
                      const viewerLiked = Number(t.viewer_liked || 0) === 1;
@@ -792,7 +823,7 @@
                     class="publicTierCardHub"
                     data-public-card
                     data-tierlist-id="<%= t.id %>"
-                    data-category="<%= category %>"
+                    data-categories="<%= categories.join(',') %>"
                     data-search="<%= searchText %>"
                     data-likes="<%= likeCount %>"
                     data-updated="<%= Number(t.updated_ts || 0) %>"
@@ -801,9 +832,17 @@
                     <a class="publicTierCardMain" href="/tierlists/public/<%= t.id %>">
                       <div class="publicTierCardTop">
                         <div class="publicTierCardName"><%= t.name %></div>
-                        <span class="tierTag category"><%= categoryLabel %></span>
+                        <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;">
+                          <% categoryTags.forEach(tag => { %>
+                            <span class="tierTag category">
+                              <%= tag.label %>
+                            </span>
+                          <% }) %>
+                        </div>
                       </div>
-                      <div class="publicTierScope"><%= scope %></div>
+                      <div class="publicTierScope">
+                        <%= scopes.join(" • ") %>
+                      </div>
                     </a>
 
                     <div class="publicTierCardBottom">
@@ -882,9 +921,16 @@
         let visible = 0;
 
         sortedCards.forEach(card => {
-          const category = String(card.dataset.category || "");
+          const categories = String(
+            card.dataset.categories || ""
+          )
+            .split(",")
+            .map(x => x.trim())
+            .filter(Boolean);
           const searchable = String(card.dataset.search || "");
-          const matchesCategory = activeFilter === "all" || category === activeFilter;
+          const matchesCategory =
+            activeFilter === "all" ||
+            categories.includes(activeFilter);
           const matchesSearch = !query || searchable.includes(query);
           const show = matchesCategory && matchesSearch;
 
