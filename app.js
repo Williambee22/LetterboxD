@@ -4,6 +4,8 @@ const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
 const session = require('express-session');
+const Database = require('better-sqlite3');
+const SqliteStore = require('better-sqlite3-session-store')(session);
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const { Resend } = require('resend');
@@ -34,10 +36,29 @@ const PORT = parseInt(process.env.PORT || '8080', 10);
 const SOURCE_DB_PATH = path.join(BASE_DIR, 'site.db');
 const DB_PATH = process.env.DB_PATH || '/data/site.db';
 
+const SESSION_DB_PATH =
+  process.env.SESSION_DB_PATH ||
+  path.join(DATA_DIR, 'sessions.db');
+
 console.log('APP DB_PATH =', DB_PATH);
+console.log('SESSION DB_PATH =', SESSION_DB_PATH);
 
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+fs.mkdirSync(path.dirname(SESSION_DB_PATH), { recursive: true });
 
+const sessionDb = new Database(SESSION_DB_PATH);
+
+sessionDb.pragma('journal_mode = WAL');
+sessionDb.pragma('busy_timeout = 5000');
+
+const sessionStore = new SqliteStore({
+  client: sessionDb,
+
+  expired: {
+    clear: true,
+    intervalMs: 1000 * 60 * 15
+  }
+});
 if (!fs.existsSync(DB_PATH)) {
   if (fs.existsSync(SOURCE_DB_PATH)) {
     fs.copyFileSync(SOURCE_DB_PATH, DB_PATH);
@@ -527,15 +548,23 @@ function createApp() {
   app.use(express.json({ limit: `${MAX_UPLOAD_MB}mb` }));
 
   app.use(session({
+    store: sessionStore,
+  
     secret: APP_SECRET,
+  
     resave: false,
     saveUninitialized: false,
+  
     proxy: true,
+  
     name: 'pressboxd.sid',
+  
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
+  
+      // Stay logged in for 14 days
       maxAge: 1000 * 60 * 60 * 24 * 14,
     },
   }));
