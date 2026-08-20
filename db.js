@@ -3732,7 +3732,48 @@ function ensureTierlistTables(conn) {
 
   conn.exec(`
     CREATE INDEX IF NOT EXISTS idx_tierlists_public
-    ON tierlists(is_public, filter_type, filter_value, updated_ts DESC);
+    ON tierlists(
+      is_public,
+      filter_type,
+      filter_value,
+      updated_ts DESC
+    );
+
+
+    CREATE TABLE IF NOT EXISTS tierlist_likes (
+      tierlist_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+
+      created_ts INTEGER NOT NULL
+        DEFAULT (strftime('%s','now')),
+
+      PRIMARY KEY (
+        tierlist_id,
+        user_id
+      ),
+
+      FOREIGN KEY (tierlist_id)
+        REFERENCES tierlists(id)
+        ON DELETE CASCADE,
+
+      FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+    );
+
+
+    CREATE INDEX IF NOT EXISTS idx_tierlist_likes_tierlist
+    ON tierlist_likes(
+      tierlist_id,
+      created_ts DESC
+    );
+
+
+    CREATE INDEX IF NOT EXISTS idx_tierlist_likes_user
+    ON tierlist_likes(
+      user_id,
+      created_ts DESC
+    );
   `);
 }
 
@@ -3941,8 +3982,13 @@ function listTierlistDecadeOptions(conn) {
     .filter(n => Number.isFinite(n) && n > 0);
 }
 
-function listPublicTierlists(conn) {
+function listPublicTierlists(conn, args = {}) {
   ensureTierlistTables(conn);
+
+  const viewerUserId =
+    args.viewerUserId == null
+      ? null
+      : Number(args.viewerUserId);
 
   const rows = conn.prepare(`
     SELECT
@@ -3958,19 +4004,166 @@ function listPublicTierlists(conn) {
       t.is_public,
       t.created_ts,
       t.updated_ts,
+
       u.username,
-      u.avatar_url
+      u.avatar_url,
+
+      (
+        SELECT COUNT(*)
+        FROM tierlist_likes tl
+        WHERE tl.tierlist_id = t.id
+      ) AS like_count,
+
+      EXISTS (
+        SELECT 1
+        FROM tierlist_likes mine
+        WHERE mine.tierlist_id = t.id
+          AND mine.user_id = ?
+      ) AS viewer_liked
+
     FROM tierlists t
-    JOIN users u ON u.id = t.user_id
+
+    JOIN users u
+      ON u.id = t.user_id
+
     WHERE t.is_public = 1
-    ORDER BY t.updated_ts DESC
-  `).all();
+
+    ORDER BY
+      t.updated_ts DESC,
+      t.id DESC
+  `).all(viewerUserId);
 
   return rows.map(row => {
-    row.data = safeJsonParse(row.data_json, defaultTierlistData());
+    row.data =
+      safeJsonParse(
+        row.data_json,
+        defaultTierlistData()
+      );
+
+    row.like_count =
+      Number(row.like_count || 0);
+
+    row.viewer_liked =
+      Number(row.viewer_liked || 0);
+
     return row;
   });
 }
+
+function toggleTierlistLike(
+  conn,
+  tierlistId,
+  userId
+) {
+  ensureTierlistTables(conn);
+
+  const cleanTierlistId =
+    Number(tierlistId);
+
+  const cleanUserId =
+    Number(userId);
+
+  if (
+    !Number.isFinite(cleanTierlistId) ||
+    !Number.isFinite(cleanUserId)
+  ) {
+    throw new Error(
+      'Invalid tierlist or user.'
+    );
+  }
+
+
+  const tierlist = conn.prepare(`
+    SELECT
+      id,
+      user_id,
+      is_public
+    FROM tierlists
+    WHERE id = ?
+    LIMIT 1
+  `).get(cleanTierlistId);
+
+
+  if (!tierlist) {
+    throw new Error(
+      'Tierlist not found.'
+    );
+  }
+
+
+  if (
+    Number(tierlist.is_public || 0) !== 1
+  ) {
+    throw new Error(
+      'Only public tierlists can be liked.'
+    );
+  }
+
+
+  const existing = conn.prepare(`
+    SELECT 1
+    FROM tierlist_likes
+    WHERE tierlist_id = ?
+      AND user_id = ?
+    LIMIT 1
+  `).get(
+    cleanTierlistId,
+    cleanUserId
+  );
+
+
+  let liked;
+
+
+  if (existing) {
+
+    conn.prepare(`
+      DELETE FROM tierlist_likes
+      WHERE tierlist_id = ?
+        AND user_id = ?
+    `).run(
+      cleanTierlistId,
+      cleanUserId
+    );
+
+    liked = false;
+
+  } else {
+
+    conn.prepare(`
+      INSERT INTO tierlist_likes (
+        tierlist_id,
+        user_id,
+        created_ts
+      )
+      VALUES (
+        ?,
+        ?,
+        strftime('%s','now')
+      )
+    `).run(
+      cleanTierlistId,
+      cleanUserId
+    );
+
+    liked = true;
+  }
+
+
+  const countRow = conn.prepare(`
+    SELECT COUNT(*) AS cnt
+    FROM tierlist_likes
+    WHERE tierlist_id = ?
+  `).get(cleanTierlistId);
+
+
+  return {
+    liked,
+    like_count:
+      Number(countRow?.cnt || 0)
+  };
+}
+
 
 function groupPublicTierlists(publicTierlists = []) {
   const groups = {
@@ -4166,7 +4359,9 @@ module.exports = {
   listTierlistShows,
   listTierlistDecadeOptions,
   listPublicTierlists,
+  toggleTierlistLike,
   groupPublicTierlists,
+  
 };
 
 
