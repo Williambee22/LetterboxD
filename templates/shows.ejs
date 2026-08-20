@@ -451,6 +451,44 @@
       padding: 12px 2px;
     }
   
+    /* Logged-in user's activity indicators on show posters */
+    .myShowStatus {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 5px;
+      pointer-events: none;
+    }
+
+    .myShowStatusPill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 7px;
+      border-radius: 999px;
+      color: #ffffff;
+      font-size: 10px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: 0.1px;
+      border: 1px solid rgba(255,255,255,0.22);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.45);
+      backdrop-filter: blur(4px);
+      white-space: nowrap;
+    }
+
+    .myShowStatusPill.rated {
+      background: color-mix(in srgb, var(--accent) 88%, #000000);
+    }
+
+    .myShowStatusPill.reviewed {
+      background: rgba(28, 125, 76, 0.94);
+    }
+
     @media (max-width: 768px) {
       .randomCard {
         max-width: none !important;
@@ -926,10 +964,34 @@
              const avg = row?.avg_rating != null ? Number(row.avg_rating) : (row?.avg != null ? Number(row.avg) : 0);
              const pct = Math.max(0, Math.min(1, avg / 5));
              const hue = 60 * Math.pow(pct, 2.6);
+             const myRatingHalf = row?.my_rating_half != null ? Number(row.my_rating_half) : null;
+             const hasMyReview = Number(row?.has_review || 0) === 1;
         %>
           <div class="poster">
             <a class="poster_art" href="/show/<%= row.id %>" style="position:relative; display:block;">
               <img class="poster_img" src="<%= poster %>" alt="poster" loading="lazy" onerror="this.src='<%= POSTER_FALLBACK %>';">
+              <% if (meUser && (myRatingHalf !== null || hasMyReview)) { %>
+                <div class="myShowStatus">
+                  <% if (myRatingHalf !== null) { %>
+                    <span
+                      class="myShowStatusPill rated"
+                      title="You rated this show <%= (myRatingHalf / 2).toFixed(1) %> out of 5"
+                    >
+                      ★ Rated <%= (myRatingHalf / 2).toFixed(1) %>
+                    </span>
+                  <% } %>
+
+                  <% if (hasMyReview) { %>
+                    <span
+                      class="myShowStatusPill reviewed"
+                      title="You wrote a review for this show"
+                    >
+                      ✓ Reviewed
+                    </span>
+                  <% } %>
+                </div>
+              <% } %>
+
               <% if (row.cnt > 0) { %>
                 <div class="tile_rating" style="color: hsl(<%= hue %>, 100%, 50%); text-shadow: -0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000, 0 0 4px rgba(0,0,0,0.9);"><span class="tile_star">★</span> <%= avg.toFixed(2) %></div>
     
@@ -1261,7 +1323,6 @@
   </script>
 </body>
 </html>
-
 
 
 
