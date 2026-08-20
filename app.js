@@ -1890,6 +1890,44 @@ function createApp() {
 
 
 
+  app.post('/tierlists/create', loginRequired(async (req, res) => {
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      const name =
+        String(req.body?.name || 'Untitled Tierlist').trim()
+        || 'Untitled Tierlist';
+  
+      const id = dbx.createTierlist(
+        conn,
+        Number(req.session.uid),
+        name
+      );
+  
+      await dbx.commit(conn);
+  
+      req.flash('ok', 'Tierlist created.');
+  
+      return res.redirect(`/tierlists/${id}`);
+  
+    } catch (err) {
+      console.error('Create tierlist failed:', err);
+  
+      req.flash(
+        'error',
+        String(err.message || err)
+      );
+  
+      return res.redirect('/tierlists');
+  
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  }));
+
+  
 
   
   app.get('/tierlists/:id', loginRequired(async (req, res, next) => {
