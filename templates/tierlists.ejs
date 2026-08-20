@@ -2,40 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta
-    name="viewport"
-    content="width=device-width,initial-scale=1"
-  >
-
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Tierlists - Pressboxd</title>
 
-  <link
-    rel="stylesheet"
-    href="/static/styles.css"
-  >
-
-  <link
-    rel="stylesheet"
-    href="/static/css/tierlists.css?v=20260701g"
-  >
-
-  <link
-    rel="icon"
-    type="image/png"
-    href="/static/favicon.png"
-  >
-
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/css/tierlists.css?v=20260820likes">
+  <link rel="icon" type="image/png" href="/static/favicon.png">
 
   <style>
-
-    /* =========================================================
-       PAGE
-       ========================================================= */
-
     html,
     body,
     body.app {
-      background: #000000 !important;
+      background: #000 !important;
       background-image: none !important;
     }
 
@@ -44,599 +22,329 @@
       padding-bottom: 60px;
     }
 
-
-    /* =========================================================
-       PAGE TITLE
-       ========================================================= */
-
     .tierHubHeader {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
       gap: 20px;
-
       margin-bottom: 22px;
     }
 
     .tierHubHeader h1 {
       margin: 0;
-
       font-size: 34px;
       line-height: 1;
-
-      color: #ffffff;
+      color: #fff;
     }
 
     .tierHubHeader p {
-      margin:
-        8px
-        0
-        0;
-
+      margin: 8px 0 0;
       max-width: 620px;
     }
 
-
-    /* =========================================================
-       MAIN WORKSPACE
-       ========================================================= */
-
     .tierWorkspace {
       display: grid;
-
-      grid-template-columns:
-        260px
-        minmax(0, 1fr);
-
+      grid-template-columns: 260px minmax(0, 1fr);
       gap: 18px;
-
       align-items: start;
     }
 
-
-    /* =========================================================
-       SIDEBAR
-       ========================================================= */
-
     .tierSidebar {
       position: sticky;
-
       top: 16px;
-
       display: flex;
       flex-direction: column;
-
       gap: 14px;
     }
 
-    .tierSidebarCard {
-      background: #080808;
-
-      border:
-        1px solid
-        rgba(255,255,255,0.10);
-
+    .tierSidebarCard,
+    .tierBlock {
+      background: #050505;
+      border: 1px solid rgba(255,255,255,.10);
       border-radius: 14px;
+    }
 
+    .tierSidebarCard {
       padding: 16px;
     }
 
     .tierSidebarTitle {
       font-size: 15px;
       font-weight: 900;
-
-      color: #ffffff;
-
+      color: #fff;
       margin-bottom: 10px;
     }
-
-
-    /* =========================================================
-       CREATE TIERLIST
-       ========================================================= */
 
     .newTierFormHub {
       display: flex;
       flex-direction: column;
-
       gap: 8px;
+    }
+
+    .newTierFormHub input,
+    .publicTierSearch,
+    .publicTierSort {
+      box-sizing: border-box;
+      border: 1px solid rgba(255,255,255,.13);
+      background: rgba(255,255,255,.05);
+      color: #fff;
+      outline: none;
+      border-radius: 10px;
     }
 
     .newTierFormHub input {
       width: 100%;
-
       height: 40px;
-
-      box-sizing: border-box;
-
-      border-radius: 10px;
-
-      border:
-        1px solid
-        rgba(255,255,255,0.13);
-
-      background:
-        rgba(255,255,255,0.05);
-
-      color: #ffffff;
-
-      padding:
-        0
-        11px;
-
-      outline: none;
+      padding: 0 11px;
     }
 
-    .newTierFormHub input:focus {
-      border-color:
-        color-mix(
-          in srgb,
-          var(--accent) 60%,
-          rgba(255,255,255,0.20)
-        );
-
-      box-shadow:
-        0
-        0
-        0
-        3px
-        color-mix(
-          in srgb,
-          var(--accent) 18%,
-          transparent
-        );
+    .newTierFormHub input:focus,
+    .publicTierSearch:focus,
+    .publicTierSort:focus {
+      border-color: color-mix(in srgb, var(--accent) 55%, rgba(255,255,255,.18));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
     }
 
     .newTierFormHub .btn {
       width: 100%;
     }
 
-
-    /* =========================================================
-       SIDEBAR NAVIGATION
-       ========================================================= */
-
     .tierQuickNav {
       display: flex;
       flex-direction: column;
-
       gap: 5px;
     }
 
     .tierQuickNav a {
       display: flex;
-
       align-items: center;
       justify-content: space-between;
-
-      padding:
-        9px
-        10px;
-
+      padding: 9px 10px;
       border-radius: 9px;
-
-      color: #ffffff;
-
+      color: #fff;
       text-decoration: none;
-
       font-size: 13px;
       font-weight: 750;
-
-      background:
-        rgba(255,255,255,0.03);
-
-      border:
-        1px solid
-        transparent;
+      background: rgba(255,255,255,.03);
+      border: 1px solid transparent;
     }
 
     .tierQuickNav a:hover {
-      background:
-        rgba(255,255,255,0.07);
-
-      border-color:
-        rgba(255,255,255,0.08);
+      background: rgba(255,255,255,.07);
+      border-color: rgba(255,255,255,.08);
     }
 
     .tierQuickNavCount {
       min-width: 25px;
-
-      padding:
-        2px
-        6px;
-
+      padding: 2px 6px;
       text-align: center;
-
       border-radius: 999px;
-
-      background:
-        rgba(255,255,255,0.07);
-
+      background: rgba(255,255,255,.07);
       font-size: 11px;
     }
 
-
-    /* =========================================================
-       MAIN CONTENT
-       ========================================================= */
-
     .tierMain {
       min-width: 0;
-
       display: flex;
       flex-direction: column;
-
       gap: 18px;
     }
 
     .tierBlock {
-      background: #050505;
-
-      border:
-        1px solid
-        rgba(255,255,255,0.10);
-
-      border-radius: 15px;
-
       padding: 18px;
     }
 
     .tierBlockHeader {
       display: flex;
-
       align-items: center;
       justify-content: space-between;
-
       gap: 14px;
-
       margin-bottom: 15px;
     }
 
     .tierBlockTitle {
       margin: 0;
-
-      color: #ffffff;
-
+      color: #fff;
       font-size: 20px;
       font-weight: 900;
     }
 
     .tierBlockSub {
       margin-top: 4px;
-
       font-size: 12px;
     }
 
-
-    /* =========================================================
-       YOUR TIERLISTS
-       ========================================================= */
-
-    .myTierGrid {
+    .myTierGrid,
+    .publicTierGridHub {
       display: grid;
-
-      grid-template-columns:
-        repeat(
-          auto-fill,
-          minmax(225px, 1fr)
-        );
-
       gap: 10px;
     }
 
-    .myTierCard {
-      position: relative;
+    .myTierGrid {
+      grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+    }
 
+    .publicTierGridHub {
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+
+    .myTierCard {
       display: flex;
       flex-direction: column;
-
       min-height: 118px;
-
-      border:
-        1px solid
-        rgba(255,255,255,0.09);
-
+      border: 1px solid rgba(255,255,255,.09);
       border-radius: 12px;
-
-      background:
-        rgba(255,255,255,0.035);
-
+      background: rgba(255,255,255,.035);
       overflow: hidden;
     }
 
     .myTierCard:hover {
-      border-color:
-        color-mix(
-          in srgb,
-          var(--accent) 40%,
-          rgba(255,255,255,0.12)
-        );
-
-      background:
-        rgba(255,255,255,0.055);
+      border-color: color-mix(in srgb, var(--accent) 40%, rgba(255,255,255,.12));
+      background: rgba(255,255,255,.055);
     }
 
     .myTierOpen {
       flex: 1;
-
       display: block;
-
       padding: 13px;
-
       color: inherit;
-
       text-decoration: none;
     }
 
     .myTierName {
-      color: #ffffff;
-
+      color: #fff;
       font-size: 15px;
       font-weight: 900;
-
       line-height: 1.2;
-
       margin-bottom: 10px;
     }
 
     .myTierMeta {
       display: flex;
       flex-wrap: wrap;
-
       gap: 6px;
-
       align-items: center;
     }
-
-
-    /* =========================================================
-       TAGS
-       ========================================================= */
 
     .tierTag {
       display: inline-flex;
       align-items: center;
-
       min-height: 20px;
-
-      padding:
-        2px
-        7px;
-
+      padding: 2px 7px;
       border-radius: 999px;
-
-      background:
-        rgba(255,255,255,0.06);
-
-      border:
-        1px solid
-        rgba(255,255,255,0.08);
-
-      color:
-        rgba(255,255,255,0.78);
-
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      color: rgba(255,255,255,.78);
       font-size: 10px;
       font-weight: 800;
+      white-space: nowrap;
     }
 
     .tierTag.public {
-      background:
-        rgba(25,135,75,0.18);
-
-      border-color:
-        rgba(25,135,75,0.28);
+      background: rgba(25,135,75,.18);
+      border-color: rgba(25,135,75,.28);
     }
 
     .tierTag.private {
-      background:
-        rgba(255,255,255,0.045);
+      background: rgba(255,255,255,.045);
     }
 
     .tierTag.category {
-      background:
-        color-mix(
-          in srgb,
-          var(--accent) 18%,
-          transparent
-        );
-
-      border-color:
-        color-mix(
-          in srgb,
-          var(--accent) 28%,
-          rgba(255,255,255,0.08)
-        );
+      background: color-mix(in srgb, var(--accent) 18%, transparent);
+      border-color: color-mix(in srgb, var(--accent) 28%, rgba(255,255,255,.08));
     }
-
-
-    /* =========================================================
-       DELETE
-       ========================================================= */
 
     .myTierDelete {
       display: flex;
-
       justify-content: flex-end;
-
-      padding:
-        8px
-        10px;
-
-      border-top:
-        1px solid
-        rgba(255,255,255,0.06);
-
-      background:
-        rgba(0,0,0,0.20);
+      padding: 8px 10px;
+      border-top: 1px solid rgba(255,255,255,.06);
+      background: rgba(0,0,0,.20);
     }
 
     .dangerBtnCompact {
-      border:
-        1px solid
-        rgba(255,70,70,0.20);
-
-      background:
-        rgba(255,70,70,0.08);
-
-      color:
-        rgba(255,140,140,0.95);
-
+      border: 1px solid rgba(255,70,70,.20);
+      background: rgba(255,70,70,.08);
+      color: rgba(255,140,140,.95);
       border-radius: 8px;
-
-      padding:
-        4px
-        8px;
-
+      padding: 4px 8px;
       cursor: pointer;
-
       font-size: 10px;
       font-weight: 800;
     }
 
     .dangerBtnCompact:hover {
-      background:
-        rgba(255,70,70,0.16);
+      background: rgba(255,70,70,.16);
     }
-
-
-    /* =========================================================
-       PUBLIC TIERLIST TOOLBAR
-       ========================================================= */
 
     .publicTierTools {
       display: flex;
-
       flex-direction: column;
-
       gap: 10px;
-
       margin-bottom: 14px;
     }
 
     .publicTierSearchRow {
       display: flex;
-
       gap: 8px;
-
       align-items: center;
     }
 
     .publicTierSearch {
       flex: 1;
-
       min-width: 0;
-
       height: 40px;
-
-      border-radius: 10px;
-
-      border:
-        1px solid
-        rgba(255,255,255,0.12);
-
-      background:
-        rgba(255,255,255,0.045);
-
-      color: #ffffff;
-
-      padding:
-        0
-        12px;
-
-      outline: none;
+      padding: 0 12px;
     }
 
-    .publicTierSearch:focus {
-      border-color:
-        color-mix(
-          in srgb,
-          var(--accent) 50%,
-          rgba(255,255,255,0.15)
-        );
+    .publicTierSort {
+      flex: 0 0 auto;
+      height: 40px;
+      padding: 0 10px;
+      background: #111;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 750;
     }
 
     .publicResultCount {
       flex: 0 0 auto;
-
       font-size: 11px;
-
-      color:
-        rgba(255,255,255,0.60);
-
+      color: rgba(255,255,255,.60);
       white-space: nowrap;
     }
 
-
-    /* =========================================================
-       FILTER BUTTONS
-       ========================================================= */
-
     .publicTierFilters {
       display: flex;
-
       flex-wrap: wrap;
-
       gap: 6px;
     }
 
     .publicFilterBtn {
-      border:
-        1px solid
-        rgba(255,255,255,0.09);
-
-      background:
-        rgba(255,255,255,0.04);
-
-      color:
-        rgba(255,255,255,0.75);
-
-      padding:
-        6px
-        10px;
-
+      border: 1px solid rgba(255,255,255,.09);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.75);
+      padding: 6px 10px;
       border-radius: 999px;
-
       cursor: pointer;
-
       font-size: 11px;
       font-weight: 800;
     }
 
     .publicFilterBtn:hover {
-      background:
-        rgba(255,255,255,0.07);
-
-      color: #ffffff;
+      background: rgba(255,255,255,.07);
+      color: #fff;
     }
 
     .publicFilterBtn.active {
-      color: #ffffff;
-
-      background:
-        color-mix(
-          in srgb,
-          var(--accent) 55%,
-          rgba(255,255,255,0.04)
-        );
-
-      border-color:
-        color-mix(
-          in srgb,
-          var(--accent) 60%,
-          rgba(255,255,255,0.10)
-        );
+      color: #fff;
+      background: color-mix(in srgb, var(--accent) 55%, rgba(255,255,255,.04));
+      border-color: color-mix(in srgb, var(--accent) 60%, rgba(255,255,255,.10));
     }
-
-
-    /* =========================================================
-       PUBLIC RESULTS AREA
-       ========================================================= */
 
     .publicTierScroll {
       max-height: 640px;
-
       overflow-y: auto;
-
       padding-right: 6px;
     }
 
@@ -645,123 +353,78 @@
     }
 
     .publicTierScroll::-webkit-scrollbar-track {
-      background:
-        rgba(255,255,255,0.02);
-
+      background: rgba(255,255,255,.02);
       border-radius: 999px;
     }
 
     .publicTierScroll::-webkit-scrollbar-thumb {
-      background:
-        rgba(255,255,255,0.16);
-
+      background: rgba(255,255,255,.16);
       border-radius: 999px;
     }
-
-    .publicTierGridHub {
-      display: grid;
-
-      grid-template-columns:
-        repeat(
-          auto-fill,
-          minmax(215px, 1fr)
-        );
-
-      gap: 9px;
-    }
-
-
-    /* =========================================================
-       PUBLIC TIERLIST CARD
-       ========================================================= */
 
     .publicTierCardHub {
       display: flex;
       flex-direction: column;
-
-      gap: 9px;
-
-      min-height: 105px;
-
-      padding: 12px;
-
-      box-sizing: border-box;
-
+      min-height: 118px;
       border-radius: 11px;
-
-      border:
-        1px solid
-        rgba(255,255,255,0.08);
-
-      background:
-        rgba(255,255,255,0.03);
-
-      color: inherit;
-
-      text-decoration: none;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      overflow: hidden;
+      transition: background .15s ease, border-color .15s ease;
     }
 
     .publicTierCardHub:hover {
-      background:
-        rgba(255,255,255,0.055);
+      background: rgba(255,255,255,.05);
+      border-color: color-mix(in srgb, var(--accent) 35%, rgba(255,255,255,.10));
+    }
 
-      border-color:
-        color-mix(
-          in srgb,
-          var(--accent) 35%,
-          rgba(255,255,255,0.10)
-        );
+    .publicTierCardMain {
+      flex: 1;
+      display: block;
+      padding: 12px;
+      color: inherit;
+      text-decoration: none;
     }
 
     .publicTierCardTop {
       display: flex;
-
       align-items: flex-start;
       justify-content: space-between;
-
       gap: 8px;
     }
 
     .publicTierCardName {
       min-width: 0;
-
-      color: #ffffff;
-
+      color: #fff;
       font-size: 14px;
       font-weight: 900;
-
       line-height: 1.25;
-
       overflow-wrap: anywhere;
     }
 
     .publicTierScope {
-      margin-top: auto;
-
+      margin-top: 10px;
       font-size: 11px;
-
-      color:
-        rgba(255,255,255,0.58);
+      color: rgba(255,255,255,.58);
     }
 
-
-    /* =========================================================
-       PUBLIC USER
-       ========================================================= */
+    .publicTierCardBottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 10px;
+      border-top: 1px solid rgba(255,255,255,.06);
+      background: rgba(0,0,0,.22);
+    }
 
     .publicTierUserHub {
-      display: flex;
-
-      align-items: center;
-
-      gap: 7px;
-
       min-width: 0;
-
+      display: flex;
+      align-items: center;
+      gap: 7px;
       font-size: 11px;
-
-      color:
-        rgba(255,255,255,0.70);
+      color: rgba(255,255,255,.70);
     }
 
     .publicTierUserHub .avatar_sm {
@@ -770,71 +433,82 @@
 
     .publicTierUsername {
       overflow: hidden;
-
       text-overflow: ellipsis;
-
       white-space: nowrap;
     }
 
+    .publicTierLikeBtn {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      min-width: 48px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.65);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 850;
+      transition: background .15s ease, color .15s ease, border-color .15s ease, transform .15s ease;
+    }
 
-    /* =========================================================
-       EMPTY STATE
-       ========================================================= */
+    .publicTierLikeBtn:hover {
+      color: #fff;
+      background: rgba(255,255,255,.08);
+      transform: translateY(-1px);
+    }
+
+    .publicTierLikeBtn.liked {
+      color: #ff6b81;
+      background: rgba(255,80,110,.12);
+      border-color: rgba(255,80,110,.24);
+    }
+
+    .publicTierLikeBtn.liked .publicLikeHeart {
+      color: #ff5d75;
+    }
+
+    .publicTierLikeBtn:disabled {
+      opacity: .55;
+      cursor: wait;
+      transform: none;
+    }
 
     .tierEmpty {
-      border:
-        1px dashed
-        rgba(255,255,255,0.10);
-
+      border: 1px dashed rgba(255,255,255,.10);
       border-radius: 12px;
-
       padding: 30px 18px;
-
       text-align: center;
-
-      color:
-        rgba(255,255,255,0.55);
+      color: rgba(255,255,255,.55);
     }
 
     #publicNoResults {
       display: none;
+      margin-top: 10px;
     }
 
-
-    /* =========================================================
-       MOBILE
-       ========================================================= */
-
     @media (max-width: 900px) {
-
       .tierWorkspace {
         grid-template-columns: 1fr;
       }
 
       .tierSidebar {
         position: static;
-
         display: grid;
-
-        grid-template-columns:
-          repeat(
-            2,
-            minmax(0, 1fr)
-          );
+        grid-template-columns: repeat(2, minmax(0,1fr));
       }
-
     }
 
-
     @media (max-width: 650px) {
-
       .tierHub {
         padding-top: 14px;
       }
 
       .tierHubHeader {
         align-items: flex-start;
-
         flex-direction: column;
       }
 
@@ -857,386 +531,136 @@
 
       .publicTierSearchRow {
         align-items: stretch;
-
         flex-direction: column;
+      }
+
+      .publicTierSort {
+        width: 100%;
       }
 
       .publicTierScroll {
         max-height: 600px;
       }
-
     }
-
   </style>
 </head>
 
-
 <%
-  const meUser =
-    typeof me !== "undefined"
-      ? me
-      : null;
-
-  const myTierlists =
-    Array.isArray(tierlists)
-      ? tierlists
-      : [];
-
-  const publicTierlists =
-    Array.isArray(public_tierlists)
-      ? public_tierlists
-      : [];
+  const meUser = typeof me !== "undefined" ? me : null;
+  const myTierlists = Array.isArray(tierlists) ? tierlists : [];
+  const publicTierlists = Array.isArray(public_tierlists) ? public_tierlists : [];
 %>
 
-
-<body
-  class="app"
-  style="--accent: <%= accent_color || '#3252b3' %>;"
->
-
-
-  <!-- =======================================================
-       HEADER
-       ======================================================= -->
-
+<body class="app" style="--accent: <%= accent_color || '#3252b3' %>;">
   <header class="topbar">
-
     <div class="wrap row between">
-
-      <a
-        href="/shows"
-        class="brand"
-        style="
-          display:flex;
-          align-items:center;
-        "
-      >
-
+      <a href="/shows" class="brand" style="display:flex;align-items:center;">
         <img
           src="/static/pressboxd-wordmark.png"
           alt="Pressboxd"
-          style="
-            height:68px;
-            width:auto;
-            display:block;
-          "
+          style="height:68px;width:auto;display:block;"
         >
-
       </a>
 
-
       <nav class="nav row">
-
-        <a href="/shows">
-          Shows
-        </a>
-
-        <a href="/top">
-          Top Shows
-        </a>
-
-        <a href="/top_users">
-          Top Users
-        </a>
-
-        <a href="/predictions">
-          Predictions
-        </a>
-
-        <a href="/forums">
-          Forums
-        </a>
-
-        <a href="/tierlists">
-          Tierlists
-        </a>
-
+        <a href="/shows">Shows</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+        <a href="/predictions">Predictions</a>
+        <a href="/forums">Forums</a>
+        <a href="/tierlists">Tierlists</a>
       </nav>
 
-
       <div class="auth row">
-
         <% if (meUser) { %>
-
-          <a
-            class="nav_user"
-            href="/me"
-          >
-
+          <a class="nav_user" href="/me">
             <span class="avatar_sm">
-
               <% if (meUser.avatar_url) { %>
-
-                <img
-                  src="<%= meUser.avatar_url %>"
-                  alt="avatar"
-                >
-
+                <img src="<%= meUser.avatar_url %>" alt="avatar">
               <% } else { %>
-
                 <span class="avatar_fallback"></span>
-
               <% } %>
-
             </span>
-
-            <span class="muted small">
-              <%= meUser.username || "me" %>
-            </span>
-
+            <span class="muted small"><%= meUser.username || "me" %></span>
           </a>
-
-          <a href="/logout">
-            Logout
-          </a>
-
+          <a href="/logout">Logout</a>
         <% } else { %>
-
-          <a href="/login">
-            Login
-          </a>
-
-          <a
-            class="btn"
-            href="/register"
-          >
-            Register
-          </a>
-
+          <a href="/login">Login</a>
+          <a class="btn" href="/register">Register</a>
         <% } %>
-
       </div>
-
     </div>
-
   </header>
 
-
-
-  <!-- =======================================================
-       PAGE
-       ======================================================= -->
-
   <main class="wrap tierHub">
-
-
-    <!-- PAGE TITLE -->
-
     <div class="tierHubHeader">
-
       <div>
-
-        <h1>
-          Tierlists
-        </h1>
-
+        <h1>Tierlists</h1>
         <p class="muted">
-          Create your own tierlists and quickly browse rankings
-          made by the Pressboxd community.
+          Create your own tierlists and quickly browse rankings made by the Pressboxd community.
         </p>
-
       </div>
-
     </div>
 
-
-
     <div class="tierWorkspace">
-
-
-      <!-- ===================================================
-           LEFT SIDEBAR
-           =================================================== -->
-
       <aside class="tierSidebar">
-
-
-        <!-- CREATE -->
-
         <div class="tierSidebarCard">
-
-          <div class="tierSidebarTitle">
-            Create Tierlist
-          </div>
-
-          <form
-            method="POST"
-            action="/tierlists/new"
-            class="newTierFormHub"
-          >
-
+          <div class="tierSidebarTitle">Create Tierlist</div>
+          <form method="POST" action="/tierlists/new" class="newTierFormHub">
             <input
               name="name"
               placeholder="Example: 2014 Uniforms"
               maxlength="80"
               required
             >
-
-            <button
-              type="submit"
-              class="btn"
-            >
-              + New Tierlist
-            </button>
-
+            <button type="submit" class="btn">+ New Tierlist</button>
           </form>
-
         </div>
 
-
-
-        <!-- QUICK NAV -->
-
         <div class="tierSidebarCard">
-
-          <div class="tierSidebarTitle">
-            Quick Access
-          </div>
-
+          <div class="tierSidebarTitle">Quick Access</div>
           <div class="tierQuickNav">
-
             <a href="#your-tierlists">
-
-              <span>
-                Your Tierlists
-              </span>
-
-              <span class="tierQuickNavCount">
-                <%= myTierlists.length %>
-              </span>
-
+              <span>Your Tierlists</span>
+              <span class="tierQuickNavCount"><%= myTierlists.length %></span>
             </a>
-
-
             <a href="#public-tierlists">
-
-              <span>
-                Public Tierlists
-              </span>
-
-              <span class="tierQuickNavCount">
-                <%= publicTierlists.length %>
-              </span>
-
+              <span>Public Tierlists</span>
+              <span class="tierQuickNavCount"><%= publicTierlists.length %></span>
             </a>
-
           </div>
-
         </div>
-
-
-
-        <!-- SUMMARY -->
 
         <div class="tierSidebarCard">
-
-          <div class="tierSidebarTitle">
-            Library
-          </div>
-
-          <div
-            class="muted small"
-            style="
-              display:flex;
-              flex-direction:column;
-              gap:8px;
-            "
-          >
-
-            <div
-              style="
-                display:flex;
-                justify-content:space-between;
-              "
-            >
-
-              <span>
-                Yours
-              </span>
-
-              <strong style="color:#ffffff;">
-                <%= myTierlists.length %>
-              </strong>
-
+          <div class="tierSidebarTitle">Library</div>
+          <div class="muted small" style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;justify-content:space-between;">
+              <span>Yours</span>
+              <strong style="color:#fff;"><%= myTierlists.length %></strong>
             </div>
-
-
-            <div
-              style="
-                display:flex;
-                justify-content:space-between;
-              "
-            >
-
-              <span>
-                Community
-              </span>
-
-              <strong style="color:#ffffff;">
-                <%= publicTierlists.length %>
-              </strong>
-
+            <div style="display:flex;justify-content:space-between;">
+              <span>Community</span>
+              <strong style="color:#fff;"><%= publicTierlists.length %></strong>
             </div>
-
           </div>
-
         </div>
-
       </aside>
 
-
-
-      <!-- ===================================================
-           RIGHT SIDE
-           =================================================== -->
-
       <div class="tierMain">
-
-
-        <!-- =================================================
-             YOUR TIERLISTS
-             ================================================= -->
-
-        <section
-          id="your-tierlists"
-          class="tierBlock"
-        >
-
+        <section id="your-tierlists" class="tierBlock">
           <div class="tierBlockHeader">
-
             <div>
-
-              <h2 class="tierBlockTitle">
-                Your Tierlists
-              </h2>
-
-              <div class="tierBlockSub muted">
-                Open, edit, or manage your saved tierlists.
-              </div>
-
+              <h2 class="tierBlockTitle">Your Tierlists</h2>
+              <div class="tierBlockSub muted">Open, edit, or manage your saved tierlists.</div>
             </div>
-
           </div>
 
-
           <% if (!myTierlists.length) { %>
-
-            <div class="tierEmpty">
-
-              You haven't created a tierlist yet.
-
-            </div>
-
+            <div class="tierEmpty">You haven't created a tierlist yet.</div>
           <% } else { %>
-
-
             <div class="myTierGrid">
-
-
               <% myTierlists.forEach(t => {
-
                    let scope = "All shows";
-
                    if (t.filter_year) {
                      scope = String(t.filter_year);
                    } else if (t.filter_decade) {
@@ -1244,133 +668,49 @@
                    } else if (t.filter_corps) {
                      scope = t.filter_corps;
                    }
-
-                   const isPublic =
-                     Number(t.is_public || 0) === 1;
-
+                   const isPublic = Number(t.is_public || 0) === 1;
               %>
-
-
                 <div class="myTierCard">
-
-
-                  <a
-                    class="myTierOpen"
-                    href="/tierlists/<%= t.id %>"
-                  >
-
-                    <div class="myTierName">
-                      <%= t.name %>
-                    </div>
-
-
+                  <a class="myTierOpen" href="/tierlists/<%= t.id %>">
+                    <div class="myTierName"><%= t.name %></div>
                     <div class="myTierMeta">
-
-                      <span class="tierTag">
-                        <%= scope %>
-                      </span>
-
-
+                      <span class="tierTag"><%= scope %></span>
                       <% if (isPublic) { %>
-
-                        <span class="tierTag public">
-                          Public
-                        </span>
-
+                        <span class="tierTag public">Public</span>
                       <% } else { %>
-
-                        <span class="tierTag private">
-                          Private
-                        </span>
-
+                        <span class="tierTag private">Private</span>
                       <% } %>
-
                     </div>
-
                   </a>
 
-
                   <div class="myTierDelete">
-
                     <form
                       method="POST"
                       action="/tierlists/<%= t.id %>/delete"
-                      onsubmit="
-                        return confirm(
-                          'Delete this tierlist?'
-                        )
-                      "
+                      onsubmit="return confirm('Delete this tierlist?')"
                     >
-
-                      <button
-                        type="submit"
-                        class="dangerBtnCompact"
-                      >
-                        Delete
-                      </button>
-
+                      <button type="submit" class="dangerBtnCompact">Delete</button>
                     </form>
-
                   </div>
-
                 </div>
-
-
               <% }) %>
-
-
             </div>
-
           <% } %>
-
         </section>
 
-
-
-        <!-- =================================================
-             PUBLIC TIERLISTS
-             ================================================= -->
-
-        <section
-          id="public-tierlists"
-          class="tierBlock"
-        >
-
-
+        <section id="public-tierlists" class="tierBlock">
           <div class="tierBlockHeader">
-
             <div>
-
-              <h2 class="tierBlockTitle">
-                Public Tierlists
-              </h2>
-
-              <div class="tierBlockSub muted">
-                Search or filter tierlists from other users.
-              </div>
-
+              <h2 class="tierBlockTitle">Public Tierlists</h2>
+              <div class="tierBlockSub muted">Search, filter, like, and sort tierlists from other users.</div>
             </div>
-
           </div>
 
-
-
           <% if (!publicTierlists.length) { %>
-
-            <div class="tierEmpty">
-              No public tierlists yet.
-            </div>
-
+            <div class="tierEmpty">No public tierlists yet.</div>
           <% } else { %>
-
-
-            <!-- SEARCH + FILTERS -->
-
             <div class="publicTierTools">
-
-
               <div class="publicTierSearchRow">
-
                 <input
                   id="publicTierSearch"
                   class="publicTierSearch"
@@ -1379,420 +719,250 @@
                   autocomplete="off"
                 >
 
-                <div
-                  id="publicResultCount"
-                  class="publicResultCount"
-                >
-                  <%= publicTierlists.length %>
-                  results
+                <select id="publicTierSort" class="publicTierSort">
+                  <option value="recent">Recently Updated</option>
+                  <option value="liked">Most Liked</option>
+                  <option value="name">Name A-Z</option>
+                </select>
+
+                <div id="publicResultCount" class="publicResultCount">
+                  <%= publicTierlists.length %> results
                 </div>
-
               </div>
-
-
 
               <div class="publicTierFilters">
-
-
-                <button
-                  type="button"
-                  class="publicFilterBtn active"
-                  data-public-filter="all"
-                >
+                <button type="button" class="publicFilterBtn active" data-public-filter="all">
                   Everything
                 </button>
-
-
-                <button
-                  type="button"
-                  class="publicFilterBtn"
-                  data-public-filter="allshows"
-                >
+                <button type="button" class="publicFilterBtn" data-public-filter="allshows">
                   All Shows
                 </button>
-
-
-                <button
-                  type="button"
-                  class="publicFilterBtn"
-                  data-public-filter="corps"
-                >
+                <button type="button" class="publicFilterBtn" data-public-filter="corps">
                   Corps
                 </button>
-
-
-                <button
-                  type="button"
-                  class="publicFilterBtn"
-                  data-public-filter="year"
-                >
+                <button type="button" class="publicFilterBtn" data-public-filter="year">
                   Year
                 </button>
-
-
-                <button
-                  type="button"
-                  class="publicFilterBtn"
-                  data-public-filter="decade"
-                >
+                <button type="button" class="publicFilterBtn" data-public-filter="decade">
                   Decade
                 </button>
-
-
               </div>
-
             </div>
-
-
-
-            <!-- RESULTS -->
 
             <div class="publicTierScroll">
-
-
-              <div
-                id="publicTierGrid"
-                class="publicTierGridHub"
-              >
-
-
+              <div id="publicTierGrid" class="publicTierGridHub">
                 <% publicTierlists.forEach(t => {
-
-                     let category =
-                       "allshows";
-
-                     let categoryLabel =
-                       "All Shows";
-
-                     let scope =
-                       "No filters";
-
+                     let category = "allshows";
+                     let categoryLabel = "All Shows";
+                     let scope = "No filters";
 
                      if (t.filter_year) {
-
-                       category =
-                         "year";
-
-                       categoryLabel =
-                         "Year";
-
-                       scope =
-                         String(t.filter_year);
-
+                       category = "year";
+                       categoryLabel = "Year";
+                       scope = String(t.filter_year);
                      } else if (t.filter_decade) {
-
-                       category =
-                         "decade";
-
-                       categoryLabel =
-                         "Decade";
-
-                       scope =
-                         `${t.filter_decade}s`;
-
+                       category = "decade";
+                       categoryLabel = "Decade";
+                       scope = `${t.filter_decade}s`;
                      } else if (t.filter_corps) {
-
-                       category =
-                         "corps";
-
-                       categoryLabel =
-                         "Corps";
-
-                       scope =
-                         t.filter_corps;
-
+                       category = "corps";
+                       categoryLabel = "Corps";
+                       scope = t.filter_corps;
                      }
 
+                     const searchText = [
+                       t.name || "",
+                       t.username || "",
+                       categoryLabel,
+                       scope
+                     ].join(" ").toLowerCase();
 
-                     const searchText =
-                       [
-                         t.name || "",
-                         t.username || "",
-                         categoryLabel,
-                         scope
-                       ]
-                         .join(" ")
-                         .toLowerCase();
-
+                     const likeCount = Number(t.like_count || 0);
+                     const viewerLiked = Number(t.viewer_liked || 0) === 1;
                 %>
-
-
-                  <a
+                  <div
                     class="publicTierCardHub"
-                    href="/tierlists/public/<%= t.id %>"
                     data-public-card
+                    data-tierlist-id="<%= t.id %>"
                     data-category="<%= category %>"
                     data-search="<%= searchText %>"
+                    data-likes="<%= likeCount %>"
+                    data-updated="<%= Number(t.updated_ts || 0) %>"
+                    data-name="<%= String(t.name || '').toLowerCase() %>"
                   >
+                    <a class="publicTierCardMain" href="/tierlists/public/<%= t.id %>">
+                      <div class="publicTierCardTop">
+                        <div class="publicTierCardName"><%= t.name %></div>
+                        <span class="tierTag category"><%= categoryLabel %></span>
+                      </div>
+                      <div class="publicTierScope"><%= scope %></div>
+                    </a>
 
-
-                    <div class="publicTierCardTop">
-
-
-                      <div class="publicTierCardName">
-                        <%= t.name %>
+                    <div class="publicTierCardBottom">
+                      <div class="publicTierUserHub">
+                        <span class="avatar_sm">
+                          <% if (t.avatar_url) { %>
+                            <img src="<%= t.avatar_url %>" alt="avatar">
+                          <% } else { %>
+                            <span class="avatar_fallback"></span>
+                          <% } %>
+                        </span>
+                        <span class="publicTierUsername">by <%= t.username %></span>
                       </div>
 
-
-                      <span class="tierTag category">
-                        <%= categoryLabel %>
-                      </span>
-
-
+                      <button
+                        type="button"
+                        class="publicTierLikeBtn <%= viewerLiked ? 'liked' : '' %>"
+                        data-like-tierlist="<%= t.id %>"
+                        aria-pressed="<%= viewerLiked ? 'true' : 'false' %>"
+                        title="<%= viewerLiked ? 'Unlike this tierlist' : 'Like this tierlist' %>"
+                      >
+                        <span class="publicLikeHeart">♥</span>
+                        <span data-like-count><%= likeCount %></span>
+                      </button>
                     </div>
-
-
-
-                    <div class="publicTierUserHub">
-
-
-                      <span class="avatar_sm">
-
-
-                        <% if (t.avatar_url) { %>
-
-                          <img
-                            src="<%= t.avatar_url %>"
-                            alt="avatar"
-                          >
-
-                        <% } else { %>
-
-                          <span class="avatar_fallback"></span>
-
-                        <% } %>
-
-
-                      </span>
-
-
-                      <span class="publicTierUsername">
-                        by <%= t.username %>
-                      </span>
-
-
-                    </div>
-
-
-
-                    <div class="publicTierScope">
-                      <%= scope %>
-                    </div>
-
-
-                  </a>
-
-
+                  </div>
                 <% }) %>
-
-
               </div>
 
-
-
-              <div
-                id="publicNoResults"
-                class="tierEmpty"
-              >
-
+              <div id="publicNoResults" class="tierEmpty">
                 No tierlists match your search.
-
               </div>
-
-
             </div>
-
-
           <% } %>
-
-
         </section>
-
-
       </div>
-
     </div>
-
   </main>
 
-
-
-  <!-- =======================================================
-       FILTER SCRIPT
-       ======================================================= -->
-
   <script>
-
     (() => {
+      const searchInput = document.getElementById("publicTierSearch");
+      const sortSelect = document.getElementById("publicTierSort");
+      const grid = document.getElementById("publicTierGrid");
+      const cards = Array.from(document.querySelectorAll("[data-public-card]"));
+      const filterButtons = Array.from(document.querySelectorAll("[data-public-filter]"));
+      const likeButtons = Array.from(document.querySelectorAll("[data-like-tierlist]"));
+      const resultCount = document.getElementById("publicResultCount");
+      const noResults = document.getElementById("publicNoResults");
 
-      const searchInput =
-        document.getElementById(
-          "publicTierSearch"
-        );
+      if (!searchInput || !grid || !cards.length) return;
 
-      const cards =
-        Array.from(
-          document.querySelectorAll(
-            "[data-public-card]"
-          )
-        );
+      let activeFilter = "all";
 
-      const filterButtons =
-        Array.from(
-          document.querySelectorAll(
-            "[data-public-filter]"
-          )
-        );
+      function applyFiltersAndSort() {
+        const query = searchInput.value.trim().toLowerCase();
+        const sortMode = sortSelect ? sortSelect.value : "recent";
+        const sortedCards = [...cards];
 
-      const resultCount =
-        document.getElementById(
-          "publicResultCount"
-        );
-
-      const noResults =
-        document.getElementById(
-          "publicNoResults"
-        );
-
-
-      if (
-        !searchInput ||
-        !cards.length
-      ) {
-        return;
-      }
-
-
-      let activeFilter =
-        "all";
-
-
-      function applyFilters() {
-
-        const query =
-          searchInput
-            .value
-            .trim()
-            .toLowerCase();
-
-
-        let visible =
-          0;
-
-
-        cards.forEach(card => {
-
-          const category =
-            String(
-              card.dataset.category || ""
-            );
-
-          const searchable =
-            String(
-              card.dataset.search || ""
-            );
-
-
-          const matchesCategory =
-            activeFilter === "all" ||
-            category === activeFilter;
-
-
-          const matchesSearch =
-            !query ||
-            searchable.includes(query);
-
-
-          const show =
-            matchesCategory &&
-            matchesSearch;
-
-
-          card.style.display =
-            show
-              ? ""
-              : "none";
-
-
-          if (show) {
-            visible += 1;
+        sortedCards.sort((a, b) => {
+          if (sortMode === "liked") {
+            const likeDiff = Number(b.dataset.likes || 0) - Number(a.dataset.likes || 0);
+            if (likeDiff !== 0) return likeDiff;
+            return Number(b.dataset.updated || 0) - Number(a.dataset.updated || 0);
           }
 
+          if (sortMode === "name") {
+            return String(a.dataset.name || "").localeCompare(String(b.dataset.name || ""));
+          }
+
+          return Number(b.dataset.updated || 0) - Number(a.dataset.updated || 0);
         });
 
+        sortedCards.forEach(card => grid.appendChild(card));
 
+        let visible = 0;
+
+        sortedCards.forEach(card => {
+          const category = String(card.dataset.category || "");
+          const searchable = String(card.dataset.search || "");
+          const matchesCategory = activeFilter === "all" || category === activeFilter;
+          const matchesSearch = !query || searchable.includes(query);
+          const show = matchesCategory && matchesSearch;
+
+          card.style.display = show ? "" : "none";
+          if (show) visible += 1;
+        });
 
         if (resultCount) {
-
-          resultCount.textContent =
-            `${visible} ${
-              visible === 1
-                ? "result"
-                : "results"
-            }`;
-
+          resultCount.textContent = `${visible} ${visible === 1 ? "result" : "results"}`;
         }
-
-
 
         if (noResults) {
-
-          noResults.style.display =
-            visible === 0
-              ? "block"
-              : "none";
-
+          noResults.style.display = visible === 0 ? "block" : "none";
         }
-
       }
 
+      searchInput.addEventListener("input", applyFiltersAndSort);
 
-
-      searchInput.addEventListener(
-        "input",
-        applyFilters
-      );
-
-
+      if (sortSelect) {
+        sortSelect.addEventListener("change", applyFiltersAndSort);
+      }
 
       filterButtons.forEach(button => {
+        button.addEventListener("click", () => {
+          activeFilter = button.dataset.publicFilter || "all";
 
-        button.addEventListener(
-          "click",
-          () => {
+          filterButtons.forEach(btn => btn.classList.remove("active"));
+          button.classList.add("active");
 
-            activeFilter =
-              button.dataset.publicFilter ||
-              "all";
-
-
-            filterButtons.forEach(btn => {
-              btn.classList.remove(
-                "active"
-              );
-            });
-
-
-            button.classList.add(
-              "active"
-            );
-
-
-            applyFilters();
-
-          }
-        );
-
+          applyFiltersAndSort();
+        });
       });
 
+      likeButtons.forEach(button => {
+        button.addEventListener("click", async event => {
+          event.preventDefault();
+          event.stopPropagation();
 
+          if (button.dataset.loading === "1") return;
 
-      applyFilters();
+          const tierlistId = Number(button.dataset.likeTierlist);
+          if (!tierlistId) return;
 
+          button.dataset.loading = "1";
+          button.disabled = true;
+
+          try {
+            const response = await fetch(`/tierlists/public/${tierlistId}/like`, {
+              method: "POST",
+              headers: {
+                "Accept": "application/json",
+                "X-Requested-With": "XMLHttpRequest"
+              }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.ok) {
+              throw new Error(data.error || "Unable to like tierlist.");
+            }
+
+            const liked = !!data.liked;
+            const likeCount = Number(data.like_count || 0);
+
+            button.classList.toggle("liked", liked);
+            button.setAttribute("aria-pressed", liked ? "true" : "false");
+            button.title = liked ? "Unlike this tierlist" : "Like this tierlist";
+
+            const countEl = button.querySelector("[data-like-count]");
+            if (countEl) countEl.textContent = String(likeCount);
+
+            const card = button.closest("[data-public-card]");
+            if (card) card.dataset.likes = String(likeCount);
+
+            applyFiltersAndSort();
+          } catch (err) {
+            console.error("tierlist like failed:", err);
+          } finally {
+            button.dataset.loading = "0";
+            button.disabled = false;
+          }
+        });
+      });
+
+      applyFiltersAndSort();
     })();
-
   </script>
-
-
 </body>
 </html>
