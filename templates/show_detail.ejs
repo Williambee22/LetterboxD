@@ -900,408 +900,6 @@
         margin-top: 16px !important;
       }
     }
-
-    /* =========================================================
-       SHOW DETAIL — COMPACT DISCUSSION LAYOUT
-       ========================================================= */
-
-    .showJumpNav {
-      position: sticky;
-      top: 8px;
-      z-index: 40;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      flex-wrap: wrap;
-      margin: 10px 0 14px;
-      padding: 8px;
-      border: 1px solid rgba(255,255,255,0.09);
-      border-radius: 13px;
-      background: rgba(8,8,8,0.94);
-      backdrop-filter: blur(12px);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.22);
-    }
-
-    .showJumpNav a {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      min-height: 32px;
-      padding: 0 11px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.035);
-      color: rgba(255,255,255,0.76);
-      text-decoration: none;
-      font-size: 11px;
-      font-weight: 850;
-    }
-
-    .showJumpNav a:hover {
-      color: #fff;
-      background: rgba(255,255,255,0.07);
-      border-color: color-mix(in srgb, var(--accent) 38%, rgba(255,255,255,0.10));
-    }
-
-    .showJumpCount {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 20px;
-      height: 20px;
-      padding: 0 5px;
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--accent) 22%, rgba(255,255,255,0.05));
-      color: #fff;
-      font-size: 9px;
-      font-weight: 900;
-    }
-
-    .discussionSection {
-      scroll-margin-top: 70px;
-    }
-
-    .discussionHeader {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 10px;
-      padding: 14px 16px;
-      border: 1px solid color-mix(in srgb, var(--accent) 20%, rgba(255,255,255,0.10));
-      border-radius: 14px;
-      background: #050505;
-    }
-
-    .discussionHeader h2 {
-      margin: 5px 0 0;
-      font-size: 22px;
-      color: #fff;
-    }
-
-    .discussionHeaderMeta {
-      margin-top: 4px;
-      color: rgba(255,255,255,0.55);
-      font-size: 12px;
-    }
-
-    .discussionLayout {
-      display: grid;
-      grid-template-columns: minmax(0,1fr) 330px;
-      gap: 12px;
-      align-items: start;
-    }
-
-    .discussionFeed {
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .reviewConversation {
-      display: grid;
-      grid-template-columns: minmax(280px, .88fr) minmax(340px, 1.12fr);
-      min-width: 0;
-      border: 1px solid rgba(255,255,255,0.09);
-      border-radius: 15px;
-      background: rgba(255,255,255,0.025);
-      overflow: hidden;
-    }
-
-    .reviewPane {
-      min-width: 0;
-      padding: 14px;
-      border-right: 1px solid rgba(255,255,255,0.07);
-      background: rgba(255,255,255,0.018);
-    }
-
-    .commentsPane {
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      background: rgba(0,0,0,0.18);
-    }
-
-    .commentsPaneHeader {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 11px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      background: rgba(255,255,255,0.025);
-    }
-
-    .commentsPaneTitle {
-      color: #fff;
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .02em;
-    }
-
-    .commentsPaneCount {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 24px;
-      height: 22px;
-      padding: 0 7px;
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,0.04));
-      border: 1px solid color-mix(in srgb, var(--accent) 26%, rgba(255,255,255,0.07));
-      color: #fff;
-      font-size: 10px;
-      font-weight: 900;
-    }
-
-    .commentsScroller {
-      max-height: 390px;
-      overflow-y: auto;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      scrollbar-width: thin;
-    }
-
-    .commentsScroller::-webkit-scrollbar {
-      width: 7px;
-    }
-
-    .commentsScroller::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,0.16);
-      border-radius: 999px;
-    }
-
-    .commentsEmpty {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 90px;
-      padding: 14px;
-      color: rgba(255,255,255,0.45);
-      font-size: 12px;
-      text-align: center;
-    }
-
-    .commentsComposer {
-      padding: 10px;
-      border-top: 1px solid rgba(255,255,255,0.07);
-      background: rgba(5,5,5,0.92);
-    }
-
-    .commentsComposer .comment-form {
-      margin: 0;
-    }
-
-    .commentsComposer .comment-form textarea {
-      min-height: 58px;
-      max-height: 150px;
-      padding: 9px 10px;
-      border-radius: 10px;
-      font-size: 12px;
-    }
-
-    .commentsComposer .review-actions {
-      margin-top: 7px;
-    }
-
-    .commentsComposer .btn {
-      padding: 6px 10px;
-      font-size: 11px;
-    }
-
-    .comment-item {
-      padding: 9px !important;
-      border-radius: 10px !important;
-      background: rgba(255,255,255,0.035) !important;
-      border: 1px solid rgba(255,255,255,0.07) !important;
-    }
-
-    .comment-item .comment-item.comment-reply {
-      background: rgba(255,255,255,0.022) !important;
-    }
-
-    .comment-replies {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-      margin-top: 8px;
-      margin-left: 16px;
-      padding-left: 9px;
-      border-left: 2px solid color-mix(in srgb, var(--accent) 28%, rgba(255,255,255,0.08));
-    }
-
-    .comment-reply {
-      margin-left: 0 !important;
-      padding-left: 8px !important;
-      border-left: 0 !important;
-    }
-
-    .comment-head {
-      margin-bottom: 5px !important;
-    }
-
-    .commentText {
-      color: rgba(255,255,255,0.75);
-      font-size: 12px;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-
-    .replyToggle {
-      margin-top: 7px;
-    }
-
-    .replyToggle summary {
-      width: fit-content;
-      cursor: pointer;
-      color: color-mix(in srgb, var(--accent) 70%, white 22%);
-      font-size: 10px;
-      font-weight: 800;
-      list-style: none;
-    }
-
-    .replyToggle summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .replyToggle summary::before {
-      content: "↳ ";
-      opacity: .7;
-    }
-
-    .replyToggle .comment-form {
-      margin-top: 7px;
-    }
-
-    .replyToggle .comment-form textarea {
-      min-height: 56px;
-      font-size: 12px;
-    }
-
-    .reviewPane .reviewcard,
-    .reviewPane.reviewcard {
-      margin: 0;
-      padding: 0;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
-    }
-
-    .reviewPane .reviewhead {
-      margin-bottom: 10px;
-    }
-
-    .reviewPane .reviewtext {
-      margin-top: 10px;
-      color: rgba(255,255,255,0.88);
-      font-size: 13px;
-      line-height: 1.55;
-      overflow-wrap: anywhere;
-    }
-
-    .reviewPane .review_footer {
-      align-items: center;
-      margin-top: 12px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .reviewPane .review_posted_date {
-      color: rgba(255,255,255,0.42);
-    }
-
-    .reviewComposer {
-      position: sticky;
-      top: 62px;
-      scroll-margin-top: 70px;
-      padding: 15px;
-      border: 1px solid color-mix(in srgb, var(--accent) 20%, rgba(255,255,255,0.10));
-      border-radius: 14px;
-      background: #050505;
-    }
-
-    .reviewComposer h3 {
-      margin: 5px 0 12px;
-      color: #fff;
-    }
-
-    .reviewComposer .write-review-form textarea {
-      min-height: 150px;
-      max-height: 320px;
-    }
-
-    .discussionEmpty {
-      padding: 34px 18px;
-      border: 1px dashed rgba(255,255,255,0.10);
-      border-radius: 14px;
-      color: rgba(255,255,255,0.50);
-      text-align: center;
-    }
-
-    @media (max-width: 1180px) {
-      .discussionLayout {
-        grid-template-columns: minmax(0,1fr) 290px;
-      }
-
-      .reviewConversation {
-        grid-template-columns: 1fr;
-      }
-
-      .reviewPane {
-        border-right: 0;
-        border-bottom: 1px solid rgba(255,255,255,0.07);
-      }
-
-      .commentsScroller {
-        max-height: 310px;
-      }
-    }
-
-    @media (max-width: 840px) {
-      .discussionLayout {
-        grid-template-columns: 1fr;
-      }
-
-      .reviewComposer {
-        position: static;
-        order: -1;
-      }
-
-      .showJumpNav {
-        position: static;
-      }
-    }
-
-    @media (max-width: 650px) {
-      .discussionHeader {
-        align-items: stretch;
-        flex-direction: column;
-      }
-
-      .discussionHeader .reviewSortForm {
-        width: 100%;
-      }
-
-      .reviewConversation {
-        border-radius: 12px;
-      }
-
-      .reviewPane {
-        padding: 11px;
-      }
-
-      .commentsScroller {
-        max-height: 280px;
-      }
-
-      .comment-replies {
-        margin-left: 8px;
-      }
-    }
-
   </style>
 </head>
 
@@ -1399,9 +997,6 @@
         <a href="/shows">Shows</a>
         <a href="/top">Top Shows</a>
         <a href="/top_users">Top Users</a>
-        <a href="/predictions">Predictions</a>
-        <a href="/forums">Forums</a>
-        <a href="/tierlists">Tierlists</a>
         <% if (meUser && Number(meUser.is_admin) === 1) { %>
           <a href="/admin/bulk_add">Mass Add</a>
           <a href="/admin/roles">Roles</a>
@@ -1507,7 +1102,7 @@
       </div>
     <% } %>
 
-    <div id="show-overview" style="margin-top:14px;">
+    <div style="margin-top:14px;">
       <div class="panel">
         <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:28px; width:100%;">
           <div style="display:flex; align-items:flex-start; gap:18px; flex:1 1 auto; min-width:0;">
@@ -1849,65 +1444,46 @@
       </div>
     </div>
 
-    
-    <%
-      const totalDiscussionComments = reviewList.reduce((sum, rv) => {
-        return sum + Number(rv && rv.comment_count ? rv.comment_count : 0);
-      }, 0);
-    %>
+    <div style="margin-top:8px;">
+      <section class="reviewsSection">
+        <div class="reviewsLayout">
+          <div class="panel reviewsMain" style="flex:1 1 0; min-width:0; border:1px solid color-mix(in srgb, var(--accent) 22%, rgba(255,255,255,0.12)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent);">
+            <div class="row between reviewToolbar" style="margin-bottom:14px; align-items: flex-end;">
+              <div>
+                <div class="kicker">Reviews</div>
+                <h2 style="margin:6px 0 0;">Community</h2>
+                <div class="muted small" style="margin-top:4px;">
+                  <%= reviewList.length %> review<%= reviewList.length === 1 ? '' : 's' %>
+                </div>
+              </div>
 
-    <nav class="showJumpNav" aria-label="Show page sections">
-      <a href="#show-overview">Overview</a>
-      <a href="#community-discussion">
-        Reviews & Comments
-        <span class="showJumpCount"><%= reviewList.length %></span>
-      </a>
-      <a href="#write-review">Write Review</a>
-    </nav>
+              <form method="get" action="/show/<%= showRow.id %>" class="reviewSortForm">
+                <label for="reviewSort" class="muted small" style="display:block; margin-bottom:6px;">Sort by</label>
+                <select id="reviewSort" name="sort" class="reviewSortSelect" onchange="this.form.submit()">
+                  <option value="popular" <%= activeSort === 'popular' ? 'selected' : '' %>>Most Popular</option>
+                  <option value="newest" <%= activeSort === 'newest' ? 'selected' : '' %>>Newest</option>
+                  <option value="oldest" <%= activeSort === 'oldest' ? 'selected' : '' %>>Oldest</option>
+                  <option value="highest" <%= activeSort === 'highest' ? 'selected' : '' %>>Lowest Reviewed</option>
+                  <option value="lowest" <%= activeSort === 'lowest' ? 'selected' : '' %>>Highest Reviewed</option>
+                </select>
+              </form>
+            </div>
 
-    <section id="community-discussion" class="discussionSection">
-      <div class="discussionHeader">
-        <div>
-          <div class="kicker">Community</div>
-          <h2>Reviews & Discussion</h2>
-          <div class="discussionHeaderMeta">
-            <%= reviewList.length %> review<%= reviewList.length === 1 ? '' : 's' %>
-            •
-            <%= totalDiscussionComments %> comment<%= totalDiscussionComments === 1 ? '' : 's' %>
-          </div>
-        </div>
-
-        <form method="get" action="/show/<%= showRow.id %>" class="reviewSortForm">
-          <label for="reviewSort" class="muted small" style="display:block;margin-bottom:6px;">Sort reviews</label>
-          <select id="reviewSort" name="sort" class="reviewSortSelect" onchange="this.form.submit()">
-            <option value="popular" <%= activeSort === 'popular' ? 'selected' : '' %>>Most Popular</option>
-            <option value="newest" <%= activeSort === 'newest' ? 'selected' : '' %>>Newest</option>
-            <option value="oldest" <%= activeSort === 'oldest' ? 'selected' : '' %>>Oldest</option>
-            <option value="highest" <%= activeSort === 'highest' ? 'selected' : '' %>>Lowest Reviewed</option>
-            <option value="lowest" <%= activeSort === 'lowest' ? 'selected' : '' %>>Highest Reviewed</option>
-          </select>
-        </form>
-      </div>
-
-      <div class="discussionLayout">
-        <div class="discussionFeed">
-          <% if (reviewList.length > 0) { %>
-            <% for (const rv of reviewList) {
-              const commentList = Array.isArray(rv.comments)
-                ? [...rv.comments].sort((a, b) => {
-                    const at = String(a.created_at || '');
-                    const bt = String(b.created_at || '');
-                    return at.localeCompare(bt);
-                  })
-                : [];
-
-              const rvVote = Number(rv.vote_score || 0);
-              const myVote = rv.my_vote == null ? 0 : Number(rv.my_vote);
-              const isOwner = currentUserId != null && currentUserId === Number(rv.user_id);
-              const canAdminDelete = meUser && Number(meUser.is_admin || 0) === 1 && !isOwner;
-            %>
-              <article class="reviewConversation">
-                <div class="reviewPane">
+            <% if (reviewList.length > 0) { %>
+              <div class="reviewlist">
+                <% for (const rv of reviewList) {
+                  const commentList = Array.isArray(rv.comments)
+                    ? [...rv.comments].sort((a, b) => {
+                        const at = String(a.created_at || '');
+                        const bt = String(b.created_at || '');
+                        return at.localeCompare(bt);
+                      })
+                    : [];
+                  const rvVote = Number(rv.vote_score || 0);
+                  const myVote = rv.my_vote == null ? 0 : Number(rv.my_vote);
+                  const isOwner = currentUserId != null && currentUserId === Number(rv.user_id);
+                  const canAdminDelete = meUser && Number(meUser.is_admin || 0) === 1 && !isOwner;
+                %>
                   <div class="reviewcard">
                     <div class="reviewhead">
                       <div class="reviewuser">
@@ -1928,9 +1504,7 @@
                             <% } %>
 
                             <% if (rv.rating_half != null) { %>
-                              <span class="review_rating_plain">
-                                ★ <%= (Number(rv.rating_half) / 2).toFixed(Number(rv.rating_half) % 2 ? 1 : 0) %>
-                              </span>
+                              <span class="review_rating_plain">★ <%= (Number(rv.rating_half) / 2).toFixed(Number(rv.rating_half) % 2 ? 1 : 0) %></span>
                             <% } %>
                           </div>
                         </div>
@@ -1964,226 +1538,212 @@
 
                       <% if (rv.ts) { %>
                         <div class="review_posted_date">
-                          Posted <%= new Date(Number(rv.ts) * 1000).toLocaleDateString('en-US') %>
+                          Posted on <%= new Date(Number(rv.ts) * 1000).toLocaleDateString('en-US') %>
                         </div>
                       <% } %>
                     </div>
-                  </div>
-                </div>
 
-                <div class="commentsPane">
-                  <div class="commentsPaneHeader">
-                    <div class="commentsPaneTitle">Discussion</div>
-                    <span class="commentsPaneCount"><%= Number(rv.comment_count || 0) %></span>
-                  </div>
-
-                  <div class="commentsScroller">
-                    <% if (commentList.length > 0) { %>
-                      <% for (const c of commentList) {
-                        const isCommentOwner = currentUserId != null && currentUserId === Number(c.commenter_user_id);
-                        const canAdminDeleteComment = meUser && Number(meUser.is_admin || 0) === 1;
-                        const replyList = Array.isArray(c.replies) ? c.replies : [];
-                        const commentDeleted = String(c.comment_text || '').trim() === '[comment deleted]';
-                      %>
-                        <div class="comment-item">
-                          <div class="comment-head">
-                            <div class="comment-user">
-                              <a href="/u/<%= encodeURIComponent(c.commenter_username || '') %>" class="comment-avatar">
-                                <% if (c.commenter_avatar_url) { %>
-                                  <img src="<%= c.commenter_avatar_url %>" alt="<%= c.commenter_username || 'user' %>">
-                                <% } %>
-                              </a>
-
-                              <div>
-                                <div style="font-weight:700;font-size:12px;">
-                                  <a href="/u/<%= encodeURIComponent(c.commenter_username || '') %>">
-                                    <%= c.commenter_username || "User" %>
+                    <details style="margin-top:10px;">
+                      <summary class="muted">
+                        Comments (
+                        <% if (rv.comment_count !== 0) { %>
+                          <b><%= rv.comment_count %></b>
+                        <% } else { %>
+                          <%= rv.comment_count %>
+                        <% } %>
+                        )
+                      </summary>
+                    
+                      <div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
+                        <% if (commentList.length > 0) { %>
+                          <% for (const c of commentList) {
+                            const isCommentOwner = currentUserId != null && currentUserId === Number(c.commenter_user_id);
+                            const canAdminDeleteComment = meUser && Number(meUser.is_admin || 0) === 1;
+                            const replyList = Array.isArray(c.replies) ? c.replies : [];
+                            const commentDeleted = String(c.comment_text || '').trim() === '[comment deleted]';
+                          %>
+                            <div class="comment-item">
+                              <div class="comment-head">
+                                <div class="comment-user">
+                                  <a href="/u/<%= encodeURIComponent(c.commenter_username || '') %>" class="comment-avatar">
+                                    <% if (c.commenter_avatar_url) { %>
+                                      <img src="<%= c.commenter_avatar_url %>" alt="<%= c.commenter_username || 'user' %>">
+                                    <% } %>
                                   </a>
+                                  <div>
+                                    <div style="font-weight:700;">
+                                      <a href="/u/<%= encodeURIComponent(c.commenter_username || '') %>"><%= c.commenter_username || "User" %></a>
+                                    </div>
+                                    <% if (c.created_at) { %>
+                                      <div class="muted small"><%= c.created_at %></div>
+                                    <% } %>
+                                  </div>
                                 </div>
-
-                                <% if (c.created_at) { %>
-                                  <div class="muted" style="font-size:9px;"><%= c.created_at %></div>
+                    
+                                <% if (!commentDeleted) { %>
+                                  <% if (canAdminDeleteComment) { %>
+                                    <form method="post" action="/admin/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete">
+                                      <button class="btn ghost" type="submit">Delete</button>
+                                    </form>
+                                  <% } else if (isCommentOwner) { %>
+                                    <form method="post" action="/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete">
+                                      <button class="btn ghost" type="submit">Delete</button>
+                                    </form>
+                                  <% } %>
                                 <% } %>
                               </div>
-                            </div>
-
-                            <% if (!commentDeleted) { %>
-                              <% if (canAdminDeleteComment) { %>
-                                <form method="post" action="/admin/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete">
-                                  <button class="btn ghost" type="submit" style="padding:4px 7px;font-size:9px;">Delete</button>
-                                </form>
-                              <% } else if (isCommentOwner) { %>
-                                <form method="post" action="/show/<%= showRow.id %>/comment/<%= c.comment_id %>/delete">
-                                  <button class="btn ghost" type="submit" style="padding:4px 7px;font-size:9px;">Delete</button>
-                                </form>
-                              <% } %>
-                            <% } %>
-                          </div>
-
-                          <div class="commentText">
-                            <%= commentDeleted ? '[comment deleted]' : c.comment_text %>
-                          </div>
-
-                          <% if (replyList.length > 0) { %>
-                            <div class="comment-replies">
-                              <% for (const r of replyList) {
-                                const isReplyOwner = currentUserId != null && currentUserId === Number(r.replier_user_id);
-                                const replyDeleted = String(r.reply_text || '').trim() === '[reply deleted]';
-                              %>
-                                <div class="comment-item comment-reply">
-                                  <div class="comment-head">
-                                    <div class="comment-user">
-                                      <a href="/u/<%= encodeURIComponent(r.replier_username || '') %>" class="comment-avatar">
-                                        <% if (r.replier_avatar_url) { %>
-                                          <img src="<%= r.replier_avatar_url %>" alt="<%= r.replier_username || 'user' %>">
-                                        <% } %>
-                                      </a>
-
-                                      <div>
-                                        <div style="font-weight:700;font-size:12px;">
-                                          <a href="/u/<%= encodeURIComponent(r.replier_username || '') %>">
-                                            <%= r.replier_username || "User" %>
+                    
+                              <div class="muted"><%= commentDeleted ? '[comment deleted]' : c.comment_text %></div>
+                    
+                              <% if (replyList.length > 0) { %>
+                                <div style="margin-top:10px; margin-left:20px; display:flex; flex-direction:column; gap:8px;">
+                                  <% for (const r of replyList) {
+                                    const isReplyOwner = currentUserId != null && currentUserId === Number(r.replier_user_id);
+                                    const replyDeleted = String(r.reply_text || '').trim() === '[reply deleted]';
+                                  %>
+                                    <div class="comment-item comment-reply" style="background:rgba(255,255,255,0.025);">
+                                      <div class="comment-head">
+                                        <div class="comment-user">
+                                          <a href="/u/<%= encodeURIComponent(r.replier_username || '') %>" class="comment-avatar">
+                                            <% if (r.replier_avatar_url) { %>
+                                              <img src="<%= r.replier_avatar_url %>" alt="<%= r.replier_username || 'user' %>">
+                                            <% } %>
                                           </a>
+                                          <div>
+                                            <div style="font-weight:700;">
+                                              <a href="/u/<%= encodeURIComponent(r.replier_username || '') %>"><%= r.replier_username || "User" %></a>
+                                            </div>
+                                            <% if (r.created_at) { %>
+                                              <div class="muted small"><%= r.created_at %></div>
+                                            <% } %>
+                                          </div>
                                         </div>
-
-                                        <% if (r.created_at) { %>
-                                          <div class="muted" style="font-size:9px;"><%= r.created_at %></div>
+                              
+                                        <% if (!replyDeleted) { %>
+                                          <% if (canAdminDeleteComment) { %>
+                                            <form method="post" action="/admin/show/<%= showRow.id %>/reply/<%= r.reply_id %>/delete">
+                                              <button class="btn ghost" type="submit">Delete</button>
+                                            </form>
+                                          <% } else if (isReplyOwner) { %>
+                                            <form method="post" action="/show/<%= showRow.id %>/reply/<%= r.reply_id %>/delete">
+                                              <button class="btn ghost" type="submit">Delete</button>
+                                            </form>
+                                          <% } %>
                                         <% } %>
                                       </div>
-                                    </div>
-
-                                    <% if (!replyDeleted) { %>
-                                      <% if (canAdminDeleteComment) { %>
-                                        <form method="post" action="/admin/show/<%= showRow.id %>/reply/<%= r.reply_id %>/delete">
-                                          <button class="btn ghost" type="submit" style="padding:4px 7px;font-size:9px;">Delete</button>
-                                        </form>
-                                      <% } else if (isReplyOwner) { %>
-                                        <form method="post" action="/show/<%= showRow.id %>/reply/<%= r.reply_id %>/delete">
-                                          <button class="btn ghost" type="submit" style="padding:4px 7px;font-size:9px;">Delete</button>
-                                        </form>
+                              
+                                      <div class="muted">
+                                        <% if (!replyDeleted && r.parent_replier_username) { %>
+                                          <b>@<%= r.parent_replier_username %></b>
+                                          <span> </span>
+                                        <% } %>
+                                        <%= replyDeleted ? '[reply deleted]' : r.reply_text %>
+                                      </div>
+                              
+                                      <% if (meUser && !replyDeleted) { %>
+                                        <details style="margin-top:10px;">
+                                          <summary class="muted small" style="cursor:pointer;">Reply</summary>
+                                          <form
+                                            class="comment-form"
+                                            method="post"
+                                            action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment/<%= c.comment_id %>/reply"
+                                            style="margin-top:8px;"
+                                          >
+                                            <input type="hidden" name="parent_reply_id" value="<%= r.reply_id %>">
+                                            <textarea name="reply_text" placeholder="Write a reply…" required></textarea>
+                                            <div class="review-actions">
+                                              <button class="btn ghost" type="submit">Post reply</button>
+                                            </div>
+                                          </form>
+                                        </details>
                                       <% } %>
-                                    <% } %>
-                                  </div>
-
-                                  <div class="commentText">
-                                    <% if (!replyDeleted && r.parent_replier_username) { %>
-                                      <b>@<%= r.parent_replier_username %></b>
-                                      <span> </span>
-                                    <% } %>
-                                    <%= replyDeleted ? '[reply deleted]' : r.reply_text %>
-                                  </div>
-
-                                  <% if (meUser && !replyDeleted) { %>
-                                    <details class="replyToggle">
-                                      <summary>Reply</summary>
-                                      <form
-                                        class="comment-form"
-                                        method="post"
-                                        action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment/<%= c.comment_id %>/reply"
-                                      >
-                                        <input type="hidden" name="parent_reply_id" value="<%= r.reply_id %>">
-                                        <textarea name="reply_text" placeholder="Write a reply…" required></textarea>
-                                        <div class="review-actions">
-                                          <button class="btn ghost" type="submit">Post reply</button>
-                                        </div>
-                                      </form>
-                                    </details>
+                                    </div>
                                   <% } %>
                                 </div>
                               <% } %>
+                                
+                              <% if (meUser && !commentDeleted) { %>
+                                <details style="margin-top:10px;">
+                                  <summary class="muted small" style="cursor:pointer;">Reply</summary>
+                                  <form
+                                    class="comment-form"
+                                    method="post"
+                                    action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment/<%= c.comment_id %>/reply"
+                                    style="margin-top:8px;"
+                                  >
+                                    <textarea name="reply_text" placeholder="Write a reply…" required></textarea>
+                                    <div class="review-actions">
+                                      <button class="btn ghost" type="submit">Post reply</button>
+                                    </div>
+                                  </form>
+                                </details>
+                              <% } %>
                             </div>
                           <% } %>
-
-                          <% if (meUser && !commentDeleted) { %>
-                            <details class="replyToggle">
-                              <summary>Reply</summary>
-                              <form
-                                class="comment-form"
-                                method="post"
-                                action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment/<%= c.comment_id %>/reply"
-                              >
-                                <textarea name="reply_text" placeholder="Write a reply…" required></textarea>
-                                <div class="review-actions">
-                                  <button class="btn ghost" type="submit">Post reply</button>
-                                </div>
-                              </form>
-                            </details>
-                          <% } %>
-                        </div>
-                      <% } %>
-                    <% } else { %>
-                      <div class="commentsEmpty">No comments yet. Start the discussion.</div>
-                    <% } %>
-                  </div>
-
-                  <div class="commentsComposer">
-                    <% if (meUser) { %>
-                      <form
-                        class="comment-form"
-                        method="post"
-                        action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment"
-                      >
-                        <textarea name="comment_text" placeholder="Add a comment…" required></textarea>
-                        <div class="review-actions">
-                          <button class="btn ghost" type="submit">Post comment</button>
-                        </div>
-                      </form>
-                    <% } else { %>
-                      <div class="muted" style="font-size:11px;">
-                        <a href="<%= loginNext %>">Log in</a> to comment.
+                        <% } else { %>
+                          <div class="muted">No comments yet.</div>
+                        <% } %>
+                    
+                        <% if (meUser) { %>
+                          <form
+                            class="comment-form"
+                            method="post"
+                            action="/show/<%= showRow.id %>/review/<%= rv.user_id %>/comment"
+                          >
+                            <textarea name="comment_text" placeholder="Add a comment…" required></textarea>
+                            <div class="review-actions">
+                              <button class="btn ghost" type="submit">Post comment</button>
+                            </div>
+                          </form>
+                        <% } else { %>
+                          <div class="muted">Log in to comment.</div>
+                        <% } %>
                       </div>
-                    <% } %>
+                    </details>
                   </div>
-                </div>
-              </article>
-            <% } %>
-          <% } else { %>
-            <div class="discussionEmpty">
-              No reviews yet. Be the first to write one.
-            </div>
-          <% } %>
-        </div>
-
-        <aside id="write-review" class="reviewComposer">
-          <div class="kicker">Share your thoughts</div>
-          <h3>Write a Review</h3>
-
-          <% if (meUser) { %>
-            <form class="write-review-form" action="/show/<%= showRow.id %>/review" method="POST">
-              <textarea
-                name="review_text"
-                placeholder="Write your review here..."
-                required
-              ><%= myReviewText %></textarea>
-
-              <div class="review-actions">
-                <button type="submit" class="btn primary">Save Review</button>
-
-                <% if (myReviewText && myReviewText.trim()) { %>
-                  <button
-                    type="submit"
-                    class="btn ghost"
-                    formaction="/show/<%= showRow.id %>/review/delete"
-                    formmethod="POST"
-                  >
-                    Delete Review
-                  </button>
                 <% } %>
               </div>
-            </form>
-          <% } else { %>
-            <div class="muted">
-              <p>
-                Please
-                <a href="/login?next=<%= encodeURIComponent('/show/' + showRow.id) %>">log in</a>
-                to review.
-              </p>
-            </div>
-          <% } %>
-        </aside>
-      </div>
-    </section>
+            <% } else { %>
+              <div class="muted">No reviews yet. Be the first to write one.</div>
+            <% } %>
+          </div>
 
+          <div class="panel reviewsSide" style="border:1px solid color-mix(in srgb, var(--accent) 22%, rgba(255,255,255,0.12)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent);">
+            <div class="kicker">Share your thoughts</div>
+            <h3 style="margin: 6px 0 16px;">Write a Review</h3>
+
+            <% if (meUser) { %>
+              <form class="write-review-form" action="/show/<%= showRow.id %>/review" method="POST">
+                <textarea
+                  name="review_text"
+                  placeholder="Write your review here..."
+                  required
+                ><%= myReviewText %></textarea>
+
+                <div class="review-actions">
+                  <button type="submit" class="btn primary">Save Review</button>
+
+                  <% if (myReviewText && myReviewText.trim()) { %>
+                    <button
+                      type="submit"
+                      class="btn ghost"
+                      formaction="/show/<%= showRow.id %>/review/delete"
+                      formmethod="POST"
+                    >
+                      Delete Review
+                    </button>
+                  <% } %>
+                </div>
+              </form>
+            <% } else { %>
+              <div class="muted">
+                <p>Please <a href="/login?next=<%= encodeURIComponent('/show/' + showRow.id) %>">log in</a> to review.</p>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </section>
+    </div>
   </main>
 
   <footer class="wrap footer">
