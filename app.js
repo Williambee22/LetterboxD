@@ -3684,6 +3684,110 @@ function createApp() {
     }
   });
 
+  app.get(
+    '/admin/show/:show_id/ratings',
+    adminRequired(async (req, res, next) => {
+      const showId = Number(req.params.show_id);
+      const viewerUid = req.session.uid ? Number(req.session.uid) : null;
+  
+      let conn;
+  
+      try {
+        conn = getConn();
+  
+        let row = normalizeRow(await dbx.getShowById(conn, showId));
+        if (!row) return res.sendStatus(404);
+  
+        if (!row.poster_url) {
+          row.poster_url = posterUrlForShow(
+            row.corps || '',
+            row.year || 0
+          );
+        }
+  
+        let me = viewerUid
+          ? normalizeRow(await dbx.userById(conn, viewerUid))
+          : null;
+  
+        if (me && !me.avatar_url) {
+          me.avatar_url = pfpUrlForUsername(me.username || '');
+        }
+  
+        const allRatings = conn.prepare(`
+          SELECT
+            u.id AS user_id,
+            u.username,
+            u.avatar_url,
+  
+            r.rating_half,
+            r.ts AS rating_ts,
+  
+            rv.review_text,
+            rv.ts AS review_ts,
+  
+            (
+              SELECT ro.name
+              FROM user_roles ur
+              JOIN roles ro
+                ON ro.id = ur.role_id
+              WHERE ur.user_id = u.id
+              ORDER BY ur.assigned_ts ASC
+              LIMIT 1
+            ) AS role_name,
+  
+            (
+              SELECT ro.color
+              FROM user_roles ur
+              JOIN roles ro
+                ON ro.id = ur.role_id
+              WHERE ur.user_id = u.id
+              ORDER BY ur.assigned_ts ASC
+              LIMIT 1
+            ) AS role_color
+  
+          FROM ratings r
+  
+          JOIN users u
+            ON u.id = r.user_id
+  
+          LEFT JOIN reviews rv
+            ON rv.show_id = r.show_id
+           AND rv.user_id = r.user_id
+  
+          WHERE r.show_id = ?
+  
+          ORDER BY
+            r.rating_half DESC,
+            LOWER(u.username) ASC
+        `)
+          .all(showId)
+          .map(normalizeRow)
+          .map((rating) => {
+            if (!rating.avatar_url) {
+              rating.avatar_url = pfpUrlForUsername(
+                rating.username || ''
+              );
+            }
+  
+            return rating;
+          });
+  
+        return res.render('show_all_ratings_admin', {
+          row,
+          me,
+          all_ratings: allRatings,
+        });
+  
+      } catch (err) {
+        return next(err);
+  
+      } finally {
+        if (conn) dbx.close(conn);
+      }
+    })
+  );
+
+  
   app.post('/show/:show_id/review/:review_user_id/vote', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const reviewUserId = Number(req.params.review_user_id);
