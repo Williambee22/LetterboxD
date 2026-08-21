@@ -3006,7 +3006,11 @@ function createApp() {
 
   app.get('/u/:username/ratings', async (req, res, next) => {
     const username = req.params.username;
-    const rawSort = String(req.query.sort || 'high').trim().toLowerCase();
+  
+    const rawSort = String(
+      req.query.sort || 'high'
+    ).trim().toLowerCase();
+  
     const allowedSorts = new Set([
       'high',
       'low',
@@ -3015,30 +3019,84 @@ function createApp() {
       'high_reviews',
       'low_reviews'
     ]);
-    const sort = allowedSorts.has(rawSort) ? rawSort : 'high';
-    const q = String(req.query.q || '').trim();
-
+  
+    const sort = allowedSorts.has(rawSort)
+      ? rawSort
+      : 'high';
+  
+    const q = String(
+      req.query.q || ''
+    ).trim();
+  
     let conn;
+  
     try {
       conn = getConn();
+  
       const me = await currentUser(req);
-      const profileUser = normalizeRow(await dbx.userByUsername(conn, username));
-      if (!profileUser) return res.sendStatus(404);
-      const rows = (await dbx.listAllRatingsForUser(conn, profileUser.id, { sort, corpsQ: q }) || []).map(normalizeRow);
-      const userRoles = (await dbx.rolesForUser(conn, Number(profileUser.id)) || []).map(normalizeRow);
-
-      return res.render('user_all_ratings', {
-        me,
-        profile_user: profileUser,
-        user_roles: userRoles,
-        sort,
-        q,
-        rows,
+  
+      const profileUser = normalizeRow(
+        await dbx.userByUsername(
+          conn,
+          username
+        )
+      );
+  
+      if (!profileUser) {
+        return res.sendStatus(404);
+      }
+  
+      const rawRows =
+        await dbx.listAllRatingsForUser(
+          conn,
+          profileUser.id,
+          {
+            sort,
+            corpsQ: q
+          }
+        ) || [];
+  
+      const rows = rawRows.map(row => {
+        const d = normalizeRow(row);
+  
+        /*
+         * EXACT SAME POSTER SOURCE
+         * USED BY THE SHOWS PAGE.
+         */
+        d.poster_url = posterUrlForShow(
+          d.corps || '',
+          d.year || 0
+        );
+  
+        return d;
       });
+  
+      const userRoles = (
+        await dbx.rolesForUser(
+          conn,
+          Number(profileUser.id)
+        ) || []
+      ).map(normalizeRow);
+  
+      return res.render(
+        'user_all_ratings',
+        {
+          me,
+          profile_user: profileUser,
+          user_roles: userRoles,
+          sort,
+          q,
+          rows
+        }
+      );
+  
     } catch (err) {
       return next(err);
+  
     } finally {
-      if (conn) dbx.close(conn);
+      if (conn) {
+        dbx.close(conn);
+      }
     }
   });
 
