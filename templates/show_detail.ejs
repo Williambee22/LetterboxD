@@ -1713,12 +1713,17 @@
             <h3 style="margin: 6px 0 16px;">Write a Review</h3>
 
             <% if (meUser) { %>
-              <form class="write-review-form" action="/show/<%= showRow.id %>/review" method="POST">
+              <form class="write-review-form" action="/show/<%= showRow.id %>/review" method="POST" data-review-draft-form>
                 <textarea
                   name="review_text"
                   placeholder="Write your review here..."
                   required
+                  data-review-draft-textarea
                 ><%= myReviewText %></textarea>
+
+                <div class="muted small" data-review-draft-status style="margin-top:6px;">
+                  Draft saves automatically.
+                </div>
 
                 <div class="review-actions">
                   <button type="submit" class="btn primary">Save Review</button>
@@ -1773,5 +1778,106 @@
       });
     })();
   </script>
+
+  <script>
+    (() => {
+      const form = document.querySelector("[data-review-draft-form]");
+      const textarea = document.querySelector("[data-review-draft-textarea]");
+      const status = document.querySelector("[data-review-draft-status]");
+
+      if (!form || !textarea) return;
+
+      const showId = "<%= String(showRow.id || '') %>";
+      const userId = "<%= currentUserId != null ? String(currentUserId) : 'guest' %>";
+
+      const key = `pressboxd:review-draft:${userId}:${showId}`;
+      const pendingSaveKey = `${key}:pending-save`;
+      const pendingDeleteKey = `${key}:pending-delete`;
+
+      const serverValue = textarea.value;
+      const draft = localStorage.getItem(key);
+      const pendingSave = localStorage.getItem(pendingSaveKey);
+      const pendingDelete = localStorage.getItem(pendingDeleteKey);
+
+      function setStatus(message) {
+        if (status) status.textContent = message;
+      }
+
+      /*
+       * If a Save Review submission succeeded, the server-rendered review
+       * will match what we submitted. At that point the local draft can
+       * safely be removed.
+       */
+      if (pendingSave !== null) {
+        if (serverValue === pendingSave) {
+          localStorage.removeItem(key);
+          localStorage.removeItem(pendingSaveKey);
+          localStorage.removeItem(pendingDeleteKey);
+          setStatus("Review saved.");
+        } else {
+          localStorage.removeItem(pendingSaveKey);
+
+          if (draft !== null) {
+            textarea.value = draft;
+            setStatus("Unsaved draft restored.");
+          }
+        }
+      } else if (pendingDelete !== null) {
+        /*
+         * A successful delete returns an empty server review.
+         * If deletion failed, keep/restore the local draft.
+         */
+        if (serverValue.trim() === "") {
+          localStorage.removeItem(key);
+          localStorage.removeItem(pendingDeleteKey);
+          localStorage.removeItem(pendingSaveKey);
+          setStatus("Draft saves automatically.");
+        } else {
+          localStorage.removeItem(pendingDeleteKey);
+
+          if (draft !== null) {
+            textarea.value = draft;
+            setStatus("Unsaved draft restored.");
+          }
+        }
+      } else if (draft !== null && draft !== serverValue) {
+        textarea.value = draft;
+        setStatus("Unsaved draft restored.");
+      }
+
+      textarea.addEventListener("input", () => {
+        try {
+          localStorage.setItem(key, textarea.value);
+          setStatus("Draft saved.");
+        } catch (err) {
+          setStatus("Could not save draft in this browser.");
+        }
+      });
+
+      form.addEventListener("submit", (event) => {
+        const submitter = event.submitter;
+        const submitAction = String(
+          submitter?.getAttribute("formaction") ||
+          form.getAttribute("action") ||
+          ""
+        );
+
+        try {
+          localStorage.setItem(key, textarea.value);
+
+          if (submitAction.endsWith("/review/delete")) {
+            localStorage.setItem(pendingDeleteKey, "1");
+            localStorage.removeItem(pendingSaveKey);
+          } else {
+            localStorage.setItem(pendingSaveKey, textarea.value);
+            localStorage.removeItem(pendingDeleteKey);
+          }
+        } catch (err) {
+          // If localStorage is unavailable, allow the normal form submit.
+        }
+      });
+    })();
+  </script>
+
 </body>
 </html>
