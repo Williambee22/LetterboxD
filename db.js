@@ -2341,11 +2341,24 @@ function listAllRatingsForUser(conn, userId, opts = {}) {
   let orderSql = 'r.rating_half DESC, r.ts DESC, s.year DESC, s.id ASC';
 
   if (sort === 'low') {
-    orderSql = 'r.rating_half ASC, r.ts DESC, s.year DESC, s.id ASC';
+    orderSql =
+      'r.rating_half ASC, r.ts DESC, s.year DESC, s.id ASC';
+  
+  } else if (sort === 'year_desc') {
+    orderSql =
+      'CAST(s.year AS INTEGER) DESC, s.corps COLLATE NOCASE ASC, s.title COLLATE NOCASE ASC';
+  
+  } else if (sort === 'year_asc') {
+    orderSql =
+      'CAST(s.year AS INTEGER) ASC, s.corps COLLATE NOCASE ASC, s.title COLLATE NOCASE ASC';
+  
   } else if (sort === 'high_reviews') {
-    orderSql = 'r.rating_half DESC, rv.ts DESC, s.year DESC, s.id ASC';
+    orderSql =
+      'r.rating_half DESC, rv.ts DESC, s.year DESC, s.id ASC';
+  
   } else if (sort === 'low_reviews') {
-    orderSql = 'r.rating_half ASC, rv.ts DESC, s.year DESC, s.id ASC';
+    orderSql =
+      'r.rating_half ASC, rv.ts DESC, s.year DESC, s.id ASC';
   }
 
   const sql = `
