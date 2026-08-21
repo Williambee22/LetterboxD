@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>All Ratings - <%= row && row.title ? row.title : "Show" %> - Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <link rel="icon" type="image/png" href="/static/favicon.png"/>
+
+  <style>
+    .ratingList {
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      margin-top:16px;
+    }
+
+    .ratingCard {
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:14px;
+      background:rgba(255,255,255,0.03);
+      overflow:hidden;
+    }
+
+    .ratingSummary {
+      list-style:none;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:14px;
+    }
+
+    .ratingSummary::-webkit-details-marker {
+      display:none;
+    }
+
+    .ratingSummary:hover {
+      background:rgba(255,255,255,0.035);
+    }
+
+    .ratingLeft {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .ratingAvatar {
+      width:44px;
+      height:44px;
+      border-radius:999px;
+      overflow:hidden;
+      flex:0 0 44px;
+      background:rgba(255,255,255,0.08);
+    }
+
+    .ratingAvatar img {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .ratingMeta {
+      min-width:0;
+    }
+
+    .ratingNameRow {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      font-weight:800;
+    }
+
+    .ratingScore {
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      font-weight:900;
+      white-space:nowrap;
+      padding:6px 10px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.10);
+      background:rgba(255,255,255,0.04);
+    }
+
+    .ratingChevron {
+      font-size:14px;
+      opacity:.75;
+      transition:transform .15s ease;
+      margin-left:10px;
+    }
+
+    details[open] .ratingChevron {
+      transform:rotate(90deg);
+    }
+
+    .ratingBody {
+      padding:0 14px 14px 14px;
+      border-top:1px solid rgba(255,255,255,0.06);
+      background:rgba(255,255,255,0.02);
+    }
+
+    .ratingReviewText {
+      white-space:pre-wrap;
+      line-height:1.55;
+      margin-top:12px;
+    }
+
+    .ratingNoReview {
+      margin-top:12px;
+      color:var(--muted);
+    }
+
+    .rolebadge {
+      display:inline-flex;
+      align-items:center;
+      font-size:11px;
+      font-weight:800;
+      border-radius:999px;
+      padding:3px 8px;
+      color:#fff;
+    }
+
+    .adminBadge {
+      display:inline-flex;
+      align-items:center;
+      padding:4px 8px;
+      border-radius:999px;
+      background:rgba(239,68,68,.14);
+      border:1px solid rgba(239,68,68,.28);
+      font-size:10px;
+      font-weight:900;
+      color:#fff;
+      margin-top:8px;
+    }
+
+    .showposter {
+      border-radius:0 !important;
+    }
+  </style>
+</head>
+
+<body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
+  <%
+    const POSTER_FALLBACK = "/static/posters/placeholder.png";
+    const ratingList = Array.isArray(all_ratings) ? all_ratings : [];
+  %>
+
+  <header class="topbar">
+    <div class="wrap row between">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display:flex;align-items:center;">
+          <img
+            src="/static/logo.png"
+            alt="Logo"
+            style="width:36px;height:36px;object-fit:contain;flex-shrink:0;"
+          >
+        </a>
+
+        <a class="brand" href="/shows" style="display:flex;align-items:center;text-decoration:none;">
+          <img
+            src="/static/pressboxd-wordmark.png"
+            alt="Pressboxd"
+            style="height:68px;width:auto;display:block;"
+          >
+        </a>
+      </div>
+
+      <nav class="nav row">
+        <a href="/shows">Shows</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+      </nav>
+
+      <div class="auth row">
+        <% if (me) { %>
+          <a class="nav_user" href="/me">
+            <span class="avatar_sm">
+              <% if (me.avatar_url) { %>
+                <img src="<%= me.avatar_url %>" alt="avatar">
+              <% } else { %>
+                <span class="avatar_fallback"></span>
+              <% } %>
+            </span>
+            <span class="muted small"><%= me.username || "me" %></span>
+          </a>
+          <a href="/logout">Logout</a>
+        <% } %>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div style="margin-top:14px;">
+      <div class="panel">
+        <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+          <div class="showposter" style="position:relative;overflow:hidden;width:140px;height:210px;flex:0 0 140px;">
+            <img
+              src="<%= row.poster_url || POSTER_FALLBACK %>"
+              alt="<%= row.title || 'Show' %> poster"
+              style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;"
+              onerror="this.onerror=null;this.src='<%= POSTER_FALLBACK %>';"
+            >
+          </div>
+
+          <div style="flex:1 1 auto;min-width:0;">
+            <div class="kicker">All User Ratings</div>
+            <h1 style="margin:6px 0 8px;"><%= row.title || "" %></h1>
+
+            <div class="muted">
+              <% if (row.year) { %><%= row.year %><% } %>
+              <% if (row.year && row.corps) { %> — <% } %>
+              <% if (row.corps) { %><%= row.corps %><% } %>
+            </div>
+
+            <div class="adminBadge">ADMIN ONLY</div>
+
+            <div style="margin-top:14px;">
+              <a class="btn ghost" href="/show/<%= row.id %>">← Back to show</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ratingList">
+      <% if (ratingList.length > 0) { %>
+        <% for (const c of ratingList) { %>
+          <details class="ratingCard">
+            <summary class="ratingSummary">
+              <div class="ratingLeft">
+                <a href="/u/<%= encodeURIComponent(c.username || '') %>" class="ratingAvatar">
+                  <% if (c.avatar_url) { %>
+                    <img src="<%= c.avatar_url %>" alt="<%= c.username || 'user' %>">
+                  <% } %>
+                </a>
+
+                <div class="ratingMeta">
+                  <div class="ratingNameRow">
+                    <a href="/u/<%= encodeURIComponent(c.username || '') %>">
+                      <%= c.username || "User" %>
+                    </a>
+
+                    <% if (c.role_name) { %>
+                      <span class="rolebadge" style="background:<%= c.role_color || '#666666' %>;">
+                        <%= c.role_name %>
+                      </span>
+                    <% } %>
+                  </div>
+
+                  <div class="muted small">
+                    <% if (c.review_text && c.review_text.trim()) { %>
+                      Click to view review
+                    <% } else { %>
+                      No written review
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;align-items:center;">
+                <div class="ratingScore">
+                  ★ <%= (Number(c.rating_half || 0) / 2).toFixed(Number(c.rating_half || 0) % 2 ? 1 : 0) %>
+                </div>
+                <span class="ratingChevron">▶</span>
+              </div>
+            </summary>
+
+            <div class="ratingBody">
+              <% if (c.review_text && c.review_text.trim()) { %>
+                <div class="ratingReviewText"><%= c.review_text %></div>
+
+                <% if (c.review_ts) { %>
+                  <div class="muted small" style="margin-top:10px;">
+                    Review posted on <%= new Date(Number(c.review_ts) * 1000).toLocaleDateString('en-US') %>
+                  </div>
+                <% } %>
+              <% } else { %>
+                <div class="ratingNoReview">
+                  This user rated the show but did not leave a written review.
+                </div>
+              <% } %>
+
+              <% if (c.rating_ts) { %>
+                <div class="muted small" style="margin-top:10px;">
+                  Rating submitted on <%= new Date(Number(c.rating_ts) * 1000).toLocaleDateString('en-US') %>
+                </div>
+              <% } %>
+            </div>
+          </details>
+        <% } %>
+      <% } else { %>
+        <div class="panel">
+          <div class="muted">No ratings yet for this show.</div>
+        </div>
+      <% } %>
+    </div>
+  </main>
+
+  <footer class="wrap footer">
+    <div class="small">Rate drum corps shows.</div>
+  </footer>
+</body>
+</html>
