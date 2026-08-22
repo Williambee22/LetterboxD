@@ -78,7 +78,7 @@ function usersColumns(conn) {
 }
 
 const PRESENCE_ONLINE_SECONDS = 3 * 60;
-const PRESENCE_RECENT_SECONDS = 20 * 60;
+const PRESENCE_RECENT_SECONDS = 12 * 60;
 const PRESENCE_WRITE_THROTTLE_SECONDS = 30;
 
 
@@ -153,7 +153,7 @@ function presenceStatusFromTs(
 
 
   if (
-    age <=
+    age <
     PRESENCE_RECENT_SECONDS
   ) {
     return 'recent';
