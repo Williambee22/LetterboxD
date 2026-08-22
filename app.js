@@ -1090,6 +1090,146 @@ function createApp() {
     return next();
   });
 
+  app.post('/api/presence', (req, res) => {
+    const userId =
+      Number(
+        req.session?.uid || 0
+      );
+  
+    if (!userId) {
+      return res
+        .status(204)
+        .end();
+    }
+  
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      if (
+        typeof dbx.touchUserPresence ===
+        'function'
+      ) {
+        dbx.touchUserPresence(
+          conn,
+          userId
+        );
+      }
+  
+      return res
+        .status(204)
+        .end();
+  
+    } catch (err) {
+      console.error(
+        'Presence heartbeat failed:',
+        err
+      );
+  
+      /*
+        Presence should never prevent
+        somebody from using Pressboxd.
+      */
+      return res
+        .status(204)
+        .end();
+  
+    } finally {
+      if (conn) {
+        dbx.close(conn);
+      }
+    }
+  });
+  
+  
+  app.get(
+    '/api/presence/connections',
+    (req, res) => {
+      const userId =
+        Number(
+          req.session?.uid || 0
+        );
+  
+      res.setHeader(
+        'Cache-Control',
+        'private, no-store'
+      );
+  
+      if (!userId) {
+        return res
+          .status(401)
+          .json({
+            ok: false,
+            users: []
+          });
+      }
+  
+      let conn;
+  
+      try {
+        conn = getConn();
+  
+        if (
+          typeof dbx.touchUserPresence ===
+          'function'
+        ) {
+          dbx.touchUserPresence(
+            conn,
+            userId
+          );
+        }
+  
+        const users =
+          typeof dbx.listConnectedUserPresence ===
+          'function'
+            ? (
+                dbx.listConnectedUserPresence(
+                  conn,
+                  userId,
+                  {
+                    limit: 500,
+                    includeOffline: true
+                  }
+                ) || []
+              ).map(normalizeRow)
+            : [];
+  
+        return res.json({
+          ok: true,
+  
+          now_ts:
+            typeof dbx.nowTs ===
+            'function'
+              ? dbx.nowTs()
+              : Math.floor(
+                  Date.now() / 1000
+                ),
+  
+          users
+        });
+  
+      } catch (err) {
+        console.error(
+          'Presence connections lookup failed:',
+          err
+        );
+  
+        return res
+          .status(500)
+          .json({
+            ok: false,
+            users: []
+          });
+  
+      } finally {
+        if (conn) {
+          dbx.close(conn);
+        }
+      }
+    }
+  );
+  
   app.use(async (req, res, next) => {
     try {
       const me = await currentUser(req);
@@ -1111,9 +1251,44 @@ function createApp() {
         me.theme_color = safeThemeColor;
 
         const conn = getConn();
+
         try {
-          notifCount = await dbx.unreadNotificationsCount(conn, Number(me.id));
-          notifItems = (await dbx.listUnreadNotifications(conn, Number(me.id), { limit: 20 }) || []).map(normalizeRow);
+          /*
+            Any normal Pressboxd activity
+            counts as being active.
+        
+            db.js throttles these writes,
+            so this does not write to SQLite
+            on every single request.
+          */
+          if (
+            typeof dbx.touchUserPresence ===
+            'function'
+          ) {
+            dbx.touchUserPresence(
+              conn,
+              Number(me.id)
+            );
+          }
+        
+        
+          notifCount =
+            await dbx.unreadNotificationsCount(
+              conn,
+              Number(me.id)
+            );
+        
+        
+          notifItems = (
+            await dbx.listUnreadNotifications(
+              conn,
+              Number(me.id),
+              {
+                limit: 20
+              }
+            ) || []
+          ).map(normalizeRow);
+        
         } finally {
           dbx.close(conn);
         }
