@@ -1,126 +1,524 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Following - Pressboxd</title>
-  <link rel="stylesheet" href="/static/styles.css"/>
+
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="icon" type="image/png" href="/static/favicon.png">
 
   <style>
-    .auth { align-items:center; gap: 12px; }
-
-    .notifWrap { position: relative; display: inline-flex; align-items:center; }
-    .bellBtn {
-      position: relative;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      color: inherit;
-      padding: 6px;
-      border-radius: 10px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0.95;
+    :root {
+      --social-border: rgba(255,255,255,.09);
+      --social-muted: rgba(255,255,255,.58);
+      --social-card: rgba(255,255,255,.03);
+      --social-card-hover: rgba(255,255,255,.055);
+      --presence-online: #35d07f;
+      --presence-recent: #e6b94a;
+      --presence-offline: #70798b;
     }
-    .bellBtn:hover { background: rgba(255,255,255,0.06); }
-    .badgeDot {
+
+    .auth { align-items:center; gap:12px; }
+    .followingPage { padding-top:26px; padding-bottom:50px; }
+
+    .followingBrand {
+      display:flex;
+      align-items:center;
+      flex-shrink:0;
+      text-decoration:none;
+    }
+
+    .followingBrand img {
+      height:70px;
+      width:auto;
+      display:block;
+      object-fit:contain;
+    }
+
+    .followingHero {
+      position:relative;
+      overflow:hidden;
+      margin-bottom:18px;
+      padding:24px 26px;
+      border:1px solid var(--social-border);
+      border-radius:18px;
+      background:linear-gradient(135deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+    }
+
+    .followingHero::before {
+      content:"";
       position:absolute;
-      top: 3px;
-      right: 3px;
-      min-width: 18px;
-      height: 18px;
-      padding: 0 6px;
-      border-radius: 999px;
-      background: #ff3b30;
-      color: #fff;
-      font-size: 11px;
-      line-height: 18px;
-      text-align: center;
-      font-weight: 800;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+      width:300px;
+      height:300px;
+      right:-110px;
+      top:-170px;
+      border-radius:50%;
+      background:var(--accent, #3252b3);
+      opacity:.14;
+      filter:blur(24px);
+      pointer-events:none;
     }
 
-    .notifDropdown {
-      display: none;
-      position: absolute;
-      right: 0;
-      top: 40px;
-      width: 340px;
-      max-height: 420px;
-      overflow: auto;
-      background: rgba(15, 23, 42, 0.98);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 14px;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.45);
-      z-index: 9999;
+    .followingHeroInner {
+      position:relative;
+      z-index:1;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:20px;
     }
-    .notifDropdown.open { display:block; }
 
-    .notifHeader {
+    .followingTitle {
+      margin:5px 0 5px;
+      font-size:clamp(30px, 5vw, 44px);
+      line-height:1;
+      letter-spacing:-.035em;
+    }
+
+    .followingDescription {
+      margin:0;
+      max-width:580px;
+      color:var(--social-muted);
+      font-size:14px;
+      line-height:1.5;
+    }
+
+    .followingStats {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      gap:9px;
+    }
+
+    .followingStat {
+      min-width:94px;
+      padding:11px 14px;
+      text-align:center;
+      border:1px solid var(--social-border);
+      border-radius:13px;
+      background:rgba(0,0,0,.14);
+    }
+
+    .followingStatNumber {
+      display:block;
+      font-size:19px;
+      font-weight:900;
+      line-height:1.1;
+    }
+
+    .followingStatLabel {
+      display:block;
+      margin-top:3px;
+      color:var(--social-muted);
+      font-size:11px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.055em;
+    }
+
+    .followingStat.online .followingStatNumber {
+      color:var(--presence-online);
+    }
+
+    .followingPanel {
+      overflow:hidden;
+      border:1px solid var(--social-border);
+      border-radius:18px;
+      background:rgba(255,255,255,.022);
+    }
+
+    .followingPanelHeader {
       display:flex;
       align-items:center;
       justify-content:space-between;
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.10);
-      position: sticky;
-      top: 0;
-      background: rgba(15, 23, 42, 0.98);
-      backdrop-filter: blur(8px);
+      gap:12px;
+      padding:17px 18px;
+      border-bottom:1px solid var(--social-border);
     }
-    .notifTitle { font-weight: 900; }
+
+    .followingPanelTitle {
+      margin:0;
+      font-size:17px;
+      font-weight:900;
+    }
+
+    .followingPanelSubtitle {
+      margin-top:3px;
+      color:var(--social-muted);
+      font-size:12px;
+    }
+
+    .followingCount {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:30px;
+      height:30px;
+      padding:0 9px;
+      border:1px solid var(--social-border);
+      border-radius:999px;
+      background:rgba(255,255,255,.055);
+      font-size:12px;
+      font-weight:850;
+    }
+
+    .followingGrid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+      gap:10px;
+      padding:12px;
+    }
+
+    .followingCard {
+      display:flex;
+      align-items:center;
+      min-width:0;
+      gap:12px;
+      padding:12px;
+      border:1px solid var(--social-border);
+      border-radius:14px;
+      background:var(--social-card);
+      transition:background .12s ease, border-color .12s ease, transform .12s ease;
+    }
+
+    .followingCard:hover {
+      background:var(--social-card-hover);
+      border-color:rgba(255,255,255,.14);
+      transform:translateY(-1px);
+    }
+
+    .followingAvatarWrap {
+      position:relative;
+      width:48px;
+      height:48px;
+      flex:0 0 48px;
+    }
+
+    .followingAvatar {
+      width:48px;
+      height:48px;
+      display:block;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:50%;
+      background:rgba(255,255,255,.07);
+    }
+
+    .followingAvatar img {
+      width:100%;
+      height:100%;
+      display:block;
+      object-fit:cover;
+    }
+
+    .followingAvatarFallback {
+      display:block;
+      width:100%;
+      height:100%;
+      background:linear-gradient(145deg, rgba(255,255,255,.13), rgba(255,255,255,.035));
+    }
+
+    .presenceAvatarDot {
+      position:absolute;
+      right:-1px;
+      bottom:1px;
+      width:13px;
+      height:13px;
+      border:3px solid #0d1118;
+      border-radius:50%;
+      background:var(--presence-offline);
+    }
+
+    .presenceAvatarDot.online {
+      background:var(--presence-online);
+      box-shadow:0 0 0 3px rgba(53,208,127,.11);
+    }
+
+    .presenceAvatarDot.recent { background:var(--presence-recent); }
+    .presenceAvatarDot.offline { background:var(--presence-offline); }
+
+    .followingUserInfo {
+      min-width:0;
+      flex:1;
+    }
+
+    .followingUsername {
+      display:block;
+      max-width:100%;
+      overflow:hidden;
+      color:inherit;
+      font-size:15px;
+      font-weight:850;
+      text-decoration:none;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .followingUsername:hover {
+      color:var(--accent, #3252b3);
+    }
+
+    .followingUserLabel {
+      margin-top:4px;
+      color:var(--social-muted);
+      font-size:11px;
+    }
+
+    .presenceLine {
+      display:flex;
+      align-items:center;
+      gap:6px;
+      margin-top:4px;
+      color:rgba(255,255,255,.42);
+      font-size:11px;
+      font-weight:650;
+    }
+
+    .presenceMiniDot {
+      width:7px;
+      height:7px;
+      flex:0 0 7px;
+      border-radius:50%;
+      background:var(--presence-offline);
+    }
+
+    .presenceLine.online { color:var(--presence-online); }
+    .presenceLine.online .presenceMiniDot { background:var(--presence-online); }
+
+    .presenceLine.recent { color:var(--presence-recent); }
+    .presenceLine.recent .presenceMiniDot { background:var(--presence-recent); }
+
+    .presenceLine.offline { color:rgba(255,255,255,.42); }
+    .presenceLine.offline .presenceMiniDot { background:var(--presence-offline); }
+
+    .followingEmpty {
+      padding:42px 24px;
+      text-align:center;
+    }
+
+    .followingEmptyIcon {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:50px;
+      height:50px;
+      margin:0 auto 12px;
+      border:1px solid var(--social-border);
+      border-radius:15px;
+      background:rgba(255,255,255,.045);
+      font-size:22px;
+    }
+
+    .followingEmptyTitle {
+      font-size:15px;
+      font-weight:850;
+    }
+
+    .followingEmptyText {
+      max-width:360px;
+      margin:5px auto 0;
+      color:var(--social-muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+
+    .notifWrap {
+      position:relative;
+      display:inline-flex;
+      align-items:center;
+    }
+
+    .bellBtn {
+      position:relative;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:34px;
+      height:34px;
+      padding:0;
+      color:inherit;
+      cursor:pointer;
+      opacity:.9;
+      border:1px solid transparent;
+      border-radius:10px;
+      background:transparent;
+      transition:background .12s ease, border-color .12s ease, opacity .12s ease;
+    }
+
+    .bellBtn:hover {
+      opacity:1;
+      border-color:rgba(255,255,255,.08);
+      background:rgba(255,255,255,.06);
+    }
+
+    .badgeDot {
+      position:absolute;
+      top:-3px;
+      right:-4px;
+      min-width:18px;
+      height:18px;
+      padding:0 5px;
+      color:#fff;
+      font-size:10px;
+      font-weight:900;
+      line-height:18px;
+      text-align:center;
+      border:2px solid #0d1118;
+      border-radius:999px;
+      background:#ff3b30;
+    }
+
+    .notifDropdown {
+      display:none;
+      position:absolute;
+      top:43px;
+      right:0;
+      z-index:9999;
+      width:min(350px, calc(100vw - 24px));
+      max-height:440px;
+      overflow:auto;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      background:rgba(15,23,42,.99);
+      box-shadow:0 18px 55px rgba(0,0,0,.5);
+    }
+
+    .notifDropdown.open { display:block; }
+    .notifDropdown, .notifDropdown * { pointer-events:auto !important; }
+
+    .notifHeader {
+      position:sticky;
+      top:0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:11px 12px;
+      border-bottom:1px solid rgba(255,255,255,.1);
+      background:rgba(15,23,42,.99);
+      backdrop-filter:blur(8px);
+    }
+
+    .notifTitle { font-weight:900; }
+
     .markReadBtn {
-      border: none;
-      background: transparent;
-      color: inherit;
-      cursor: pointer;
-      opacity: 0.85;
-      font-size: 12px;
-      padding: 6px 8px;
-      border-radius: 10px;
+      padding:6px 8px;
+      color:inherit;
+      font-size:11px;
+      cursor:pointer;
+      opacity:.75;
+      border:0;
+      border-radius:8px;
+      background:transparent;
     }
-    .markReadBtn:hover { background: rgba(255,255,255,0.06); opacity: 1; }
 
-    .notifList { padding: 8px; display:flex; flex-direction:column; gap: 8px; }
+    .markReadBtn:hover {
+      opacity:1;
+      background:rgba(255,255,255,.06);
+    }
+
+    .notifList {
+      display:flex;
+      flex-direction:column;
+      gap:7px;
+      padding:8px;
+    }
+
     .notifItem {
-      padding: 10px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
+      padding:10px;
+      font-size:13px;
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:11px;
+      background:rgba(255,255,255,.035);
     }
-    .notifItem.unread { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.25); }
-    .notifTime { font-size: 12px; opacity: 0.7; margin-top: 4px; }
-    .notifEmpty { padding: 12px; opacity: 0.8; }
 
-    .authBellSlot { display:inline-flex; align-items:center; }
+    .notifItem.unread {
+      border-color:rgba(99,102,241,.24);
+      background:rgba(99,102,241,.15);
+    }
 
-    .notifDropdown,
-    .notifDropdown * {
-      pointer-events: auto !important;
+    .notifTime {
+      margin-top:4px;
+      font-size:10px;
+      opacity:.6;
+    }
+
+    .notifEmpty {
+      padding:15px;
+      font-size:13px;
+      opacity:.7;
+    }
+
+    @media (max-width:760px) {
+      .followingPage { padding-top:16px; }
+
+      .followingHero {
+        padding:19px 17px;
+        border-radius:15px;
+      }
+
+      .followingHeroInner {
+        align-items:flex-start;
+        flex-direction:column;
+      }
+
+      .followingStats { justify-content:flex-start; }
+      .followingPanel { border-radius:15px; }
+      .followingGrid { grid-template-columns:1fr; }
+
+      .followingBrand img { height:62px; }
+      .topbar .nav { display:none; }
+      .auth .muted.small { display:none; }
     }
   </style>
 </head>
-<body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
+
 <%
   const safeMe = (typeof me !== "undefined" && me) ? me : null;
   const safeProfileUser = (typeof profile_user !== "undefined" && profile_user) ? profile_user : {};
   const safeRows = (typeof rows !== "undefined" && Array.isArray(rows)) ? rows : [];
-  const safeNotifCount = (typeof notif_count !== "undefined" && notif_count) ? notif_count : 0;
+  const safeNotifCount = (typeof notif_count !== "undefined" && notif_count) ? Number(notif_count) : 0;
   const safeNotifItems = (typeof notif_items !== "undefined" && Array.isArray(notif_items)) ? notif_items : [];
   const safeFlashes = (typeof flashes !== "undefined" && Array.isArray(flashes)) ? flashes : [];
+
+  const isOwnFollowing = !!(
+    safeMe &&
+    safeProfileUser &&
+    Number(safeMe.id) === Number(safeProfileUser.id)
+  );
+
+  function cleanPresence(user) {
+    const status = String(user?.presence_status || "offline").toLowerCase();
+    return status === "online" || status === "recent" ? status : "offline";
+  }
+
+  function presenceLabel(status) {
+    if (status === "online") return "Online";
+    if (status === "recent") return "Active recently";
+    return "Offline";
+  }
+
+  const initialOnlineCount = isOwnFollowing
+    ? safeRows.filter(u => cleanPresence(u) === "online").length
+    : 0;
 %>
+
+<body class="app" <%= safeMe && safeMe.theme_color ? `style="--accent: ${safeMe.theme_color};"` : "" %>>
 
   <header class="topbar">
     <div class="wrap row between">
-      <a class="brand" href="/shows">
-        <span class="dot"></span>
-        <span>Pressboxd</span>
+      <a class="followingBrand" href="/shows" aria-label="Pressboxd">
+        <img src="/static/pressboxd-wordmark.png" alt="Pressboxd">
       </a>
 
       <nav class="nav row">
         <a href="/shows">Shows</a>
         <a href="/top">Top Shows</a>
         <a href="/top_users">Top Users</a>
+        <a href="/predictions">Predictions</a>
+        <a href="/forums">Forums</a>
+        <a href="/tierlists">Tierlists</a>
+
         <% if (safeMe && Number(safeMe.is_admin) === 1) { %>
           <a href="/admin/bulk_add">Mass Add</a>
           <a href="/admin/roles">Roles</a>
@@ -130,69 +528,75 @@
 
       <div class="auth row">
         <% if (safeMe) { %>
-          <div class="authBellSlot">
-            <div class="notifWrap">
-              <button class="bellBtn" id="bellBtn" aria-label="Notifications" title="Notifications">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/>
-                  <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
-                </svg>
+          <div class="notifWrap">
+            <button class="bellBtn" id="bellBtn" type="button" aria-label="Notifications" title="Notifications">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1.3"/>
+                <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+              </svg>
 
-                <% if (safeNotifCount > 0) { %>
-                  <span class="badgeDot"><%= safeNotifCount %></span>
-                <% } %>
-              </button>
+              <% if (safeNotifCount > 0) { %>
+                <span class="badgeDot"><%= safeNotifCount %></span>
+              <% } %>
+            </button>
 
-              <div class="notifDropdown" id="notifDropdown">
-                <div class="notifHeader">
-                  <div class="notifTitle">Notifications</div>
-                  <form method="post" action="/me/notifications/read">
-                    <button class="markReadBtn" type="submit">Mark all read</button>
-                  </form>
-                </div>
-
-                <% if (safeNotifItems.length > 0) { %>
-                  <div class="notifList">
-                    <% for (const n of safeNotifItems) {
-                      const kind = n.kind || "";
-                      const actor = n.actor_username || "Someone";
-                      const created = n.created_at || "";
-                      const unread = Number(n.is_read || 0) === 0;
-                      const sid = n.show_id || null;
-                    %>
-                      <div class="notifItem <%= unread ? 'unread' : '' %>">
-                        <% if (kind === "friend_request") { %>
-                          <div><b><%= actor %></b> sent you a friend request.</div>
-                        <% } else if (kind === "follow") { %>
-                          <div><b><%= actor %></b> followed you.</div>
-                        <% } else if (kind === "review_upvote") { %>
-                          <div>
-                            <b><%= actor %></b> upvoted your review
-                            <% if (sid) { %>
-                              — <a href="/show/<%= sid %>">View show</a>
-                            <% } %>
-                          </div>
-                        <% } else { %>
-                          <div>New activity.</div>
-                        <% } %>
-
-                        <% if (created) { %>
-                          <div class="notifTime"><%= created %></div>
-                        <% } %>
-                      </div>
-                    <% } %>
-                  </div>
-                <% } else { %>
-                  <div class="notifEmpty">No notifications.</div>
-                <% } %>
+            <div class="notifDropdown" id="notifDropdown">
+              <div class="notifHeader">
+                <div class="notifTitle">Notifications</div>
+                <form method="post" action="/me/notifications/read">
+                  <button class="markReadBtn" type="submit">Mark all read</button>
+                </form>
               </div>
+
+              <% if (safeNotifItems.length > 0) { %>
+                <div class="notifList">
+                  <% for (const n of safeNotifItems) {
+                    const kind = n.kind || "";
+                    const actor = n.actor_username || "Someone";
+                    const created = n.created_at || "";
+                    const unread = Number(n.is_read || 0) === 0;
+                    const sid = n.show_id || null;
+                  %>
+                    <div class="notifItem <%= unread ? 'unread' : '' %>">
+                      <% if (kind === "friend_request") { %>
+                        <div><b><%= actor %></b> sent you a friend request.</div>
+                      <% } else if (kind === "follow") { %>
+                        <div><b><%= actor %></b> followed you.</div>
+                      <% } else if (kind === "review_upvote") { %>
+                        <div>
+                          <b><%= actor %></b> upvoted your review
+                          <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %>
+                        </div>
+                      <% } else if (kind === "review_comment") { %>
+                        <div>
+                          <b><%= actor %></b> commented on your review.
+                          <% if (sid) { %> — <a href="/show/<%= sid %>">View</a><% } %>
+                        </div>
+                      <% } else if (kind === "comment_reply") { %>
+                        <div>
+                          <b><%= actor %></b> replied to your comment.
+                          <% if (sid) { %> — <a href="/show/<%= sid %>">View</a><% } %>
+                        </div>
+                      <% } else { %>
+                        <div>New activity.</div>
+                      <% } %>
+
+                      <% if (created) { %>
+                        <div class="notifTime"><%= created %></div>
+                      <% } %>
+                    </div>
+                  <% } %>
+                </div>
+              <% } else { %>
+                <div class="notifEmpty">No notifications.</div>
+              <% } %>
             </div>
           </div>
 
           <a class="nav_user" href="/me">
             <span class="avatar_sm">
               <% if (safeMe.avatar_url) { %>
-                <img src="<%= safeMe.avatar_url %>" alt="avatar">
+                <img src="<%= safeMe.avatar_url %>" alt="">
               <% } else { %>
                 <span class="avatar_fallback"></span>
               <% } %>
@@ -209,67 +613,244 @@
     </div>
   </header>
 
-  <main class="wrap">
+  <main class="wrap followingPage">
     <% if (safeFlashes.length > 0) { %>
-      <div class="flashes">
+      <div class="flashes" style="margin-bottom:14px;">
         <% for (const f of safeFlashes) { %>
           <div class="flash <%= f.category %>"><%= f.message %></div>
         <% } %>
       </div>
     <% } %>
 
-    <div class="panel">
-      <div class="kicker">Following</div>
-      <h1 style="margin:6px 0 0;"><%= safeProfileUser.username || "User" %></h1>
+    <section class="followingHero">
+      <div class="followingHeroInner">
+        <div>
+          <div class="kicker">Following</div>
+
+          <h1 class="followingTitle">
+            <%= isOwnFollowing ? "People You Follow" : `${safeProfileUser.username || "User"}'s Following` %>
+          </h1>
+
+          <p class="followingDescription">
+            <% if (isOwnFollowing) { %>
+              Keep up with the people you follow and see who's currently active on Pressboxd.
+            <% } else { %>
+              People followed by <%= safeProfileUser.username || "this user" %>.
+            <% } %>
+          </p>
+        </div>
+
+        <div class="followingStats">
+          <div class="followingStat">
+            <span class="followingStatNumber"><%= safeRows.length %></span>
+            <span class="followingStatLabel">Following</span>
+          </div>
+
+          <% if (isOwnFollowing) { %>
+            <div class="followingStat online">
+              <span class="followingStatNumber" id="followingOnlineCount"><%= initialOnlineCount %></span>
+              <span class="followingStatLabel">Online</span>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </section>
+
+    <section class="followingPanel">
+      <div class="followingPanelHeader">
+        <div>
+          <h2 class="followingPanelTitle">
+            <%= isOwnFollowing ? "Your Following" : "Following" %>
+          </h2>
+
+          <div class="followingPanelSubtitle">
+            <%= safeRows.length === 1 ? "1 account" : `${safeRows.length} accounts` %>
+          </div>
+        </div>
+
+        <div class="followingCount"><%= safeRows.length %></div>
+      </div>
 
       <% if (safeRows.length > 0) { %>
-        <div class="stack" style="margin-top:12px;">
-          <% for (const u of safeRows) { %>
-            <div class="row between" style="align-items:center;">
-              <div class="row gap" style="align-items:center;">
-                <span class="avatar_sm">
+        <div class="followingGrid" id="followingGrid">
+          <% for (const u of safeRows) {
+            const status = cleanPresence(u);
+          %>
+            <div
+              class="followingCard"
+              data-following-id="<%= u.id %>"
+              <% if (isOwnFollowing) { %>data-presence="<%= status %>"<% } %>
+            >
+              <div class="followingAvatarWrap">
+                <a class="followingAvatar" href="/u/<%= encodeURIComponent(u.username) %>">
                   <% if (u.avatar_url) { %>
-                    <img src="<%= u.avatar_url %>" alt="avatar">
+                    <img src="<%= u.avatar_url %>" alt="">
                   <% } else { %>
-                    <span class="avatar_fallback"></span>
+                    <span class="followingAvatarFallback"></span>
                   <% } %>
-                </span>
-                <a class="reviewuser" href="/u/<%= encodeURIComponent(u.username) %>"><%= u.username %></a>
+                </a>
+
+                <% if (isOwnFollowing) { %>
+                  <span class="presenceAvatarDot <%= status %>" data-presence-avatar-dot aria-hidden="true"></span>
+                <% } %>
+              </div>
+
+              <div class="followingUserInfo">
+                <a class="followingUsername" href="/u/<%= encodeURIComponent(u.username) %>">
+                  <%= u.username %>
+                </a>
+
+                <% if (isOwnFollowing) { %>
+                  <div class="presenceLine <%= status %>" data-presence-line>
+                    <span class="presenceMiniDot"></span>
+                    <span data-presence-text><%= presenceLabel(status) %></span>
+                  </div>
+                <% } else { %>
+                  <div class="followingUserLabel">Pressboxd user</div>
+                <% } %>
               </div>
             </div>
           <% } %>
         </div>
       <% } else { %>
-        <div class="muted" style="margin-top:10px;">Not following anyone yet.</div>
+        <div class="followingEmpty">
+          <div class="followingEmptyIcon">+</div>
+          <div class="followingEmptyTitle">Not following anyone yet</div>
+          <div class="followingEmptyText">
+            <% if (isOwnFollowing) { %>
+              Visit a user's profile and follow them to have their activity appear here.
+            <% } else { %>
+              <%= safeProfileUser.username || "This user" %> isn't following anyone yet.
+            <% } %>
+          </div>
+        </div>
       <% } %>
-    </div>
+    </section>
   </main>
 
   <footer class="wrap footer">
     <div class="small">Rate drum corps shows.</div>
   </footer>
 
+  <% if (safeMe) { %>
+    <script src="/static/js/presence.js?v=20260822a"></script>
+  <% } %>
+
   <script>
     (() => {
       const btn = document.getElementById("bellBtn");
-      const dd  = document.getElementById("notifDropdown");
-      if (!btn || !dd) return;
+      const dd = document.getElementById("notifDropdown");
 
-      dd.addEventListener("click", (e) => e.stopPropagation());
+      if (btn && dd) {
+        dd.addEventListener("click", e => e.stopPropagation());
 
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dd.classList.toggle("open");
+        btn.addEventListener("click", e => {
+          e.preventDefault();
+          e.stopPropagation();
+          dd.classList.toggle("open");
+        });
+
+        document.addEventListener("click", () => dd.classList.remove("open"));
+
+        document.addEventListener("keydown", e => {
+          if (e.key === "Escape") dd.classList.remove("open");
+        });
+      }
+
+      const isOwnFollowing = <%= isOwnFollowing ? "true" : "false" %>;
+      if (!isOwnFollowing) return;
+
+      const onlineCount = document.getElementById("followingOnlineCount");
+      const validStatuses = new Set(["online", "recent", "offline"]);
+
+      function cleanStatus(value) {
+        const status = String(value || "").trim().toLowerCase();
+        return validStatuses.has(status) ? status : "offline";
+      }
+
+      function statusText(status) {
+        if (status === "online") return "Online";
+        if (status === "recent") return "Active recently";
+        return "Offline";
+      }
+
+      function updateFollowingCard(userId, status) {
+        const card = document.querySelector(
+          `[data-following-id="${CSS.escape(String(userId))}"]`
+        );
+
+        if (!card) return;
+
+        const clean = cleanStatus(status);
+        card.dataset.presence = clean;
+
+        const avatarDot = card.querySelector("[data-presence-avatar-dot]");
+        const line = card.querySelector("[data-presence-line]");
+        const text = card.querySelector("[data-presence-text]");
+
+        if (avatarDot) {
+          avatarDot.classList.remove("online", "recent", "offline");
+          avatarDot.classList.add(clean);
+        }
+
+        if (line) {
+          line.classList.remove("online", "recent", "offline");
+          line.classList.add(clean);
+        }
+
+        if (text) text.textContent = statusText(clean);
+      }
+
+      function refreshOnlineCount() {
+        if (!onlineCount) return;
+
+        onlineCount.textContent = String(
+          document.querySelectorAll('.followingCard[data-presence="online"]').length
+        );
+      }
+
+      async function refreshPresence() {
+        if (document.visibilityState !== "visible") return;
+
+        try {
+          const response = await fetch("/api/presence/connections", {
+            method: "GET",
+            credentials: "same-origin",
+            cache: "no-store",
+            headers: {
+              "X-Requested-With": "XMLHttpRequest"
+            }
+          });
+
+          if (!response.ok) return;
+
+          const payload = await response.json();
+          if (!payload || !Array.isArray(payload.users)) return;
+
+          document.querySelectorAll("[data-following-id]").forEach(card => {
+            updateFollowingCard(card.dataset.followingId, "offline");
+          });
+
+          for (const user of payload.users) {
+            updateFollowingCard(user.id, user.presence_status);
+          }
+
+          refreshOnlineCount();
+        } catch (_) {
+          // Presence is optional and should never break the page.
+        }
+      }
+
+      refreshOnlineCount();
+      refreshPresence();
+
+      setInterval(refreshPresence, 30 * 1000);
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") refreshPresence();
       });
 
-      document.addEventListener("click", () => {
-        dd.classList.remove("open");
-      });
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") dd.classList.remove("open");
-      });
+      window.addEventListener("focus", refreshPresence);
     })();
   </script>
 </body>
