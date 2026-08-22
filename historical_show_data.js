@@ -1274,11 +1274,27 @@ function parseWikipediaYearRow(
           splitRepertoire(
             repertoireRaw
           );
-
-        if (
-          !repertoire.length &&
-          repIndex < 0
-        ) {
+        
+        
+        // Make sure what we extracted actually looks
+        // like music repertoire.
+        const hasUsableRepertoire =
+          repertoire.some(
+            (piece) =>
+              /\s+by\s+/i.test(
+                String(piece || '')
+              )
+          );
+        
+        
+        // Wikipedia tables are inconsistent.
+        // Even when a "Repertoire" header exists,
+        // scan the entire matching year row if the
+        // normal repertoire column produced nothing useful.
+        if (!hasUsableRepertoire) {
+          let bestRepertoire = [];
+          let bestByCount = 0;
+        
           for (
             let i = 0;
             i < row.cells.length;
@@ -1286,13 +1302,12 @@ function parseWikipediaYearRow(
           ) {
             if (
               i === yearIndex ||
-              i === titleIndex ||
               i === scoreIndex ||
               i === placementIndex
             ) {
               continue;
             }
-
+        
             const raw =
               row.cells[i]
                 ? cellTextWithBreaks(
@@ -1300,27 +1315,52 @@ function parseWikipediaYearRow(
                     row.cells[i]
                   )
                 : '';
-
-            if (
-              /\s+by\s+/i.test(
-                raw
-              ) ||
-              raw.includes('\n')
-            ) {
-              const possible =
-                splitRepertoire(
-                  raw
-                );
-
-              if (
-                possible.length
-              ) {
-                repertoire =
-                  possible;
-
-                break;
-              }
+        
+            if (!raw) {
+              continue;
             }
+        
+        
+            // A real repertoire cell normally contains
+            // one or more "Title by Composer" entries.
+            const byMatches =
+              raw.match(
+                /\s+by\s+/gi
+              ) || [];
+        
+            if (!byMatches.length) {
+              continue;
+            }
+        
+        
+            const possible =
+              splitRepertoire(
+                raw
+              ).filter(
+                (piece) =>
+                  /\s+by\s+/i.test(
+                    String(piece || '')
+                  )
+              );
+        
+        
+            if (
+              possible.length &&
+              byMatches.length >
+                bestByCount
+            ) {
+              bestRepertoire =
+                possible;
+        
+              bestByCount =
+                byMatches.length;
+            }
+          }
+        
+        
+          if (bestRepertoire.length) {
+            repertoire =
+              bestRepertoire;
           }
         }
 
