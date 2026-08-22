@@ -2106,7 +2106,7 @@
                       const rh = eventToHalf(e);
                       input.value = rh;
                       setDisplay(rh);
-                      form.submit();
+                      form.requestSubmit();
                     });
                 
                     stars.addEventListener("keydown", (e) => {
@@ -2116,7 +2116,7 @@
                 
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        form.submit();
+                        form.requestSubmit();
                         return;
                       }
                 
@@ -2663,6 +2663,172 @@
           }
         } catch (err) {
           // If localStorage is unavailable, allow the normal form submit.
+        }
+      });
+    })();
+  </script>
+
+
+  <script>
+    (function () {
+      const HISTORY_HEADER = "X-Pressboxd-History-Replace";
+      const submittingForms = new WeakSet();
+
+      function getSubmitInfo(form, submitter) {
+        const action =
+          submitter?.getAttribute("formaction") ||
+          form.getAttribute("action") ||
+          window.location.href;
+
+        const method = String(
+          submitter?.getAttribute("formmethod") ||
+          form.getAttribute("method") ||
+          "GET"
+        ).toUpperCase();
+
+        return {
+          url: new URL(action, window.location.href),
+          method
+        };
+      }
+
+      function buildParams(form, submitter) {
+        const params = new URLSearchParams();
+        const formData = new FormData(form);
+
+        for (const [key, value] of formData.entries()) {
+          if (typeof value === "string") {
+            params.append(key, value);
+          }
+        }
+
+        if (submitter && submitter.name) {
+          params.append(submitter.name, submitter.value || "");
+        }
+
+        return params;
+      }
+
+      document.addEventListener("submit", async (event) => {
+        if (event.defaultPrevented) return;
+
+        const form = event.target;
+
+        if (!(form instanceof HTMLFormElement)) return;
+
+        // Do not interfere with forms intentionally opening another tab/window.
+        const target = String(form.getAttribute("target") || "").trim();
+        if (target && target !== "_self") return;
+
+        const submitter = event.submitter || null;
+        const { url, method } = getSubmitInfo(form, submitter);
+
+        // Never intercept a form posting to another website.
+        if (url.origin !== window.location.origin) return;
+
+        // The review-sort dropdown is navigation within the same show page.
+        // Replace the current history entry instead of adding another one.
+        if (method === "GET" && form.classList.contains("reviewSortForm")) {
+          event.preventDefault();
+
+          const params = buildParams(form, submitter);
+          url.search = params.toString();
+
+          window.location.replace(url.href);
+          return;
+        }
+
+        // State-changing forms on this page are POST forms.
+        if (method !== "POST") return;
+
+        // Leave multipart/file-upload forms alone if one is ever added here.
+        if (
+          String(form.enctype || "").toLowerCase().includes("multipart/form-data") &&
+          form.querySelector('input[type="file"]')
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+
+        if (submittingForms.has(form)) return;
+        submittingForms.add(form);
+
+        const buttons = form.querySelectorAll(
+          'button[type="submit"], input[type="submit"]'
+        );
+
+        buttons.forEach((button) => {
+          button.dataset.historyWasDisabled = button.disabled ? "1" : "0";
+          button.disabled = true;
+        });
+
+        try {
+          const params = buildParams(form, submitter);
+
+          const response = await fetch(url.href, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+              "Accept": "application/json",
+              [HISTORY_HEADER]: "1"
+            },
+            body: params.toString()
+          });
+
+          const contentType = String(
+            response.headers.get("content-type") || ""
+          ).toLowerCase();
+
+          let data = null;
+
+          if (contentType.includes("application/json")) {
+            data = await response.json();
+          }
+
+          if (response.ok && data && data.redirect) {
+            const destination = new URL(
+              data.redirect,
+              window.location.href
+            );
+
+            // This is the key: replace instead of push.
+            // Browser Back now skips all of the show's update refreshes.
+            window.location.replace(destination.href);
+            return;
+          }
+
+          if (response.ok) {
+            // If a POST route ever stops redirecting, still refresh without
+            // creating a new browser-history entry.
+            window.location.replace(window.location.href);
+            return;
+          }
+
+          console.error(
+            "Pressboxd update failed:",
+            response.status,
+            response.statusText
+          );
+
+          alert("That update could not be completed. Please try again.");
+        } catch (err) {
+          console.error("Pressboxd update request failed:", err);
+
+          // Network-level fallback. This may use normal browser navigation,
+          // but only if the history-safe request itself could not run.
+          HTMLFormElement.prototype.submit.call(form);
+          return;
+        } finally {
+          submittingForms.delete(form);
+
+          buttons.forEach((button) => {
+            button.disabled =
+              button.dataset.historyWasDisabled === "1";
+
+            delete button.dataset.historyWasDisabled;
+          });
         }
       });
     })();
