@@ -3988,7 +3988,7 @@ function createApp() {
       u.viewer_friend_status = await dbx.friendsStatus(conn, uid, uid);
 
       const rolesForMe = (await dbx.rolesForUser(conn, uid) || []).map(normalizeRow);
-      const recentRatings = (await dbx.listRecentRatingsForUser(conn, uid, { limit: 8 }) || []).map((x) => {
+      const recentRatings = (await dbx.listRecentRatingsForUser(conn, uid, { limit: 7 }) || []).map((x) => {
         const d = normalizeRow(x);
         d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
         return d;
