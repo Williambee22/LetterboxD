@@ -1,326 +1,2435 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  >
+
   <title>Friends - Pressboxd</title>
-  <link rel="stylesheet" href="/static/styles.css"/>
+
+  <link
+    rel="stylesheet"
+    href="/static/styles.css"
+  >
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="/static/favicon.png"
+  >
 
   <style>
-    .auth { align-items:center; gap: 12px; }
+    /* =========================================================
+       FRIENDS PAGE
+       ========================================================= */
 
-    .notifWrap { position: relative; display: inline-flex; align-items:center; }
-    .bellBtn {
+    :root {
+      --friend-panel:
+        rgba(255,255,255,.035);
+
+      --friend-panel-hover:
+        rgba(255,255,255,.055);
+
+      --friend-border:
+        rgba(255,255,255,.09);
+
+      --friend-border-strong:
+        rgba(255,255,255,.14);
+
+      --friend-muted:
+        rgba(255,255,255,.58);
+
+      --presence-online:
+        #35d07f;
+
+      --presence-recent:
+        #e6b94a;
+
+      --presence-offline:
+        #70798b;
+    }
+
+
+    body.app {
+      min-height: 100vh;
+    }
+
+
+    .friendsPage {
+      padding-top: 26px;
+      padding-bottom: 50px;
+    }
+
+
+    /* =========================================================
+       TOP BAR
+       ========================================================= */
+
+    .friendsTopbar .wrap {
+      min-height: 72px;
+    }
+
+
+    .friendsBrand {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+
+    .friendsBrand img {
+      height: 70px;
+      width: auto;
+      display: block;
+      object-fit: contain;
+    }
+
+
+    .auth {
+      align-items: center;
+      gap: 12px;
+    }
+
+
+    .nav_user {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+
+    /* =========================================================
+       PAGE HERO
+       ========================================================= */
+
+    .friendsHero {
       position: relative;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      color: inherit;
-      padding: 6px;
-      border-radius: 10px;
+      overflow: hidden;
+
+      padding: 24px 26px;
+
+      border:
+        1px solid
+        var(--friend-border);
+
+      border-radius: 18px;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(255,255,255,.055),
+          rgba(255,255,255,.018)
+        );
+
+      margin-bottom: 18px;
+    }
+
+
+    .friendsHero::before {
+      content: "";
+
+      position: absolute;
+
+      width: 280px;
+      height: 280px;
+
+      right: -100px;
+      top: -160px;
+
+      border-radius: 999px;
+
+      background:
+        var(
+          --accent,
+          #3252b3
+        );
+
+      opacity: .14;
+
+      filter: blur(20px);
+
+      pointer-events: none;
+    }
+
+
+    .friendsHeroInner {
+      position: relative;
+      z-index: 1;
+
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+
+    .friendsHeroTitle {
+      margin: 4px 0 5px;
+
+      font-size:
+        clamp(
+          30px,
+          5vw,
+          44px
+        );
+
+      line-height: 1;
+
+      letter-spacing: -.035em;
+    }
+
+
+    .friendsHeroDescription {
+      margin: 0;
+
+      color:
+        var(--friend-muted);
+
+      font-size: 14px;
+      line-height: 1.5;
+
+      max-width: 560px;
+    }
+
+
+    .friendsStats {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+
+    .friendsStat {
+      min-width: 92px;
+
+      padding: 11px 14px;
+
+      border:
+        1px solid
+        var(--friend-border);
+
+      border-radius: 13px;
+
+      background:
+        rgba(0,0,0,.14);
+
+      text-align: center;
+    }
+
+
+    .friendsStatNumber {
+      display: block;
+
+      font-size: 19px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+
+    .friendsStatLabel {
+      display: block;
+
+      margin-top: 3px;
+
+      color:
+        var(--friend-muted);
+
+      font-size: 11px;
+      font-weight: 700;
+
+      text-transform: uppercase;
+      letter-spacing: .055em;
+    }
+
+
+    .friendsStat.online
+      .friendsStatNumber {
+      color:
+        var(--presence-online);
+    }
+
+
+    /* =========================================================
+       LAYOUT
+       ========================================================= */
+
+    .friendsGrid {
+      display: grid;
+
+      grid-template-columns:
+        minmax(0, 1fr)
+        minmax(280px, 360px);
+
+      gap: 18px;
+
+      align-items: start;
+    }
+
+
+    .friendsSection {
+      border:
+        1px solid
+        var(--friend-border);
+
+      border-radius: 18px;
+
+      background:
+        rgba(255,255,255,.022);
+
+      overflow: hidden;
+    }
+
+
+    .friendsSectionHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 12px;
+
+      padding: 17px 18px;
+
+      border-bottom:
+        1px solid
+        var(--friend-border);
+    }
+
+
+    .friendsSectionTitle {
+      margin: 0;
+
+      font-size: 17px;
+      font-weight: 900;
+
+      letter-spacing: -.01em;
+    }
+
+
+    .friendsSectionSubtitle {
+      margin-top: 3px;
+
+      color:
+        var(--friend-muted);
+
+      font-size: 12px;
+    }
+
+
+    .friendsSectionCount {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      opacity: 0.95;
+
+      min-width: 29px;
+      height: 29px;
+
+      padding: 0 9px;
+
+      border-radius: 999px;
+
+      background:
+        rgba(255,255,255,.06);
+
+      border:
+        1px solid
+        var(--friend-border);
+
+      font-size: 12px;
+      font-weight: 800;
     }
-    .bellBtn:hover { background: rgba(255,255,255,0.06); }
+
+
+    /* =========================================================
+       FRIEND LIST
+       ========================================================= */
+
+    .friendList {
+      display: flex;
+      flex-direction: column;
+    }
+
+
+    .friendCard {
+      display: flex;
+
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 15px;
+
+      min-height: 74px;
+
+      padding: 12px 15px;
+
+      border-bottom:
+        1px solid
+        rgba(255,255,255,.065);
+
+      transition:
+        background .12s ease,
+        border-color .12s ease;
+    }
+
+
+    .friendCard:last-child {
+      border-bottom: none;
+    }
+
+
+    .friendCard:hover {
+      background:
+        var(--friend-panel-hover);
+    }
+
+
+    .friendIdentity {
+      display: flex;
+      align-items: center;
+
+      min-width: 0;
+
+      gap: 12px;
+    }
+
+
+    .friendAvatarWrap {
+      position: relative;
+
+      width: 46px;
+      height: 46px;
+
+      flex: 0 0 46px;
+    }
+
+
+    .friendAvatar {
+      width: 46px;
+      height: 46px;
+
+      display: block;
+
+      overflow: hidden;
+
+      border-radius: 50%;
+
+      background:
+        rgba(255,255,255,.08);
+
+      border:
+        1px solid
+        rgba(255,255,255,.12);
+    }
+
+
+    .friendAvatar img {
+      width: 100%;
+      height: 100%;
+
+      object-fit: cover;
+      display: block;
+    }
+
+
+    .friendAvatarFallback {
+      width: 100%;
+      height: 100%;
+
+      display: block;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(255,255,255,.13),
+          rgba(255,255,255,.035)
+        );
+    }
+
+
+    .presenceAvatarDot {
+      position: absolute;
+
+      width: 13px;
+      height: 13px;
+
+      right: -1px;
+      bottom: 1px;
+
+      border-radius: 50%;
+
+      border:
+        3px solid
+        #0d1118;
+
+      background:
+        var(--presence-offline);
+
+      transition:
+        background .15s ease,
+        box-shadow .15s ease;
+    }
+
+
+    .presenceAvatarDot.online {
+      background:
+        var(--presence-online);
+
+      box-shadow:
+        0 0 0 3px
+        rgba(53,208,127,.11);
+    }
+
+
+    .presenceAvatarDot.recent {
+      background:
+        var(--presence-recent);
+    }
+
+
+    .presenceAvatarDot.offline {
+      background:
+        var(--presence-offline);
+    }
+
+
+    .friendInfo {
+      min-width: 0;
+    }
+
+
+    .friendUsername {
+      display: inline-block;
+
+      max-width: 100%;
+
+      color: inherit;
+
+      font-size: 15px;
+      font-weight: 850;
+
+      text-decoration: none;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+
+    .friendUsername:hover {
+      color:
+        var(
+          --accent,
+          #3252b3
+        );
+    }
+
+
+    .presenceLine {
+      display: flex;
+      align-items: center;
+
+      gap: 6px;
+
+      margin-top: 4px;
+
+      color:
+        var(--friend-muted);
+
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+
+    .presenceMiniDot {
+      width: 7px;
+      height: 7px;
+
+      flex: 0 0 7px;
+
+      border-radius: 50%;
+
+      background:
+        var(--presence-offline);
+    }
+
+
+    .presenceLine.online {
+      color:
+        var(--presence-online);
+    }
+
+
+    .presenceLine.online
+      .presenceMiniDot {
+      background:
+        var(--presence-online);
+    }
+
+
+    .presenceLine.recent {
+      color:
+        var(--presence-recent);
+    }
+
+
+    .presenceLine.recent
+      .presenceMiniDot {
+      background:
+        var(--presence-recent);
+    }
+
+
+    .presenceLine.offline {
+      color:
+        rgba(255,255,255,.42);
+    }
+
+
+    .friendActions {
+      flex: 0 0 auto;
+    }
+
+
+    .friendRemoveBtn {
+      min-height: 34px;
+
+      padding: 6px 11px;
+
+      font-size: 12px;
+
+      opacity: .75;
+
+      transition:
+        opacity .12s ease,
+        border-color .12s ease,
+        background .12s ease;
+    }
+
+
+    .friendCard:hover
+      .friendRemoveBtn {
+      opacity: 1;
+    }
+
+
+    /* =========================================================
+       REQUESTS
+       ========================================================= */
+
+    .requestList {
+      display: flex;
+      flex-direction: column;
+
+      padding: 8px;
+      gap: 7px;
+    }
+
+
+    .requestCard {
+      padding: 12px;
+
+      border:
+        1px solid
+        var(--friend-border);
+
+      border-radius: 13px;
+
+      background:
+        var(--friend-panel);
+    }
+
+
+    .requestUser {
+      display: flex;
+      align-items: center;
+
+      gap: 10px;
+
+      min-width: 0;
+    }
+
+
+    .requestAvatar {
+      width: 38px;
+      height: 38px;
+
+      flex: 0 0 38px;
+
+      overflow: hidden;
+
+      border-radius: 50%;
+
+      border:
+        1px solid
+        rgba(255,255,255,.11);
+
+      background:
+        rgba(255,255,255,.06);
+    }
+
+
+    .requestAvatar img {
+      display: block;
+
+      width: 100%;
+      height: 100%;
+
+      object-fit: cover;
+    }
+
+
+    .requestUsername {
+      font-size: 14px;
+      font-weight: 850;
+
+      color: inherit;
+
+      text-decoration: none;
+
+      min-width: 0;
+
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+
+    .requestUsername:hover {
+      color:
+        var(
+          --accent,
+          #3252b3
+        );
+    }
+
+
+    .requestMessage {
+      color:
+        var(--friend-muted);
+
+      font-size: 11px;
+
+      margin-top: 2px;
+    }
+
+
+    .requestActions {
+      display: grid;
+
+      grid-template-columns:
+        1fr 1fr;
+
+      gap: 7px;
+
+      margin-top: 11px;
+    }
+
+
+    .requestActions form {
+      margin: 0;
+    }
+
+
+    .requestActions .btn {
+      width: 100%;
+
+      min-height: 35px;
+
+      padding:
+        6px 10px;
+
+      font-size: 12px;
+    }
+
+
+    /* =========================================================
+       EMPTY STATE
+       ========================================================= */
+
+    .friendsEmpty {
+      padding:
+        34px 24px;
+
+      text-align: center;
+    }
+
+
+    .friendsEmptyIcon {
+      width: 48px;
+      height: 48px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      margin:
+        0 auto 12px;
+
+      border-radius: 15px;
+
+      background:
+        rgba(255,255,255,.045);
+
+      border:
+        1px solid
+        var(--friend-border);
+
+      font-size: 22px;
+    }
+
+
+    .friendsEmptyTitle {
+      font-size: 15px;
+      font-weight: 850;
+    }
+
+
+    .friendsEmptyText {
+      max-width: 320px;
+
+      margin:
+        5px auto 0;
+
+      color:
+        var(--friend-muted);
+
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+
+    /* =========================================================
+       NOTIFICATIONS
+       ========================================================= */
+
+    .notifWrap {
+      position: relative;
+
+      display: inline-flex;
+      align-items: center;
+    }
+
+
+    .bellBtn {
+      position: relative;
+
+      width: 34px;
+      height: 34px;
+
+      border:
+        1px solid transparent;
+
+      background: transparent;
+
+      cursor: pointer;
+
+      color: inherit;
+
+      padding: 0;
+
+      border-radius: 10px;
+
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      opacity: .9;
+
+      transition:
+        background .12s ease,
+        border-color .12s ease,
+        opacity .12s ease;
+    }
+
+
+    .bellBtn:hover {
+      background:
+        rgba(255,255,255,.06);
+
+      border-color:
+        rgba(255,255,255,.08);
+
+      opacity: 1;
+    }
+
+
     .badgeDot {
-      position:absolute;
-      top: 3px;
-      right: 3px;
+      position: absolute;
+
+      top: -3px;
+      right: -4px;
+
       min-width: 18px;
       height: 18px;
-      padding: 0 6px;
+
+      padding: 0 5px;
+
       border-radius: 999px;
+
       background: #ff3b30;
+
       color: #fff;
-      font-size: 11px;
+
+      font-size: 10px;
       line-height: 18px;
+
       text-align: center;
-      font-weight: 800;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+
+      font-weight: 900;
+
+      border:
+        2px solid
+        #0d1118;
     }
+
 
     .notifDropdown {
       display: none;
+
       position: absolute;
+
       right: 0;
-      top: 40px;
-      width: 340px;
-      max-height: 420px;
+      top: 43px;
+
+      width:
+        min(
+          350px,
+          calc(
+            100vw -
+            24px
+          )
+        );
+
+      max-height: 440px;
+
       overflow: auto;
-      background: rgba(15, 23, 42, 0.98);
-      border: 1px solid rgba(255,255,255,0.12);
+
+      background:
+        rgba(15,23,42,.99);
+
+      border:
+        1px solid
+        rgba(255,255,255,.12);
+
       border-radius: 14px;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.45);
+
+      box-shadow:
+        0 18px 55px
+        rgba(0,0,0,.5);
+
       z-index: 9999;
     }
-    .notifDropdown.open { display:block; }
 
-    .notifHeader {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.10);
-      position: sticky;
-      top: 0;
-      background: rgba(15, 23, 42, 0.98);
-      backdrop-filter: blur(8px);
-    }
-    .notifTitle { font-weight: 900; }
-    .markReadBtn {
-      border: none;
-      background: transparent;
-      color: inherit;
-      cursor: pointer;
-      opacity: 0.85;
-      font-size: 12px;
-      padding: 6px 8px;
-      border-radius: 10px;
-    }
-    .markReadBtn:hover { background: rgba(255,255,255,0.06); opacity: 1; }
 
-    .notifList { padding: 8px; display:flex; flex-direction:column; gap: 8px; }
-    .notifItem {
-      padding: 10px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
+    .notifDropdown.open {
+      display: block;
     }
-    .notifItem.unread { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.25); }
-    .notifTime { font-size: 12px; opacity: 0.7; margin-top: 4px; }
-    .notifEmpty { padding: 12px; opacity: 0.8; }
 
-    .authBellSlot { display:inline-flex; align-items:center; }
 
     .notifDropdown,
     .notifDropdown * {
-      pointer-events: auto !important;
+      pointer-events:
+        auto !important;
+    }
+
+
+    .notifHeader {
+      display: flex;
+
+      align-items: center;
+      justify-content: space-between;
+
+      padding: 11px 12px;
+
+      border-bottom:
+        1px solid
+        rgba(255,255,255,.1);
+
+      position: sticky;
+
+      top: 0;
+
+      background:
+        rgba(15,23,42,.99);
+
+      backdrop-filter:
+        blur(8px);
+    }
+
+
+    .notifTitle {
+      font-weight: 900;
+    }
+
+
+    .markReadBtn {
+      border: none;
+
+      background: transparent;
+
+      color: inherit;
+
+      cursor: pointer;
+
+      opacity: .75;
+
+      font-size: 11px;
+
+      padding: 6px 8px;
+
+      border-radius: 8px;
+    }
+
+
+    .markReadBtn:hover {
+      background:
+        rgba(255,255,255,.06);
+
+      opacity: 1;
+    }
+
+
+    .notifList {
+      padding: 8px;
+
+      display: flex;
+      flex-direction: column;
+
+      gap: 7px;
+    }
+
+
+    .notifItem {
+      padding: 10px;
+
+      border-radius: 11px;
+
+      background:
+        rgba(255,255,255,.035);
+
+      border:
+        1px solid
+        rgba(255,255,255,.07);
+
+      font-size: 13px;
+    }
+
+
+    .notifItem.unread {
+      background:
+        rgba(99,102,241,.15);
+
+      border-color:
+        rgba(99,102,241,.24);
+    }
+
+
+    .notifTime {
+      margin-top: 4px;
+
+      font-size: 10px;
+
+      opacity: .6;
+    }
+
+
+    .notifEmpty {
+      padding: 15px;
+
+      opacity: .7;
+
+      font-size: 13px;
+    }
+
+
+    /* =========================================================
+       FLASHES
+       ========================================================= */
+
+    .friendsFlashes {
+      margin-bottom: 14px;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+       ========================================================= */
+
+    @media (
+      max-width: 900px
+    ) {
+      .friendsGrid {
+        grid-template-columns:
+          1fr;
+      }
+
+
+      .friendsHeroInner {
+        align-items:
+          flex-start;
+
+        flex-direction:
+          column;
+      }
+
+
+      .friendsStats {
+        justify-content:
+          flex-start;
+      }
+
+
+      .friendsGrid aside {
+        order: -1;
+      }
+    }
+
+
+    @media (
+      max-width: 720px
+    ) {
+      .friendsPage {
+        padding-top: 16px;
+      }
+
+
+      .friendsHero {
+        padding:
+          19px 17px;
+
+        border-radius:
+          15px;
+      }
+
+
+      .friendsStat {
+        min-width: 80px;
+
+        padding:
+          9px 11px;
+      }
+
+
+      .friendCard {
+        padding:
+          11px 12px;
+      }
+
+
+      .friendAvatarWrap,
+      .friendAvatar {
+        width: 42px;
+        height: 42px;
+      }
+
+
+      .friendAvatarWrap {
+        flex-basis: 42px;
+      }
+
+
+      .friendsSection {
+        border-radius:
+          15px;
+      }
+
+
+      .friendsTopbar .nav {
+        display: none;
+      }
+
+
+      .friendsBrand img {
+        height: 62px;
+      }
+
+
+      .auth .muted.small {
+        display: none;
+      }
+    }
+
+
+    @media (
+      max-width: 460px
+    ) {
+      .friendCard {
+        gap: 9px;
+      }
+
+
+      .friendRemoveBtn {
+        padding:
+          5px 8px;
+      }
+
+
+      .friendsHeroTitle {
+        font-size: 32px;
+      }
     }
   </style>
 </head>
-<body class="app" <%= me && me.theme_color ? `style="--accent: ${me.theme_color};"` : "" %>>
+
+
+<body
+  class="app"
+  <%= me && me.theme_color
+    ? `style="--accent: ${me.theme_color};"`
+    : ""
+  %>
+>
+
 <%
-  const safeMe = (typeof me !== "undefined" && me) ? me : null;
-  const safeFriends = (typeof friends !== "undefined" && Array.isArray(friends)) ? friends : [];
-  const safeIncoming = (typeof incoming !== "undefined" && Array.isArray(incoming)) ? incoming : [];
-  const safeNotifCount = (typeof notif_count !== "undefined" && notif_count) ? notif_count : 0;
-  const safeNotifItems = (typeof notif_items !== "undefined" && Array.isArray(notif_items)) ? notif_items : [];
-  const safeFlashes = (typeof flashes !== "undefined" && Array.isArray(flashes)) ? flashes : [];
+  const safeMe =
+    (
+      typeof me !== "undefined" &&
+      me
+    )
+      ? me
+      : null;
+
+
+  const safeFriends =
+    (
+      typeof friends !== "undefined" &&
+      Array.isArray(friends)
+    )
+      ? friends
+      : [];
+
+
+  const safeIncoming =
+    (
+      typeof incoming !== "undefined" &&
+      Array.isArray(incoming)
+    )
+      ? incoming
+      : [];
+
+
+  const safeNotifCount =
+    (
+      typeof notif_count !== "undefined" &&
+      notif_count
+    )
+      ? notif_count
+      : 0;
+
+
+  const safeNotifItems =
+    (
+      typeof notif_items !== "undefined" &&
+      Array.isArray(notif_items)
+    )
+      ? notif_items
+      : [];
+
+
+  const safeFlashes =
+    (
+      typeof flashes !== "undefined" &&
+      Array.isArray(flashes)
+    )
+      ? flashes
+      : [];
+
+
+  const initialOnlineCount =
+    safeFriends.filter(
+      (friend) =>
+        String(
+          friend.presence_status ||
+          ""
+        ).toLowerCase() ===
+        "online"
+    ).length;
+
+
+  function presenceStatus(user) {
+    const status =
+      String(
+        user &&
+        user.presence_status
+          ? user.presence_status
+          : "offline"
+      )
+        .trim()
+        .toLowerCase();
+
+
+    if (
+      status === "online" ||
+      status === "recent"
+    ) {
+      return status;
+    }
+
+
+    return "offline";
+  }
+
+
+  function presenceText(status) {
+    if (status === "online") {
+      return "Online";
+    }
+
+
+    if (status === "recent") {
+      return "Active recently";
+    }
+
+
+    return "Offline";
+  }
 %>
 
-  <header class="topbar">
-    <div class="wrap row between">
-      <a class="brand" href="/shows">
-        <span class="dot"></span>
-        <span>Pressboxd</span>
+
+<header class="topbar friendsTopbar">
+  <div class="wrap row between">
+
+    <a
+      class="friendsBrand"
+      href="/shows"
+      aria-label="Pressboxd"
+    >
+      <img
+        src="/static/pressboxd-wordmark.png"
+        alt="Pressboxd"
+      >
+    </a>
+
+
+    <nav class="nav row">
+      <a href="/shows">
+        Shows
       </a>
 
-      <nav class="nav row">
-        <a href="/shows">Shows</a>
-        <a href="/top">Top Shows</a>
-        <a href="/top_users">Top Users</a>
-        <% if (safeMe && Number(safeMe.is_admin) === 1) { %>
-          <a href="/admin/bulk_add">Mass Add</a>
-          <a href="/admin/roles">Roles</a>
-          <a href="/admin/users">Users</a>
-        <% } %>
-      </nav>
+      <a href="/top">
+        Top Shows
+      </a>
 
-      <div class="auth row">
-        <% if (safeMe) { %>
-          <div class="authBellSlot">
-            <div class="notifWrap">
-              <button class="bellBtn" id="bellBtn" aria-label="Notifications" title="Notifications">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/>
-                  <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
-                </svg>
+      <a href="/top_users">
+        Top Users
+      </a>
 
-                <% if (safeNotifCount > 0) { %>
-                  <span class="badgeDot"><%= safeNotifCount %></span>
-                <% } %>
-              </button>
+      <a href="/predictions">
+        Predictions
+      </a>
 
-              <div class="notifDropdown" id="notifDropdown">
-                <div class="notifHeader">
-                  <div class="notifTitle">Notifications</div>
-                  <form method="post" action="/me/notifications/read">
-                    <button class="markReadBtn" type="submit">Mark all read</button>
-                  </form>
-                </div>
+      <a href="/forums">
+        Forums
+      </a>
 
-                <% if (safeNotifItems.length > 0) { %>
-                  <div class="notifList">
-                    <% for (const n of safeNotifItems) {
-                      const kind = n.kind || "";
-                      const actor = n.actor_username || "Someone";
-                      const created = n.created_at || "";
-                      const unread = Number(n.is_read || 0) === 0;
-                      const sid = n.show_id || null;
-                    %>
-                      <div class="notifItem <%= unread ? 'unread' : '' %>">
-                        <% if (kind === "friend_request") { %>
-                          <div><b><%= actor %></b> sent you a friend request.</div>
-                        <% } else if (kind === "follow") { %>
-                          <div><b><%= actor %></b> followed you.</div>
-                        <% } else if (kind === "review_upvote") { %>
-                          <div>
-                            <b><%= actor %></b> upvoted your review
-                            <% if (sid) { %>
-                              — <a href="/show/<%= sid %>">View show</a>
-                            <% } %>
-                          </div>
-                        <% } else { %>
-                          <div>New activity.</div>
-                        <% } %>
+      <a href="/tierlists">
+        Tierlists
+      </a>
 
-                        <% if (created) { %>
-                          <div class="notifTime"><%= created %></div>
+
+      <% if (
+        safeMe &&
+        Number(
+          safeMe.is_admin
+        ) === 1
+      ) { %>
+
+        <a href="/admin/bulk_add">
+          Mass Add
+        </a>
+
+        <a href="/admin/roles">
+          Roles
+        </a>
+
+        <a href="/admin/users">
+          Users
+        </a>
+
+      <% } %>
+    </nav>
+
+
+    <div class="auth row">
+
+      <% if (safeMe) { %>
+
+        <div class="notifWrap">
+
+          <button
+            class="bellBtn"
+            id="bellBtn"
+            type="button"
+            aria-label="Notifications"
+            title="Notifications"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z"
+                stroke="currentColor"
+                stroke-width="1.3"
+              />
+
+              <path
+                d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z"
+                stroke="currentColor"
+                stroke-width="1.3"
+                stroke-linejoin="round"
+              />
+            </svg>
+
+
+            <% if (
+              Number(
+                safeNotifCount
+              ) > 0
+            ) { %>
+
+              <span class="badgeDot">
+                <%= safeNotifCount %>
+              </span>
+
+            <% } %>
+          </button>
+
+
+          <div
+            class="notifDropdown"
+            id="notifDropdown"
+          >
+
+            <div class="notifHeader">
+
+              <div class="notifTitle">
+                Notifications
+              </div>
+
+
+              <form
+                method="post"
+                action="/me/notifications/read"
+              >
+                <button
+                  class="markReadBtn"
+                  type="submit"
+                >
+                  Mark all read
+                </button>
+              </form>
+
+            </div>
+
+
+            <% if (
+              safeNotifItems.length > 0
+            ) { %>
+
+              <div class="notifList">
+
+                <%
+                  for (
+                    const n
+                    of safeNotifItems
+                  ) {
+
+                    const kind =
+                      n.kind || "";
+
+                    const actor =
+                      n.actor_username ||
+                      "Someone";
+
+                    const created =
+                      n.created_at ||
+                      "";
+
+                    const unread =
+                      Number(
+                        n.is_read || 0
+                      ) === 0;
+
+                    const sid =
+                      n.show_id ||
+                      null;
+                %>
+
+                  <div
+                    class="notifItem <%= unread ? 'unread' : '' %>"
+                  >
+
+                    <% if (
+                      kind ===
+                      "friend_request"
+                    ) { %>
+
+                      <div>
+                        <b><%= actor %></b>
+                        sent you a friend request.
+                      </div>
+
+
+                    <% } else if (
+                      kind ===
+                      "follow"
+                    ) { %>
+
+                      <div>
+                        <b><%= actor %></b>
+                        followed you.
+                      </div>
+
+
+                    <% } else if (
+                      kind ===
+                      "review_upvote"
+                    ) { %>
+
+                      <div>
+                        <b><%= actor %></b>
+                        upvoted your review
+
+                        <% if (sid) { %>
+
+                          —
+                          <a
+                            href="/show/<%= sid %>"
+                          >
+                            View show
+                          </a>
+
                         <% } %>
                       </div>
+
+
+                    <% } else if (
+                      kind ===
+                      "review_comment"
+                    ) { %>
+
+                      <div>
+                        <b><%= actor %></b>
+                        commented on your review.
+
+                        <% if (sid) { %>
+
+                          —
+                          <a
+                            href="/show/<%= sid %>"
+                          >
+                            View
+                          </a>
+
+                        <% } %>
+                      </div>
+
+
+                    <% } else if (
+                      kind ===
+                      "comment_reply"
+                    ) { %>
+
+                      <div>
+                        <b><%= actor %></b>
+                        replied to your comment.
+
+                        <% if (sid) { %>
+
+                          —
+                          <a
+                            href="/show/<%= sid %>"
+                          >
+                            View
+                          </a>
+
+                        <% } %>
+                      </div>
+
+
+                    <% } else { %>
+
+                      <div>
+                        New activity.
+                      </div>
+
                     <% } %>
+
+
+                    <% if (created) { %>
+
+                      <div class="notifTime">
+                        <%= created %>
+                      </div>
+
+                    <% } %>
+
                   </div>
-                <% } else { %>
-                  <div class="notifEmpty">No notifications.</div>
+
                 <% } %>
+
+              </div>
+
+
+            <% } else { %>
+
+              <div class="notifEmpty">
+                No notifications.
+              </div>
+
+            <% } %>
+
+          </div>
+        </div>
+
+
+        <a
+          class="nav_user"
+          href="/me"
+        >
+          <span class="avatar_sm">
+
+            <% if (
+              safeMe.avatar_url
+            ) { %>
+
+              <img
+                src="<%= safeMe.avatar_url %>"
+                alt=""
+              >
+
+            <% } else { %>
+
+              <span
+                class="avatar_fallback"
+              ></span>
+
+            <% } %>
+
+          </span>
+
+
+          <span class="muted small">
+            <%= safeMe.username %>
+          </span>
+        </a>
+
+
+        <a href="/logout">
+          Logout
+        </a>
+
+
+      <% } else { %>
+
+        <a href="/login">
+          Login
+        </a>
+
+        <a
+          class="btn"
+          href="/register"
+        >
+          Register
+        </a>
+
+      <% } %>
+
+    </div>
+  </div>
+</header>
+
+
+<main class="wrap friendsPage">
+
+  <% if (
+    safeFlashes.length > 0
+  ) { %>
+
+    <div class="flashes friendsFlashes">
+
+      <% for (
+        const f
+        of safeFlashes
+      ) { %>
+
+        <div
+          class="flash <%= f.category %>"
+        >
+          <%= f.message %>
+        </div>
+
+      <% } %>
+
+    </div>
+
+  <% } %>
+
+
+  <section class="friendsHero">
+
+    <div class="friendsHeroInner">
+
+      <div>
+        <div class="kicker">
+          Social
+        </div>
+
+        <h1 class="friendsHeroTitle">
+          Friends
+        </h1>
+
+        <p class="friendsHeroDescription">
+          Keep up with your friends,
+          see who's online, and manage
+          incoming friend requests.
+        </p>
+      </div>
+
+
+      <div class="friendsStats">
+
+        <div class="friendsStat">
+
+          <span
+            class="friendsStatNumber"
+            id="friendsTotalCount"
+          >
+            <%= safeFriends.length %>
+          </span>
+
+          <span class="friendsStatLabel">
+            Friends
+          </span>
+
+        </div>
+
+
+        <div class="friendsStat online">
+
+          <span
+            class="friendsStatNumber"
+            id="friendsOnlineCount"
+          >
+            <%= initialOnlineCount %>
+          </span>
+
+          <span class="friendsStatLabel">
+            Online
+          </span>
+
+        </div>
+
+
+        <div class="friendsStat">
+
+          <span class="friendsStatNumber">
+            <%= safeIncoming.length %>
+          </span>
+
+          <span class="friendsStatLabel">
+            Requests
+          </span>
+
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <div class="friendsGrid">
+
+    <section class="friendsSection">
+
+      <div class="friendsSectionHeader">
+
+        <div>
+          <h2 class="friendsSectionTitle">
+            Your Friends
+          </h2>
+
+          <div class="friendsSectionSubtitle">
+            Friends currently connected
+            to your Pressboxd account.
+          </div>
+        </div>
+
+
+        <div class="friendsSectionCount">
+          <%= safeFriends.length %>
+        </div>
+
+      </div>
+
+
+      <% if (
+        safeFriends.length > 0
+      ) { %>
+
+        <div
+          class="friendList"
+          id="friendList"
+        >
+
+          <% for (
+            const u
+            of safeFriends
+          ) {
+
+            const status =
+              presenceStatus(u);
+
+            const statusLabel =
+              presenceText(status);
+          %>
+
+            <div
+              class="friendCard"
+              data-friend-id="<%= u.id %>"
+              data-presence="<%= status %>"
+            >
+
+              <div class="friendIdentity">
+
+                <div class="friendAvatarWrap">
+
+                  <a
+                    class="friendAvatar"
+                    href="/u/<%= encodeURIComponent(u.username) %>"
+                    aria-label="<%= u.username %>"
+                  >
+
+                    <% if (
+                      u.avatar_url
+                    ) { %>
+
+                      <img
+                        src="<%= u.avatar_url %>"
+                        alt=""
+                      >
+
+                    <% } else { %>
+
+                      <span
+                        class="friendAvatarFallback"
+                      ></span>
+
+                    <% } %>
+
+                  </a>
+
+
+                  <span
+                    class="presenceAvatarDot <%= status %>"
+                    data-presence-avatar-dot
+                    aria-hidden="true"
+                  ></span>
+
+                </div>
+
+
+                <div class="friendInfo">
+
+                  <a
+                    class="friendUsername"
+                    href="/u/<%= encodeURIComponent(u.username) %>"
+                  >
+                    <%= u.username %>
+                  </a>
+
+
+                  <div
+                    class="presenceLine <%= status %>"
+                    data-presence-line
+                  >
+                    <span
+                      class="presenceMiniDot"
+                    ></span>
+
+                    <span
+                      data-presence-text
+                    >
+                      <%= statusLabel %>
+                    </span>
+                  </div>
+
+                </div>
+              </div>
+
+
+              <div class="friendActions">
+
+                <form
+                  method="post"
+                  action="/u/<%= encodeURIComponent(u.username) %>/friend/remove"
+                >
+                  <button
+                    class="btn ghost friendRemoveBtn"
+                    type="submit"
+                  >
+                    Remove
+                  </button>
+                </form>
+
               </div>
             </div>
+
+          <% } %>
+
+        </div>
+
+
+      <% } else { %>
+
+        <div class="friendsEmpty">
+
+          <div class="friendsEmptyIcon">
+            ♫
           </div>
 
-          <a class="nav_user" href="/me">
-            <span class="avatar_sm">
-              <% if (safeMe.avatar_url) { %>
-                <img src="<%= safeMe.avatar_url %>" alt="avatar">
-              <% } else { %>
-                <span class="avatar_fallback"></span>
-              <% } %>
-            </span>
-            <span class="muted small"><%= safeMe.username %></span>
-          </a>
+          <div class="friendsEmptyTitle">
+            No friends yet
+          </div>
 
-          <a href="/logout">Logout</a>
-        <% } else { %>
-          <a href="/login">Login</a>
-          <a class="btn" href="/register">Register</a>
-        <% } %>
-      </div>
-    </div>
-  </header>
+          <div class="friendsEmptyText">
+            Visit another user's profile
+            and send them a friend request.
+            Once they accept, they'll
+            appear here.
+          </div>
 
-  <main class="wrap">
-    <% if (safeFlashes.length > 0) { %>
-      <div class="flashes">
-        <% for (const f of safeFlashes) { %>
-          <div class="flash <%= f.category %>"><%= f.message %></div>
-        <% } %>
-      </div>
-    <% } %>
-
-    <div class="row between" style="align-items:flex-end;">
-      <div>
-        <div class="kicker">Social</div>
-        <h1 style="margin:6px 0 0;">Friends</h1>
-        <div class="muted small">Friends are mutual (request → accept).</div>
-      </div>
-    </div>
-
-    <div class="layout" style="margin-top:14px;">
-      <section>
-        <div class="panel">
-          <div class="kicker">Your friends</div>
-
-          <% if (safeFriends.length > 0) { %>
-            <div class="stack" style="margin-top:12px;">
-              <% for (const u of safeFriends) { %>
-                <div class="row between" style="align-items:center;">
-                  <div class="row gap" style="align-items:center;">
-                    <span class="avatar_sm">
-                      <% if (u.avatar_url) { %>
-                        <img src="<%= u.avatar_url %>" alt="avatar">
-                      <% } else { %>
-                        <span class="avatar_fallback"></span>
-                      <% } %>
-                    </span>
-                    <a class="reviewuser" href="/u/<%= encodeURIComponent(u.username) %>"><%= u.username %></a>
-                  </div>
-                  <form method="post" action="/u/<%= encodeURIComponent(u.username) %>/friend/remove">
-                    <button class="btn ghost" type="submit">Remove</button>
-                  </form>
-                </div>
-              <% } %>
-            </div>
-          <% } else { %>
-            <div class="muted" style="margin-top:10px;">No friends yet.</div>
-          <% } %>
         </div>
-      </section>
 
-      <aside class="side">
-        <div class="panel">
-          <div class="kicker">Incoming requests</div>
+      <% } %>
 
-          <% if (safeIncoming.length > 0) { %>
-            <div class="stack" style="margin-top:12px;">
-              <% for (const u of safeIncoming) { %>
-                <div class="row between" style="align-items:center;">
-                  <div class="row gap" style="align-items:center;">
-                    <span class="avatar_sm">
-                      <% if (u.avatar_url) { %>
-                        <img src="<%= u.avatar_url %>" alt="avatar">
-                      <% } else { %>
-                        <span class="avatar_fallback"></span>
-                      <% } %>
-                    </span>
-                    <a class="reviewuser" href="/u/<%= encodeURIComponent(u.username) %>"><%= u.username %></a>
-                  </div>
+    </section>
 
-                  <div class="row gap">
-                    <form method="post" action="/u/<%= encodeURIComponent(u.username) %>/friend/accept">
-                      <button class="btn green" type="submit">Accept</button>
-                    </form>
-                    <form method="post" action="/u/<%= encodeURIComponent(u.username) %>/friend/decline">
-                      <button class="btn ghost" type="submit">Decline</button>
-                    </form>
-                  </div>
-                </div>
-              <% } %>
-            </div>
-          <% } else { %>
-            <div class="muted" style="margin-top:10px;">No incoming requests.</div>
-          <% } %>
+
+
+    <aside class="friendsSection">
+
+      <div class="friendsSectionHeader">
+
+        <div>
+          <h2 class="friendsSectionTitle">
+            Incoming Requests
+          </h2>
+
+          <div class="friendsSectionSubtitle">
+            People who want to add you.
+          </div>
         </div>
-      </aside>
-    </div>
-  </main>
 
-  <footer class="wrap footer">
-    <div class="small">Rate drum corps shows.</div>
-  </footer>
 
-  <script>
-    (() => {
-      const btn = document.getElementById("bellBtn");
-      const dd  = document.getElementById("notifDropdown");
-      if (!btn || !dd) return;
+        <% if (
+          safeIncoming.length > 0
+        ) { %>
 
-      dd.addEventListener("click", (e) => e.stopPropagation());
+          <div class="friendsSectionCount">
+            <%= safeIncoming.length %>
+          </div>
 
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dd.classList.toggle("open");
-      });
+        <% } %>
 
-      document.addEventListener("click", () => {
-        dd.classList.remove("open");
-      });
+      </div>
 
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") dd.classList.remove("open");
-      });
-    })();
-  </script>
+
+      <% if (
+        safeIncoming.length > 0
+      ) { %>
+
+        <div class="requestList">
+
+          <% for (
+            const u
+            of safeIncoming
+          ) { %>
+
+            <div class="requestCard">
+
+              <div class="requestUser">
+
+                <a
+                  class="requestAvatar"
+                  href="/u/<%= encodeURIComponent(u.username) %>"
+                >
+
+                  <% if (
+                    u.avatar_url
+                  ) { %>
+
+                    <img
+                      src="<%= u.avatar_url %>"
+                      alt=""
+                    >
+
+                  <% } else { %>
+
+                    <span
+                      class="friendAvatarFallback"
+                    ></span>
+
+                  <% } %>
+
+                </a>
+
+
+                <div style="min-width:0;">
+
+                  <a
+                    class="requestUsername"
+                    href="/u/<%= encodeURIComponent(u.username) %>"
+                  >
+                    <%= u.username %>
+                  </a>
+
+                  <div class="requestMessage">
+                    sent you a friend request
+                  </div>
+
+                </div>
+              </div>
+
+
+              <div class="requestActions">
+
+                <form
+                  method="post"
+                  action="/u/<%= encodeURIComponent(u.username) %>/friend/accept"
+                >
+                  <button
+                    class="btn green"
+                    type="submit"
+                  >
+                    Accept
+                  </button>
+                </form>
+
+
+                <form
+                  method="post"
+                  action="/u/<%= encodeURIComponent(u.username) %>/friend/decline"
+                >
+                  <button
+                    class="btn ghost"
+                    type="submit"
+                  >
+                    Decline
+                  </button>
+                </form>
+
+              </div>
+            </div>
+
+          <% } %>
+
+        </div>
+
+
+      <% } else { %>
+
+        <div class="friendsEmpty">
+
+          <div class="friendsEmptyIcon">
+            ✓
+          </div>
+
+          <div class="friendsEmptyTitle">
+            You're all caught up
+          </div>
+
+          <div class="friendsEmptyText">
+            You don't have any incoming
+            friend requests right now.
+          </div>
+
+        </div>
+
+      <% } %>
+
+    </aside>
+
+  </div>
+</main>
+
+
+<footer class="wrap footer">
+  <div class="small">
+    Rate drum corps shows.
+  </div>
+</footer>
+
+
+<!--
+  Global logged-in heartbeat.
+  This sends activity while the tab
+  remains visible.
+-->
+<script
+  src="/static/js/presence.js?v=20260822a"
+></script>
+
+
+<script>
+  (() => {
+    /* =======================================================
+       NOTIFICATION DROPDOWN
+       ======================================================= */
+
+    const btn =
+      document.getElementById(
+        "bellBtn"
+      );
+
+    const dd =
+      document.getElementById(
+        "notifDropdown"
+      );
+
+
+    if (btn && dd) {
+      dd.addEventListener(
+        "click",
+        (event) => {
+          event.stopPropagation();
+        }
+      );
+
+
+      btn.addEventListener(
+        "click",
+        (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+
+          dd.classList.toggle(
+            "open"
+          );
+        }
+      );
+
+
+      document.addEventListener(
+        "click",
+        () => {
+          dd.classList.remove(
+            "open"
+          );
+        }
+      );
+
+
+      document.addEventListener(
+        "keydown",
+        (event) => {
+          if (
+            event.key ===
+            "Escape"
+          ) {
+            dd.classList.remove(
+              "open"
+            );
+          }
+        }
+      );
+    }
+
+
+
+    /* =======================================================
+       FRIEND PRESENCE
+       ======================================================= */
+
+    const onlineCountEl =
+      document.getElementById(
+        "friendsOnlineCount"
+      );
+
+
+    const validStatuses =
+      new Set([
+        "online",
+        "recent",
+        "offline"
+      ]);
+
+
+    function cleanStatus(value) {
+      const status =
+        String(
+          value || ""
+        )
+          .trim()
+          .toLowerCase();
+
+
+      return validStatuses.has(
+        status
+      )
+        ? status
+        : "offline";
+    }
+
+
+    function statusText(status) {
+      if (
+        status ===
+        "online"
+      ) {
+        return "Online";
+      }
+
+
+      if (
+        status ===
+        "recent"
+      ) {
+        return "Active recently";
+      }
+
+
+      return "Offline";
+    }
+
+
+    function updateFriendCard(
+      userId,
+      status
+    ) {
+      const card =
+        document.querySelector(
+          `[data-friend-id="${CSS.escape(
+            String(userId)
+          )}"]`
+        );
+
+
+      if (!card) {
+        return;
+      }
+
+
+      const clean =
+        cleanStatus(status);
+
+
+      card.dataset.presence =
+        clean;
+
+
+      const avatarDot =
+        card.querySelector(
+          "[data-presence-avatar-dot]"
+        );
+
+
+      const line =
+        card.querySelector(
+          "[data-presence-line]"
+        );
+
+
+      const text =
+        card.querySelector(
+          "[data-presence-text]"
+        );
+
+
+      if (avatarDot) {
+        avatarDot.classList.remove(
+          "online",
+          "recent",
+          "offline"
+        );
+
+        avatarDot.classList.add(
+          clean
+        );
+      }
+
+
+      if (line) {
+        line.classList.remove(
+          "online",
+          "recent",
+          "offline"
+        );
+
+        line.classList.add(
+          clean
+        );
+      }
+
+
+      if (text) {
+        text.textContent =
+          statusText(clean);
+      }
+    }
+
+
+    function refreshOnlineCount() {
+      if (!onlineCountEl) {
+        return;
+      }
+
+
+      const online =
+        document.querySelectorAll(
+          '.friendCard[data-presence="online"]'
+        ).length;
+
+
+      onlineCountEl.textContent =
+        String(online);
+    }
+
+
+    async function refreshPresence() {
+      /*
+        If the tab is hidden, there's no
+        reason to poll for live statuses.
+      */
+      if (
+        document.visibilityState !==
+        "visible"
+      ) {
+        return;
+      }
+
+
+      try {
+        const response =
+          await fetch(
+            "/api/presence/connections",
+            {
+              method: "GET",
+
+              credentials:
+                "same-origin",
+
+              cache:
+                "no-store",
+
+              headers: {
+                "X-Requested-With":
+                  "XMLHttpRequest"
+              }
+            }
+          );
+
+
+        if (!response.ok) {
+          return;
+        }
+
+
+        const payload =
+          await response.json();
+
+
+        if (
+          !payload ||
+          !Array.isArray(
+            payload.users
+          )
+        ) {
+          return;
+        }
+
+
+        /*
+          Default every current friend
+          to offline before applying the
+          server's newest statuses.
+        */
+        document
+          .querySelectorAll(
+            "[data-friend-id]"
+          )
+          .forEach(
+            (card) => {
+              updateFriendCard(
+                card.dataset.friendId,
+                "offline"
+              );
+            }
+          );
+
+
+        for (
+          const user
+          of payload.users
+        ) {
+          updateFriendCard(
+            user.id,
+            user.presence_status
+          );
+        }
+
+
+        refreshOnlineCount();
+
+      } catch (_err) {
+        /*
+          Presence is optional.
+
+          A network failure should not
+          affect the Friends page.
+        */
+      }
+    }
+
+
+    /*
+      Refresh statuses every 30 seconds.
+
+      The separate presence.js heartbeat
+      still runs every 60 seconds.
+    */
+    const PRESENCE_REFRESH_MS =
+      30 * 1000;
+
+
+    refreshOnlineCount();
+
+    refreshPresence();
+
+
+    setInterval(
+      refreshPresence,
+      PRESENCE_REFRESH_MS
+    );
+
+
+    document.addEventListener(
+      "visibilitychange",
+      () => {
+        if (
+          document.visibilityState ===
+          "visible"
+        ) {
+          refreshPresence();
+        }
+      }
+    );
+
+
+    window.addEventListener(
+      "focus",
+      refreshPresence
+    );
+
+  })();
+</script>
+
 </body>
 </html>
