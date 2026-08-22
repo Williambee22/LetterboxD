@@ -1361,14 +1361,46 @@
       color: rgba(255,255,255,0.30);
     }
 
-    .posterRepTitle {
-      margin-bottom: 4px;
+    .posterRepDetails {
+      margin: 0;
+      padding: 0;
+    }
+
+    .posterRepSummary {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+      padding: 2px 0;
       font-size: 7.5px;
       line-height: 1.05;
       font-weight: 900;
       letter-spacing: .06em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.38);
+      color: rgba(255,255,255,0.48);
+    }
+
+    .posterRepSummary::-webkit-details-marker {
+      display: none;
+    }
+
+    .posterRepSummary::after {
+      content: "▾";
+      flex: 0 0 auto;
+      font-size: 8px;
+      color: rgba(255,255,255,0.48);
+      transition: transform .12s ease;
+    }
+
+    .posterRepDetails[open] .posterRepSummary::after {
+      transform: rotate(180deg);
+    }
+
+    .posterRepDetails[open] .posterRepList {
+      margin-top: 4px;
     }
 
     .posterRepList {
@@ -1780,12 +1812,14 @@
                     <% } %>
 
                     <% if (historicalRepertoire.length > 0) { %>
-                      <div class="posterRepTitle">Music Repertoire</div>
-                      <ul class="posterRepList">
-                        <% for (const piece of historicalRepertoire) { %>
-                          <li class="posterRepItem"><%= piece %></li>
-                        <% } %>
-                      </ul>
+                      <details class="posterRepDetails">
+                        <summary class="posterRepSummary">Music Repertoire</summary>
+                        <ul class="posterRepList">
+                          <% for (const piece of historicalRepertoire) { %>
+                            <li class="posterRepItem"><%= piece %></li>
+                          <% } %>
+                        </ul>
+                      </details>
                     <% } %>
 
                     <% if (
