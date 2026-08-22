@@ -1230,6 +1230,59 @@ function createApp() {
     }
   );
 
+
+  app.get('/api/presence/user/:id', (req, res) => {
+    const targetUserId = Number(req.params.id || 0);
+  
+    res.setHeader('Cache-Control', 'private, no-store');
+  
+    if (!targetUserId) {
+      return res.status(400).json({
+        ok: false,
+        user: null
+      });
+    }
+  
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      const presence =
+        typeof dbx.presenceForUser === 'function'
+          ? dbx.presenceForUser(conn, targetUserId)
+          : null;
+  
+      if (!presence) {
+        return res.status(404).json({
+          ok: false,
+          user: null
+        });
+      }
+  
+      return res.json({
+        ok: true,
+        user: {
+          id: targetUserId,
+          last_seen_ts: presence.last_seen_ts || 0,
+          presence_status: presence.status || 'offline'
+        }
+      });
+  
+    } catch (err) {
+      console.error('User presence lookup failed:', err);
+  
+      return res.status(500).json({
+        ok: false,
+        user: null
+      });
+  
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  });
+
+  
   app.get('/api/presence/followers', (req, res) => {
     const userId = Number(req.session?.uid || 0);
   
