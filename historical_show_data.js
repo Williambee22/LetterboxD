@@ -76,6 +76,70 @@ function sameCorps(a, b) {
   return canonicalCorps(a) === canonicalCorps(b);
 }
 
+function wikipediaTitleMatchesCorps(
+  title,
+  corps
+) {
+  const article =
+    canonicalCorps(title);
+
+  const target =
+    canonicalCorps(corps);
+
+  if (!article || !target) {
+    return false;
+  }
+
+  return article === target;
+}
+
+
+function wikipediaUrlMatchesCorps(
+  url,
+  corps
+) {
+  if (!url) {
+    return true;
+  }
+
+  try {
+    const parsed =
+      new URL(url);
+
+    const marker =
+      '/wiki/';
+
+    const index =
+      parsed.pathname.indexOf(
+        marker
+      );
+
+    if (index < 0) {
+      return true;
+    }
+
+    const rawTitle =
+      parsed.pathname.slice(
+        index + marker.length
+      );
+
+    const title =
+      decodeURIComponent(
+        rawTitle
+      )
+        .replace(/_/g, ' ');
+
+    return wikipediaTitleMatchesCorps(
+      title,
+      corps
+    );
+
+  } catch (_err) {
+    return false;
+  }
+}
+
+
 function cleanText(value) {
   return String(value || '')
     .replace(/\[[0-9]+\]/g, '')
@@ -1324,6 +1388,18 @@ async function fetchWikipediaHistory(
     const title
     of titles
   ) {
+
+    // CRITICAL:
+    // Never use another corps' Wikipedia page.
+    if (
+      !wikipediaTitleMatchesCorps(
+        title,
+        corps
+      )
+    ) {
+      continue;
+    }
+
     const url =
       `${WIKI_API}` +
       `?action=parse` +
@@ -1340,6 +1416,30 @@ async function fetchWikipediaHistory(
 
       const data =
         JSON.parse(raw);
+
+      const actualTitle =
+        data &&
+        data.parse &&
+        data.parse.title
+          ? String(
+              data.parse.title
+            )
+          : title;
+
+      /*
+        Wikipedia can redirect pages.
+
+        Validate the final article title too,
+        not just the original search result.
+      */
+      if (
+        !wikipediaTitleMatchesCorps(
+          actualTitle,
+          corps
+        )
+      ) {
+        continue;
+      }
 
       const html =
         data &&
@@ -1366,13 +1466,17 @@ async function fetchWikipediaHistory(
         ...parsed,
 
         repertoire_source_url:
-          wikiPageUrl(title),
+          wikiPageUrl(
+            actualTitle
+          ),
 
         repertoire_source_label:
           'Wikipedia corps history',
 
         fallback_placement_source_url:
-          wikiPageUrl(title),
+          wikiPageUrl(
+            actualTitle
+          ),
 
         fallback_placement_source_label:
           'Wikipedia corps history',
@@ -1405,7 +1509,7 @@ async function fetchWikipediaHistory(
       }
 
     } catch (_err) {
-      // Try next possible Wikipedia page.
+      // Try another valid article.
     }
   }
 
@@ -1903,12 +2007,63 @@ async function getOrFetchHistoricalShowData(
     conn
   );
 
-  const cached =
+  let cached =
     getCachedHistoricalShowData(
       conn,
       show.id
     );
 
+  if (cached) {
+    const repertoireSourceValid =
+      !cached.repertoire_source_url ||
+      wikipediaUrlMatchesCorps(
+        cached.repertoire_source_url,
+        show.corps
+      );
+  
+    const placementIsWikipedia =
+      cached.placement_source_label &&
+      String(
+        cached.placement_source_label
+      )
+        .toLowerCase()
+        .includes('wikipedia');
+  
+    const placementSourceValid =
+      !placementIsWikipedia ||
+      wikipediaUrlMatchesCorps(
+        cached.placement_source_url,
+        show.corps
+      );
+  
+    if (
+      !repertoireSourceValid ||
+      !placementSourceValid
+    ) {
+      console.warn(
+        'Removing mismatched historical cache:',
+        {
+          show_id: show.id,
+          corps: show.corps,
+          year: show.year,
+          repertoire_source:
+            cached.repertoire_source_url,
+          placement_source:
+            cached.placement_source_url
+        }
+      );
+  
+      conn.prepare(`
+        DELETE FROM show_external_history
+        WHERE show_id = ?
+      `).run(
+        Number(show.id)
+      );
+  
+      cached = null;
+    }
+  }
+  
   const ageSeconds =
     cached
       ? Math.max(
@@ -1938,10 +2093,53 @@ async function getOrFetchHistoricalShowData(
       cached.repertoire.length >
         0;
 
+    const cachedWikipediaSourceIsValid =
+      wikipediaUrlMatchesCorps(
+        cached.repertoire_source_url,
+        show.corps
+      );
+    
+    const cachedPlacementSourceIsValid =
+      !(
+        cached.placement_source_label &&
+        String(
+          cached.placement_source_label
+        )
+          .toLowerCase()
+          .includes('wikipedia')
+      ) ||
+      wikipediaUrlMatchesCorps(
+        cached.placement_source_url,
+        show.corps
+      );
+    
+    const cachedSourcesAreValid =
+      cachedWikipediaSourceIsValid &&
+      cachedPlacementSourceIsValid;
+    
+    
     const cachedIsComplete =
       cachedHasPlacement &&
       cachedHasScore &&
-      cachedHasRepertoire;
+      cachedHasRepertoire &&
+      cachedSourcesAreValid;
+
+    if (
+      !cachedSourcesAreValid
+    ) {
+      console.warn(
+        'Historical cache source mismatch:',
+        {
+          show_id: show.id,
+          corps: show.corps,
+          year: show.year,
+          repertoire_source:
+            cached.repertoire_source_url,
+          placement_source:
+            cached.placement_source_url
+        }
+      );
+    }
 
     if (
       cachedIsComplete
