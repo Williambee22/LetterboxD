@@ -77,6 +77,412 @@ function usersColumns(conn) {
   return tableColumns(conn, 'users');
 }
 
+const PRESENCE_ONLINE_SECONDS = 3 * 60;
+const PRESENCE_RECENT_SECONDS = 20 * 60;
+const PRESENCE_WRITE_THROTTLE_SECONDS = 30;
+
+
+function ensurePresenceColumns(conn) {
+  const cols = usersColumns(conn);
+
+  if (!cols.has('last_seen_ts')) {
+    try {
+      conn.prepare(`
+        ALTER TABLE users
+        ADD COLUMN last_seen_ts INTEGER NOT NULL DEFAULT 0
+      `).run();
+
+    } catch (err) {
+      const refreshed =
+        usersColumns(conn);
+
+      if (
+        !refreshed.has(
+          'last_seen_ts'
+        )
+      ) {
+        throw err;
+      }
+    }
+  }
+
+
+  try {
+    conn.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_users_last_seen_ts
+      ON users(last_seen_ts)
+    `).run();
+
+  } catch (_) {}
+}
+
+
+function presenceStatusFromTs(
+  lastSeenTs,
+  atTs = nowTs()
+) {
+  const seen =
+    Number(
+      lastSeenTs || 0
+    );
+
+  const now =
+    Number(
+      atTs || nowTs()
+    );
+
+
+  if (!seen) {
+    return 'offline';
+  }
+
+
+  const age =
+    Math.max(
+      0,
+      now - seen
+    );
+
+
+  if (
+    age <=
+    PRESENCE_ONLINE_SECONDS
+  ) {
+    return 'online';
+  }
+
+
+  if (
+    age <=
+    PRESENCE_RECENT_SECONDS
+  ) {
+    return 'recent';
+  }
+
+
+  return 'offline';
+}
+
+
+function touchUserPresence(
+  conn,
+  userId,
+  ts = nowTs()
+) {
+  ensurePresenceColumns(conn);
+
+
+  const uid =
+    Number(userId);
+
+  const seenTs =
+    Number(
+      ts || nowTs()
+    );
+
+
+  if (!uid) {
+    return null;
+  }
+
+
+  /*
+    Only actually write once every 30 seconds.
+
+    This keeps the presence heartbeat from
+    constantly writing to SQLite.
+  */
+  conn.prepare(`
+    UPDATE users
+
+    SET last_seen_ts = ?
+
+    WHERE id = ?
+
+      AND COALESCE(
+        last_seen_ts,
+        0
+      ) <= ?
+  `).run(
+    seenTs,
+    uid,
+    seenTs -
+      PRESENCE_WRITE_THROTTLE_SECONDS
+  );
+
+
+  return presenceForUser(
+    conn,
+    uid
+  );
+}
+
+
+function presenceForUser(
+  conn,
+  userId
+) {
+  ensurePresenceColumns(conn);
+
+
+  const row =
+    conn.prepare(`
+      SELECT
+        id,
+        COALESCE(
+          last_seen_ts,
+          0
+        ) AS last_seen_ts
+
+      FROM users
+
+      WHERE id = ?
+
+      LIMIT 1
+    `).get(
+      Number(userId)
+    );
+
+
+  if (!row) {
+    return null;
+  }
+
+
+  const lastSeenTs =
+    Number(
+      row.last_seen_ts || 0
+    );
+
+
+  const ageSeconds =
+    lastSeenTs
+      ? Math.max(
+          0,
+          nowTs() -
+            lastSeenTs
+        )
+      : null;
+
+
+  return {
+    user_id:
+      Number(row.id),
+
+    last_seen_ts:
+      lastSeenTs,
+
+    age_seconds:
+      ageSeconds,
+
+    status:
+      presenceStatusFromTs(
+        lastSeenTs
+      )
+  };
+}
+
+
+function listConnectedUserPresence(
+  conn,
+  userId,
+  opts = {}
+) {
+  ensurePresenceColumns(conn);
+
+  ensureSocialTables(conn);
+
+
+  const uid =
+    Number(userId);
+
+
+  const limit =
+    Math.max(
+      1,
+      Math.min(
+        Number(
+          opts.limit || 500
+        ),
+        1000
+      )
+    );
+
+
+  const includeOffline =
+    opts.includeOffline !== false;
+
+
+  const offlineWhere =
+    includeOffline
+      ? ''
+      : `
+        AND COALESCE(
+          u.last_seen_ts,
+          0
+        ) >=
+          strftime('%s','now') -
+          ${PRESENCE_RECENT_SECONDS}
+      `;
+
+
+  return conn.prepare(`
+    WITH connections AS (
+
+      /* People I follow */
+      SELECT
+        followed_id AS user_id,
+        1 AS is_following,
+        0 AS is_friend
+
+      FROM follows
+
+      WHERE follower_id = @uid
+
+
+      UNION ALL
+
+
+      /* Accepted friends */
+      SELECT
+        CASE
+
+          WHEN requester_id = @uid
+            THEN addressee_id
+
+          ELSE requester_id
+
+        END AS user_id,
+
+        0 AS is_following,
+        1 AS is_friend
+
+      FROM friend_requests
+
+      WHERE status = 'accepted'
+
+        AND (
+          requester_id = @uid
+          OR
+          addressee_id = @uid
+        )
+    ),
+
+
+    merged AS (
+      SELECT
+        user_id,
+
+        MAX(
+          is_following
+        ) AS is_following,
+
+        MAX(
+          is_friend
+        ) AS is_friend
+
+      FROM connections
+
+      GROUP BY user_id
+    )
+
+
+    SELECT
+      u.id,
+      u.username,
+      u.avatar_url,
+
+      COALESCE(
+        u.last_seen_ts,
+        0
+      ) AS last_seen_ts,
+
+      m.is_following,
+      m.is_friend,
+
+
+      CASE
+
+        WHEN COALESCE(
+          u.last_seen_ts,
+          0
+        ) >=
+          strftime('%s','now') -
+          ${PRESENCE_ONLINE_SECONDS}
+
+          THEN 'online'
+
+
+        WHEN COALESCE(
+          u.last_seen_ts,
+          0
+        ) >=
+          strftime('%s','now') -
+          ${PRESENCE_RECENT_SECONDS}
+
+          THEN 'recent'
+
+
+        ELSE 'offline'
+
+      END AS presence_status
+
+
+    FROM merged m
+
+    JOIN users u
+      ON u.id =
+         m.user_id
+
+
+    WHERE
+      u.id <> @uid
+
+      ${offlineWhere}
+
+
+    ORDER BY
+
+      CASE
+
+        WHEN COALESCE(
+          u.last_seen_ts,
+          0
+        ) >=
+          strftime('%s','now') -
+          ${PRESENCE_ONLINE_SECONDS}
+
+          THEN 0
+
+
+        WHEN COALESCE(
+          u.last_seen_ts,
+          0
+        ) >=
+          strftime('%s','now') -
+          ${PRESENCE_RECENT_SECONDS}
+
+          THEN 1
+
+
+        ELSE 2
+
+      END,
+
+      LOWER(
+        u.username
+      ) ASC
+
+
+    LIMIT @limit
+  `).all({
+    uid,
+    limit
+  });
+}
+
+
+
 function getRatingHistogram(conn, showId) {
   const rows = conn.prepare(`
     SELECT
@@ -2301,6 +2707,8 @@ function listTopShowsWithTopReview(conn, opts = {}) {
 }
 
 function ensureSocialTables(conn) {
+  ensurePresenceColumns(conn);
+
   conn.exec(`
     CREATE TABLE IF NOT EXISTS follows (
       follower_id INTEGER NOT NULL,
@@ -2414,16 +2822,79 @@ function followingCount(conn, userId) {
   return Number(row ? row.c : 0);
 }
 
-function listFollowers(conn, userId, opts = {}) {
-  const limit = Number(opts.limit || 200);
+function listFollowers(
+  conn,
+  userId,
+  opts = {}
+) {
+  ensurePresenceColumns(conn);
+
+
+  const limit =
+    Number(
+      opts.limit || 200
+    );
+
+
   return conn.prepare(`
-    SELECT u.id, u.username, u.avatar_url
+    SELECT
+      u.id,
+      u.username,
+      u.avatar_url,
+
+      COALESCE(
+        u.last_seen_ts,
+        0
+      ) AS last_seen_ts,
+
+
+      CASE
+
+        WHEN COALESCE(
+          u.last_seen_ts,
+          0
+        ) >=
+          strftime('%s','now') -
+          ${PRESENCE_ONLINE_SECONDS}
+
+          THEN 'online'
+
+
+        WHEN COALESCE(
+          u.last_seen_ts,
+          0
+        ) >=
+          strftime('%s','now') -
+          ${PRESENCE_RECENT_SECONDS}
+
+          THEN 'recent'
+
+
+        ELSE 'offline'
+
+      END AS presence_status
+
+
     FROM follows f
-    JOIN users u ON u.id = f.follower_id
-    WHERE f.followed_id = ?
-    ORDER BY f.created_ts DESC
+
+    JOIN users u
+      ON u.id =
+         f.follower_id
+
+
+    WHERE
+      f.followed_id = ?
+
+
+    ORDER BY
+      f.created_ts DESC
+
+
     LIMIT ?
-  `).all(Number(userId), limit);
+  `).all(
+    Number(userId),
+    limit
+  );
 }
 
 function listFollowing(conn, userId, opts = {}) {
@@ -2498,23 +2969,100 @@ function friendsStatus(conn, aId, bId) {
   return Number(row.requester_id) === a ? 'pending_out' : 'pending_in';
 }
 
-function listFriends(conn, userId, opts = {}) {
-  const limit = Number(opts.limit || 500);
-  return conn.prepare(`
-    SELECT u.id, u.username, u.avatar_url
-    FROM friend_requests fr
-    JOIN users u
-      ON u.id = CASE
-                  WHEN fr.requester_id = ? THEN fr.addressee_id
-                  ELSE fr.requester_id
-                END
-    WHERE fr.status='accepted'
-      AND (fr.requester_id=? OR fr.addressee_id=?)
-    ORDER BY COALESCE(fr.responded_ts, fr.requested_ts) DESC
-    LIMIT ?
-  `).all(Number(userId), Number(userId), Number(userId), limit);
-}
+function listFriends(
+  conn,
+  userId,
+  opts = {}
+) {
+  ensurePresenceColumns(conn);
 
+
+  const limit =
+    Number(
+      opts.limit || 500
+    );
+
+
+  return conn.prepare(`
+    SELECT
+      u.id,
+      u.username,
+      u.avatar_url,
+
+      COALESCE(
+        u.last_seen_ts,
+        0
+      ) AS last_seen_ts,
+
+
+      CASE
+
+        WHEN COALESCE(
+          u.last_seen_ts,
+          0
+        ) >=
+          strftime('%s','now') -
+          ${PRESENCE_ONLINE_SECONDS}
+
+          THEN 'online'
+
+
+        WHEN COALESCE(
+          u.last_seen_ts,
+          0
+        ) >=
+          strftime('%s','now') -
+          ${PRESENCE_RECENT_SECONDS}
+
+          THEN 'recent'
+
+
+        ELSE 'offline'
+
+      END AS presence_status
+
+
+    FROM friend_requests fr
+
+
+    JOIN users u
+      ON u.id =
+
+        CASE
+
+          WHEN fr.requester_id = ?
+            THEN fr.addressee_id
+
+          ELSE fr.requester_id
+
+        END
+
+
+    WHERE
+      fr.status = 'accepted'
+
+      AND (
+        fr.requester_id = ?
+        OR
+        fr.addressee_id = ?
+      )
+
+
+    ORDER BY
+      COALESCE(
+        fr.responded_ts,
+        fr.requested_ts
+      ) DESC
+
+
+    LIMIT ?
+  `).all(
+    Number(userId),
+    Number(userId),
+    Number(userId),
+    limit
+  );
+}
 function listIncomingFriendRequests(conn, userId, opts = {}) {
   const limit = Number(opts.limit || 200);
   return conn.prepare(`
@@ -4268,6 +4816,11 @@ module.exports = {
   listUsers,
   listTopShowsWithTopReview,
   ensureSocialTables,
+  ensurePresenceColumns,
+  touchUserPresence,
+  presenceForUser,
+  presenceStatusFromTs,
+  listConnectedUserPresence,
   listAllRatingsForUser,
   follow,
   unfollow,
