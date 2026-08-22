@@ -1496,7 +1496,7 @@
 
         try {
           const response = await fetch(
-            "/api/presence/connections",
+            `/api/presence/user/${profileUserId}`,
             {
               method:"GET",
               credentials:"same-origin",
@@ -1513,20 +1513,15 @@
 
           if (
             !data ||
-            !Array.isArray(data.users)
+            data.ok !== true ||
+            !data.user
           ) {
+            applyStatus("offline");
             return;
           }
-
-          const profileUser = data.users.find(
-            (user) =>
-              Number(user.id) === profileUserId
-          );
-
+          
           applyStatus(
-            profileUser
-              ? profileUser.presence_status
-              : "offline"
+            data.user.presence_status || "offline"
           );
 
         } catch (_) {
