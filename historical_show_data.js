@@ -4,6 +4,7 @@ const DCI_BASE = 'https://www.dci.org/scores/final-scores';
 const WIKI_API = 'https://en.wikipedia.org/w/api.php';
 const USER_AGENT = 'Pressboxd/1.0 (+https://www.pressboxd.com)';
 const ERROR_RETRY_SECONDS = 24 * 60 * 60;
+const PARTIAL_RETRY_SECONDS = 6 * 60 * 60;
 
 let cheerioModule = null;
 
@@ -207,7 +208,7 @@ function parseDciPage(
 
     const placeMatch =
       String(cells[0]).match(
-        /^([0-9]{1,3})$/
+        /^([0-9]{1,3})(?:st|nd|rd|th)?\.?$/i
       );
 
     if (!placeMatch) return;
@@ -621,17 +622,325 @@ function splitRepertoire(raw) {
   return pieces.slice(0, 40);
 }
 
-function headerIndex(
-  headers,
-  tests
-) {
-  return headers.findIndex(
-    (header) =>
-      tests.some(
-        (test) =>
-          header.includes(test)
-      )
+function headerIndex(headers, tests) {
+  return headers.findIndex((header) =>
+    tests.some((test) => header.includes(test))
   );
+}
+
+function parseScoreValue(value) {
+  const matches =
+    String(value || '').match(
+      /\b([0-9]{1,3}\.[0-9]{2,3})\b/g
+    ) || [];
+
+  for (const match of matches) {
+    const score = Number(match);
+
+    if (
+      Number.isFinite(score) &&
+      score >= 40 &&
+      score <= 100
+    ) {
+      return score;
+    }
+  }
+
+  return null;
+}
+
+function parsePlacementValue(
+  value,
+  year = null
+) {
+  const text =
+    String(value || '');
+
+  const ordinalMatch =
+    text.match(
+      /\b([0-9]{1,3})(?:st|nd|rd|th)\b/i
+    );
+
+  if (ordinalMatch) {
+    const placement =
+      Number(ordinalMatch[1]);
+
+    if (
+      placement > 0 &&
+      placement < 100
+    ) {
+      return placement;
+    }
+  }
+
+  const namedMatch =
+    text.match(
+      /\b(?:place|placement|rank(?:ed)?|finish)\s*[:#-]?\s*([0-9]{1,3})\b/i
+    );
+
+  if (namedMatch) {
+    const placement =
+      Number(namedMatch[1]);
+
+    if (
+      placement > 0 &&
+      placement < 100
+    ) {
+      return placement;
+    }
+  }
+
+  const clean =
+    cleanText(text);
+
+  if (
+    /^[0-9]{1,3}$/.test(clean)
+  ) {
+    const placement =
+      Number(clean);
+
+    if (
+      placement > 0 &&
+      placement < 100 &&
+      placement !==
+        Number(year || 0)
+    ) {
+      return placement;
+    }
+  }
+
+  return null;
+}
+
+function inferChampionshipRound(
+  text,
+  placement = null
+) {
+  const value =
+    cleanText(text)
+      .toLowerCase();
+
+  if (
+    /\bsemi[\s-]?finals?\b/.test(value) ||
+    /\bsemis?\b/.test(value)
+  ) {
+    return 'Semifinals';
+  }
+
+  if (
+    /\bprelims?\b/.test(value) ||
+    /\bpreliminar(?:y|ies)\b/.test(value)
+  ) {
+    return 'Prelims';
+  }
+
+  if (
+    /\bfinals?\b/.test(value) &&
+    !/\bsemi[\s-]?finals?\b/.test(value)
+  ) {
+    return 'Finals';
+  }
+
+  const p =
+    Number(placement || 0);
+
+  if (
+    p > 0 &&
+    p <= 12
+  ) {
+    return 'Finals';
+  }
+
+  if (
+    p > 12 &&
+    p <= 25
+  ) {
+    return 'Semifinals';
+  }
+
+  if (p > 25) {
+    return 'Prelims';
+  }
+
+  return null;
+}
+
+/*
+  Wikipedia uses rowspans a lot.
+
+  Example:
+
+  2012 | Program | Music | 81.250 | 18th
+       | more information...
+
+  Normal .find("td") parsing can shift every column.
+  This expands the rowspans into their logical columns.
+*/
+function expandWikipediaTableRows(
+  $,
+  table
+) {
+  const rows = [];
+  const activeSpans =
+    new Map();
+
+  $(table)
+    .find('tr')
+    .each((_rowIndex, tr) => {
+      const existingSpans =
+        new Set(
+          activeSpans.keys()
+        );
+
+      const logicalCells = [];
+
+      for (
+        const [column, span]
+        of activeSpans
+      ) {
+        logicalCells[column] =
+          span.cell;
+      }
+
+      let column = 0;
+
+      const physicalCells =
+        $(tr)
+          .children('th, td')
+          .toArray();
+
+      for (
+        const cell
+        of physicalCells
+      ) {
+        while (
+          logicalCells[column]
+        ) {
+          column += 1;
+        }
+
+        const colspan =
+          Math.max(
+            1,
+            Number(
+              $(cell).attr(
+                'colspan'
+              ) || 1
+            )
+          );
+
+        const rowspan =
+          Math.max(
+            1,
+            Number(
+              $(cell).attr(
+                'rowspan'
+              ) || 1
+            )
+          );
+
+        for (
+          let offset = 0;
+          offset < colspan;
+          offset += 1
+        ) {
+          const target =
+            column + offset;
+
+          logicalCells[target] =
+            cell;
+
+          if (rowspan > 1) {
+            activeSpans.set(
+              target,
+              {
+                cell,
+                remaining:
+                  rowspan - 1,
+              }
+            );
+          }
+        }
+
+        column += colspan;
+      }
+
+      rows.push({
+        cells:
+          logicalCells,
+      });
+
+      for (
+        const columnIndex
+        of existingSpans
+      ) {
+        const span =
+          activeSpans.get(
+            columnIndex
+          );
+
+        if (!span) {
+          continue;
+        }
+
+        span.remaining -= 1;
+
+        if (
+          span.remaining <= 0
+        ) {
+          activeSpans.delete(
+            columnIndex
+          );
+        }
+      }
+    });
+
+  return rows;
+}
+
+function wikipediaCandidateScore(
+  candidate
+) {
+  if (!candidate) {
+    return -1;
+  }
+
+  let score = 0;
+
+  if (
+    candidate.placement != null
+  ) {
+    score += 10;
+  }
+
+  if (
+    candidate.final_score != null
+  ) {
+    score += 10;
+  }
+
+  if (
+    candidate.championship_round
+  ) {
+    score += 3;
+  }
+
+  if (
+    candidate.show_title
+  ) {
+    score += 2;
+  }
+
+  if (
+    Array.isArray(
+      candidate.repertoire
+    ) &&
+    candidate.repertoire.length
+  ) {
+    score += 5;
+  }
+
+  return score;
 }
 
 function parseWikipediaYearRow(
@@ -644,258 +953,361 @@ function parseWikipediaYearRow(
   const targetYear =
     String(year);
 
-  let found = null;
+  const yearRegex =
+    new RegExp(
+      `(?:^|\\b)${targetYear}(?:\\b|$)`
+    );
+
+  let best = null;
+  let bestScore = -1;
 
   $('table').each(
     (_tableIndex, table) => {
-      if (found) {
-        return false;
-      }
-
-      let headers = [];
-      let indexes = null;
-
-      $(table)
-        .find('tr')
-        .each(
-          (_rowIndex, tr) => {
-            if (found) {
-              return false;
-            }
-
-            const ths =
-              $(tr).find('th');
-
-            if (
-              ths.length >= 3
-            ) {
-              const candidateHeaders =
-                ths
-                  .map(
-                    (_i, th) =>
-                      cleanText(
-                        $(th).text()
-                      ).toLowerCase()
-                  )
-                  .get();
-
-              if (
-                candidateHeaders.some(
-                  (h) =>
-                    h === 'year' ||
-                    h.includes(
-                      'year'
-                    )
-                )
-              ) {
-                headers =
-                  candidateHeaders;
-
-                indexes = {
-                  year:
-                    headerIndex(
-                      headers,
-                      ['year']
-                    ),
-
-                  title:
-                    headerIndex(
-                      headers,
-                      [
-                        'show title',
-                        'show theme',
-                        'theme',
-                        'program',
-                      ]
-                    ),
-
-                  repertoire:
-                    headerIndex(
-                      headers,
-                      [
-                        'repertoire',
-                        'music',
-                      ]
-                    ),
-
-                  score:
-                    headerIndex(
-                      headers,
-                      ['score']
-                    ),
-
-                  placement:
-                    headerIndex(
-                      headers,
-                      [
-                        'placement',
-                        'place',
-                      ]
-                    ),
-                };
-
-                return;
-              }
-            }
-
-            const cells =
-              $(tr)
-                .find('td, th')
-                .toArray();
-
-            if (
-              cells.length < 4
-            ) {
-              return;
-            }
-
-            const texts =
-              cells.map(
-                (cell) =>
-                  cleanText(
-                    $(cell).text()
-                  )
-              );
-
-            let yearIndex =
-              indexes &&
-              indexes.year >= 0
-                ? indexes.year
-                : 0;
-
-            if (
-              !texts[yearIndex] ||
-              !new RegExp(
-                `\\b${targetYear}\\b`
-              ).test(
-                texts[yearIndex]
-              )
-            ) {
-              yearIndex =
-                texts.findIndex(
-                  (t) =>
-                    new RegExp(
-                      `^${targetYear}(?:\\D|$)`
-                    ).test(t)
-                );
-            }
-
-            if (
-              yearIndex < 0
-            ) {
-              return;
-            }
-
-            const repIndex =
-              indexes &&
-              indexes.repertoire >= 0
-                ? indexes.repertoire
-                : Math.min(
-                    yearIndex + 2,
-                    cells.length - 3
-                  );
-
-            const titleIndex =
-              indexes &&
-              indexes.title >= 0
-                ? indexes.title
-                : Math.min(
-                    yearIndex + 1,
-                    cells.length - 1
-                  );
-
-            const scoreIndex =
-              indexes &&
-              indexes.score >= 0
-                ? indexes.score
-                : Math.max(
-                    cells.length - 2,
-                    0
-                  );
-
-            const placementIndex =
-              indexes &&
-              indexes.placement >= 0
-                ? indexes.placement
-                : Math.max(
-                    cells.length - 1,
-                    0
-                  );
-
-            const repertoireRaw =
-              repIndex >= 0 &&
-              cells[repIndex]
-                ? cellTextWithBreaks(
-                    $,
-                    cells[repIndex]
-                  )
-                : '';
-
-            const scoreText =
-              scoreIndex >= 0
-                ? texts[scoreIndex]
-                : '';
-
-            const placementText =
-              placementIndex >= 0
-                ? texts[
-                    placementIndex
-                  ]
-                : '';
-
-            const scoreMatch =
-              String(
-                scoreText
-              ).match(
-                /\b([0-9]{1,3}\.[0-9]{2,3})\b/
-              );
-
-            const placementMatch =
-              String(
-                placementText
-              ).match(
-                /\b([0-9]{1,3})(?:st|nd|rd|th)?\b/i
-              );
-
-            found = {
-              show_title:
-                titleIndex >= 0
-                  ? cleanText(
-                      texts[
-                        titleIndex
-                      ]
-                    )
-                  : null,
-
-              repertoire:
-                splitRepertoire(
-                  repertoireRaw
-                ),
-
-              final_score:
-                scoreMatch
-                  ? Number(
-                      scoreMatch[1]
-                    )
-                  : null,
-
-              placement:
-                placementMatch
-                  ? Number(
-                      placementMatch[1]
-                    )
-                  : null,
-            };
-
-            return false;
-          }
+      const rows =
+        expandWikipediaTableRows(
+          $,
+          table
         );
 
-      return undefined;
+      let indexes = null;
+
+      for (
+        const row
+        of rows
+      ) {
+        const texts =
+          row.cells.map(
+            (cell) =>
+              cell
+                ? cleanText(
+                    $(cell).text()
+                  )
+                : ''
+          );
+
+        const lowerTexts =
+          texts.map(
+            (text) =>
+              text.toLowerCase()
+          );
+
+        if (
+          lowerTexts.some(
+            (text) =>
+              text === 'year' ||
+              text.includes(
+                'year'
+              )
+          )
+        ) {
+          indexes = {
+            year:
+              headerIndex(
+                lowerTexts,
+                [
+                  'year',
+                  'season',
+                ]
+              ),
+
+            title:
+              headerIndex(
+                lowerTexts,
+                [
+                  'show title',
+                  'show theme',
+                  'theme',
+                  'program',
+                  'production',
+                ]
+              ),
+
+            repertoire:
+              headerIndex(
+                lowerTexts,
+                [
+                  'repertoire',
+                  'music',
+                  'musical selections',
+                ]
+              ),
+
+            score:
+              headerIndex(
+                lowerTexts,
+                [
+                  'final score',
+                  'score',
+                  'championship score',
+                ]
+              ),
+
+            placement:
+              headerIndex(
+                lowerTexts,
+                [
+                  'placement',
+                  'place',
+                  'rank',
+                  'finish',
+                ]
+              ),
+          };
+
+          continue;
+        }
+
+        if (!texts.length) {
+          continue;
+        }
+
+        let yearIndex =
+          indexes &&
+          indexes.year >= 0
+            ? indexes.year
+            : 0;
+
+        if (
+          !texts[yearIndex] ||
+          !yearRegex.test(
+            texts[yearIndex]
+          )
+        ) {
+          yearIndex =
+            texts.findIndex(
+              (text) =>
+                new RegExp(
+                  `^${targetYear}(?:\\D|$)`
+                ).test(text)
+            );
+        }
+
+        if (
+          yearIndex < 0
+        ) {
+          continue;
+        }
+
+        const titleIndex =
+          indexes &&
+          indexes.title >= 0
+            ? indexes.title
+            : Math.min(
+                yearIndex + 1,
+                row.cells.length - 1
+              );
+
+        const repIndex =
+          indexes &&
+          indexes.repertoire >= 0
+            ? indexes.repertoire
+            : -1;
+
+        const scoreIndex =
+          indexes &&
+          indexes.score >= 0
+            ? indexes.score
+            : -1;
+
+        const placementIndex =
+          indexes &&
+          indexes.placement >= 0
+            ? indexes.placement
+            : -1;
+
+        const repertoireRaw =
+          repIndex >= 0 &&
+          row.cells[repIndex]
+            ? cellTextWithBreaks(
+                $,
+                row.cells[
+                  repIndex
+                ]
+              )
+            : '';
+
+        let finalScore =
+          scoreIndex >= 0
+            ? parseScoreValue(
+                texts[
+                  scoreIndex
+                ]
+              )
+            : null;
+
+        let placement =
+          placementIndex >= 0
+            ? parsePlacementValue(
+                texts[
+                  placementIndex
+                ],
+                year
+              )
+            : null;
+
+        if (
+          finalScore == null
+        ) {
+          for (
+            let i = 0;
+            i < texts.length;
+            i += 1
+          ) {
+            if (
+              i === yearIndex
+            ) {
+              continue;
+            }
+
+            const value =
+              parseScoreValue(
+                texts[i]
+              );
+
+            if (
+              value != null
+            ) {
+              finalScore =
+                value;
+
+              break;
+            }
+          }
+        }
+
+        if (
+          placement == null
+        ) {
+          for (
+            let i = 0;
+            i < texts.length;
+            i += 1
+          ) {
+            if (
+              i === yearIndex
+            ) {
+              continue;
+            }
+
+            const value =
+              parsePlacementValue(
+                texts[i],
+                year
+              );
+
+            if (
+              value != null
+            ) {
+              placement =
+                value;
+
+              break;
+            }
+          }
+        }
+
+        let repertoire =
+          splitRepertoire(
+            repertoireRaw
+          );
+
+        if (
+          !repertoire.length &&
+          repIndex < 0
+        ) {
+          for (
+            let i = 0;
+            i < row.cells.length;
+            i += 1
+          ) {
+            if (
+              i === yearIndex ||
+              i === titleIndex ||
+              i === scoreIndex ||
+              i === placementIndex
+            ) {
+              continue;
+            }
+
+            const raw =
+              row.cells[i]
+                ? cellTextWithBreaks(
+                    $,
+                    row.cells[i]
+                  )
+                : '';
+
+            if (
+              /\s+by\s+/i.test(
+                raw
+              ) ||
+              raw.includes('\n')
+            ) {
+              const possible =
+                splitRepertoire(
+                  raw
+                );
+
+              if (
+                possible.length
+              ) {
+                repertoire =
+                  possible;
+
+                break;
+              }
+            }
+          }
+        }
+
+        const rowText =
+          texts.join(' | ');
+
+        const candidate = {
+          show_title:
+            titleIndex >= 0 &&
+            texts[titleIndex]
+              ? cleanText(
+                  texts[
+                    titleIndex
+                  ]
+                )
+              : null,
+
+          repertoire,
+
+          final_score:
+            finalScore,
+
+          placement,
+
+          championship_round:
+            inferChampionshipRound(
+              rowText,
+              placement
+            ),
+        };
+
+        const candidateScore =
+          wikipediaCandidateScore(
+            candidate
+          );
+
+        if (
+          candidateScore >
+          bestScore
+        ) {
+          best =
+            candidate;
+
+          bestScore =
+            candidateScore;
+        }
+      }
     }
   );
 
-  return found;
+  return best;
 }
 
 async function fetchWikipediaHistory(
@@ -905,6 +1317,9 @@ async function fetchWikipediaHistory(
   const titles =
     await wikiSearch(corps);
 
+  let best = null;
+  let bestScore = -1;
+
   for (
     const title
     of titles
@@ -912,7 +1327,9 @@ async function fetchWikipediaHistory(
     const url =
       `${WIKI_API}` +
       `?action=parse` +
-      `&page=${encodeURIComponent(title)}` +
+      `&page=${encodeURIComponent(
+        title
+      )}` +
       `&prop=text` +
       `&format=json` +
       `&origin=*`;
@@ -945,7 +1362,7 @@ async function fetchWikipediaHistory(
         continue;
       }
 
-      return {
+      const candidate = {
         ...parsed,
 
         repertoire_source_url:
@@ -961,12 +1378,38 @@ async function fetchWikipediaHistory(
           'Wikipedia corps history',
       };
 
+      const score =
+        wikipediaCandidateScore(
+          candidate
+        );
+
+      if (
+        score > bestScore
+      ) {
+        best =
+          candidate;
+
+        bestScore =
+          score;
+      }
+
+      if (
+        candidate.placement != null &&
+        candidate.final_score != null &&
+        Array.isArray(
+          candidate.repertoire
+        ) &&
+        candidate.repertoire.length
+      ) {
+        return candidate;
+      }
+
     } catch (_err) {
-      // Try next candidate article.
+      // Try next possible Wikipedia page.
     }
   }
 
-  return null;
+  return best;
 }
 
 async function fetchHistoricalShowData(
@@ -1006,7 +1449,8 @@ async function fetchHistoricalShowData(
     await fetchDciPlacement(
       corps,
       year,
-      wiki && wiki.placement
+      wiki &&
+        wiki.placement
     );
 
   const placement =
@@ -1040,7 +1484,9 @@ async function fetchHistoricalShowData(
       : [];
 
   const hasPlacement =
-    placement != null ||
+    placement != null;
+
+  const hasScore =
     finalScore != null;
 
   const hasRepertoire =
@@ -1051,12 +1497,14 @@ async function fetchHistoricalShowData(
 
   if (
     hasPlacement &&
+    hasScore &&
     hasRepertoire
   ) {
     status = 'ok';
 
   } else if (
     hasPlacement ||
+    hasScore ||
     hasRepertoire
   ) {
     status = 'partial';
@@ -1076,7 +1524,9 @@ async function fetchHistoricalShowData(
 
     placement_display:
       placement
-        ? ordinal(placement)
+        ? ordinal(
+            placement
+          )
         : null,
 
     final_score:
@@ -1086,7 +1536,12 @@ async function fetchHistoricalShowData(
       dci &&
       dci.championship_round
         ? dci.championship_round
-        : null,
+        : (
+            wiki &&
+            wiki.championship_round
+              ? wiki.championship_round
+              : null
+          ),
 
     repertoire,
 
@@ -1204,7 +1659,9 @@ function hydrateRow(row) {
 
   return {
     show_id:
-      Number(row.show_id),
+      Number(
+        row.show_id
+      ),
 
     show_title:
       row.show_title ||
@@ -1468,16 +1925,55 @@ async function getOrFetchHistoricalShowData(
     !force &&
     cached
   ) {
+    const cachedHasPlacement =
+      cached.placement != null;
+
+    const cachedHasScore =
+      cached.final_score != null;
+
+    const cachedHasRepertoire =
+      Array.isArray(
+        cached.repertoire
+      ) &&
+      cached.repertoire.length >
+        0;
+
+    const cachedIsComplete =
+      cachedHasPlacement &&
+      cachedHasScore &&
+      cachedHasRepertoire;
+
     if (
-      cached.fetch_status ===
-        'ok' ||
-      cached.fetch_status ===
-        'partial'
+      cachedIsComplete
     ) {
       return cached;
     }
 
+    /*
+      Older versions could mark an incomplete
+      record as "ok".
+
+      Those old records should be retried
+      with the improved parser.
+    */
     if (
+      cached.fetch_status ===
+      'ok'
+    ) {
+      // Fall through and refresh.
+
+    } else if (
+      cached.fetch_status ===
+      'partial'
+    ) {
+      if (
+        ageSeconds <
+        PARTIAL_RETRY_SECONDS
+      ) {
+        return cached;
+      }
+
+    } else if (
       ageSeconds <
       ERROR_RETRY_SECONDS
     ) {
@@ -1490,6 +1986,124 @@ async function getOrFetchHistoricalShowData(
       await fetchHistoricalShowData(
         show
       );
+
+    /*
+      Preserve any good cached information if
+      an external source temporarily fails to
+      return one of the fields.
+    */
+    if (cached) {
+      if (
+        fresh.placement == null &&
+        cached.placement != null
+      ) {
+        fresh.placement =
+          cached.placement;
+
+        fresh.placement_display =
+          ordinal(
+            cached.placement
+          );
+      }
+
+      if (
+        fresh.final_score == null &&
+        cached.final_score != null
+      ) {
+        fresh.final_score =
+          cached.final_score;
+      }
+
+      if (
+        !fresh.championship_round &&
+        cached.championship_round
+      ) {
+        fresh.championship_round =
+          cached.championship_round;
+      }
+
+      if (
+        (
+          !Array.isArray(
+            fresh.repertoire
+          ) ||
+          fresh.repertoire.length ===
+            0
+        ) &&
+        Array.isArray(
+          cached.repertoire
+        ) &&
+        cached.repertoire.length >
+          0
+      ) {
+        fresh.repertoire =
+          cached.repertoire;
+      }
+
+      if (
+        !fresh.placement_source_url &&
+        cached.placement_source_url
+      ) {
+        fresh.placement_source_url =
+          cached
+            .placement_source_url;
+
+        fresh.placement_source_label =
+          cached
+            .placement_source_label;
+      }
+
+      if (
+        !fresh.repertoire_source_url &&
+        cached.repertoire_source_url
+      ) {
+        fresh.repertoire_source_url =
+          cached
+            .repertoire_source_url;
+
+        fresh.repertoire_source_label =
+          cached
+            .repertoire_source_label;
+      }
+    }
+
+    /*
+      Recalculate status after merging the
+      newly fetched data with preserved cache.
+    */
+    const mergedHasPlacement =
+      fresh.placement != null;
+
+    const mergedHasScore =
+      fresh.final_score != null;
+
+    const mergedHasRepertoire =
+      Array.isArray(
+        fresh.repertoire
+      ) &&
+      fresh.repertoire.length >
+        0;
+
+    if (
+      mergedHasPlacement &&
+      mergedHasScore &&
+      mergedHasRepertoire
+    ) {
+      fresh.fetch_status =
+        'ok';
+
+    } else if (
+      mergedHasPlacement ||
+      mergedHasScore ||
+      mergedHasRepertoire
+    ) {
+      fresh.fetch_status =
+        'partial';
+
+    } else {
+      fresh.fetch_status =
+        'not_found';
+    }
 
     saveHistoricalShowData(
       conn,
@@ -1522,7 +2136,8 @@ async function getOrFetchHistoricalShowData(
 
       championship_round:
         cached &&
-        cached.championship_round,
+        cached
+          .championship_round,
 
       repertoire:
         cached &&
@@ -1531,24 +2146,29 @@ async function getOrFetchHistoricalShowData(
 
       placement_source_url:
         cached &&
-        cached.placement_source_url,
+        cached
+          .placement_source_url,
 
       placement_source_label:
         cached &&
-        cached.placement_source_label,
+        cached
+          .placement_source_label,
 
       repertoire_source_url:
         cached &&
-        cached.repertoire_source_url,
+        cached
+          .repertoire_source_url,
 
       repertoire_source_label:
         cached &&
-        cached.repertoire_source_label,
+        cached
+          .repertoire_source_label,
 
       fetch_status:
         cached &&
         (
           cached.placement != null ||
+          cached.final_score != null ||
           (
             cached.repertoire ||
             []
