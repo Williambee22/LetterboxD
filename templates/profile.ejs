@@ -8,58 +8,62 @@
   <link rel="icon" type="image/png" href="/static/favicon.png"/>
 
   <style>
-    .auth { align-items:center; gap: 12px; }
+    .auth { align-items:center; gap:12px; }
 
-    .notifWrap { position: relative; display: inline-flex; align-items:center; }
+    .notifWrap {
+      position:relative;
+      display:inline-flex;
+      align-items:center;
+    }
 
     .bellBtn {
-      position: relative;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      color: inherit;
-      padding: 6px;
-      border-radius: 10px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0.95;
+      position:relative;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      color:inherit;
+      padding:6px;
+      border-radius:10px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      opacity:.95;
     }
 
     .bellBtn:hover {
-      background: rgba(255,255,255,0.06);
+      background:rgba(255,255,255,.06);
     }
 
     .badgeDot {
       position:absolute;
-      top: 3px;
-      right: 3px;
-      min-width: 18px;
-      height: 18px;
-      padding: 0 6px;
-      border-radius: 999px;
-      background: #ff3b30;
-      color: #fff;
-      font-size: 11px;
-      line-height: 18px;
-      text-align: center;
-      font-weight: 800;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+      top:3px;
+      right:3px;
+      min-width:18px;
+      height:18px;
+      padding:0 6px;
+      border-radius:999px;
+      background:#ff3b30;
+      color:#fff;
+      font-size:11px;
+      line-height:18px;
+      text-align:center;
+      font-weight:800;
+      box-shadow:0 6px 18px rgba(0,0,0,.35);
     }
 
     .notifDropdown {
-      display: none;
-      position: absolute;
-      right: 0;
-      top: 40px;
-      width: 340px;
-      max-height: 420px;
-      overflow: auto;
-      background: rgba(15, 23, 42, 0.98);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 14px;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.45);
-      z-index: 9999;
+      display:none;
+      position:absolute;
+      right:0;
+      top:40px;
+      width:340px;
+      max-height:420px;
+      overflow:auto;
+      background:rgba(15,23,42,.98);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      box-shadow:0 14px 40px rgba(0,0,0,.45);
+      z-index:9999;
     }
 
     .notifDropdown.open {
@@ -70,76 +74,76 @@
       display:flex;
       align-items:center;
       justify-content:space-between;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--accentSoft);
-      position: sticky;
-      top: 0;
-      background: rgba(15, 23, 42, 0.98);
-      backdrop-filter: blur(8px);
+      padding:10px 12px;
+      border-bottom:1px solid var(--accentSoft);
+      position:sticky;
+      top:0;
+      background:rgba(15,23,42,.98);
+      backdrop-filter:blur(8px);
     }
 
     .notifTitle {
-      font-weight: 900;
-      color: var(--text);
+      font-weight:900;
+      color:var(--text);
     }
 
     .markReadBtn {
-      border: 1px solid transparent;
-      background: transparent;
-      color: inherit;
-      cursor: pointer;
-      opacity: 0.9;
-      font-size: 12px;
-      padding: 6px 8px;
-      border-radius: 10px;
-      transition: background .15s ease, border-color .15s ease;
+      border:1px solid transparent;
+      background:transparent;
+      color:inherit;
+      cursor:pointer;
+      opacity:.9;
+      font-size:12px;
+      padding:6px 8px;
+      border-radius:10px;
+      transition:background .15s ease,border-color .15s ease;
     }
 
     .markReadBtn:hover {
-      background: var(--accentFaint);
-      border-color: var(--accentSoft);
-      opacity: 1;
+      background:var(--accentFaint);
+      border-color:var(--accentSoft);
+      opacity:1;
     }
 
     .notifList {
-      padding: 8px;
+      padding:8px;
       display:flex;
       flex-direction:column;
-      gap: 8px;
+      gap:8px;
     }
 
     .notifItem {
-      padding: 10px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      transition: border-color .15s ease, background .15s ease;
+      padding:10px;
+      border-radius:12px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      transition:border-color .15s ease,background .15s ease;
     }
 
     .notifItem.unread {
-      background: var(--accentFaint);
-      border-color: var(--accentSoft);
+      background:var(--accentFaint);
+      border-color:var(--accentSoft);
     }
 
     .notifItem a {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 700;
+      color:var(--accent);
+      text-decoration:none;
+      font-weight:700;
     }
 
     .notifItem a:hover {
-      text-decoration: underline;
+      text-decoration:underline;
     }
 
     .notifTime {
-      font-size: 12px;
-      opacity: 0.7;
-      margin-top: 4px;
+      font-size:12px;
+      opacity:.7;
+      margin-top:4px;
     }
 
     .notifEmpty {
-      padding: 12px;
-      opacity: 0.8;
+      padding:12px;
+      opacity:.8;
     }
 
     .authBellSlot {
@@ -149,7 +153,7 @@
 
     .notifDropdown,
     .notifDropdown * {
-      pointer-events: auto !important;
+      pointer-events:auto !important;
     }
 
     .profile_top_actions {
@@ -161,9 +165,9 @@
     }
 
     .profile_counts .badge {
-      border-color: var(--accentFaint);
-      background: var(--accentFaint);
-      color: var(--text);
+      border-color:var(--accentFaint);
+      background:var(--accentFaint);
+      color:var(--text);
     }
 
     .profile_hero {
@@ -171,7 +175,7 @@
       overflow:hidden;
       margin-top:16px;
       border:1px solid var(--accentSoft);
-      box-shadow:var(--shadow, 0 10px 30px rgba(0,0,0,.35));
+      box-shadow:var(--shadow,0 10px 30px rgba(0,0,0,.35));
       background:#0b0b0b;
     }
 
@@ -195,8 +199,8 @@
       inset:0;
       z-index:1;
       background:
-        linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.62)),
-        radial-gradient(circle at top left, var(--accentFaint), transparent 30%);
+        linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.62)),
+        radial-gradient(circle at top left,var(--accentFaint),transparent 30%);
       pointer-events:none;
     }
 
@@ -206,8 +210,8 @@
     }
 
     .profile_hero_inner h1 {
-      color: var(--text);
-      text-shadow: 0 2px 18px rgba(0,0,0,.45);
+      color:var(--text);
+      text-shadow:0 2px 18px rgba(0,0,0,.45);
     }
 
     .profile_username_row {
@@ -229,7 +233,7 @@
       border-radius:50%;
       background:#70798b;
       border:2px solid rgba(0,0,0,.6);
-      transition:background .15s ease, box-shadow .15s ease;
+      transition:background .15s ease,box-shadow .15s ease;
     }
 
     .profile_presence_dot.online {
@@ -250,19 +254,19 @@
 
     .profile_bio {
       margin-top:12px;
-      opacity:0.95;
+      opacity:.95;
       line-height:1.55;
-      border-left: 3px solid var(--accentSoft);
-      padding-left: 12px;
+      border-left:3px solid var(--accentSoft);
+      padding-left:12px;
     }
 
     .profile_section_title {
-      color: var(--accent);
+      color:var(--accent);
     }
 
     .acct_panel {
       border:1px solid var(--accentSoft) !important;
-      background:color-mix(in srgb, var(--accent) 6%, rgba(0,0,0,.94));
+      background:color-mix(in srgb,var(--accent) 6%,rgba(0,0,0,.94));
       box-shadow:0 0 0 1px var(--accentFaint);
     }
 
@@ -276,22 +280,140 @@
       color:var(--accent);
     }
 
-    .profile_hero_right {
-      flex:0 0 270px;
-      width:270px;
-      align-self:stretch;
-      display:flex;
-      flex-direction:column;
-      justify-content:flex-start;
-      gap:10px;
+    .profile_layout {
+      display:block !important;
     }
 
-    .profile_account_details {
-      position:absolute;
-      top:0;
-      right:0;
+    .profile_content_stack {
       width:100%;
-      z-index:20;
+    }
+
+    .profile_avg_box {
+      position:relative !important;
+      transform:none !important;
+      margin:0 auto !important;
+      background:rgba(0,0,0,.35);
+      backdrop-filter:blur(4px);
+    }
+
+    .profile_avg_value {
+      color:var(--text);
+    }
+
+    .profile_avg_star {
+      color:var(--accent);
+    }
+
+    .role_tag {
+      box-shadow:0 0 0 1px rgba(0,0,0,.15) inset;
+    }
+
+    .rolebadge {
+      display:inline-flex;
+      align-items:center;
+      font-size:11px;
+      font-weight:800;
+      border-radius:999px;
+      padding:4px 9px;
+      color:#fff;
+      line-height:1;
+      box-shadow:0 0 0 1px rgba(0,0,0,.18) inset;
+    }
+
+    .poster_meta {
+      border-top:1px solid var(--accentFaint);
+    }
+
+    .reviewcard {
+      border-color:var(--accentSoft);
+      background:color-mix(in srgb,var(--accent) 5%,rgba(7,10,16,.35));
+    }
+
+    .reviewtext {
+      border-left:3px solid var(--accentSoft);
+      padding-left:12px;
+      margin-top:12px;
+      text-indent:0 !important;
+      white-space:normal;
+    }
+
+    .tile_rating {
+      border-color:var(--accentSoft) !important;
+      background:rgba(0,0,0,.72) !important;
+    }
+
+    .tile_star {
+      color:var(--accent) !important;
+    }
+
+    .topline_accent {
+      border-top:1px solid var(--accentSoft);
+      padding-top:12px;
+    }
+
+    .profile_hero_content {
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      min-width:0;
+      flex:1;
+    }
+
+    .profile_favorites_box {
+      margin-top:4px;
+      padding-top:12px;
+      border-top:1px solid var(--accentSoft);
+    }
+
+    .profile_favorites_title {
+      color:var(--accent);
+      font-weight:800;
+      font-size:12px;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+      margin-bottom:10px;
+    }
+
+    .profile_favorites_row {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:flex-start;
+    }
+
+    .profile_favorite_item {
+      width:72px;
+      text-decoration:none;
+      color:inherit;
+      display:block;
+    }
+
+    .profile_favorite_art {
+      position:relative;
+      width:79px;
+      height:119px;
+      overflow:hidden;
+      background:rgba(0,0,0,.55);
+      border:1px solid var(--accentSoft);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .profile_favorite_art img {
+      width:100% !important;
+      height:100% !important;
+      object-fit:contain !important;
+      object-position:center center !important;
+      display:block;
+    }
+
+    .profile_account_floating {
+      position:absolute;
+      top:14px;
+      right:14px;
+      z-index:50;
+      width:220px;
     }
 
     .profile_account_summary {
@@ -313,14 +435,21 @@
       transition:transform .15s ease;
     }
 
-    .profile_account_details[open] .profile_account_summary .small {
+    .profile_account_floating[open] .profile_account_summary .small {
       transform:rotate(180deg);
     }
 
     .profile_account_panel {
-      width:100%;
-      margin-top:8px;
+      position:absolute;
+      top:calc(100% + 8px);
+      right:0;
+      width:330px;
+      max-width:calc(100vw - 30px);
       padding:14px;
+      background:rgba(10,12,17,.98) !important;
+      backdrop-filter:blur(14px);
+      box-shadow:0 18px 50px rgba(0,0,0,.55);
+      z-index:60;
     }
 
     .profile_account_forms {
@@ -339,163 +468,6 @@
       border-top:1px solid var(--accentFaint);
     }
 
-    .profile_hero_right .profile_avg_box {
-      position:relative !important;
-      width:100%;
-      transform:none !important;
-      margin:0 !important;
-    }
-
-    .profile_layout {
-      display:block !important;
-    }
-
-    .profile_content_stack {
-      width:100%;
-    }
-
-    .profile_avg_box {
-      position: relative !important;
-      transform: none !important;
-      margin: 0 auto !important;
-      background: rgba(0,0,0,.35);
-      backdrop-filter: blur(4px);
-    }
-
-    .profile_avg_value {
-      color: var(--text);
-    }
-
-    .profile_avg_star {
-      color: var(--accent);
-    }
-
-    .role_tag {
-      box-shadow: 0 0 0 1px rgba(0,0,0,.15) inset;
-    }
-
-    .rolebadge {
-      display:inline-flex;
-      align-items:center;
-      font-size:11px;
-      font-weight:800;
-      border-radius:999px;
-      padding:4px 9px;
-      color:#fff;
-      line-height:1;
-      box-shadow: 0 0 0 1px rgba(0,0,0,.18) inset;
-    }
-
-    .profile_ratings_panel .postergrid {
-      display:grid !important;
-      grid-template-columns:repeat(8, minmax(0, 1fr)) !important;
-      gap:10px !important;
-      width:100%;
-    }
-    
-    .profile_ratings_panel .poster {
-      width:100% !important;
-      min-width:0 !important;
-    }
-    
-    .profile_ratings_panel .poster_art {
-      width:100% !important;
-    }
-    
-    .profile_ratings_panel .poster_img {
-      width:100% !important;
-      height:100% !important;
-      object-fit:contain !important;
-    }
-
-    .poster_meta {
-      border-top: 1px solid var(--accentFaint);
-    }
-
-    .reviewcard {
-      border-color: var(--accentSoft);
-      background: color-mix(in srgb, var(--accent) 5%, rgba(7,10,16,.35));
-    }
-
-    .reviewtext {
-      border-left:3px solid var(--accentSoft);
-      padding-left:12px;
-      margin-top:12px;
-      text-indent:0 !important;
-      white-space:normal;
-    }
-
-    .tile_rating {
-      border-color: var(--accentSoft) !important;
-      background: rgba(0,0,0,.72) !important;
-    }
-
-    .tile_star {
-      color: var(--accent) !important;
-    }
-
-    .topline_accent {
-      border-top: 1px solid var(--accentSoft);
-      padding-top: 12px;
-    }
-
-    .profile_hero_content {
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-      min-width:0;
-      flex:1;
-    }
-
-    .profile_favorites_box {
-      margin-top:4px;
-      padding-top:12px;
-      border-top:1px solid var(--accentSoft);
-    }
-
-    .profile_favorites_title {
-      color: var(--accent);
-      font-weight: 800;
-      font-size: 12px;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-
-    .profile_favorites_row {
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:flex-start;
-    }
-
-    .profile_favorite_item {
-      width:72px;
-      text-decoration:none;
-      color:inherit;
-      display:block;
-    }
-
-    .profile_favorite_art {
-      position: relative;
-      width: 79px;
-      height: 119px;
-      overflow: hidden;
-      background: rgba(0,0,0,0.55);
-      border: 1px solid var(--accentSoft);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .profile_favorite_art img {
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: contain !important;
-      object-position: center center !important;
-      display: block;
-    }
-
     .profile_favorite_rank {
       position:absolute;
       left:6px;
@@ -505,7 +477,7 @@
       padding:0 6px;
       border-radius:999px;
       background:rgba(0,0,0,.78);
-      border:1px solid rgba(255,255,255,0.10);
+      border:1px solid rgba(255,255,255,.10);
       color:#fff;
       font-size:11px;
       font-weight:900;
@@ -525,7 +497,7 @@
     }
 
     .profile_favorite_empty {
-      opacity:0.8;
+      opacity:.8;
       font-size:13px;
     }
 
@@ -578,40 +550,20 @@
       pointer-events:none;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width:768px) {
       .topbar {
-        position: relative !important;
-        height: auto !important;
-        padding: 15px 0 !important;
+        position:relative !important;
+        height:auto !important;
+        padding:15px 0 !important;
       }
 
       .topbar .wrap {
-        flex-direction: column !important;
-        gap: 15px !important;
+        flex-direction:column !important;
+        gap:15px !important;
       }
 
       .profile_layout {
         display:block !important;
-      }
-
-      .profile_hero_right {
-        position:relative;
-        flex:0 0 270px;
-        width:270px;
-        align-self:stretch;
-        min-height:300px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-      }
-
-      .profile_account_panel {
-        width:100%;
-        max-width:none;
-      }
-
-      .profile_hero_right .profile_avg_box {
-        width:100%;
       }
 
       .profile_content_stack {
@@ -619,12 +571,12 @@
       }
 
       .profile_hero_inner {
-        padding: 20px 10px !important;
+        padding:20px 10px !important;
       }
 
       .profile_hero_inner .row.gap {
-        flex-direction: column !important;
-        text-align: center !important;
+        flex-direction:column !important;
+        text-align:center !important;
       }
 
       .profile_username_row {
@@ -632,20 +584,30 @@
       }
 
       .avatar_lg {
-        margin: 0 auto 15px auto !important;
+        margin:0 auto 15px auto !important;
       }
 
-      @media (max-width:768px) {
-        .profile_ratings_panel .postergrid {
-          grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
-          gap:8px !important;
-        }
+      .profile_account_floating {
+        position:relative;
+        top:auto;
+        right:auto;
+        width:100%;
+        margin-bottom:14px;
       }
-      
-      @media (max-width:480px) {
-        .profile_ratings_panel .postergrid {
-          grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
-        }
+
+      .profile_account_panel {
+        position:relative;
+        top:auto;
+        right:auto;
+        width:100%;
+        max-width:none;
+        margin-top:8px;
+      }
+
+      .postergrid {
+        display:grid !important;
+        grid-template-columns:repeat(3,1fr) !important;
+        gap:8px !important;
       }
 
       .profile_favorites_row {
@@ -791,6 +753,7 @@
                       const unread = Number(n.is_read || 0) === 0;
                       const sid = n.show_id || null;
                     %>
+
                       <div class="notifItem <%= unread ? 'unread' : '' %>">
                         <% if (kind === "friend_request") { %>
                           <div>
@@ -837,7 +800,9 @@
                     <% } %>
                   </div>
                 <% } else { %>
-                  <div class="notifEmpty">No notifications.</div>
+                  <div class="notifEmpty">
+                    No notifications.
+                  </div>
                 <% } %>
               </div>
             </div>
@@ -852,7 +817,9 @@
               <% } %>
             </span>
 
-            <span class="muted small"><%= me.username %></span>
+            <span class="muted small">
+              <%= me.username %>
+            </span>
           </a>
 
           <a href="/logout">Logout</a>
@@ -979,6 +946,100 @@
       <div class="profile_hero_overlay"></div>
 
       <div class="profile_hero_inner">
+        <% if (isMe) { %>
+          <details class="profile_account_floating">
+            <summary class="btn ghost profile_account_summary">
+              Account Settings
+              <span class="muted small">▼</span>
+            </summary>
+
+            <div class="panel acct_panel profile_account_panel">
+              <div class="kicker profile_section_title">
+                Account
+              </div>
+
+              <div class="profile_account_forms">
+                <div>
+                  <div class="muted small profile_account_label">
+                    <b>Change username</b>
+                  </div>
+
+                  <form method="post" action="/me/change_username">
+                    <div class="field">
+                      <label>New username</label>
+                      <input
+                        name="new_username"
+                        placeholder="New username"
+                        autocomplete="username"
+                      >
+                    </div>
+
+                    <div class="field">
+                      <label>Current password</label>
+                      <input
+                        type="password"
+                        name="current_password"
+                        placeholder="Current password"
+                        autocomplete="current-password"
+                      >
+                    </div>
+
+                    <div class="actions">
+                      <button class="btn green" type="submit">
+                        Update username
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                <div class="profile_account_password">
+                  <div class="muted small profile_account_label">
+                    <b>Change password</b>
+                  </div>
+
+                  <form method="post" action="/me/change_password">
+                    <div class="field">
+                      <label>Current password</label>
+                      <input
+                        type="password"
+                        name="current_password"
+                        placeholder="Current password"
+                        autocomplete="current-password"
+                      >
+                    </div>
+
+                    <div class="field">
+                      <label>New password</label>
+                      <input
+                        type="password"
+                        name="new_password"
+                        placeholder="New password"
+                        autocomplete="new-password"
+                      >
+                    </div>
+
+                    <div class="field">
+                      <label>Confirm new password</label>
+                      <input
+                        type="password"
+                        name="new_password2"
+                        placeholder="Confirm new password"
+                        autocomplete="new-password"
+                      >
+                    </div>
+
+                    <div class="actions">
+                      <button class="btn green" type="submit">
+                        Update password
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </details>
+        <% } %>
+
         <div class="row gap" style="align-items:center;">
           <div class="avatar_lg">
             <% if (pu.avatar_url) { %>
@@ -1129,133 +1190,25 @@
             </div>
           </div>
 
-          <div class="profile_hero_right">
-            <% if (isMe) { %>
-              <details class="profile_account_details">
-                <summary class="btn ghost profile_account_summary">
-                  Account Settings
-                  <span class="muted small">▼</span>
-                </summary>
+          <div class="profile_avg_box">
+            <div class="kicker" style="color:var(--accent);">
+              Avg rating
+            </div>
 
-                <div class="panel acct_panel profile_account_panel">
-                  <div class="kicker profile_section_title">
-                    Account
-                  </div>
-
-                  <div class="profile_account_forms">
-                    <div>
-                      <div class="muted small profile_account_label">
-                        <b>Change username</b>
-                      </div>
-
-                      <form
-                        method="post"
-                        action="/me/change_username"
-                      >
-                        <div class="field">
-                          <label>New username</label>
-                          <input
-                            name="new_username"
-                            placeholder="New username"
-                            autocomplete="username"
-                          >
-                        </div>
-
-                        <div class="field">
-                          <label>Current password</label>
-                          <input
-                            type="password"
-                            name="current_password"
-                            placeholder="Current password"
-                            autocomplete="current-password"
-                          >
-                        </div>
-
-                        <div class="actions">
-                          <button
-                            class="btn green"
-                            type="submit"
-                          >
-                            Update username
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-
-                    <div class="profile_account_password">
-                      <div class="muted small profile_account_label">
-                        <b>Change password</b>
-                      </div>
-
-                      <form
-                        method="post"
-                        action="/me/change_password"
-                      >
-                        <div class="field">
-                          <label>Current password</label>
-                          <input
-                            type="password"
-                            name="current_password"
-                            placeholder="Current password"
-                            autocomplete="current-password"
-                          >
-                        </div>
-
-                        <div class="field">
-                          <label>New password</label>
-                          <input
-                            type="password"
-                            name="new_password"
-                            placeholder="New password"
-                            autocomplete="new-password"
-                          >
-                        </div>
-
-                        <div class="field">
-                          <label>Confirm new password</label>
-                          <input
-                            type="password"
-                            name="new_password2"
-                            placeholder="Confirm new password"
-                            autocomplete="new-password"
-                          >
-                        </div>
-
-                        <div class="actions">
-                          <button
-                            class="btn green"
-                            type="submit"
-                          >
-                            Update password
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-              </details>
-            <% } %>
-
-            <div class="profile_avg_box">
-              <div class="kicker" style="color:var(--accent);">
-                Avg rating
+            <% if (avgRatingCnt > 0) { %>
+              <div class="profile_avg_value">
+                <span class="profile_avg_star">★</span>
+                <%= avgRating.toFixed(2) %>
               </div>
 
-              <% if (avgRatingCnt > 0) { %>
-                <div class="profile_avg_value">
-                  <span class="profile_avg_star">★</span>
-                  <%= avgRating.toFixed(2) %>
-                </div>
-
-                <div class="muted small">
-                  <%= avgRatingCnt %> ratings
-                </div>
-              <% } else { %>
-                <div class="muted">
-                  No ratings
-                </div>
-              <% } %>
-            </div>
+              <div class="muted small">
+                <%= avgRatingCnt %> ratings
+              </div>
+            <% } else { %>
+              <div class="muted">
+                No ratings
+              </div>
+            <% } %>
           </div>
         </div>
       </div>
@@ -1464,6 +1417,7 @@
 
     (() => {
       const dot = document.getElementById("profilePresenceDot");
+
       if (!dot) return;
 
       const profileUserId = Number(
@@ -1515,11 +1469,11 @@
           const response = await fetch(
             "/api/presence/connections",
             {
-              method: "GET",
-              credentials: "same-origin",
-              cache: "no-store",
-              headers: {
-                "X-Requested-With": "XMLHttpRequest"
+              method:"GET",
+              credentials:"same-origin",
+              cache:"no-store",
+              headers:{
+                "X-Requested-With":"XMLHttpRequest"
               }
             }
           );
@@ -1537,8 +1491,7 @@
 
           const profileUser = data.users.find(
             (user) =>
-              Number(user.id) ===
-              profileUserId
+              Number(user.id) === profileUserId
           );
 
           applyStatus(
@@ -1546,6 +1499,7 @@
               ? profileUser.presence_status
               : "offline"
           );
+
         } catch (_) {
           // Presence should never break the profile page.
         }
@@ -1561,10 +1515,7 @@
       document.addEventListener(
         "visibilitychange",
         () => {
-          if (
-            document.visibilityState ===
-            "visible"
-          ) {
+          if (document.visibilityState === "visible") {
             refreshProfilePresence();
           }
         }
@@ -1611,15 +1562,13 @@
 
       const updateRanks = () => {
         items().forEach(
-          (item, index) => {
-            const rank =
-              item.querySelector(
-                "[data-favorite-rank]"
-              );
+          (item,index) => {
+            const rank = item.querySelector(
+              "[data-favorite-rank]"
+            );
 
             if (rank) {
-              rank.textContent =
-                String(index + 1);
+              rank.textContent = String(index + 1);
             }
           }
         );
@@ -1641,8 +1590,7 @@
         if (clearAfter > 0) {
           statusTimer = setTimeout(
             () => {
-              status.textContent =
-                "Drag to reorder";
+              status.textContent = "Drag to reorder";
             },
             clearAfter
           );
@@ -1660,15 +1608,12 @@
       const saveOrder = async () => {
         const currentItems = items();
 
-        const showIds =
-          currentItems.map((item) =>
-            Number(
-              item.dataset.showId
-            )
-          );
+        const showIds = currentItems.map(
+          (item) =>
+            Number(item.dataset.showId)
+        );
 
-        const currentOrder =
-          showIds.join(",");
+        const currentOrder = showIds.join(",");
 
         if (
           !showIds.length ||
@@ -1683,24 +1628,21 @@
           const response = await fetch(
             "/me/favorites/reorder",
             {
-              method: "POST",
-              credentials: "same-origin",
-              headers: {
-                "Content-Type":
-                  "application/json",
-                "Accept":
-                  "application/json"
+              method:"POST",
+              credentials:"same-origin",
+              headers:{
+                "Content-Type":"application/json",
+                "Accept":"application/json"
               },
-              body: JSON.stringify({
-                show_ids: showIds
+              body:JSON.stringify({
+                show_ids:showIds
               })
             }
           );
 
-          const data =
-            await response
-              .json()
-              .catch(() => null);
+          const data = await response
+            .json()
+            .catch(() => null);
 
           if (
             !response.ok ||
@@ -1713,8 +1655,7 @@
             );
           }
 
-          lastSavedOrder =
-            currentOrder;
+          lastSavedOrder = currentOrder;
 
           setStatus(
             "Order saved",
@@ -1734,25 +1675,20 @@
         }
       };
 
-      lastSavedOrder =
-        orderString();
+      lastSavedOrder = orderString();
 
       items().forEach((item) => {
         item.addEventListener(
           "dragstart",
           (event) => {
             dragging = item;
-            startingOrder =
-              orderString();
+            startingOrder = orderString();
 
-            event.dataTransfer.effectAllowed =
-              "move";
+            event.dataTransfer.effectAllowed = "move";
 
             event.dataTransfer.setData(
               "text/plain",
-              String(
-                item.dataset.showId || ""
-              )
+              String(item.dataset.showId || "")
             );
 
             requestAnimationFrame(() => {
@@ -1795,11 +1731,9 @@
 
             event.preventDefault();
 
-            event.dataTransfer.dropEffect =
-              "move";
+            event.dataTransfer.dropEffect = "move";
 
-            const rect =
-              item.getBoundingClientRect();
+            const rect = item.getBoundingClientRect();
 
             const centerX =
               rect.left +
@@ -1816,17 +1750,12 @@
             let putBefore;
 
             if (
-              Math.abs(
-                verticalDistance
-              ) >
-              rect.height * 0.35
+              Math.abs(verticalDistance) >
+              rect.height * .35
             ) {
-              putBefore =
-                verticalDistance < 0;
+              putBefore = verticalDistance < 0;
             } else {
-              putBefore =
-                event.clientX <
-                centerX;
+              putBefore = event.clientX < centerX;
             }
 
             if (putBefore) {
@@ -1871,8 +1800,7 @@
 
             dragging = null;
 
-            lastDragEndedAt =
-              Date.now();
+            lastDragEndedAt = Date.now();
 
             if (changed) {
               saveOrder();
@@ -1885,7 +1813,7 @@
           (event) => {
             if (
               Date.now() -
-                lastDragEndedAt <
+              lastDragEndedAt <
               300
             ) {
               event.preventDefault();
