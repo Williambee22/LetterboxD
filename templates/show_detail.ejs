@@ -1294,215 +1294,158 @@
 
   
     /* =========================================================
-       HISTORICAL SHOW INFORMATION
+       COMPACT HISTORICAL INFO UNDER POSTER
        ========================================================= */
 
-    .historyPanel {
-      margin-top: 10px;
-      padding: 16px !important;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.09);
-      background: rgba(255,255,255,0.022);
-      box-shadow: none;
+    .posterHistoryColumn {
+      flex: 0 0 210px;
+      width: 210px;
+      min-width: 210px;
     }
 
-    .historyHeader {
+    .posterHistoryColumn .showposter {
+      width: 210px !important;
+      height: 315px !important;
+      flex: none !important;
+    }
+
+    .posterHistoryMini {
+      width: 100%;
+      margin-top: 7px;
+      padding: 8px 8px 7px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.018);
+      box-sizing: border-box;
+      font-size: 9px;
+      line-height: 1.35;
+      color: rgba(255,255,255,0.72);
+    }
+
+    .posterHistoryTop {
       display: flex;
       align-items: flex-start;
-      justify-content: space-between;
-      gap: 18px;
-      margin-bottom: 14px;
+      gap: 10px;
+      margin-bottom: 7px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
 
-    .historyHeaderText {
+    .posterHistoryStat {
       min-width: 0;
+      flex: 1 1 0;
     }
 
-    .historyTitle {
-      margin: 4px 0 0;
-      font-size: 20px;
-      line-height: 1.15;
-      letter-spacing: -0.015em;
-    }
-
-    .historySubtitle {
-      margin-top: 4px;
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .historyRefreshForm {
-      flex: 0 0 auto;
-    }
-
-    .historyRefreshForm .btn {
-      white-space: nowrap;
-      padding: 7px 10px;
-      font-size: 11px;
-    }
-
-    .historyBody {
-      display: grid;
-      grid-template-columns: minmax(230px, 300px) minmax(0, 1fr);
-      gap: 18px;
-      align-items: start;
-    }
-
-    .historySummary {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .historyStat {
-      padding: 12px;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 11px;
-      background: rgba(255,255,255,0.025);
-      min-width: 0;
-    }
-
-    .historyStat.historyStatWide {
-      grid-column: 1 / -1;
-    }
-
-    .historyStatLabel {
-      font-size: 9px;
+    .posterHistoryLabel {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 7px;
+      line-height: 1.1;
       font-weight: 900;
-      text-transform: uppercase;
       letter-spacing: .08em;
-      color: var(--muted);
-      margin-bottom: 5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.42);
     }
 
-    .historyStatValue {
-      font-size: 22px;
-      line-height: 1.05;
+    .posterHistoryValue {
+      font-size: 12px;
+      line-height: 1.1;
       font-weight: 900;
-      color: #fff;
+      color: rgba(255,255,255,0.94);
       font-variant-numeric: tabular-nums;
-      overflow-wrap: anywhere;
     }
 
-    .historyStatValue.historyProgramTitle {
-      font-size: 14px;
-      line-height: 1.3;
+    .posterHistoryRound {
+      margin-top: 2px;
+      font-size: 7px;
+      color: rgba(255,255,255,0.38);
     }
 
-    .historyStatMeta {
-      margin-top: 5px;
-      font-size: 10px;
-      color: var(--muted);
-    }
-
-    .historyRepertoire {
-      min-width: 0;
-      padding-left: 18px;
-      border-left: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .historyRepertoireTitle {
-      font-size: 10px;
+    .posterRepTitle {
+      margin-bottom: 4px;
+      font-size: 7px;
+      line-height: 1.1;
       font-weight: 900;
       letter-spacing: .08em;
       text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 9px;
+      color: rgba(255,255,255,0.42);
     }
 
-    .historyRepertoireList {
+    .posterRepList {
+      list-style: none;
       margin: 0;
       padding: 0;
-      list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      gap: 3px;
     }
 
-    .historyRepertoireItem {
+    .posterRepItem {
       position: relative;
-      padding-left: 14px;
-      font-size: 13px;
-      line-height: 1.4;
-      color: rgba(255,255,255,0.90);
+      padding-left: 8px;
+      font-size: 8.5px;
+      line-height: 1.3;
+      color: rgba(255,255,255,0.72);
       overflow-wrap: anywhere;
     }
 
-    .historyRepertoireItem::before {
-      content: "";
+    .posterRepItem::before {
+      content: "•";
       position: absolute;
       left: 0;
-      top: .62em;
-      width: 4px;
-      height: 4px;
-      border-radius: 999px;
-      background: var(--accent);
-    }
-
-    .historySources {
-      margin-top: 14px;
-      padding-top: 11px;
-      border-top: 1px solid rgba(255,255,255,0.07);
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px 12px;
-    }
-
-    .historySourcesLabel {
-      font-size: 9px;
+      top: 0;
+      color: var(--accent);
       font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--muted);
     }
 
-    .historySourceLink {
-      font-size: 11px;
-      font-weight: 750;
+    .posterHistorySources {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px 7px;
+      margin-top: 7px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .posterHistorySource {
+      font-size: 7.5px;
+      font-weight: 700;
+      color: color-mix(in srgb, var(--accent) 68%, white 32%);
       text-decoration: none;
-      color: color-mix(in srgb, var(--accent) 72%, white 28%);
     }
 
-    .historySourceLink:hover {
+    .posterHistorySource:hover {
       text-decoration: underline;
     }
 
-    .historyUnavailable {
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.5;
+    .posterHistoryRefresh {
+      width: 100%;
+      margin-top: 6px;
+      padding: 4px 5px !important;
+      font-size: 7.5px !important;
+      line-height: 1.1;
+      border-radius: 5px !important;
     }
 
-    @media (max-width: 820px) {
-      .historyHeader {
-        flex-direction: column;
-      }
-
-      .historyBody {
-        grid-template-columns: 1fr;
-      }
-
-      .historyRepertoire {
-        padding-left: 0;
-        padding-top: 14px;
-        border-left: 0;
-        border-top: 1px solid rgba(255,255,255,0.08);
-      }
-
-      .historyRefreshForm,
-      .historyRefreshForm .btn {
-        width: 100%;
-      }
+    .posterHistoryEmpty {
+      font-size: 8px;
+      color: rgba(255,255,255,0.45);
     }
 
-    @media (max-width: 520px) {
-      .historySummary {
-        grid-template-columns: 1fr;
+    @media (max-width: 768px) {
+      .posterHistoryColumn {
+        flex: 0 0 150px;
+        width: 150px;
+        min-width: 150px;
+        margin: 0 auto;
       }
 
-      .historyStat.historyStatWide {
-        grid-column: auto;
+      .posterHistoryColumn .showposter {
+        width: 150px !important;
+        height: 225px !important;
+      }
+
+      .posterHistoryMini {
+        text-align: left;
       }
     }
 
@@ -1519,10 +1462,33 @@
       ? historical_data
       : null;
 
-  const historicalRepertoire =
+  const historicalRepertoireRaw =
     historicalData && Array.isArray(historicalData.repertoire)
       ? historicalData.repertoire
       : [];
+
+  function historicalTextKey(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  const historicalShowTitleKey = historicalTextKey(showRow.title || "");
+
+  const historicalRepertoire = historicalRepertoireRaw.filter((piece) => {
+    const pieceKey = historicalTextKey(piece);
+    if (!pieceKey) return false;
+
+    // Do not repeat the show's program title as a repertoire selection.
+    if (historicalShowTitleKey && pieceKey === historicalShowTitleKey) {
+      return false;
+    }
+
+    return true;
+  });
 
   const historicalPlacement =
     historicalData && historicalData.placement != null
@@ -1774,14 +1740,90 @@
       <div class="panel">
         <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:28px; width:100%;">
           <div style="display:flex; align-items:flex-start; gap:18px; flex:1 1 auto; min-width:0;">
-            <div class="showposter" style="position:relative; overflow:hidden; width:240px; height:360px; flex:0 0 240px;">
-              <img
-                src="<%= showRow.poster_url || POSTER_FALLBACK %>"
-                alt="<%= showRow.title || 'Show' %> poster"
-                style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;"
-                onerror="this.onerror=null;this.src='<%= POSTER_FALLBACK %>';"
-              >
-              <div class="poster_fallback" style="position:absolute; inset:0;"></div>
+            <div class="posterHistoryColumn">
+              <div class="showposter" style="position:relative; overflow:hidden;">
+                <img
+                  src="<%= showRow.poster_url || POSTER_FALLBACK %>"
+                  alt="<%= showRow.title || 'Show' %> poster"
+                  style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;"
+                  onerror="this.onerror=null;this.src='<%= POSTER_FALLBACK %>';"
+                >
+                <div class="poster_fallback" style="position:absolute; inset:0;"></div>
+              </div>
+
+              <% if (historicalHasAny || (meUser && Number(meUser.is_admin) === 1)) { %>
+                <div class="posterHistoryMini">
+                  <% if (historicalHasAny) { %>
+                    <% if (historicalHasPlacement || historicalHasScore) { %>
+                      <div class="posterHistoryTop">
+                        <% if (historicalHasPlacement) { %>
+                          <div class="posterHistoryStat">
+                            <span class="posterHistoryLabel">Final Placement</span>
+                            <div class="posterHistoryValue"><%= historicalPlacementText %></div>
+                            <% if (historicalData.championship_round) { %>
+                              <div class="posterHistoryRound">DCI <%= historicalData.championship_round %></div>
+                            <% } %>
+                          </div>
+                        <% } %>
+
+                        <% if (historicalHasScore) { %>
+                          <div class="posterHistoryStat">
+                            <span class="posterHistoryLabel">Final Score</span>
+                            <div class="posterHistoryValue"><%= historicalScore.toFixed(3) %></div>
+                            <% if (historicalData.championship_round) { %>
+                              <div class="posterHistoryRound">DCI <%= historicalData.championship_round %></div>
+                            <% } %>
+                          </div>
+                        <% } %>
+                      </div>
+                    <% } %>
+
+                    <% if (historicalRepertoire.length > 0) { %>
+                      <div class="posterRepTitle">Music Repertoire</div>
+                      <ul class="posterRepList">
+                        <% for (const piece of historicalRepertoire) { %>
+                          <li class="posterRepItem"><%= piece %></li>
+                        <% } %>
+                      </ul>
+                    <% } %>
+
+                    <% if (historicalPlacementSourceUrl || historicalRepertoireSourceUrl) { %>
+                      <div class="posterHistorySources">
+                        <% if (historicalPlacementSourceUrl) { %>
+                          <a
+                            class="posterHistorySource"
+                            href="<%= historicalPlacementSourceUrl %>"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >↗ <%= historicalPlacementSourceLabel %></a>
+                        <% } %>
+
+                        <% if (
+                          historicalRepertoireSourceUrl &&
+                          historicalRepertoireSourceUrl !== historicalPlacementSourceUrl
+                        ) { %>
+                          <a
+                            class="posterHistorySource"
+                            href="<%= historicalRepertoireSourceUrl %>"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >↗ <%= historicalRepertoireSourceLabel %></a>
+                        <% } %>
+                      </div>
+                    <% } %>
+                  <% } else { %>
+                    <div class="posterHistoryEmpty">No historical data found yet.</div>
+                  <% } %>
+
+                  <% if (meUser && Number(meUser.is_admin) === 1) { %>
+                    <form method="post" action="/admin/show/<%= showRow.id %>/history/refresh">
+                      <button class="btn ghost posterHistoryRefresh" type="submit">
+                        ↻ Refresh Internet Data
+                      </button>
+                    </form>
+                  <% } %>
+                </div>
+              <% } %>
             </div>
 
             <div class="showmeta" style="flex:1 1 auto; min-width:0;">
@@ -2145,126 +2187,6 @@
         </div>
       </div>
     </div>
-
-    <% if (historicalHasAny || (meUser && Number(meUser.is_admin) === 1)) { %>
-      <section class="panel historyPanel">
-        <div class="historyHeader">
-          <div class="historyHeaderText">
-            <div class="kicker">Historical Information</div>
-            <h2 class="historyTitle">Competition &amp; Music Repertoire</h2>
-            <div class="historySubtitle">
-              Historical placement, championship score, and repertoire gathered from external reference sources.
-            </div>
-          </div>
-
-          <% if (meUser && Number(meUser.is_admin) === 1) { %>
-            <form
-              class="historyRefreshForm"
-              method="post"
-              action="/admin/show/<%= showRow.id %>/history/refresh"
-            >
-              <button class="btn ghost" type="submit">↻ Refresh Internet Data</button>
-            </form>
-          <% } %>
-        </div>
-
-        <% if (historicalHasAny) { %>
-          <div class="historyBody">
-            <div class="historySummary">
-              <% if (historicalHasPlacement) { %>
-                <div class="historyStat">
-                  <div class="historyStatLabel">Final Placement</div>
-                  <div class="historyStatValue"><%= historicalPlacementText %></div>
-
-                  <% if (historicalData.championship_round) { %>
-                    <div class="historyStatMeta">
-                      DCI <%= historicalData.championship_round %>
-                    </div>
-                  <% } %>
-                </div>
-              <% } %>
-
-              <% if (historicalHasScore) { %>
-                <div class="historyStat">
-                  <div class="historyStatLabel">Final Score</div>
-                  <div class="historyStatValue"><%= historicalScore.toFixed(3) %></div>
-
-                  <% if (historicalData.championship_round) { %>
-                    <div class="historyStatMeta">
-                      DCI <%= historicalData.championship_round %>
-                    </div>
-                  <% } %>
-                </div>
-              <% } %>
-
-              <% if (historicalData.show_title) { %>
-                <div class="historyStat historyStatWide">
-                  <div class="historyStatLabel">Program Title</div>
-                  <div class="historyStatValue historyProgramTitle">
-                    <%= historicalData.show_title %>
-                  </div>
-                </div>
-              <% } %>
-            </div>
-
-            <div class="historyRepertoire">
-              <div class="historyRepertoireTitle">Music Repertoire</div>
-
-              <% if (historicalRepertoire.length > 0) { %>
-                <ul class="historyRepertoireList">
-                  <% for (const piece of historicalRepertoire) { %>
-                    <li class="historyRepertoireItem"><%= piece %></li>
-                  <% } %>
-                </ul>
-              <% } else { %>
-                <div class="historyUnavailable">
-                  Repertoire information was not found for this show.
-                </div>
-              <% } %>
-            </div>
-          </div>
-
-          <% if (historicalPlacementSourceUrl || historicalRepertoireSourceUrl) { %>
-            <div class="historySources">
-              <span class="historySourcesLabel">Sources</span>
-
-              <% if (historicalPlacementSourceUrl) { %>
-                <a
-                  class="historySourceLink"
-                  href="<%= historicalPlacementSourceUrl %>"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  ↗ <%= historicalPlacementSourceLabel %>
-                </a>
-              <% } %>
-
-              <% if (
-                historicalRepertoireSourceUrl &&
-                historicalRepertoireSourceUrl !== historicalPlacementSourceUrl
-              ) { %>
-                <a
-                  class="historySourceLink"
-                  href="<%= historicalRepertoireSourceUrl %>"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  ↗ <%= historicalRepertoireSourceLabel %>
-                </a>
-              <% } %>
-            </div>
-          <% } %>
-
-        <% } else { %>
-          <div class="historyUnavailable">
-            No historical placement or repertoire data has been found for this corps and year yet.
-            <% if (historicalStatus === "error" && historicalData && historicalData.fetch_error) { %>
-              The last lookup returned an error.
-            <% } %>
-          </div>
-        <% } %>
-      </section>
-    <% } %>
 
     <div style="margin-top:8px;">
       <section class="reviewsSection">
