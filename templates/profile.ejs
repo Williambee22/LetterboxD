@@ -245,31 +245,37 @@
       white-space:nowrap;
     }
     
-    .profile_presence_dot {
-      display:block;
-      width:10px;
-      height:10px;
-      min-width:10px;
-      min-height:10px;
-      border-radius:50%;
+    .profile_presence_circle {
+      display:inline-block !important;
+      width:10px !important;
+      height:10px !important;
+      min-width:10px !important;
+      min-height:10px !important;
+      max-width:10px !important;
+      max-height:10px !important;
+      padding:0 !important;
+      margin:0 !important;
+      border:0 !important;
+      border-radius:999px !important;
+      box-sizing:border-box !important;
+      aspect-ratio:1 / 1;
+      flex:0 0 10px !important;
+      overflow:hidden;
       background:#70798b;
-      border:none;
-      flex:0 0 10px;
-      transition:background .15s ease,box-shadow .15s ease;
     }
     
-    .profile_presence_dot.online {
-      background:#35d07f;
+    .profile_presence_circle.online {
+      background:#35d07f !important;
       box-shadow:0 0 0 3px rgba(53,208,127,.13);
     }
     
-    .profile_presence_dot.recent {
-      background:#e6b94a;
+    .profile_presence_circle.recent {
+      background:#e6b94a !important;
       box-shadow:0 0 0 3px rgba(230,185,74,.10);
     }
     
-    .profile_presence_dot.offline {
-      background:#70798b;
+    .profile_presence_circle.offline {
+      background:#70798b !important;
     }
 
     .profile_bio {
