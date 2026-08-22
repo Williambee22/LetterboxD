@@ -1471,7 +1471,10 @@
           : Infinity;
       
         // Force offline once 12 minutes have passed.
-        if (ageSeconds >= 12 * 60) {
+        if (
+          seenTs > 0 &&
+          ageSeconds >= 12 * 60
+        ) {
           status = "offline";
         }
       
@@ -1514,7 +1517,10 @@
         }
 
         if (isOwnProfile) {
-          applyStatus("online");
+          applyStatus(
+            "online",
+            Math.floor(Date.now() / 1000)
+          );
           return;
         }
 
