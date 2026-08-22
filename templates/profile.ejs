@@ -225,29 +225,49 @@
       margin:6px 0 0;
     }
 
+    .profile_avatar_column {
+      flex:0 0 auto;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+    }
+    
+    .profile_presence_status {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      font-size:12px;
+      font-weight:700;
+      color:rgba(255,255,255,.82);
+      line-height:1;
+      white-space:nowrap;
+    }
+    
     .profile_presence_dot {
-      width:13px;
-      height:13px;
-      flex:0 0 13px;
-      margin-top:7px;
+      display:block;
+      width:10px;
+      height:10px;
+      min-width:10px;
+      min-height:10px;
       border-radius:50%;
       background:#70798b;
-      border:2px solid rgba(0,0,0,.6);
+      border:none;
+      flex:0 0 10px;
       transition:background .15s ease,box-shadow .15s ease;
     }
-
+    
     .profile_presence_dot.online {
       background:#35d07f;
-      box-shadow:
-        0 0 0 3px rgba(53,208,127,.14),
-        0 0 12px rgba(53,208,127,.35);
+      box-shadow:0 0 0 3px rgba(53,208,127,.13);
     }
-
+    
     .profile_presence_dot.recent {
       background:#e6b94a;
       box-shadow:0 0 0 3px rgba(230,185,74,.10);
     }
-
+    
     .profile_presence_dot.offline {
       background:#70798b;
     }
@@ -1044,14 +1064,32 @@
         <% } %>
 
         <div class="row gap" style="align-items:center;">
-          <div class="avatar_lg">
-            <% if (pu.avatar_url) { %>
-              <img
-                src="<%= pu.avatar_url %>"
-                alt="avatar"
+          <div class="profile_avatar_column">
+            <div class="avatar_lg">
+              <% if (pu.avatar_url) { %>
+                <img
+                  src="<%= pu.avatar_url %>"
+                  alt="avatar"
+                >
+              <% } else { %>
+                <div class="avatar_fallback"></div>
+              <% } %>
+            </div>
+          
+            <% if (canSeeProfilePresence) { %>
+              <div
+                class="profile_presence_status"
+                id="profilePresenceStatus"
               >
-            <% } else { %>
-              <div class="avatar_fallback"></div>
+                <span
+                  id="profilePresenceDot"
+                  class="profile_presence_dot <%= isMe ? 'online' : 'offline' %>"
+                ></span>
+          
+                <span id="profilePresenceText">
+                  <%= isMe ? "Online" : "Checking…" %>
+                </span>
+              </div>
             <% } %>
           </div>
 
@@ -1063,15 +1101,6 @@
 
               <div class="profile_username_row">
                 <h1><%= pu.username || "User" %></h1>
-
-                <% if (canSeeProfilePresence) { %>
-                  <span
-                    id="profilePresenceDot"
-                    class="profile_presence_dot <%= isMe ? 'online' : 'offline' %>"
-                    title="<%= isMe ? 'Online' : 'Checking status…' %>"
-                    aria-label="<%= isMe ? 'Online' : 'Checking online status' %>"
-                  ></span>
-                <% } %>
               </div>
 
               <% if (roles.length > 0) { %>
