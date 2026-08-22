@@ -11,6 +11,7 @@
     .auth { align-items:center; gap: 12px; }
 
     .notifWrap { position: relative; display: inline-flex; align-items:center; }
+
     .bellBtn {
       position: relative;
       border: none;
@@ -24,7 +25,10 @@
       justify-content: center;
       opacity: 0.95;
     }
-    .bellBtn:hover { background: rgba(255,255,255,0.06); }
+
+    .bellBtn:hover {
+      background: rgba(255,255,255,0.06);
+    }
 
     .badgeDot {
       position:absolute;
@@ -57,49 +61,9 @@
       box-shadow: 0 14px 40px rgba(0,0,0,0.45);
       z-index: 9999;
     }
-    .notifDropdown.open { display:block; }
 
-    .notifHeader {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.10);
-      position: sticky;
-      top: 0;
-      background: rgba(15, 23, 42, 0.98);
-      backdrop-filter: blur(8px);
-    }
-    .notifTitle { font-weight: 900; }
-
-    .markReadBtn {
-      border: none;
-      background: transparent;
-      color: inherit;
-      cursor: pointer;
-      opacity: 0.85;
-      font-size: 12px;
-      padding: 6px 8px;
-      border-radius: 10px;
-    }
-    .markReadBtn:hover { background: rgba(255,255,255,0.06); opacity: 1; }
-
-    .notifList { padding: 8px; display:flex; flex-direction:column; gap: 8px; }
-    .notifItem {
-      padding: 10px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    .notifItem.unread { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.25); }
-    .notifTime { font-size: 12px; opacity: 0.7; margin-top: 4px; }
-    .notifEmpty { padding: 12px; opacity: 0.8; }
-
-    .authBellSlot { display:inline-flex; align-items:center; }
-
-    .notifDropdown,
-    .notifDropdown * {
-      pointer-events: auto !important;
+    .notifDropdown.open {
+      display:block;
     }
 
     .notifHeader {
@@ -113,6 +77,7 @@
       background: rgba(15, 23, 42, 0.98);
       backdrop-filter: blur(8px);
     }
+
     .notifTitle {
       font-weight: 900;
       color: var(--text);
@@ -126,18 +91,26 @@
       opacity: 0.9;
       font-size: 12px;
       padding: 6px 8px;
+      border-radius: 10px;
       transition: background .15s ease, border-color .15s ease;
     }
+
     .markReadBtn:hover {
       background: var(--accentFaint);
       border-color: var(--accentSoft);
       opacity: 1;
     }
 
-    .notifList { padding: 8px; display:flex; flex-direction:column; gap: 8px; }
+    .notifList {
+      padding: 8px;
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+    }
 
     .notifItem {
       padding: 10px;
+      border-radius: 12px;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.08);
       transition: border-color .15s ease, background .15s ease;
@@ -153,6 +126,7 @@
       text-decoration: none;
       font-weight: 700;
     }
+
     .notifItem a:hover {
       text-decoration: underline;
     }
@@ -168,14 +142,17 @@
       opacity: 0.8;
     }
 
-    .authBellSlot { display:inline-flex; align-items:center; }
+    .authBellSlot {
+      display:inline-flex;
+      align-items:center;
+    }
 
     .notifDropdown,
     .notifDropdown * {
       pointer-events: auto !important;
     }
 
-    .profile_top_actions{
+    .profile_top_actions {
       margin-top:10px;
       display:flex;
       gap:10px;
@@ -183,13 +160,13 @@
       align-items:center;
     }
 
-    .profile_counts .badge{
+    .profile_counts .badge {
       border-color: var(--accentFaint);
       background: var(--accentFaint);
       color: var(--text);
     }
 
-    .profile_hero{
+    .profile_hero {
       position:relative;
       overflow:hidden;
       margin-top:16px;
@@ -197,14 +174,14 @@
       box-shadow:var(--shadow, 0 10px 30px rgba(0,0,0,.35));
       background:#0b0b0b;
     }
-    
-    .profile_hero_bg{
+
+    .profile_hero_bg {
       position:absolute;
       inset:0;
       z-index:0;
     }
-    
-    .profile_hero_bg img{
+
+    .profile_hero_bg img {
       width:100%;
       height:100%;
       object-fit:cover;
@@ -212,8 +189,8 @@
       display:block;
       opacity:.60;
     }
-    
-    .profile_hero_overlay{
+
+    .profile_hero_overlay {
       position:absolute;
       inset:0;
       z-index:1;
@@ -222,18 +199,56 @@
         radial-gradient(circle at top left, var(--accentFaint), transparent 30%);
       pointer-events:none;
     }
-    
-    .profile_hero_inner{
+
+    .profile_hero_inner {
       position:relative;
       z-index:2;
     }
-    
-    .profile_hero_inner h1{
+
+    .profile_hero_inner h1 {
       color: var(--text);
       text-shadow: 0 2px 18px rgba(0,0,0,.45);
     }
 
-    .profile_bio{
+    .profile_username_row {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .profile_username_row h1 {
+      margin:6px 0 0;
+    }
+
+    .profile_presence_dot {
+      width:13px;
+      height:13px;
+      flex:0 0 13px;
+      margin-top:7px;
+      border-radius:50%;
+      background:#70798b;
+      border:2px solid rgba(0,0,0,.6);
+      transition:background .15s ease, box-shadow .15s ease;
+    }
+
+    .profile_presence_dot.online {
+      background:#35d07f;
+      box-shadow:
+        0 0 0 3px rgba(53,208,127,.14),
+        0 0 12px rgba(53,208,127,.35);
+    }
+
+    .profile_presence_dot.recent {
+      background:#e6b94a;
+      box-shadow:0 0 0 3px rgba(230,185,74,.10);
+    }
+
+    .profile_presence_dot.offline {
+      background:#70798b;
+    }
+
+    .profile_bio {
       margin-top:12px;
       opacity:0.95;
       line-height:1.55;
@@ -241,42 +256,98 @@
       padding-left: 12px;
     }
 
-    .profile_section_title{
+    .profile_section_title {
       color: var(--accent);
     }
 
-    .acct_details{
-      border-top: 1px solid var(--accentSoft);
-      padding-top: 12px;
-      margin-top: 12px;
+    .acct_panel {
+      border:1px solid var(--accentSoft) !important;
+      background:color-mix(in srgb, var(--accent) 6%, rgba(0,0,0,.94));
+      box-shadow:0 0 0 1px var(--accentFaint);
     }
 
-    .acct_panel{
-      border: 1px solid var(--accentSoft) !important;
-      background: color-mix(in srgb, var(--accent) 6%, rgba(0,0,0,.92));
-      box-shadow: 0 0 0 1px var(--accentFaint);
-    }
-
-    .profile_main_panel{
-      border-color: var(--accentSoft);
-      box-shadow: 0 0 0 1px var(--accentFaint);
+    .profile_main_panel {
+      border-color:var(--accentSoft);
+      box-shadow:0 0 0 1px var(--accentFaint);
     }
 
     .profile_ratings_panel .kicker,
-    .profile_reviews_panel .kicker,
-    .profile_stats .kicker{
-      color: var(--accent);
+    .profile_reviews_panel .kicker {
+      color:var(--accent);
     }
 
-    .profile_stats {
-      position: relative !important;
-      background-attachment: scroll !important;
-      width: 100% !important;
-      margin: 10px 0 !important;
-      display: flex !important;
-      flex-wrap: wrap !important;
-      justify-content: center !important;
-      gap: 15px !important;
+    .profile_hero_right {
+      flex:0 0 270px;
+      width:270px;
+      align-self:stretch;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-start;
+      gap:10px;
+    }
+
+    .profile_account_details {
+      width:100%;
+    }
+
+    .profile_account_summary {
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      cursor:pointer;
+      list-style:none;
+    }
+
+    .profile_account_summary::-webkit-details-marker {
+      display:none;
+    }
+
+    .profile_account_summary .small {
+      display:inline-block;
+      transition:transform .15s ease;
+    }
+
+    .profile_account_details[open] .profile_account_summary .small {
+      transform:rotate(180deg);
+    }
+
+    .profile_account_panel {
+      width:100%;
+      margin-top:8px;
+      padding:14px;
+    }
+
+    .profile_account_forms {
+      display:grid;
+      grid-template-columns:1fr;
+      gap:14px;
+      margin-top:12px;
+    }
+
+    .profile_account_label {
+      margin-bottom:8px;
+    }
+
+    .profile_account_password {
+      padding-top:14px;
+      border-top:1px solid var(--accentFaint);
+    }
+
+    .profile_hero_right .profile_avg_box {
+      position:relative !important;
+      width:100%;
+      transform:none !important;
+      margin:0 !important;
+    }
+
+    .profile_layout {
+      display:block !important;
+    }
+
+    .profile_content_stack {
+      width:100%;
     }
 
     .profile_avg_box {
@@ -287,15 +358,15 @@
       backdrop-filter: blur(4px);
     }
 
-    .profile_avg_value{
+    .profile_avg_value {
       color: var(--text);
     }
 
-    .profile_avg_star{
+    .profile_avg_star {
       color: var(--accent);
     }
 
-    .role_tag{
+    .role_tag {
       box-shadow: 0 0 0 1px rgba(0,0,0,.15) inset;
     }
 
@@ -311,36 +382,36 @@
       box-shadow: 0 0 0 1px rgba(0,0,0,.18) inset;
     }
 
-    .poster_meta{
+    .poster_meta {
       border-top: 1px solid var(--accentFaint);
     }
 
-    .reviewcard{
+    .reviewcard {
       border-color: var(--accentSoft);
       background: color-mix(in srgb, var(--accent) 5%, rgba(7,10,16,.35));
     }
 
-    .reviewtext{
+    .reviewtext {
       border-left: 3px solid var(--accentSoft);
       padding-left: 12px;
       margin-top: 12px;
     }
 
-    .tile_rating{
+    .tile_rating {
       border-color: var(--accentSoft) !important;
       background: rgba(0,0,0,.72) !important;
     }
 
-    .tile_star{
+    .tile_star {
       color: var(--accent) !important;
     }
 
-    .topline_accent{
+    .topline_accent {
       border-top: 1px solid var(--accentSoft);
       padding-top: 12px;
     }
 
-    .profile_hero_content{
+    .profile_hero_content {
       display:flex;
       flex-direction:column;
       gap:14px;
@@ -348,13 +419,13 @@
       flex:1;
     }
 
-    .profile_favorites_box{
+    .profile_favorites_box {
       margin-top:4px;
       padding-top:12px;
       border-top:1px solid var(--accentSoft);
     }
 
-    .profile_favorites_title{
+    .profile_favorites_title {
       color: var(--accent);
       font-weight: 800;
       font-size: 12px;
@@ -363,21 +434,21 @@
       margin-bottom: 10px;
     }
 
-    .profile_favorites_row{
+    .profile_favorites_row {
       display:flex;
       gap:10px;
       flex-wrap:wrap;
       align-items:flex-start;
     }
 
-    .profile_favorite_item{
+    .profile_favorite_item {
       width:72px;
       text-decoration:none;
       color:inherit;
       display:block;
     }
 
-    .profile_favorite_art{
+    .profile_favorite_art {
       position: relative;
       width: 79px;
       height: 119px;
@@ -388,8 +459,8 @@
       align-items: center;
       justify-content: center;
     }
-    
-    .profile_favorite_art img{
+
+    .profile_favorite_art img {
       width: 100% !important;
       height: 100% !important;
       object-fit: contain !important;
@@ -397,7 +468,7 @@
       display: block;
     }
 
-    .profile_favorite_rank{
+    .profile_favorite_rank {
       position:absolute;
       left:6px;
       top:6px;
@@ -414,7 +485,7 @@
       text-align:center;
     }
 
-    .profile_favorite_name{
+    .profile_favorite_name {
       margin-top:6px;
       font-size:11px;
       line-height:1.25;
@@ -425,12 +496,12 @@
       overflow:hidden;
     }
 
-    .profile_favorite_empty{
+    .profile_favorite_empty {
       opacity:0.8;
       font-size:13px;
     }
 
-    .profile_favorites_title_row{
+    .profile_favorites_title_row {
       display:flex;
       align-items:center;
       justify-content:space-between;
@@ -439,18 +510,18 @@
       margin-bottom:10px;
     }
 
-    .profile_favorites_title_row .profile_favorites_title{
+    .profile_favorites_title_row .profile_favorites_title {
       margin-bottom:0;
     }
 
-    .profile_favorites_order_status{
+    .profile_favorites_order_status {
       font-size:10px;
       line-height:1.2;
       color:rgba(255,255,255,.58);
       min-height:12px;
     }
 
-    .profile_favorites_row.is_sortable .profile_favorite_item{
+    .profile_favorites_row.is_sortable .profile_favorite_item {
       cursor:grab;
       user-select:none;
       -webkit-user-drag:element;
@@ -460,25 +531,22 @@
         filter .12s ease;
     }
 
-    .profile_favorites_row.is_sortable .profile_favorite_item:active{
+    .profile_favorites_row.is_sortable .profile_favorite_item:active {
       cursor:grabbing;
     }
 
-    .profile_favorites_row.is_sortable .profile_favorite_item.is_dragging{
+    .profile_favorites_row.is_sortable .profile_favorite_item.is_dragging {
       opacity:.38;
       transform:scale(.96);
       filter:saturate(.65);
     }
 
-    .profile_favorites_row.is_sortable .profile_favorite_item.is_drag_target{
+    .profile_favorites_row.is_sortable .profile_favorite_item.is_drag_target {
       transform:translateY(-3px);
     }
 
-    .profile_favorites_row.is_sortable .profile_favorite_art{
-      pointer-events:none;
-    }
-
-    .profile_favorites_row.is_sortable .profile_favorite_name{
+    .profile_favorites_row.is_sortable .profile_favorite_art,
+    .profile_favorites_row.is_sortable .profile_favorite_name {
       pointer-events:none;
     }
 
@@ -495,26 +563,26 @@
       }
 
       .profile_layout {
-        display: flex !important;
-        flex-direction: column !important;
+        display:block !important;
       }
 
-      aside.profile_side, .profile_side {
-        position: relative !important;
-        top: 0 !important;
-        width: 100% !important;
-        margin-bottom: 20px !important;
-        display: block !important;
+      .profile_hero_right {
+        width:100%;
+        flex:1 1 auto;
+        align-self:stretch;
       }
 
-      .profile_stats {
-        position: relative !important;
-        display: block !important;
-        width: 100% !important;
-        background-attachment: scroll !important;
-        margin: 0 0 20px 0 !important;
-        box-shadow: none !important;
-        transform: none !important;
+      .profile_account_panel {
+        width:100%;
+        max-width:none;
+      }
+
+      .profile_hero_right .profile_avg_box {
+        width:100%;
+      }
+
+      .profile_content_stack {
+        width:100%;
       }
 
       .profile_hero_inner {
@@ -524,6 +592,10 @@
       .profile_hero_inner .row.gap {
         flex-direction: column !important;
         text-align: center !important;
+      }
+
+      .profile_username_row {
+        justify-content:center;
       }
 
       .avatar_lg {
@@ -536,16 +608,7 @@
         gap: 8px !important;
       }
 
-      .profile_stats .kicker {
-        text-align: center;
-      }
-
-      .profile_stats .muted.small {
-        text-align: center;
-        display: block;
-      }
-
-      .profile_favorites_row{
+      .profile_favorites_row {
         justify-content:center;
       }
     }
@@ -556,12 +619,22 @@
   const pu = profile_user || {};
   const meUsername = me && me.username ? me.username : null;
   const puUsername = pu && pu.username ? pu.username : null;
+
   const isMe = typeof is_me !== "undefined"
     ? !!is_me
     : !!(meUsername && puUsername && meUsername === puUsername);
 
   const viewerIsFollowing = !!pu.viewer_is_following;
   const friendStatus = pu.viewer_friend_status || "none";
+
+  const canSeeProfilePresence = !!(
+    me &&
+    (
+      isMe ||
+      viewerIsFollowing ||
+      friendStatus === "friends"
+    )
+  );
 
   const recentRatings = Array.isArray(recent_ratings) ? recent_ratings : [];
   const recentReviews = Array.isArray(recent_reviews) ? recent_reviews : [];
@@ -572,11 +645,16 @@
   const avgRatingCnt = pu.avg_rating_cnt != null ? Number(pu.avg_rating_cnt) : 0;
   const avgRating = pu.avg_rating != null ? Number(pu.avg_rating) : 0;
 
-    const profileAccent = String((pu && pu.theme_color) || '').trim();
+  const profileAccent = String((pu && pu.theme_color) || '').trim();
   const meAccent = String((me && me.theme_color) || '').trim();
 
-  const validProfileAccent = /^#([0-9a-fA-F]{6})$/.test(profileAccent) ? profileAccent : '';
-  const validMeAccent = /^#([0-9a-fA-F]{6})$/.test(meAccent) ? meAccent : '';
+  const validProfileAccent = /^#([0-9a-fA-F]{6})$/.test(profileAccent)
+    ? profileAccent
+    : '';
+
+  const validMeAccent = /^#([0-9a-fA-F]{6})$/.test(meAccent)
+    ? meAccent
+    : '';
 
   const pageAccent = isMe
     ? (validMeAccent || '#ffffff')
@@ -587,16 +665,21 @@
   <header class="topbar">
     <div class="wrap row between">
       <div style="display:flex; align-items:center; gap:10px;">
-        <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display:flex; align-items:center;">
+        <a
+          href="https://www.generaleffect.media/"
+          target="_blank"
+          rel="noopener"
+          style="display:flex; align-items:center;"
+        >
           <img
             src="/static/logo.png"
             alt="Logo"
-            style="width:36px; height:36px; object-fit:contain; transition: transform 0.6s ease-in-out;"
+            style="width:36px; height:36px; object-fit:contain; transition:transform .6s ease-in-out;"
             onmouseover="this.style.transform='rotate(360deg)'"
             onmouseout="this.style.transform='rotate(0deg)'"
           >
         </a>
-      
+
         <a class="brand" href="/shows" style="display:flex; align-items:center;">
           <img
             src="/static/pressboxd-wordmark.png"
@@ -610,6 +693,7 @@
         <a href="/shows">Shows</a>
         <a href="/top">Top Shows</a>
         <a href="/top_users">Top Users</a>
+
         <% if (me && Number(me.is_admin) === 1) { %>
           <a href="/admin/bulk_add">Mass Add</a>
           <a href="/admin/roles">Roles</a>
@@ -621,10 +705,25 @@
         <% if (me) { %>
           <div class="authBellSlot">
             <div class="notifWrap">
-              <button class="bellBtn" id="bellBtn" aria-label="Notifications" title="Notifications">
+              <button
+                class="bellBtn"
+                id="bellBtn"
+                aria-label="Notifications"
+                title="Notifications"
+                type="button"
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/>
-                  <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
+                  <path
+                    d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z"
+                    stroke="currentColor"
+                    stroke-width="1"
+                  />
+                  <path
+                    d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z"
+                    stroke="currentColor"
+                    stroke-width="1"
+                    stroke-linejoin="round"
+                  />
                 </svg>
 
                 <% if (notif_count && notif_count > 0) { %>
@@ -635,8 +734,11 @@
               <div class="notifDropdown" id="notifDropdown">
                 <div class="notifHeader">
                   <div class="notifTitle">Notifications</div>
+
                   <form method="post" action="/me/notifications/read">
-                    <button class="markReadBtn" type="submit">Mark all read</button>
+                    <button class="markReadBtn" type="submit">
+                      Mark all read
+                    </button>
                   </form>
                 </div>
 
@@ -651,24 +753,39 @@
                     %>
                       <div class="notifItem <%= unread ? 'unread' : '' %>">
                         <% if (kind === "friend_request") { %>
-                          <div><b><%= actor %></b> sent you a friend request.</div>
+                          <div>
+                            <b><%= actor %></b> sent you a friend request.
+                          </div>
+
                         <% } else if (kind === "follow") { %>
-                          <div><b><%= actor %></b> followed you.</div>
+                          <div>
+                            <b><%= actor %></b> followed you.
+                          </div>
+
                         <% } else if (kind === "review_upvote") { %>
                           <div>
                             <b><%= actor %></b> upvoted your review
-                            <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %>
+                            <% if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
                           </div>
+
                         <% } else if (kind === "review_comment") { %>
                           <div>
                             <b><%= actor %></b> commented on your review
-                            <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %>
+                            <% if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
                           </div>
+
                         <% } else if (kind === "comment_reply") { %>
                           <div>
                             <b><%= actor %></b> replied to your comment
-                            <% if (sid) { %> — <a href="/show/<%= sid %>">View show</a><% } %>
+                            <% if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
                           </div>
+
                         <% } else { %>
                           <div>New activity.</div>
                         <% } %>
@@ -694,6 +811,7 @@
                 <span class="avatar_fallback"></span>
               <% } %>
             </span>
+
             <span class="muted small"><%= me.username %></span>
           </a>
 
@@ -710,54 +828,100 @@
     <% if (flashesList.length > 0) { %>
       <div class="flashes">
         <% for (const f of flashesList) { %>
-          <div class="flash <%= f.category %>"><%= f.message %></div>
+          <div class="flash <%= f.category %>">
+            <%= f.message %>
+          </div>
         <% } %>
       </div>
     <% } %>
 
     <% if (pu.username) { %>
       <div class="profile_top_actions profile_counts">
-        <a class="badge muted" href="/u/<%= encodeURIComponent(pu.username) %>/followers">
+        <a
+          class="badge muted"
+          href="/u/<%= encodeURIComponent(pu.username) %>/followers"
+        >
           Followers: <%= pu.followers_count != null ? pu.followers_count : 0 %>
         </a>
 
-        <a class="badge muted" href="/u/<%= encodeURIComponent(pu.username) %>/following">
+        <a
+          class="badge muted"
+          href="/u/<%= encodeURIComponent(pu.username) %>/following"
+        >
           Following: <%= pu.following_count != null ? pu.following_count : 0 %>
         </a>
 
         <% if (me && !isMe) { %>
           <% if (viewerIsFollowing) { %>
-            <form method="post" action="/u/<%= encodeURIComponent(pu.username) %>/unfollow">
-              <button class="btn ghost" type="submit">Unfollow</button>
+            <form
+              method="post"
+              action="/u/<%= encodeURIComponent(pu.username) %>/unfollow"
+            >
+              <button class="btn ghost" type="submit">
+                Unfollow
+              </button>
             </form>
           <% } else { %>
-            <form method="post" action="/u/<%= encodeURIComponent(pu.username) %>/follow">
-              <button class="btn green" type="submit">Follow</button>
+            <form
+              method="post"
+              action="/u/<%= encodeURIComponent(pu.username) %>/follow"
+            >
+              <button class="btn green" type="submit">
+                Follow
+              </button>
             </form>
           <% } %>
 
           <% if (friendStatus === "friends") { %>
-            <form method="post" action="/u/<%= encodeURIComponent(pu.username) %>/friend/remove">
-              <button class="btn ghost" type="submit">Remove friend</button>
+            <form
+              method="post"
+              action="/u/<%= encodeURIComponent(pu.username) %>/friend/remove"
+            >
+              <button class="btn ghost" type="submit">
+                Remove friend
+              </button>
             </form>
+
           <% } else if (friendStatus === "pending_out") { %>
-            <span class="badge muted">Friend request sent</span>
+            <span class="badge muted">
+              Friend request sent
+            </span>
+
           <% } else if (friendStatus === "pending_in") { %>
-            <form method="post" action="/u/<%= encodeURIComponent(pu.username) %>/friend/accept">
-              <button class="btn green" type="submit">Accept friend</button>
+            <form
+              method="post"
+              action="/u/<%= encodeURIComponent(pu.username) %>/friend/accept"
+            >
+              <button class="btn green" type="submit">
+                Accept friend
+              </button>
             </form>
-            <form method="post" action="/u/<%= encodeURIComponent(pu.username) %>/friend/decline">
-              <button class="btn ghost" type="submit">Decline</button>
+
+            <form
+              method="post"
+              action="/u/<%= encodeURIComponent(pu.username) %>/friend/decline"
+            >
+              <button class="btn ghost" type="submit">
+                Decline
+              </button>
             </form>
+
           <% } else { %>
-            <form method="post" action="/u/<%= encodeURIComponent(pu.username) %>/friend/request">
-              <button class="btn ghost" type="submit">Add friend</button>
+            <form
+              method="post"
+              action="/u/<%= encodeURIComponent(pu.username) %>/friend/request"
+            >
+              <button class="btn ghost" type="submit">
+                Add friend
+              </button>
             </form>
           <% } %>
         <% } %>
 
         <% if (isMe) { %>
-          <a class="btn ghost" href="/me/friends">Friends</a>
+          <a class="btn ghost" href="/me/friends">
+            Friends
+          </a>
         <% } %>
       </div>
     <% } %>
@@ -765,17 +929,23 @@
     <div class="profile_hero">
       <% if (pu.banner_url) { %>
         <div class="profile_hero_bg">
-          <img src="<%= pu.banner_url %>" alt="Profile banner">
+          <img
+            src="<%= pu.banner_url %>"
+            alt="Profile banner"
+          >
         </div>
       <% } %>
-    
+
       <div class="profile_hero_overlay"></div>
-    
+
       <div class="profile_hero_inner">
         <div class="row gap" style="align-items:center;">
           <div class="avatar_lg">
             <% if (pu.avatar_url) { %>
-              <img src="<%= pu.avatar_url %>" alt="avatar">
+              <img
+                src="<%= pu.avatar_url %>"
+                alt="avatar"
+              >
             <% } else { %>
               <div class="avatar_fallback"></div>
             <% } %>
@@ -783,13 +953,33 @@
 
           <div class="profile_hero_content">
             <div>
-              <div class="kicker" style="color: var(--accent);">Profile</div>
-              <h1 style="margin:6px 0 0;"><%= pu.username || "User" %></h1>
+              <div class="kicker" style="color:var(--accent);">
+                Profile
+              </div>
+
+              <div class="profile_username_row">
+                <h1><%= pu.username || "User" %></h1>
+
+                <% if (canSeeProfilePresence) { %>
+                  <span
+                    id="profilePresenceDot"
+                    class="profile_presence_dot <%= isMe ? 'online' : 'offline' %>"
+                    title="<%= isMe ? 'Online' : 'Checking status…' %>"
+                    aria-label="<%= isMe ? 'Online' : 'Checking online status' %>"
+                  ></span>
+                <% } %>
+              </div>
 
               <% if (roles.length > 0) { %>
-                <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
+                <div
+                  class="row gap"
+                  style="margin-top:10px; flex-wrap:wrap;"
+                >
                   <% for (const r of roles) { %>
-                    <span class="rolebadge" style="background:<%= (r && r.color) ? r.color : '#666666' %>;">
+                    <span
+                      class="rolebadge"
+                      style="background:<%= (r && r.color) ? r.color : '#666666' %>;"
+                    >
                       <%= r && r.name ? r.name : "" %>
                     </span>
                   <% } %>
@@ -803,25 +993,49 @@
               <% } %>
 
               <% if (pu.username) { %>
-                <div class="row gap" style="margin-top:10px; flex-wrap:wrap;">
+                <div
+                  class="row gap"
+                  style="margin-top:10px; flex-wrap:wrap;"
+                >
                   <% if (isMe) { %>
-                    <a class="btn ghost" href="/me/customize">Customize</a>
+                    <a class="btn ghost" href="/me/customize">
+                      Customize
+                    </a>
                   <% } %>
-                  <a class="btn ghost" href="/u/<%= encodeURIComponent(pu.username) %>/ratings">All Ratings & Reviews</a>
+
+                  <a
+                    class="btn ghost"
+                    href="/u/<%= encodeURIComponent(pu.username) %>/ratings"
+                  >
+                    All Ratings & Reviews
+                  </a>
+
+                  <% if (me && Number(me.is_admin) === 1) { %>
+                    <a
+                      class="btn ghost"
+                      href="/admin/user/<%= encodeURIComponent(pu.username) %>/roles"
+                    >
+                      Roles
+                    </a>
+                  <% } %>
                 </div>
               <% } %>
             </div>
 
             <div class="profile_favorites_box">
               <div class="profile_favorites_title_row">
-                <div class="profile_favorites_title">Top 5 / Favorites</div>
+                <div class="profile_favorites_title">
+                  Top 5 / Favorites
+                </div>
 
                 <% if (isMe && favoriteShows.length > 1) { %>
                   <div
                     class="profile_favorites_order_status"
                     id="favoriteOrderStatus"
                     aria-live="polite"
-                  >Drag to reorder</div>
+                  >
+                    Drag to reorder
+                  </div>
                 <% } %>
               </div>
 
@@ -856,7 +1070,9 @@
                         <div
                           class="profile_favorite_rank"
                           data-favorite-rank
-                        ><%= i + 1 %></div>
+                        >
+                          <%= i + 1 %>
+                        </div>
                       </div>
 
                       <div class="profile_favorite_name">
@@ -873,108 +1089,174 @@
             </div>
           </div>
 
-          <div class="profile_avg_box">
-            <div class="kicker" style="color: var(--accent);">Avg rating</div>
-            <% if (avgRatingCnt > 0) { %>
-              <div class="profile_avg_value">
-                <span class="profile_avg_star">★</span>
-                <%= avgRating.toFixed(2) %>
-              </div>
-              <div class="muted small"><%= avgRatingCnt %> ratings</div>
-            <% } else { %>
-              <div class="muted">No ratings</div>
-            <% } %>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="profile_layout" style="margin-top:16px;">
-      <aside class="profile_side">
-        <div class="panel profile_stats">
-          <div class="kicker" style="color: var(--accent);">Stats</div>
-          <div class="muted small" style="margin-top:10px;">
-            Ratings shown: <%= recentRatings.length %><br/>
-            Reviews shown: <%= recentReviews.length %>
-          </div>
-
-          <% if (me && Number(me.is_admin) === 1 && pu.username) { %>
-            <div style="margin-top:10px;">
-              <a class="btn ghost" href="/admin/user/<%= encodeURIComponent(pu.username) %>/roles">Roles</a>
-            </div>
-          <% } %>
-
-          <% if (isMe) { %>
-            <div class="acct_details">
-              <details>
-                <summary class="btn ghost" style="width:100%; justify-content:space-between;">
-                  Account
+          <div class="profile_hero_right">
+            <% if (isMe) { %>
+              <details class="profile_account_details">
+                <summary class="btn ghost profile_account_summary">
+                  Account Settings
                   <span class="muted small">▼</span>
                 </summary>
 
-                <div class="panel acct_panel" style="margin-top:10px; padding:14px;">
-                  <div class="kicker profile_section_title">Account</div>
+                <div class="panel acct_panel profile_account_panel">
+                  <div class="kicker profile_section_title">
+                    Account
+                  </div>
 
-                  <div style="margin-top:12px; display:grid; grid-template-columns: 1fr; gap:14px;">
+                  <div class="profile_account_forms">
                     <div>
-                      <div class="muted small" style="margin-bottom:8px;"><b>Change username</b></div>
-                      <form method="post" action="/me/change_username">
+                      <div class="muted small profile_account_label">
+                        <b>Change username</b>
+                      </div>
+
+                      <form
+                        method="post"
+                        action="/me/change_username"
+                      >
                         <div class="field">
                           <label>New username</label>
-                          <input name="new_username" placeholder="New username" autocomplete="username">
+                          <input
+                            name="new_username"
+                            placeholder="New username"
+                            autocomplete="username"
+                          >
                         </div>
 
                         <div class="field">
                           <label>Current password</label>
-                          <input type="password" name="current_password" placeholder="Current password" autocomplete="current-password">
+                          <input
+                            type="password"
+                            name="current_password"
+                            placeholder="Current password"
+                            autocomplete="current-password"
+                          >
                         </div>
 
                         <div class="actions">
-                          <button class="btn green" type="submit">Update username</button>
+                          <button
+                            class="btn green"
+                            type="submit"
+                          >
+                            Update username
+                          </button>
                         </div>
                       </form>
                     </div>
 
-                    <div class="topline_accent">
-                      <div class="muted small" style="margin-bottom:8px;"><b>Change password</b></div>
-                      <form method="post" action="/me/change_password">
+                    <div class="profile_account_password">
+                      <div class="muted small profile_account_label">
+                        <b>Change password</b>
+                      </div>
+
+                      <form
+                        method="post"
+                        action="/me/change_password"
+                      >
                         <div class="field">
                           <label>Current password</label>
-                          <input type="password" name="current_password" placeholder="Current password" autocomplete="current-password">
+                          <input
+                            type="password"
+                            name="current_password"
+                            placeholder="Current password"
+                            autocomplete="current-password"
+                          >
                         </div>
 
                         <div class="field">
                           <label>New password</label>
-                          <input type="password" name="new_password" placeholder="New password" autocomplete="new-password">
+                          <input
+                            type="password"
+                            name="new_password"
+                            placeholder="New password"
+                            autocomplete="new-password"
+                          >
                         </div>
 
                         <div class="field">
                           <label>Confirm new password</label>
-                          <input type="password" name="new_password2" placeholder="Confirm new password" autocomplete="new-password">
+                          <input
+                            type="password"
+                            name="new_password2"
+                            placeholder="Confirm new password"
+                            autocomplete="new-password"
+                          >
                         </div>
 
                         <div class="actions">
-                          <button class="btn green" type="submit">Update password</button>
+                          <button
+                            class="btn green"
+                            type="submit"
+                          >
+                            Update password
+                          </button>
                         </div>
                       </form>
                     </div>
                   </div>
                 </div>
               </details>
-            </div>
-          <% } %>
-        </div>
-      </aside>
+            <% } %>
 
-      <section class="stack">
+            <div class="profile_avg_box">
+              <div class="kicker" style="color:var(--accent);">
+                Avg rating
+              </div>
+
+              <% if (avgRatingCnt > 0) { %>
+                <div class="profile_avg_value">
+                  <span class="profile_avg_star">★</span>
+                  <%= avgRating.toFixed(2) %>
+                </div>
+
+                <div class="muted small">
+                  <%= avgRatingCnt %> ratings
+                </div>
+              <% } else { %>
+                <div class="muted">
+                  No ratings
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="profile_layout"
+      style="margin-top:16px;"
+    >
+      <section class="stack profile_content_stack">
         <% if (isMe) { %>
           <div class="panel profile_main_panel">
-            <div class="kicker profile_section_title">Bio</div>
-            <div class="field" style="margin-top:12px;">
-              <form method="post" action="/me/update_bio">
-                <textarea name="bio" placeholder="Tell us about your favorite corps..." rows="3" style="width:100%;"><%= pu.bio || "" %></textarea>
-                <div class="actions" style="margin-top:8px;">
-                  <button class="btn green" type="submit">Save Bio</button>
+            <div class="kicker profile_section_title">
+              Bio
+            </div>
+
+            <div
+              class="field"
+              style="margin-top:12px;"
+            >
+              <form
+                method="post"
+                action="/me/update_bio"
+              >
+                <textarea
+                  name="bio"
+                  placeholder="Tell us about your favorite corps..."
+                  rows="3"
+                  style="width:100%;"
+                ><%= pu.bio || "" %></textarea>
+
+                <div
+                  class="actions"
+                  style="margin-top:8px;"
+                >
+                  <button
+                    class="btn green"
+                    type="submit"
+                  >
+                    Save Bio
+                  </button>
                 </div>
               </form>
             </div>
@@ -982,69 +1264,122 @@
         <% } %>
 
         <div class="panel profile_ratings_panel">
-          <div class="kicker" style="color: var(--accent);">Recent ratings</div>
+          <div
+            class="kicker"
+            style="color:var(--accent);"
+          >
+            Recent ratings
+          </div>
 
           <% if (recentRatings.length > 0) { %>
-            <div class="postergrid" style="margin-top:12px;">
+            <div
+              class="postergrid"
+              style="margin-top:12px;"
+            >
               <% for (const rr of recentRatings) {
-                const rh = rr && rr.rating_half != null ? Number(rr.rating_half) : 0;
+                const rh = rr && rr.rating_half != null
+                  ? Number(rr.rating_half)
+                  : 0;
               %>
-                <a class="poster" href="/show/<%= rr.show_id %>">
+                <a
+                  class="poster"
+                  href="/show/<%= rr.show_id %>"
+                >
                   <div class="poster_art">
                     <% if (rr && rr.poster_url) { %>
-                      <img class="poster_img" src="<%= rr.poster_url %>" alt="<%= rr.title || 'poster' %> poster" loading="lazy, object-position:center center;">
+                      <img
+                        class="poster_img"
+                        src="<%= rr.poster_url %>"
+                        alt="<%= rr.title || 'poster' %> poster"
+                        loading="lazy"
+                      >
                     <% } else { %>
                       <div class="poster_fallback"></div>
                     <% } %>
 
                     <div class="tile_rating">
-                      <span class="tile_star">★</span> <%= (rh / 2).toFixed(1) %>
+                      <span class="tile_star">★</span>
+                      <%= (rh / 2).toFixed(1) %>
                     </div>
 
                     <% if (rr && rr.year) { %>
-                      <div class="tile_year"><%= rr.year %></div>
+                      <div class="tile_year">
+                        <%= rr.year %>
+                      </div>
                     <% } %>
                   </div>
 
                   <div class="poster_meta">
-                    <div class="poster_title"><%= rr && rr.title ? rr.title : "" %></div>
-                    <div class="poster_sub"><%= rr && rr.corps ? rr.corps : "" %></div>
+                    <div class="poster_title">
+                      <%= rr && rr.title ? rr.title : "" %>
+                    </div>
+
+                    <div class="poster_sub">
+                      <%= rr && rr.corps ? rr.corps : "" %>
+                    </div>
                   </div>
                 </a>
               <% } %>
             </div>
           <% } else { %>
-            <div class="muted" style="margin-top:8px;">No ratings yet.</div>
+            <div
+              class="muted"
+              style="margin-top:8px;"
+            >
+              No ratings yet.
+            </div>
           <% } %>
         </div>
 
         <div class="panel profile_reviews_panel">
-          <div class="kicker" style="color: var(--accent);">Recent reviews</div>
+          <div
+            class="kicker"
+            style="color:var(--accent);"
+          >
+            Recent reviews
+          </div>
 
           <% if (recentReviews.length > 0) { %>
-            <div class="reviewlist" style="margin-top:12px;">
+            <div
+              class="reviewlist"
+              style="margin-top:12px;"
+            >
               <% for (const rv of recentReviews) { %>
                 <div class="reviewcard">
                   <div class="small">
-                    <a class="reviewuser" href="/show/<%= rv.show_id %>">
+                    <a
+                      class="reviewuser"
+                      href="/show/<%= rv.show_id %>"
+                    >
                       <%= rv && rv.title ? rv.title : "Show" %>
                     </a>
 
                     <% if (rv && rv.year && rv.corps) { %>
-                      <span class="muted">• <%= rv.year %> — <%= rv.corps %></span>
+                      <span class="muted">
+                        • <%= rv.year %> — <%= rv.corps %>
+                      </span>
                     <% } %>
 
                     <% if (rv && rv.rating_half != null) { %>
-                      <span class="muted">• ★ <%= (Number(rv.rating_half) / 2).toFixed(1) %></span>
+                      <span class="muted">
+                        • ★ <%= (Number(rv.rating_half) / 2).toFixed(1) %>
+                      </span>
                     <% } %>
                   </div>
 
-                  <div class="reviewtext">“<%= rv && rv.review_text ? rv.review_text : "" %>”</div>
+                  <div class="reviewtext">
+                    “<%= rv && rv.review_text ? rv.review_text : "" %>”
+                  </div>
                 </div>
               <% } %>
             </div>
           <% } else { %>
-            <div class="muted" style="margin-top:8px;">No reviews yet.</div>
+            <div
+              class="muted"
+              style="margin-top:8px;"
+            >
+              No reviews yet.
+            </div>
           <% } %>
         </div>
       </section>
@@ -1052,39 +1387,167 @@
   </main>
 
   <footer class="wrap footer">
-    <div class="small">Rate drum corps shows.</div>
+    <div class="small">
+      Rate drum corps shows.
+    </div>
   </footer>
+
+  <% if (me) { %>
+    <script src="/static/js/presence.js?v=20260822a"></script>
+  <% } %>
 
   <script>
     (() => {
       const btn = document.getElementById("bellBtn");
-      const dd  = document.getElementById("notifDropdown");
-      if (btn && dd) {
-        dd.addEventListener("click", (e) => e.stopPropagation());
-        btn.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          dd.classList.toggle("open");
-        });
-        document.addEventListener("click", () => dd.classList.remove("open"));
-        document.addEventListener("keydown", (e) => {
-          if (e.key === "Escape") dd.classList.remove("open");
-        });
-      }
+      const dd = document.getElementById("notifDropdown");
+
+      if (!btn || !dd) return;
+
+      dd.addEventListener("click", (e) => {
+        e.stopPropagation();
+      });
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dd.classList.toggle("open");
+      });
+
+      document.addEventListener("click", () => {
+        dd.classList.remove("open");
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          dd.classList.remove("open");
+        }
+      });
     })();
 
     (() => {
-      const row =
-        document.getElementById(
-          "favoriteShowsSortable"
+      const dot = document.getElementById("profilePresenceDot");
+      if (!dot) return;
+
+      const profileUserId = Number(
+        <%- JSON.stringify(Number(pu.id || 0)) %>
+      );
+
+      const isOwnProfile = <%= isMe ? "true" : "false" %>;
+
+      if (!profileUserId) return;
+
+      function applyStatus(value) {
+        let status = String(value || "offline")
+          .trim()
+          .toLowerCase();
+
+        if (!["online", "recent", "offline"].includes(status)) {
+          status = "offline";
+        }
+
+        dot.classList.remove(
+          "online",
+          "recent",
+          "offline"
         );
+
+        dot.classList.add(status);
+
+        const label = status === "online"
+          ? "Online"
+          : status === "recent"
+            ? "Active recently"
+            : "Offline";
+
+        dot.title = label;
+        dot.setAttribute("aria-label", label);
+      }
+
+      async function refreshProfilePresence() {
+        if (document.visibilityState !== "visible") {
+          return;
+        }
+
+        if (isOwnProfile) {
+          applyStatus("online");
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            "/api/presence/connections",
+            {
+              method: "GET",
+              credentials: "same-origin",
+              cache: "no-store",
+              headers: {
+                "X-Requested-With": "XMLHttpRequest"
+              }
+            }
+          );
+
+          if (!response.ok) return;
+
+          const data = await response.json();
+
+          if (
+            !data ||
+            !Array.isArray(data.users)
+          ) {
+            return;
+          }
+
+          const profileUser = data.users.find(
+            (user) =>
+              Number(user.id) ===
+              profileUserId
+          );
+
+          applyStatus(
+            profileUser
+              ? profileUser.presence_status
+              : "offline"
+          );
+        } catch (_) {
+          // Presence should never break the profile page.
+        }
+      }
+
+      refreshProfilePresence();
+
+      setInterval(
+        refreshProfilePresence,
+        30 * 1000
+      );
+
+      document.addEventListener(
+        "visibilitychange",
+        () => {
+          if (
+            document.visibilityState ===
+            "visible"
+          ) {
+            refreshProfilePresence();
+          }
+        }
+      );
+
+      window.addEventListener(
+        "focus",
+        refreshProfilePresence
+      );
+    })();
+
+    (() => {
+      const row = document.getElementById(
+        "favoriteShowsSortable"
+      );
 
       if (!row) return;
 
-      const status =
-        document.getElementById(
-          "favoriteOrderStatus"
-        );
+      const status = document.getElementById(
+        "favoriteOrderStatus"
+      );
 
       let dragging = null;
       let startingOrder = "";
@@ -1102,22 +1565,26 @@
       const orderString = () =>
         items()
           .map((item) =>
-            String(item.dataset.showId || "")
+            String(
+              item.dataset.showId || ""
+            )
           )
           .join(",");
 
       const updateRanks = () => {
-        items().forEach((item, index) => {
-          const rank =
-            item.querySelector(
-              "[data-favorite-rank]"
-            );
+        items().forEach(
+          (item, index) => {
+            const rank =
+              item.querySelector(
+                "[data-favorite-rank]"
+              );
 
-          if (rank) {
-            rank.textContent =
-              String(index + 1);
+            if (rank) {
+              rank.textContent =
+                String(index + 1);
+            }
           }
-        });
+        );
       };
 
       const setStatus = (
@@ -1134,10 +1601,13 @@
         }
 
         if (clearAfter > 0) {
-          statusTimer = setTimeout(() => {
-            status.textContent =
-              "Drag to reorder";
-          }, clearAfter);
+          statusTimer = setTimeout(
+            () => {
+              status.textContent =
+                "Drag to reorder";
+            },
+            clearAfter
+          );
         }
       };
 
@@ -1154,7 +1624,9 @@
 
         const showIds =
           currentItems.map((item) =>
-            Number(item.dataset.showId)
+            Number(
+              item.dataset.showId
+            )
           );
 
         const currentOrder =
@@ -1188,7 +1660,8 @@
           );
 
           const data =
-            await response.json()
+            await response
+              .json()
               .catch(() => null);
 
           if (
@@ -1283,6 +1756,7 @@
             }
 
             event.preventDefault();
+
             event.dataTransfer.dropEffect =
               "move";
 
@@ -1298,19 +1772,23 @@
               rect.height / 2;
 
             const verticalDistance =
-              event.clientY - centerY;
+              event.clientY -
+              centerY;
 
             let putBefore;
 
             if (
-              Math.abs(verticalDistance) >
+              Math.abs(
+                verticalDistance
+              ) >
               rect.height * 0.35
             ) {
               putBefore =
                 verticalDistance < 0;
             } else {
               putBefore =
-                event.clientX < centerX;
+                event.clientX <
+                centerX;
             }
 
             if (putBefore) {
@@ -1354,6 +1832,7 @@
               startingOrder;
 
             dragging = null;
+
             lastDragEndedAt =
               Date.now();
 
@@ -1380,7 +1859,3 @@
   </script>
 </body>
 </html>
-
-
-
-
