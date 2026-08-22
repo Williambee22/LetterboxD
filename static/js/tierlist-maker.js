@@ -1,7 +1,8 @@
 (() => {
   const page = document.querySelector(".tierMakerPage");
   if (!page) return;
-  console.log("tierlist-maker.js loaded 20260701c");
+
+  console.log("tierlist-maker.js loaded 20260822d");
 
   const tierlistId = page.dataset.tierlistId;
 
@@ -27,7 +28,20 @@
   }
 
   let showMap = new Map();
+
   let saveTimer = null;
+  let saveInFlight = false;
+  let saveQueued = false;
+
+  let draggedCard = null;
+  let draggedShowId = null;
+
+  let dragActive = false;
+  let dragPointerY = 0;
+  let autoScrollFrame = null;
+
+  const AUTO_SCROLL_EDGE = 120;
+  const AUTO_SCROLL_MAX_SPEED = 28;
 
   const tierBoard = document.getElementById("tierBoard");
   const showPool = document.getElementById("showPool");
@@ -85,38 +99,72 @@
   }
 
   function setSaveStatus(text) {
-    if (saveStatus) saveStatus.textContent = text;
+    if (saveStatus) {
+      saveStatus.textContent = text;
+    }
   }
 
-  function scheduleSave() {
+  function scheduleSave(delay = 400) {
     setSaveStatus("Saving...");
+
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(saveNow, 500);
+
+    saveTimer = setTimeout(() => {
+      saveTimer = null;
+      saveNow();
+    }, delay);
   }
 
   async function saveNow() {
+    if (saveInFlight) {
+      saveQueued = true;
+      return;
+    }
+
+    saveInFlight = true;
+    saveQueued = false;
+
     try {
       const payload = {
-        name: nameInput.value,
+        name: nameInput ? nameInput.value : "",
         ...currentFilters(),
         is_public: publicInput ? publicInput.checked : false,
         data: state
       };
 
-      const res = await fetch(`/tierlists/${tierlistId}/save`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
+      const res = await fetch(
+        `/tierlists/${tierlistId}/save`,
+        {
+          method: "POST",
 
-      if (!res.ok) throw new Error("Save failed");
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify(payload)
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Save failed");
+      }
 
       setSaveStatus("Saved");
+
     } catch (err) {
       console.error(err);
       setSaveStatus("Save failed");
+
+    } finally {
+      saveInFlight = false;
+
+      if (saveQueued) {
+        saveQueued = false;
+
+        setSaveStatus("Saving...");
+
+        saveNow();
+      }
     }
   }
 
@@ -133,182 +181,727 @@
   }
 
   function removeShowFromEverywhere(showId) {
+    const numericId = Number(showId);
+
     for (const tier of state.tiers) {
-      tier.items = (tier.items || []).filter(id => Number(id) !== Number(showId));
+      if (!Array.isArray(tier.items)) {
+        tier.items = [];
+        continue;
+      }
+
+      for (
+        let i = tier.items.length - 1;
+        i >= 0;
+        i -= 1
+      ) {
+        if (
+          Number(tier.items[i]) === numericId
+        ) {
+          tier.items.splice(i, 1);
+        }
+      }
     }
   }
 
   function createShowCard(show) {
     const card = document.createElement("div");
+
     card.className = "showCard";
     card.draggable = true;
-    card.dataset.showId = show.id;
+    card.dataset.showId = String(show.id);
 
-    if (show.is_default_poster || !show.poster_url) {
-      card.classList.add("textOnlyShowCard");
+    if (
+      show.is_default_poster ||
+      !show.poster_url
+    ) {
+      card.classList.add(
+        "textOnlyShowCard"
+      );
+
       card.innerHTML = `
         <strong>${escapeHtml(show.name)}</strong>
         <span>${escapeHtml(show.corps || "")} ${escapeHtml(show.year || "")}</span>
       `;
+
     } else {
       card.innerHTML = `
-        <img src="${escapeHtml(show.poster_url)}" alt="">
+        <img
+          src="${escapeHtml(show.poster_url)}"
+          alt=""
+          draggable="false"
+        >
         <span>${escapeHtml(show.name)}</span>
       `;
     }
 
-    card.addEventListener("dragstart", event => {
-      event.dataTransfer.setData("text/plain", String(show.id));
-      event.dataTransfer.effectAllowed = "move";
-    });
-
     return card;
   }
 
-  function setupDropZone(zone, onDrop) {
-    zone.addEventListener("dragover", event => {
-      event.preventDefault();
-      zone.classList.add("dragOver");
-    });
+  function getDraggedCard(showId) {
+    const numericId = Number(showId);
 
-    zone.addEventListener("dragleave", () => {
-      zone.classList.remove("dragOver");
-    });
+    if (
+      draggedCard &&
+      Number(
+        draggedCard.dataset.showId
+      ) === numericId
+    ) {
+      return draggedCard;
+    }
 
-    zone.addEventListener("drop", event => {
-      event.preventDefault();
-      zone.classList.remove("dragOver");
-
-      const showId = event.dataTransfer.getData("text/plain");
-      if (!showId) return;
-
-      onDrop(Number(showId));
-    });
+    return page.querySelector(
+      `.showCard[data-show-id="${CSS.escape(
+        String(showId)
+      )}"]`
+    );
   }
 
-  function renderTiers() {
-    tierBoard.innerHTML = "";
+  function setupDropZone(zone, onDrop) {
+    zone.addEventListener(
+      "dragover",
+      event => {
+        event.preventDefault();
 
-    state.tiers.forEach((tier, index) => {
-      if (!Array.isArray(tier.items)) tier.items = [];
-
-      const row = document.createElement("div");
-      row.className = "tierRow";
-
-      const label = document.createElement("div");
-      label.className = "tierLabel";
-      label.style.backgroundColor = tier.color || "#777777";
-
-      label.innerHTML = `
-        <input class="tierNameInput" value="${escapeHtml(tier.label || "")}" maxlength="20">
-        <input class="tierColorInput" type="color" value="${escapeHtml(tier.color || "#777777")}">
-      `;
-
-      const tierNameInput = label.querySelector(".tierNameInput");
-      const tierColorInput = label.querySelector(".tierColorInput");
-
-      tierNameInput.addEventListener("input", () => {
-        tier.label = tierNameInput.value;
-        scheduleSave();
-      });
-
-      tierColorInput.addEventListener("input", () => {
-        tier.color = tierColorInput.value;
-        label.style.backgroundColor = tier.color;
-        scheduleSave();
-      });
-
-      const zone = document.createElement("div");
-      zone.className = "tierItems tierDropZone";
-      zone.dataset.tierId = tier.id;
-
-      setupDropZone(zone, showId => {
-        removeShowFromEverywhere(showId);
-        tier.items.push(Number(showId));
-        render();
-        scheduleSave();
-      });
-
-      for (const showId of tier.items) {
-        const show = showMap.get(Number(showId));
-
-        if (show) {
-          zone.appendChild(createShowCard(show));
-        } else {
-          const missing = document.createElement("div");
-          missing.className = "showCard textOnlyShowCard";
-          missing.innerHTML = `<strong>Saved show #${escapeHtml(showId)}</strong>`;
-          zone.appendChild(missing);
+        if (event.dataTransfer) {
+          event.dataTransfer.dropEffect =
+            "move";
         }
+
+        zone.classList.add(
+          "dragOver"
+        );
+      }
+    );
+
+    zone.addEventListener(
+      "dragleave",
+      event => {
+        const next =
+          event.relatedTarget;
+
+        if (
+          next &&
+          zone.contains(next)
+        ) {
+          return;
+        }
+
+        zone.classList.remove(
+          "dragOver"
+        );
+      }
+    );
+
+    zone.addEventListener(
+      "drop",
+      event => {
+        event.preventDefault();
+
+        zone.classList.remove(
+          "dragOver"
+        );
+
+        const rawId =
+          event.dataTransfer &&
+          event.dataTransfer.getData(
+            "text/plain"
+          );
+
+        const showId =
+          rawId ||
+          (
+            draggedShowId != null
+              ? String(draggedShowId)
+              : ""
+          );
+
+        if (!showId) {
+          return;
+        }
+
+        const card =
+          getDraggedCard(showId);
+
+        onDrop(
+          Number(showId),
+          card
+        );
+
+        stopAutoScroll();
+      }
+    );
+  }
+
+  function autoScrollLoop() {
+    if (!dragActive) {
+      autoScrollFrame = null;
+      return;
+    }
+
+    const viewportHeight =
+      window.innerHeight;
+
+    let amount = 0;
+
+    if (
+      dragPointerY <
+      AUTO_SCROLL_EDGE
+    ) {
+      const strength =
+        Math.max(
+          0,
+          Math.min(
+            1,
+            (
+              AUTO_SCROLL_EDGE -
+              dragPointerY
+            ) /
+            AUTO_SCROLL_EDGE
+          )
+        );
+
+      amount =
+        -Math.max(
+          3,
+          Math.round(
+            AUTO_SCROLL_MAX_SPEED *
+            strength *
+            strength
+          )
+        );
+
+    } else if (
+      dragPointerY >
+      viewportHeight -
+      AUTO_SCROLL_EDGE
+    ) {
+      const strength =
+        Math.max(
+          0,
+          Math.min(
+            1,
+            (
+              dragPointerY -
+              (
+                viewportHeight -
+                AUTO_SCROLL_EDGE
+              )
+            ) /
+            AUTO_SCROLL_EDGE
+          )
+        );
+
+      amount =
+        Math.max(
+          3,
+          Math.round(
+            AUTO_SCROLL_MAX_SPEED *
+            strength *
+            strength
+          )
+        );
+    }
+
+    if (amount !== 0) {
+      window.scrollBy(
+        0,
+        amount
+      );
+    }
+
+    autoScrollFrame =
+      requestAnimationFrame(
+        autoScrollLoop
+      );
+  }
+
+  function startAutoScroll(clientY) {
+    dragActive = true;
+
+    dragPointerY =
+      clientY || 0;
+
+    if (!autoScrollFrame) {
+      autoScrollFrame =
+        requestAnimationFrame(
+          autoScrollLoop
+        );
+    }
+  }
+
+  function stopAutoScroll() {
+    dragActive = false;
+
+    if (autoScrollFrame) {
+      cancelAnimationFrame(
+        autoScrollFrame
+      );
+
+      autoScrollFrame = null;
+    }
+  }
+
+  page.addEventListener(
+    "dragstart",
+    event => {
+      const card =
+        event.target.closest(
+          ".showCard"
+        );
+
+      if (!card) {
+        return;
       }
 
-      const actions = document.createElement("div");
-      actions.className = "tierActions";
+      const showId =
+        Number(
+          card.dataset.showId
+        );
 
-      actions.innerHTML = `
-        <button type="button" class="smallBtn moveUpBtn">↑</button>
-        <button type="button" class="smallBtn moveDownBtn">↓</button>
-        <button type="button" class="smallBtn dangerBtn deleteTierBtn">Delete</button>
-      `;
+      if (
+        !Number.isFinite(showId)
+      ) {
+        return;
+      }
 
-      actions.querySelector(".moveUpBtn").addEventListener("click", () => {
-        if (index === 0) return;
+      draggedCard = card;
+      draggedShowId = showId;
 
-        const temp = state.tiers[index - 1];
-        state.tiers[index - 1] = state.tiers[index];
-        state.tiers[index] = temp;
+      card.classList.add(
+        "dragging"
+      );
 
-        render();
-        scheduleSave();
-      });
+      if (event.dataTransfer) {
+        event.dataTransfer.setData(
+          "text/plain",
+          String(showId)
+        );
 
-      actions.querySelector(".moveDownBtn").addEventListener("click", () => {
-        if (index >= state.tiers.length - 1) return;
+        event.dataTransfer.effectAllowed =
+          "move";
+      }
 
-        const temp = state.tiers[index + 1];
-        state.tiers[index + 1] = state.tiers[index];
-        state.tiers[index] = temp;
+      startAutoScroll(
+        event.clientY
+      );
+    }
+  );
 
-        render();
-        scheduleSave();
-      });
+  page.addEventListener(
+    "dragend",
+    event => {
+      const card =
+        event.target.closest(
+          ".showCard"
+        );
 
-      actions.querySelector(".deleteTierBtn").addEventListener("click", () => {
-        if (!confirm("Delete this tier? Shows in it will return to the pool.")) return;
+      if (card) {
+        card.classList.remove(
+          "dragging"
+        );
+      }
 
-        state.tiers.splice(index, 1);
-        render();
-        scheduleSave();
-      });
+      document
+        .querySelectorAll(
+          ".tierDropZone.dragOver"
+        )
+        .forEach(zone =>
+          zone.classList.remove(
+            "dragOver"
+          )
+        );
 
-      row.appendChild(label);
-      row.appendChild(zone);
-      row.appendChild(actions);
+      draggedCard = null;
+      draggedShowId = null;
 
-      tierBoard.appendChild(row);
-    });
+      stopAutoScroll();
+    }
+  );
+
+  window.addEventListener(
+    "dragover",
+    event => {
+      if (!dragActive) {
+        return;
+      }
+
+      dragPointerY =
+        event.clientY;
+    }
+  );
+
+  window.addEventListener(
+    "drop",
+    () => {
+      stopAutoScroll();
+    }
+  );
+
+  function renderTiers() {
+    const fragment =
+      document.createDocumentFragment();
+
+    state.tiers.forEach(
+      (tier, index) => {
+        if (
+          !Array.isArray(
+            tier.items
+          )
+        ) {
+          tier.items = [];
+        }
+
+        const row =
+          document.createElement(
+            "div"
+          );
+
+        row.className =
+          "tierRow";
+
+        const label =
+          document.createElement(
+            "div"
+          );
+
+        label.className =
+          "tierLabel";
+
+        label.style.backgroundColor =
+          tier.color ||
+          "#777777";
+
+        label.innerHTML = `
+          <input
+            class="tierNameInput"
+            value="${escapeHtml(
+              tier.label || ""
+            )}"
+            maxlength="20"
+          >
+
+          <input
+            class="tierColorInput"
+            type="color"
+            value="${escapeHtml(
+              tier.color ||
+              "#777777"
+            )}"
+          >
+        `;
+
+        const tierNameInput =
+          label.querySelector(
+            ".tierNameInput"
+          );
+
+        const tierColorInput =
+          label.querySelector(
+            ".tierColorInput"
+          );
+
+        tierNameInput.addEventListener(
+          "input",
+          () => {
+            tier.label =
+              tierNameInput.value;
+
+            scheduleSave();
+          }
+        );
+
+        tierColorInput.addEventListener(
+          "input",
+          () => {
+            tier.color =
+              tierColorInput.value;
+
+            label.style.backgroundColor =
+              tier.color;
+
+            scheduleSave();
+          }
+        );
+
+        const zone =
+          document.createElement(
+            "div"
+          );
+
+        zone.className =
+          "tierItems tierDropZone";
+
+        zone.dataset.tierId =
+          tier.id;
+
+        setupDropZone(
+          zone,
+          (showId, card) => {
+            removeShowFromEverywhere(
+              showId
+            );
+
+            tier.items.push(
+              Number(showId)
+            );
+
+            if (card) {
+              zone.appendChild(
+                card
+              );
+
+            } else {
+              const show =
+                showMap.get(
+                  Number(showId)
+                );
+
+              if (show) {
+                zone.appendChild(
+                  createShowCard(
+                    show
+                  )
+                );
+              }
+            }
+
+            scheduleSave();
+          }
+        );
+
+        const cardsFragment =
+          document.createDocumentFragment();
+
+        for (
+          const showId
+          of tier.items
+        ) {
+          const show =
+            showMap.get(
+              Number(showId)
+            );
+
+          if (show) {
+            cardsFragment.appendChild(
+              createShowCard(
+                show
+              )
+            );
+
+          } else {
+            const missing =
+              document.createElement(
+                "div"
+              );
+
+            missing.className =
+              "showCard textOnlyShowCard";
+
+            missing.innerHTML =
+              `<strong>Saved show #${escapeHtml(
+                showId
+              )}</strong>`;
+
+            cardsFragment.appendChild(
+              missing
+            );
+          }
+        }
+
+        zone.appendChild(
+          cardsFragment
+        );
+
+        const actions =
+          document.createElement(
+            "div"
+          );
+
+        actions.className =
+          "tierActions";
+
+        actions.innerHTML = `
+          <button
+            type="button"
+            class="smallBtn moveUpBtn"
+          >
+            ↑
+          </button>
+
+          <button
+            type="button"
+            class="smallBtn moveDownBtn"
+          >
+            ↓
+          </button>
+
+          <button
+            type="button"
+            class="smallBtn dangerBtn deleteTierBtn"
+          >
+            Delete
+          </button>
+        `;
+
+        actions
+          .querySelector(
+            ".moveUpBtn"
+          )
+          .addEventListener(
+            "click",
+            () => {
+              if (
+                index === 0
+              ) {
+                return;
+              }
+
+              const temp =
+                state.tiers[
+                  index - 1
+                ];
+
+              state.tiers[
+                index - 1
+              ] =
+                state.tiers[
+                  index
+                ];
+
+              state.tiers[
+                index
+              ] =
+                temp;
+
+              render();
+
+              scheduleSave();
+            }
+          );
+
+        actions
+          .querySelector(
+            ".moveDownBtn"
+          )
+          .addEventListener(
+            "click",
+            () => {
+              if (
+                index >=
+                state.tiers.length -
+                1
+              ) {
+                return;
+              }
+
+              const temp =
+                state.tiers[
+                  index + 1
+                ];
+
+              state.tiers[
+                index + 1
+              ] =
+                state.tiers[
+                  index
+                ];
+
+              state.tiers[
+                index
+              ] =
+                temp;
+
+              render();
+
+              scheduleSave();
+            }
+          );
+
+        actions
+          .querySelector(
+            ".deleteTierBtn"
+          )
+          .addEventListener(
+            "click",
+            () => {
+              if (
+                !confirm(
+                  "Delete this tier? Shows in it will return to the pool."
+                )
+              ) {
+                return;
+              }
+
+              state.tiers.splice(
+                index,
+                1
+              );
+
+              render();
+
+              scheduleSave();
+            }
+          );
+
+        row.appendChild(
+          label
+        );
+
+        row.appendChild(
+          zone
+        );
+
+        row.appendChild(
+          actions
+        );
+
+        fragment.appendChild(
+          row
+        );
+      }
+    );
+
+    tierBoard.replaceChildren(
+      fragment
+    );
   }
 
   function renderPool() {
-    showPool.innerHTML = "";
+    if (
+      showMap.size === 0
+    ) {
+      showPool.innerHTML =
+        `<p class="muted">No shows loaded.</p>`;
 
-    const used = allUsedShowIds();
+      return;
+    }
 
-    for (const show of showMap.values()) {
-      if (!used.has(Number(show.id))) {
-        showPool.appendChild(createShowCard(show));
+    const used =
+      allUsedShowIds();
+
+    const fragment =
+      document.createDocumentFragment();
+
+    for (
+      const show
+      of showMap.values()
+    ) {
+      if (
+        !used.has(
+          Number(show.id)
+        )
+      ) {
+        fragment.appendChild(
+          createShowCard(
+            show
+          )
+        );
       }
     }
 
-    if (showMap.size === 0) {
-      showPool.innerHTML = `<p class="muted">No shows loaded.</p>`;
-    }
-
-    setupDropZone(showPool, showId => {
-      removeShowFromEverywhere(showId);
-      render();
-      scheduleSave();
-    });
+    showPool.replaceChildren(
+      fragment
+    );
   }
 
   function render() {
@@ -316,79 +909,183 @@
     renderPool();
   }
 
-  async function loadShows() {
+  setupDropZone(
+    showPool,
+    (showId, card) => {
+      removeShowFromEverywhere(
+        showId
+      );
+
+      if (card) {
+        showPool.appendChild(
+          card
+        );
+
+      } else {
+        const show =
+          showMap.get(
+            Number(showId)
+          );
+
+        if (show) {
+          showPool.appendChild(
+            createShowCard(
+              show
+            )
+          );
+        }
+      }
+
+      scheduleSave();
+    }
+  );
+
+  async function loadShows({
+    saveFilters = false
+  } = {}) {
     updateYearDecadeVisibility();
 
-    const params = new URLSearchParams(currentFilters());
+    const params =
+      new URLSearchParams(
+        currentFilters()
+      );
 
     try {
-      const res = await fetch(`/tierlists/${tierlistId}/shows.json?${params.toString()}`);
+      const res =
+        await fetch(
+          `/tierlists/${tierlistId}/shows.json?${params.toString()}`
+        );
 
-      if (!res.ok) throw new Error("Could not load shows");
+      if (!res.ok) {
+        throw new Error(
+          "Could not load shows"
+        );
+      }
 
-      const json = await res.json();
-      const shows = Array.isArray(json.shows) ? json.shows : [];
+      const json =
+        await res.json();
 
-      showMap = new Map(shows.map(show => [Number(show.id), show]));
+      const shows =
+        Array.isArray(
+          json.shows
+        )
+          ? json.shows
+          : [];
+
+      showMap =
+        new Map(
+          shows.map(
+            show => [
+              Number(show.id),
+              show
+            ]
+          )
+        );
 
       render();
-      scheduleSave();
+
+      if (saveFilters) {
+        scheduleSave();
+      }
+
     } catch (err) {
       console.error(err);
+
       render();
-      showPool.innerHTML = `<p class="muted">Could not load shows.</p>`;
+
+      showPool.innerHTML =
+        `<p class="muted">Could not load shows.</p>`;
     }
   }
 
   if (addTierBtn) {
-    addTierBtn.addEventListener("click", () => {
-      state.tiers.push({
-        id: `tier_${Date.now()}`,
-        label: "New",
-        color: "#999999",
-        items: []
-      });
+    addTierBtn.addEventListener(
+      "click",
+      () => {
+        state.tiers.push({
+          id: `tier_${Date.now()}`,
+          label: "New",
+          color: "#999999",
+          items: []
+        });
 
-      render();
-      scheduleSave();
-    });
+        render();
+
+        scheduleSave();
+      }
+    );
   }
 
   if (nameInput) {
-    nameInput.addEventListener("input", scheduleSave);
+    nameInput.addEventListener(
+      "input",
+      scheduleSave
+    );
   }
 
   if (corpsFilter) {
-    corpsFilter.addEventListener("change", loadShows);
+    corpsFilter.addEventListener(
+      "change",
+      () => {
+        loadShows({
+          saveFilters: true
+        });
+      }
+    );
   }
 
   if (yearFilter) {
-    yearFilter.addEventListener("change", () => {
-      if (yearFilter.value && decadeFilter) {
-        decadeFilter.value = "";
-      }
+    yearFilter.addEventListener(
+      "change",
+      () => {
+        if (
+          yearFilter.value &&
+          decadeFilter
+        ) {
+          decadeFilter.value =
+            "";
+        }
 
-      updateYearDecadeVisibility();
-      loadShows();
-    });
+        updateYearDecadeVisibility();
+
+        loadShows({
+          saveFilters: true
+        });
+      }
+    );
   }
 
   if (decadeFilter) {
-    decadeFilter.addEventListener("change", () => {
-      if (decadeFilter.value && yearFilter) {
-        yearFilter.value = "";
-      }
+    decadeFilter.addEventListener(
+      "change",
+      () => {
+        if (
+          decadeFilter.value &&
+          yearFilter
+        ) {
+          yearFilter.value =
+            "";
+        }
 
-      updateYearDecadeVisibility();
-      loadShows();
-    });
+        updateYearDecadeVisibility();
+
+        loadShows({
+          saveFilters: true
+        });
+      }
+    );
   }
 
   if (publicInput) {
-    publicInput.addEventListener("change", scheduleSave);
+    publicInput.addEventListener(
+      "change",
+      scheduleSave
+    );
   }
 
   render();
+
   updateYearDecadeVisibility();
+
   loadShows();
 })();
