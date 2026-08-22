@@ -652,14 +652,7 @@
   const viewerIsFollowing = !!pu.viewer_is_following;
   const friendStatus = pu.viewer_friend_status || "none";
 
-  const canSeeProfilePresence = !!(
-    me &&
-    (
-      isMe ||
-      viewerIsFollowing ||
-      friendStatus === "friends"
-    )
-  );
+  const canSeeProfilePresence = !!pu.id;
 
   const recentRatings = Array.isArray(recent_ratings) ? recent_ratings : [];
   const recentReviews = Array.isArray(recent_reviews) ? recent_reviews : [];
