@@ -1449,9 +1449,9 @@
 
     (() => {
       const dot = document.getElementById("profilePresenceDot");
-
+      const text = document.getElementById("profilePresenceText");
+      
       if (!dot) return;
-
       const profileUserId = Number(
         <%- JSON.stringify(Number(pu.id || 0)) %>
       );
@@ -1482,9 +1482,13 @@
           : status === "recent"
             ? "Active recently"
             : "Offline";
-
+        
         dot.title = label;
         dot.setAttribute("aria-label", label);
+        
+        if (text) {
+          text.textContent = label;
+        }
       }
 
       async function refreshProfilePresence() {
