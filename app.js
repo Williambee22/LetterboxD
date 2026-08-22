@@ -731,6 +731,40 @@ function createApp() {
     next();
   });
 
+  app.use((req, res, next) => {
+    if (req.get('X-Pressboxd-History-Replace') !== '1') {
+      return next();
+    }
+  
+    res.redirect = function historySafeRedirect(statusOrUrl, maybeUrl) {
+      let target =
+        typeof statusOrUrl === 'number'
+          ? maybeUrl
+          : statusOrUrl;
+  
+      target = String(target || '/');
+  
+      if (target === 'back') {
+        target =
+          req.get('Referrer') ||
+          req.get('Referer') ||
+          '/shows';
+      }
+  
+      res.setHeader(
+        'Cache-Control',
+        'private, no-store'
+      );
+  
+      return res.status(200).json({
+        redirect: target
+      });
+    };
+  
+    next();
+  });
+
+  
   function getConn() {
     const conn = dbx.connect(DB_PATH);
     dbx.ensureReviewsTable(conn);
