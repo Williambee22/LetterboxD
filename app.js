@@ -11,6 +11,7 @@ const { Resend } = require('resend');
 const { uploadBufferToR2, deleteFromR2 } = require('./r2');
 
 const dbx = require('./db');
+const showHistory = require('./historical_show_data');
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1279,9 +1280,43 @@ function createApp() {
   
       let row = normalizeRow(await dbx.getShowById(conn, showId));
       if (!row) return res.sendStatus(404);
-      row.poster_url = posterUrlForShow(row.corps || '', row.year || 0);
-  
-      let me = viewerUid ? normalizeRow(await dbx.userById(conn, viewerUid)) : null;
+      
+      row.poster_url = posterUrlForShow(
+        row.corps || '',
+        row.year || 0
+      );
+      
+      
+      // HISTORICAL PLACEMENT / SCORE / REPERTOIRE
+      let historicalData = null;
+      
+      try {
+        historicalData =
+          await showHistory.getOrFetchHistoricalShowData(
+            conn,
+            row,
+            { force: false }
+          );
+      
+      } catch (historyErr) {
+        console.error(
+          'Historical show lookup failed:',
+          historyErr
+        );
+      
+        historicalData =
+          showHistory.getCachedHistoricalShowData(
+            conn,
+            showId
+          );
+      }
+      
+      
+      let me = viewerUid
+        ? normalizeRow(
+            await dbx.userById(conn, viewerUid)
+          )
+        : null;
       const myRating = viewerUid ? await dbx.userRatingForShow(conn, showId, viewerUid) : null;
       const myReview = viewerUid ? await dbx.myReviewForShow(conn, showId, viewerUid) : null;
   
@@ -1638,6 +1673,7 @@ function createApp() {
         critic_tie_rank,
         corps_rank,
         year_rank,
+        historical_data: historicalData,
       });
     } catch (err) {
       next(err);
@@ -1646,7 +1682,125 @@ function createApp() {
     }
   });
 
+  app.post(
+    '/admin/show/:show_id/history/refresh',
+  
+    adminRequired(async (req, res, next) => {
+      const showId = Number(req.params.show_id);
+  
+      let conn;
+  
+      try {
+        conn = getConn();
+  
+        const row = normalizeRow(
+          await dbx.getShowById(conn, showId)
+        );
+  
+        if (!row) {
+          return res.sendStatus(404);
+        }
+  
+  
+        const result =
+          await showHistory.getOrFetchHistoricalShowData(
+            conn,
+            row,
+            { force: true }
+          );
+  
+  
+        if (
+          result &&
+          (
+            result.fetch_status === 'ok' ||
+            result.fetch_status === 'partial'
+          )
+        ) {
+          const found = [];
+  
+  
+          if (result.placement != null) {
+            found.push(
+              `placement ${
+                result.placement_display ||
+                result.placement
+              }`
+            );
+          }
+  
+  
+          if (result.final_score != null) {
+            found.push(
+              `score ${
+                Number(result.final_score).toFixed(3)
+              }`
+            );
+          }
+  
+  
+          if (
+            Array.isArray(result.repertoire) &&
+            result.repertoire.length
+          ) {
+            found.push(
+              `${result.repertoire.length} repertoire item${
+                result.repertoire.length === 1
+                  ? ''
+                  : 's'
+              }`
+            );
+          }
+  
+  
+          req.flash(
+            'ok',
+  
+            found.length
+              ? `Historical data refreshed: ${
+                  found.join(', ')
+                }.`
+              : 'Historical data refresh completed.'
+          );
+  
+        } else if (
+          result &&
+          result.fetch_error
+        ) {
+  
+          req.flash(
+            'error',
+            `Historical lookup failed: ${
+              result.fetch_error
+            }`
+          );
+  
+        } else {
+  
+          req.flash(
+            'warn',
+            'No historical placement or repertoire data was found for this corps/year.'
+          );
+        }
+  
+  
+        return res.redirect(
+          `/show/${showId}`
+        );
+  
+      } catch (err) {
+        return next(err);
+  
+      } finally {
+        if (conn) {
+          dbx.close(conn);
+        }
+      }
+    })
+  );
 
+
+  
   app.post('/admin/show/:show_id/reply/:reply_id/delete', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const replyId = Number(req.params.reply_id);
