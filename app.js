@@ -764,6 +764,20 @@ function createApp() {
     next();
   });
 
+  function ensureFavoriteShowOrderTable(conn) {
+    conn.exec(`
+      CREATE TABLE IF NOT EXISTS user_favorite_show_order (
+        user_id INTEGER NOT NULL,
+        show_id INTEGER NOT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (user_id, show_id)
+      );
+  
+      CREATE INDEX IF NOT EXISTS idx_user_favorite_show_order_user_sort
+      ON user_favorite_show_order(user_id, sort_order);
+    `);
+  }
+
   
   function getConn() {
     const conn = dbx.connect(DB_PATH);
@@ -780,9 +794,75 @@ function createApp() {
     dbx.ensureForumTables(conn);
     dbx.ensureSiteSettingsTable(conn);
     dbx.ensureTierlistTables(conn);
+    ensureFavoriteShowOrderTable(conn);
     return conn;
   }
 
+  async function getOrderedFavoriteShows(conn, userId, limit = 5) {
+    const favorites = (
+      await dbx.getUserFavoriteShows(
+        conn,
+        Number(userId),
+        Number(limit)
+      ) || []
+    ).map(normalizeRow);
+  
+    if (!favorites.length) {
+      return [];
+    }
+  
+    const orderRows = conn.prepare(`
+      SELECT show_id, sort_order
+      FROM user_favorite_show_order
+      WHERE user_id = ?
+      ORDER BY sort_order ASC
+    `).all(Number(userId));
+  
+    const orderMap = new Map(
+      orderRows.map((row) => [
+        Number(row.show_id),
+        Number(row.sort_order)
+      ])
+    );
+  
+    const originalIndex = new Map(
+      favorites.map((fav, index) => [
+        Number(fav.show_id),
+        index
+      ])
+    );
+  
+    favorites.sort((a, b) => {
+      const aId = Number(a.show_id);
+      const bId = Number(b.show_id);
+  
+      const aSaved = orderMap.has(aId);
+      const bSaved = orderMap.has(bId);
+  
+      if (aSaved && bSaved) {
+        return orderMap.get(aId) - orderMap.get(bId);
+      }
+  
+      if (aSaved) return -1;
+      if (bSaved) return 1;
+  
+      return (
+        originalIndex.get(aId) -
+        originalIndex.get(bId)
+      );
+    });
+  
+    return favorites.map((fav) => {
+      fav.poster_url = posterUrlForShow(
+        fav.corps || '',
+        fav.year || 0
+      );
+  
+      return fav;
+    });
+  }
+
+  
   const uploadPfp = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 }
@@ -2973,6 +3053,115 @@ function createApp() {
     return res.render('bulk_add', { me: res.locals.me });
   }));
 
+  app.post(
+    '/me/favorites/reorder',
+    loginRequired(async (req, res) => {
+      const userId = Number(req.session.uid);
+  
+      const rawIds = Array.isArray(req.body.show_ids)
+        ? req.body.show_ids
+        : [];
+  
+      const showIds = rawIds.map(Number);
+  
+      if (
+        showIds.length < 1 ||
+        showIds.length > 5 ||
+        showIds.some(
+          id => !Number.isInteger(id) || id <= 0
+        ) ||
+        new Set(showIds).size !== showIds.length
+      ) {
+        return res.status(400).json({
+          ok: false,
+          error: 'invalid_order'
+        });
+      }
+  
+      let conn;
+  
+      try {
+        conn = getConn();
+  
+        const currentFavorites = (
+          await dbx.getUserFavoriteShows(
+            conn,
+            userId,
+            5
+          ) || []
+        ).map(normalizeRow);
+  
+        const currentIds =
+          currentFavorites.map(
+            fav => Number(fav.show_id)
+          );
+  
+        const currentSet =
+          new Set(currentIds);
+  
+        if (
+          currentIds.length !== showIds.length ||
+          showIds.some(id => !currentSet.has(id))
+        ) {
+          return res.status(409).json({
+            ok: false,
+            error: 'favorites_changed'
+          });
+        }
+  
+        const save = conn.transaction(() => {
+          conn.prepare(`
+            DELETE FROM user_favorite_show_order
+            WHERE user_id = ?
+          `).run(userId);
+  
+          const insert = conn.prepare(`
+            INSERT INTO user_favorite_show_order (
+              user_id,
+              show_id,
+              sort_order
+            )
+            VALUES (?, ?, ?)
+          `);
+  
+          showIds.forEach((showId, index) => {
+            insert.run(
+              userId,
+              showId,
+              index
+            );
+          });
+        });
+  
+        save();
+  
+        return res.json({
+          ok: true
+        });
+  
+      } catch (err) {
+        console.error(
+          'Favorite reorder failed:',
+          err
+        );
+  
+        return res.status(500).json({
+          ok: false,
+          error: 'save_failed'
+        });
+  
+      } finally {
+        if (conn) {
+          dbx.close(conn);
+        }
+      }
+    })
+  );
+
+
+
+
+  
   app.post('/show/:show_id/favorite', loginRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
     const userId = Number(req.session.uid);
@@ -3015,6 +3204,16 @@ function createApp() {
       if (!show) return res.sendStatus(404);
 
       await dbx.removeUserFavoriteShow(conn, userId, showId);
+        
+      conn.prepare(`
+        DELETE FROM user_favorite_show_order
+        WHERE user_id = ?
+          AND show_id = ?
+      `).run(
+        userId,
+        showId
+      );
+        
       await dbx.commit(conn);
       req.flash('ok', 'Removed from favorites.');
     } catch (err) {
@@ -3587,11 +3786,12 @@ function createApp() {
         return d;
       });
 
-      const favoriteShows = (await dbx.getUserFavoriteShows(conn, uid, 5) || []).map((x) => {
-        const d = normalizeRow(x);
-        d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
-        return d;
-      });
+      const favoriteShows =
+        await getOrderedFavoriteShows(
+          conn,
+          uid,
+          5
+        );
 
       if (!u.avatar_url) u.avatar_url = pfpUrlForUsername(u.username || '');
 
@@ -3639,11 +3839,12 @@ function createApp() {
         return d;
       });
 
-      const favoriteShows = (await dbx.getUserFavoriteShows(conn, Number(profile.id), 5) || []).map((x) => {
-        const d = normalizeRow(x);
-        d.poster_url = posterUrlForShow(d.corps || '', d.year || 0);
-        return d;
-      });
+      const favoriteShows =
+        await getOrderedFavoriteShows(
+          conn,
+          Number(profile.id),
+          5
+        );
 
       if (!profile.avatar_url) profile.avatar_url = pfpUrlForUsername(profile.username || '');
 
