@@ -430,6 +430,58 @@
       font-size:13px;
     }
 
+    .profile_favorites_title_row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+
+    .profile_favorites_title_row .profile_favorites_title{
+      margin-bottom:0;
+    }
+
+    .profile_favorites_order_status{
+      font-size:10px;
+      line-height:1.2;
+      color:rgba(255,255,255,.58);
+      min-height:12px;
+    }
+
+    .profile_favorites_row.is_sortable .profile_favorite_item{
+      cursor:grab;
+      user-select:none;
+      -webkit-user-drag:element;
+      transition:
+        opacity .12s ease,
+        transform .12s ease,
+        filter .12s ease;
+    }
+
+    .profile_favorites_row.is_sortable .profile_favorite_item:active{
+      cursor:grabbing;
+    }
+
+    .profile_favorites_row.is_sortable .profile_favorite_item.is_dragging{
+      opacity:.38;
+      transform:scale(.96);
+      filter:saturate(.65);
+    }
+
+    .profile_favorites_row.is_sortable .profile_favorite_item.is_drag_target{
+      transform:translateY(-3px);
+    }
+
+    .profile_favorites_row.is_sortable .profile_favorite_art{
+      pointer-events:none;
+    }
+
+    .profile_favorites_row.is_sortable .profile_favorite_name{
+      pointer-events:none;
+    }
+
     @media (max-width: 768px) {
       .topbar {
         position: relative !important;
@@ -761,28 +813,62 @@
             </div>
 
             <div class="profile_favorites_box">
-              <div class="profile_favorites_title">Top 5 / Favorites</div>
+              <div class="profile_favorites_title_row">
+                <div class="profile_favorites_title">Top 5 / Favorites</div>
+
+                <% if (isMe && favoriteShows.length > 1) { %>
+                  <div
+                    class="profile_favorites_order_status"
+                    id="favoriteOrderStatus"
+                    aria-live="polite"
+                  >Drag to reorder</div>
+                <% } %>
+              </div>
 
               <% if (favoriteShows.length > 0) { %>
-                <div class="profile_favorites_row">
+                <div
+                  class="profile_favorites_row <%= isMe ? 'is_sortable' : '' %>"
+                  <% if (isMe) { %>id="favoriteShowsSortable"<% } %>
+                >
                   <% for (let i = 0; i < favoriteShows.length; i++) {
                     const fav = favoriteShows[i];
                   %>
-                    <a class="profile_favorite_item" href="/show/<%= fav.show_id %>">
+                    <a
+                      class="profile_favorite_item"
+                      href="/show/<%= fav.show_id %>"
+                      <% if (isMe) { %>
+                        draggable="true"
+                        data-show-id="<%= fav.show_id %>"
+                      <% } %>
+                    >
                       <div class="profile_favorite_art">
                         <% if (fav && fav.poster_url) { %>
-                          <img src="<%= fav.poster_url %>" alt="<%= fav.title || 'Favorite show' %> poster" loading="lazy">
+                          <img
+                            src="<%= fav.poster_url %>"
+                            alt="<%= fav.title || 'Favorite show' %> poster"
+                            loading="lazy"
+                            draggable="false"
+                          >
                         <% } else { %>
                           <div class="poster_fallback"></div>
                         <% } %>
-                        <div class="profile_favorite_rank"><%= i + 1 %></div>
+
+                        <div
+                          class="profile_favorite_rank"
+                          data-favorite-rank
+                        ><%= i + 1 %></div>
                       </div>
-                      <div class="profile_favorite_name"><%= fav && fav.title ? fav.title : "" %></div>
+
+                      <div class="profile_favorite_name">
+                        <%= fav && fav.title ? fav.title : "" %>
+                      </div>
                     </a>
                   <% } %>
                 </div>
               <% } else { %>
-                <div class="profile_favorite_empty muted">No favorite shows selected yet.</div>
+                <div class="profile_favorite_empty muted">
+                  No favorite shows selected yet.
+                </div>
               <% } %>
             </div>
           </div>
@@ -985,6 +1071,311 @@
           if (e.key === "Escape") dd.classList.remove("open");
         });
       }
+    })();
+
+    (() => {
+      const row =
+        document.getElementById(
+          "favoriteShowsSortable"
+        );
+
+      if (!row) return;
+
+      const status =
+        document.getElementById(
+          "favoriteOrderStatus"
+        );
+
+      let dragging = null;
+      let startingOrder = "";
+      let lastSavedOrder = "";
+      let lastDragEndedAt = 0;
+      let statusTimer = null;
+
+      const items = () =>
+        Array.from(
+          row.querySelectorAll(
+            ".profile_favorite_item[data-show-id]"
+          )
+        );
+
+      const orderString = () =>
+        items()
+          .map((item) =>
+            String(item.dataset.showId || "")
+          )
+          .join(",");
+
+      const updateRanks = () => {
+        items().forEach((item, index) => {
+          const rank =
+            item.querySelector(
+              "[data-favorite-rank]"
+            );
+
+          if (rank) {
+            rank.textContent =
+              String(index + 1);
+          }
+        });
+      };
+
+      const setStatus = (
+        text,
+        clearAfter = 0
+      ) => {
+        if (!status) return;
+
+        status.textContent = text;
+
+        if (statusTimer) {
+          clearTimeout(statusTimer);
+          statusTimer = null;
+        }
+
+        if (clearAfter > 0) {
+          statusTimer = setTimeout(() => {
+            status.textContent =
+              "Drag to reorder";
+          }, clearAfter);
+        }
+      };
+
+      const clearTargets = () => {
+        items().forEach((item) => {
+          item.classList.remove(
+            "is_drag_target"
+          );
+        });
+      };
+
+      const saveOrder = async () => {
+        const currentItems = items();
+
+        const showIds =
+          currentItems.map((item) =>
+            Number(item.dataset.showId)
+          );
+
+        const currentOrder =
+          showIds.join(",");
+
+        if (
+          !showIds.length ||
+          currentOrder === lastSavedOrder
+        ) {
+          return;
+        }
+
+        setStatus("Saving…");
+
+        try {
+          const response = await fetch(
+            "/me/favorites/reorder",
+            {
+              method: "POST",
+              credentials: "same-origin",
+              headers: {
+                "Content-Type":
+                  "application/json",
+                "Accept":
+                  "application/json"
+              },
+              body: JSON.stringify({
+                show_ids: showIds
+              })
+            }
+          );
+
+          const data =
+            await response.json()
+              .catch(() => null);
+
+          if (
+            !response.ok ||
+            !data ||
+            data.ok !== true
+          ) {
+            throw new Error(
+              data?.error ||
+              "Could not save favorite order."
+            );
+          }
+
+          lastSavedOrder =
+            currentOrder;
+
+          setStatus(
+            "Order saved",
+            1200
+          );
+
+        } catch (err) {
+          console.error(
+            "Favorite reorder failed:",
+            err
+          );
+
+          setStatus(
+            "Could not save order",
+            2200
+          );
+        }
+      };
+
+      lastSavedOrder =
+        orderString();
+
+      items().forEach((item) => {
+        item.addEventListener(
+          "dragstart",
+          (event) => {
+            dragging = item;
+            startingOrder =
+              orderString();
+
+            event.dataTransfer.effectAllowed =
+              "move";
+
+            event.dataTransfer.setData(
+              "text/plain",
+              String(
+                item.dataset.showId || ""
+              )
+            );
+
+            requestAnimationFrame(() => {
+              item.classList.add(
+                "is_dragging"
+              );
+            });
+          }
+        );
+
+        item.addEventListener(
+          "dragenter",
+          (event) => {
+            event.preventDefault();
+
+            if (
+              !dragging ||
+              dragging === item
+            ) {
+              return;
+            }
+
+            clearTargets();
+
+            item.classList.add(
+              "is_drag_target"
+            );
+          }
+        );
+
+        item.addEventListener(
+          "dragover",
+          (event) => {
+            if (
+              !dragging ||
+              dragging === item
+            ) {
+              return;
+            }
+
+            event.preventDefault();
+            event.dataTransfer.dropEffect =
+              "move";
+
+            const rect =
+              item.getBoundingClientRect();
+
+            const centerX =
+              rect.left +
+              rect.width / 2;
+
+            const centerY =
+              rect.top +
+              rect.height / 2;
+
+            const verticalDistance =
+              event.clientY - centerY;
+
+            let putBefore;
+
+            if (
+              Math.abs(verticalDistance) >
+              rect.height * 0.35
+            ) {
+              putBefore =
+                verticalDistance < 0;
+            } else {
+              putBefore =
+                event.clientX < centerX;
+            }
+
+            if (putBefore) {
+              row.insertBefore(
+                dragging,
+                item
+              );
+            } else {
+              row.insertBefore(
+                dragging,
+                item.nextSibling
+              );
+            }
+
+            updateRanks();
+          }
+        );
+
+        item.addEventListener(
+          "drop",
+          (event) => {
+            event.preventDefault();
+            clearTargets();
+          }
+        );
+
+        item.addEventListener(
+          "dragend",
+          () => {
+            if (!dragging) return;
+
+            dragging.classList.remove(
+              "is_dragging"
+            );
+
+            clearTargets();
+            updateRanks();
+
+            const changed =
+              orderString() !==
+              startingOrder;
+
+            dragging = null;
+            lastDragEndedAt =
+              Date.now();
+
+            if (changed) {
+              saveOrder();
+            }
+          }
+        );
+
+        item.addEventListener(
+          "click",
+          (event) => {
+            if (
+              Date.now() -
+                lastDragEndedAt <
+              300
+            ) {
+              event.preventDefault();
+            }
+          }
+        );
+      });
     })();
   </script>
 </body>
