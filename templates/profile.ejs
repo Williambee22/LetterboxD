@@ -1459,32 +1459,50 @@
 
       if (!profileUserId) return;
 
-      function applyStatus(value) {
+      function applyStatus(value, lastSeenTs = 0) {
         let status = String(value || "offline")
           .trim()
           .toLowerCase();
-
+      
+        const nowTs = Math.floor(Date.now() / 1000);
+        const seenTs = Number(lastSeenTs || 0);
+        const ageSeconds = seenTs
+          ? Math.max(0, nowTs - seenTs)
+          : Infinity;
+      
+        // Force offline once 12 minutes have passed.
+        if (ageSeconds >= 12 * 60) {
+          status = "offline";
+        }
+      
         if (!["online", "recent", "offline"].includes(status)) {
           status = "offline";
         }
-
+      
         dot.classList.remove(
           "online",
           "recent",
           "offline"
         );
-
+      
         dot.classList.add(status);
-
-        const label = status === "online"
-          ? "Online"
-          : status === "recent"
-            ? "Active recently"
-            : "Offline";
-        
+      
+        let label = "Offline";
+      
+        if (status === "online") {
+          label = "Online";
+        } else if (status === "recent") {
+          const minutesAgo = Math.max(
+            1,
+            Math.floor(ageSeconds / 60)
+          );
+      
+          label = `Active ${minutesAgo} minute${minutesAgo === 1 ? "" : "s"} ago`;
+        }
+      
         dot.title = label;
         dot.setAttribute("aria-label", label);
-        
+      
         if (text) {
           text.textContent = label;
         }
@@ -1527,7 +1545,8 @@
           }
           
           applyStatus(
-            data.user.presence_status || "offline"
+            data.user.presence_status || "offline",
+            data.user.last_seen_ts || 0
           );
 
         } catch (_) {
