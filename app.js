@@ -1229,6 +1229,44 @@ function createApp() {
       }
     }
   );
+
+  app.get('/api/presence/followers', (req, res) => {
+    const userId = Number(req.session?.uid || 0);
+  
+    res.setHeader('Cache-Control', 'private, no-store');
+  
+    if (!userId) {
+      return res.status(401).json({ ok: false, users: [] });
+    }
+  
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      if (typeof dbx.touchUserPresence === 'function') {
+        dbx.touchUserPresence(conn, userId);
+      }
+  
+      const users = (
+        dbx.listFollowers(conn, userId, { limit: 500 }) || []
+      ).map(normalizeRow);
+  
+      return res.json({
+        ok: true,
+        now_ts: typeof dbx.nowTs === 'function'
+          ? dbx.nowTs()
+          : Math.floor(Date.now() / 1000),
+        users
+      });
+    } catch (err) {
+      console.error('Follower presence lookup failed:', err);
+      return res.status(500).json({ ok: false, users: [] });
+    } finally {
+      if (conn) dbx.close(conn);
+    }
+  });
+
   
   app.use(async (req, res, next) => {
     try {
