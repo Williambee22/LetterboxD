@@ -1230,6 +1230,67 @@ function createApp() {
     }
   );
 
+  app.get('/api/presence/users', (req, res) => {
+    res.setHeader('Cache-Control', 'private, no-store');
+  
+    const ids = [
+      ...new Set(
+        String(req.query.ids || '')
+          .split(',')
+          .map(id => Number(id))
+          .filter(id => Number.isInteger(id) && id > 0)
+      )
+    ].slice(0, 100);
+  
+    if (!ids.length) {
+      return res.json({
+        ok: true,
+        users: []
+      });
+    }
+  
+    let conn;
+  
+    try {
+      conn = getConn();
+  
+      const users = ids.map(id => {
+        const presence =
+          typeof dbx.presenceForUser === 'function'
+            ? dbx.presenceForUser(conn, id)
+            : null;
+  
+        return {
+          id,
+          presence_status:
+            presence && presence.status
+              ? presence.status
+              : 'offline'
+        };
+      });
+  
+      return res.json({
+        ok: true,
+        users
+      });
+  
+    } catch (err) {
+      console.error(
+        'Show-detail presence lookup failed:',
+        err
+      );
+  
+      return res.status(500).json({
+        ok: false,
+        users: []
+      });
+  
+    } finally {
+      if (conn) {
+        dbx.close(conn);
+      }
+    }
+  });
 
   app.get('/api/presence/user/:id', (req, res) => {
     const targetUserId = Number(req.params.id || 0);
