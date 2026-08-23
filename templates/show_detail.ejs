@@ -190,6 +190,12 @@
       gap:8px;
     }
 
+    .commentBodyText {
+      font-size:13px !important;
+      line-height:1.45;
+    }
+
+
     .ratingDistRow {
       display:grid;
       grid-template-columns: 52px 1fr 42px;
@@ -325,6 +331,10 @@
         width: 100%;
         min-width: 0;
       }
+
+
+
+
 
       .reviewSortSelect {
         min-width: 0;
@@ -571,7 +581,9 @@
     }
 
     .comment-avatar.showPresenceAvatar.is-online::after,
-    .friendRatingAvatar.showPresenceAvatar.is-online::after {
+    .friendRatingAvatar.showPresenceAvatar.is-online::after,
+    .comment-avatar.showPresenceAvatar.is-recent::after,
+    .friendRatingAvatar.showPresenceAvatar.is-recent::after {
       width:9px !important;
       height:9px !important;
       min-width:9px !important;
@@ -1264,7 +1276,7 @@
 
     .comment-head a,
     .comment-item .muted {
-      font-size: 11px;
+      font-size:12px;
     }
 
     .comment-reply {
@@ -2478,7 +2490,9 @@
                                 <% } %>
                               </div>
                     
-                              <div class="muted"><%= commentDeleted ? '[comment deleted]' : c.comment_text %></div>
+                              <div class="muted commentBodyText">
+                                <%= commentDeleted ? '[comment deleted]' : c.comment_text %>
+                              </div>
                     
                               <% if (replyList.length > 0) { %>
                                 <div style="margin-top:10px; margin-left:20px; display:flex; flex-direction:column; gap:8px;">
@@ -2521,7 +2535,7 @@
                                         <% } %>
                                       </div>
                               
-                                      <div class="muted">
+                                      <div class="muted commentBodyText">
                                         <% if (!replyDeleted && r.parent_replier_username) { %>
                                           <b>@<%= r.parent_replier_username %></b>
                                           <span> </span>
