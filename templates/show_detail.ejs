@@ -2537,13 +2537,7 @@
                                         <% } %>
                                       </div>
                               
-                                      <div class="muted commentBodyText">
-                                        <% if (!replyDeleted && r.parent_replier_username) { %>
-                                          <b>@<%= r.parent_replier_username %></b>
-                                          <span> </span>
-                                        <% } %>
-                                        <%= replyDeleted ? '[reply deleted]' : r.reply_text %>
-                                      </div>
+                                      <div class="muted commentBodyText"><% if (!replyDeleted && r.parent_replier_username) { %><b>@<%= r.parent_replier_username %></b> <% } %><%= replyDeleted ? '[reply deleted]' : r.reply_text %></div>
                               
                                       <% if (meUser && !replyDeleted) { %>
                                         <details style="margin-top:10px;">
