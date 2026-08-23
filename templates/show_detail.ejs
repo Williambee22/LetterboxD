@@ -500,6 +500,42 @@
       display:block;
     }
 
+    /* Online indicator on show-detail profile pictures */
+    .showPresenceAvatar {
+      position:relative !important;
+      overflow:visible !important;
+    }
+    
+    .showPresenceAvatar > img {
+      border-radius:inherit;
+    }
+    
+    .showPresenceAvatar.is-online::after {
+      content:"";
+      position:absolute;
+      right:-2px;
+      bottom:-2px;
+      width:11px;
+      height:11px;
+      border-radius:50%;
+      background:#35d07f;
+      border:2px solid #0b0b0b;
+      box-sizing:border-box;
+      box-shadow:0 0 0 1px rgba(53,208,127,.18);
+      z-index:10;
+      pointer-events:none;
+    }
+    
+    /* Slightly smaller dots for the smaller comment/friend avatars */
+    .comment-avatar.showPresenceAvatar.is-online::after,
+    .friendRatingAvatar.showPresenceAvatar.is-online::after {
+      width:9px;
+      height:9px;
+      right:-2px;
+      bottom:-2px;
+    }
+
+
     .comment-form textarea,
     .write-review-form textarea {
       width:100%;
@@ -1969,7 +2005,11 @@
                           %>
                             <div class="friendRatingItem">
                               <div class="friendRatingUser">
-                                <a href="/u/<%= encodeURIComponent(fr.username || '') %>" class="friendRatingAvatar">
+                                <a
+                                  href="/u/<%= encodeURIComponent(fr.username || '') %>"
+                                  class="friendRatingAvatar showPresenceAvatar"
+                                  data-presence-user-id="<%= Number(fr.user_id || 0) %>"
+                                >
                                   <% if (fr.avatar_url) { %>
                                     <img src="<%= fr.avatar_url %>" alt="<%= fr.username || 'user' %>">
                                   <% } %>
@@ -2276,7 +2316,11 @@
                   <div class="reviewcard">
                     <div class="reviewhead">
                       <div class="reviewuser">
-                        <a href="/u/<%= encodeURIComponent(rv.username || '') %>" class="reviewavatar">
+                        <a
+                          href="/u/<%= encodeURIComponent(rv.username || '') %>"
+                          class="reviewavatar showPresenceAvatar"
+                          data-presence-user-id="<%= Number(rv.user_id || 0) %>"
+                        >
                           <% if (rv.avatar_url) { %>
                             <img src="<%= rv.avatar_url %>" alt="<%= rv.username || 'user' %>">
                           <% } %>
@@ -2354,7 +2398,11 @@
                             <div class="comment-item">
                               <div class="comment-head">
                                 <div class="comment-user">
-                                  <a href="/u/<%= encodeURIComponent(c.commenter_username || '') %>" class="comment-avatar">
+                                  <a
+                                    href="/u/<%= encodeURIComponent(c.commenter_username || '') %>"
+                                    class="comment-avatar showPresenceAvatar"
+                                    data-presence-user-id="<%= Number(c.commenter_user_id || 0) %>"
+                                  >
                                     <% if (c.commenter_avatar_url) { %>
                                       <img src="<%= c.commenter_avatar_url %>" alt="<%= c.commenter_username || 'user' %>">
                                     <% } %>
@@ -2393,7 +2441,11 @@
                                     <div class="comment-item comment-reply" style="background:rgba(255,255,255,0.025);">
                                       <div class="comment-head">
                                         <div class="comment-user">
-                                          <a href="/u/<%= encodeURIComponent(r.replier_username || '') %>" class="comment-avatar">
+                                          <a
+                                            href="/u/<%= encodeURIComponent(r.replier_username || '') %>"
+                                            class="comment-avatar showPresenceAvatar"
+                                            data-presence-user-id="<%= Number(r.replier_user_id || 0) %>"
+                                          >
                                             <% if (r.replier_avatar_url) { %>
                                               <img src="<%= r.replier_avatar_url %>" alt="<%= r.replier_username || 'user' %>">
                                             <% } %>
@@ -2540,14 +2592,18 @@
     </div>
   </main>
 
-  <footer class="wrap footer">
-    <div class="small">Rate drum corps shows.</div>
-  </footer>
-
-  <script>
-    (() => {
-      const btn = document.getElementById("bellBtn");
-      const dd = document.getElementById("notifDropdown");
+    <footer class="wrap footer">
+      <div class="small">Rate drum corps shows.</div>
+    </footer>
+  
+    <% if (meUser) { %>
+      <script src="/static/js/presence.js?v=20260822a"></script>
+    <% } %>
+  
+    <script>
+      (() => {
+        const btn = document.getElementById("bellBtn");
+        const dd = document.getElementById("notifDropdown");
       if (!btn || !dd) return;
 
       dd.addEventListener("click", (e) => e.stopPropagation());
