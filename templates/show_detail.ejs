@@ -2593,16 +2593,110 @@
   </main>
 
     <footer class="wrap footer">
-      <div class="small">Rate drum corps shows.</div>
-    </footer>
+  <div class="small">Rate drum corps shows.</div>
+  </footer>
   
-    <% if (meUser) { %>
-      <script src="/static/js/presence.js?v=20260822a"></script>
-    <% } %>
+  <% if (meUser) { %>
+    <script src="/static/js/presence.js?v=20260822a"></script>
+  <% } %>
   
-    <script>
-      (() => {
-        const btn = document.getElementById("bellBtn");
+  <script>
+    (() => {
+      const avatars = Array.from(
+        document.querySelectorAll(
+          ".showPresenceAvatar[data-presence-user-id]"
+        )
+      );
+  
+      if (!avatars.length) return;
+  
+      const userIds = [
+        ...new Set(
+          avatars
+            .map(avatar =>
+              Number(avatar.dataset.presenceUserId || 0)
+            )
+            .filter(id => id > 0)
+        )
+      ];
+  
+      if (!userIds.length) return;
+  
+      async function refreshShowPresence() {
+        if (document.visibilityState !== "visible") {
+          return;
+        }
+  
+        try {
+          const response = await fetch(
+            `/api/presence/users?ids=${encodeURIComponent(userIds.join(","))}`,
+            {
+              method:"GET",
+              credentials:"same-origin",
+              cache:"no-store",
+              headers:{
+                "X-Requested-With":"XMLHttpRequest"
+              }
+            }
+          );
+  
+          if (!response.ok) return;
+  
+          const data = await response.json();
+  
+          if (!data || !Array.isArray(data.users)) {
+            return;
+          }
+  
+          const statusById = new Map(
+            data.users.map(user => [
+              Number(user.id),
+              String(user.presence_status || "offline")
+            ])
+          );
+  
+          avatars.forEach(avatar => {
+            const userId = Number(
+              avatar.dataset.presenceUserId || 0
+            );
+  
+            avatar.classList.toggle(
+              "is-online",
+              statusById.get(userId) === "online"
+            );
+          });
+  
+        } catch (_) {
+          // Presence is non-critical.
+        }
+      }
+  
+      refreshShowPresence();
+  
+      setInterval(
+        refreshShowPresence,
+        30 * 1000
+      );
+  
+      document.addEventListener(
+        "visibilitychange",
+        () => {
+          if (document.visibilityState === "visible") {
+            refreshShowPresence();
+          }
+        }
+      );
+  
+      window.addEventListener(
+        "focus",
+        refreshShowPresence
+      );
+    })();
+  </script>
+  
+  <script>
+    (() => {
+      const btn = document.getElementById("bellBtn");
         const dd = document.getElementById("notifDropdown");
       if (!btn || !dd) return;
 
