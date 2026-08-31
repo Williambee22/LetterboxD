@@ -2181,8 +2181,17 @@ html.native-capacitor.native-route-profile textarea {
 }
 
 /* =========================================================
-   NATIVE LOGOUT BUTTON
+   LOGOUT - LEFT SIDE OF APP HEADER
    ========================================================= */
+
+html.native-capacitor.native-route-profile
+.native-header-leading {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+
+  min-width: 62px !important;
+}
 
 html.native-capacitor.native-route-profile
 .native-logout-btn {
@@ -2190,17 +2199,19 @@ html.native-capacitor.native-route-profile
   align-items: center !important;
   justify-content: center !important;
 
-  height: 28px !important;
-  min-height: 28px !important;
+  width: auto !important;
+  height: 27px !important;
+  min-height: 27px !important;
 
-  padding: 4px 7px !important;
+  margin: 0 !important;
+  padding: 4px 6px !important;
 
   background: transparent !important;
 
-  border: 1px solid rgba(255,255,255,0.18) !important;
+  border: 0 !important;
   border-radius: 0 !important;
 
-  color: #fff !important;
+  color: rgba(255,255,255,0.8) !important;
 
   font-size: 9px !important;
   font-weight: 700 !important;
@@ -2208,4 +2219,155 @@ html.native-capacitor.native-route-profile
 
   text-decoration: none !important;
   white-space: nowrap !important;
+}
+
+/* =========================================================
+   CENTER PROFILE PAGE
+   ========================================================= */
+
+/* Main profile page itself */
+html.native-capacitor.native-route-profile main.wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+
+  margin-left: auto !important;
+  margin-right: auto !important;
+
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+
+/* Keep hero centered inside screen */
+html.native-capacitor.native-route-profile .profile_hero {
+  width: 100% !important;
+  max-width: 100% !important;
+
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+
+/* Main avatar/profile information row */
+html.native-capacitor.native-route-profile
+.profile_hero_inner > .row.gap {
+  width: 100% !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  align-items: center !important;
+  justify-content: center !important;
+
+  text-align: center !important;
+
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+
+/* Avatar */
+html.native-capacitor.native-route-profile
+.profile_avatar_column {
+  display: flex !important;
+  flex-direction: column !important;
+
+  align-items: center !important;
+  justify-content: center !important;
+
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+
+/* Username / bio / roles area */
+html.native-capacitor.native-route-profile
+.profile_hero_content {
+  width: 100% !important;
+  max-width: 100% !important;
+
+  min-width: 0 !important;
+
+  margin-left: auto !important;
+  margin-right: auto !important;
+
+  text-align: center !important;
+}
+
+
+/* Username */
+html.native-capacitor.native-route-profile
+.profile_username_row {
+  display: flex !important;
+
+  justify-content: center !important;
+  align-items: center !important;
+
+  width: 100% !important;
+}
+
+html.native-capacitor.native-route-profile
+.profile_username_row h1 {
+  margin-left: auto !important;
+  margin-right: auto !important;
+
+  text-align: center !important;
+}
+
+
+/* Bio */
+html.native-capacitor.native-route-profile
+.profile_bio {
+  width: 100% !important;
+
+  margin-left: auto !important;
+  margin-right: auto !important;
+
+  text-align: center !important;
+}
+
+
+/* Role badges */
+html.native-capacitor.native-route-profile
+.profile_hero_content .row.gap {
+  justify-content: center !important;
+}
+
+
+/* Followers / Following / Friends */
+html.native-capacitor.native-route-profile
+.profile_counts {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+
+/* Favorites section */
+html.native-capacitor.native-route-profile
+.profile_favorites_box {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+
+/* Main content sections */
+html.native-capacitor.native-route-profile
+.profile_layout,
+
+html.native-capacitor.native-route-profile
+.profile_content_stack,
+
+html.native-capacitor.native-route-profile
+.profile_main_panel,
+
+html.native-capacitor.native-route-profile
+.profile_ratings_panel,
+
+html.native-capacitor.native-route-profile
+.profile_reviews_panel {
+  width: 100% !important;
+  max-width: 100% !important;
+
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
