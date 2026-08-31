@@ -2761,7 +2761,7 @@ html.native-capacitor .native-wordmark-img {
   display: block !important;
 
   width: auto !important;
-  height: 20px !important;
+  height: 25px !important;
 
   max-width: 165px !important;
 
@@ -2781,5 +2781,32 @@ html.native-capacitor .native-page-title {
 
   font-size: 8px !important;
   line-height: 1 !important;
+}
+
+/* =========================================================
+   BIGGER LOGO WITHOUT MAKING TOP BAR TALLER
+   ========================================================= */
+
+html.native-capacitor .native-app-header {
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+}
+
+html.native-capacitor .native-wordmark {
+  height: 20px !important;
+  max-height: 20px !important;
+
+  overflow: visible !important;
+}
+
+html.native-capacitor .native-wordmark-img {
+  height: 20px !important;
+  max-height: 20px !important;
+
+  transform: scale(1.22) !important;
+  transform-origin: center center !important;
+
+  object-fit: contain !important;
 }
 
