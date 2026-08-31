@@ -446,6 +446,21 @@
 
 
   /* =========================================================
+   LOGIN STATE FOR ME TAB
+   ========================================================= */
+  
+  const isLoggedIn = !!(
+    document.querySelector('.topbar a[href="/logout"]') ||
+    document.querySelector('.topbar .nav_user')
+  );
+  
+  const meTabHref =
+    isLoggedIn
+      ? '/me'
+      : '/login';
+
+  
+  /* =========================================================
      BOTTOM NAVIGATION
      Shows → Top → Me → Predict → Forums
      ========================================================= */
@@ -495,7 +510,7 @@
     )}
 
     ${tab(
-      '/me',
+      meTabHref,
       'me',
       'Me',
       icons.me,
