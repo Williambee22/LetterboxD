@@ -2703,3 +2703,83 @@ html.native-capacitor.native-route-profile .profile_favorites_box {
 
   border-radius: 0 !important;
 }
+
+/* =========================================================
+   CENTER APP LOGO + PAGE TITLE
+   ========================================================= */
+
+/* Keep the middle header area truly centered */
+html.native-capacitor .native-app-header {
+  position: relative !important;
+
+  display: grid !important;
+  grid-template-columns: 1fr auto 1fr !important;
+
+  align-items: center !important;
+}
+
+/* Left side */
+html.native-capacitor .native-header-leading {
+  justify-self: start !important;
+}
+
+/* Center logo/title */
+html.native-capacitor .native-header-center {
+  justify-self: center !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  align-items: center !important;
+  justify-content: center !important;
+
+  text-align: center !important;
+
+  min-width: 0 !important;
+}
+
+/* Right side */
+html.native-capacitor .native-header-actions {
+  justify-self: end !important;
+}
+
+
+/* Make Pressboxd logo a little bigger */
+html.native-capacitor .native-wordmark {
+  display: flex !important;
+
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: auto !important;
+  height: 27px !important;
+
+  margin: 0 auto !important;
+}
+
+html.native-capacitor .native-wordmark-img {
+  display: block !important;
+
+  width: auto !important;
+  height: 25px !important;
+
+  max-width: 165px !important;
+
+  margin: 0 auto !important;
+
+  object-fit: contain !important;
+}
+
+
+/* Center the page label underneath */
+html.native-capacitor .native-page-title {
+  width: 100% !important;
+
+  margin-top: 1px !important;
+
+  text-align: center !important;
+
+  font-size: 8px !important;
+  line-height: 1 !important;
+}
+
