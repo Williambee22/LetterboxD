@@ -2531,3 +2531,25 @@ html.native-capacitor.native-route-profile
 
   color: #ffffff !important;
 }
+
+
+/* =========================================================
+   PROFILE BANNER - RESTORE LARGER SIZE
+   ========================================================= */
+
+html.native-capacitor.native-route-profile .profile_hero_bg,
+html.native-capacitor.native-route-profile .profile_hero_overlay {
+  height: 190px !important;
+}
+
+html.native-capacitor.native-route-profile .profile_hero_bg img {
+  width: 100% !important;
+  height: 190px !important;
+
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+html.native-capacitor.native-route-profile .profile_hero_inner {
+  min-height: 190px !important;
+}
