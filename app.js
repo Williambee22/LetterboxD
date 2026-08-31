@@ -714,7 +714,7 @@ function createApp() {
         if (!output.includes('/static/mobile-app.js')) {
           output = output.replace(
             /<\/body>/i,
-            '<script src="/static/mobile-app.js?v=3"></script>\n</body>'
+            '<script src="/static/mobile-app.js?v=4"></script>\n</body>'
           );
         }
       }
