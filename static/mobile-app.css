@@ -1858,3 +1858,33 @@ html.native-capacitor.native-route-shows .hotList .hotItem {
 html.native-capacitor.native-route-shows .hotList {
   scroll-snap-type: none !important;
 }
+
+/* FIX LARGE GAP BETWEEN WELCOME + HOT SHOWS */
+
+html.native-capacitor.native-route-shows .hotWrap {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  align-items: stretch !important;
+}
+
+html.native-capacitor.native-route-shows .hotIntro {
+  flex: 0 0 auto !important;
+
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+
+  margin: 0 !important;
+  padding: 2px 8px 5px !important;
+}
+
+html.native-capacitor.native-route-shows .hotCard {
+  flex: 0 0 auto !important;
+  margin-top: 0 !important;
+}
+
+html.native-capacitor.native-route-shows .randomCard {
+  flex: 0 0 auto !important;
+}
