@@ -1676,3 +1676,185 @@ html.native-capacitor.native-route-top .topusers_page .ts_thumb {
 html.native-capacitor.native-route-top .ts_username {
   font-size: 11px !important;
 }
+
+/* =========================================================
+   PRESSBOXD APP COMPACT HOME FIX V7
+   ========================================================= */
+
+/* ---------- WELCOME ---------- */
+
+html.native-capacitor.native-route-shows .hotIntro {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+
+  padding: 4px 8px 8px !important;
+  margin: 0 !important;
+
+  text-align: center !important;
+  display: block !important;
+}
+
+/* "Welcome to Pressboxd" */
+html.native-capacitor.native-route-shows .hotIntro > div:first-child {
+  margin: 0 0 4px !important;
+
+  font-size: 18px !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.25px !important;
+
+  text-align: center !important;
+}
+
+/* Welcome/admin message underneath */
+html.native-capacitor.native-route-shows .showsWelcomeMessage {
+  width: 100% !important;
+  max-width: 340px !important;
+
+  margin: 0 auto !important;
+  padding: 0 !important;
+
+  font-size: 10px !important;
+  line-height: 1.3 !important;
+  text-align: center !important;
+}
+
+
+/* ---------- HOT SHOWS BOX ---------- */
+
+html.native-capacitor.native-route-shows .hotCard {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+
+  padding: 7px !important;
+  margin: 0 !important;
+}
+
+/* Hot Shows heading */
+html.native-capacitor.native-route-shows .hotCard > div:first-child {
+  margin-bottom: 5px !important;
+}
+
+html.native-capacitor.native-route-shows .hotCard > div:first-child div:first-child {
+  font-size: 13px !important;
+  line-height: 1.1 !important;
+}
+
+html.native-capacitor.native-route-shows .hotCard > div:first-child .small {
+  font-size: 8px !important;
+}
+
+
+/* Make all 3 shows fit INSIDE the box */
+html.native-capacitor.native-route-shows .hotList {
+  display: flex !important;
+  flex-direction: column !important;
+
+  width: 100% !important;
+
+  gap: 3px !important;
+
+  overflow: visible !important;
+}
+
+
+/* Each hot show becomes one compact row */
+html.native-capacitor.native-route-shows .hotItem {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 52px !important;
+  height: auto !important;
+
+  display: grid !important;
+  grid-template-columns: 18px 34px minmax(0, 1fr) !important;
+
+  gap: 5px !important;
+  align-items: center !important;
+
+  padding: 4px !important;
+  margin: 0 !important;
+}
+
+
+/* Ranking number */
+html.native-capacitor.native-route-shows .hotRank {
+  width: 18px !important;
+  min-width: 18px !important;
+  flex: none !important;
+
+  font-size: 11px !important;
+  line-height: 1 !important;
+  text-align: center !important;
+}
+
+
+/* Tiny poster */
+html.native-capacitor.native-route-shows .hotPosterBox {
+  width: 34px !important;
+  height: 48px !important;
+
+  min-width: 34px !important;
+  flex: none !important;
+
+  padding: 1px !important;
+}
+
+html.native-capacitor.native-route-shows .hotPosterImg {
+  width: 100% !important;
+  height: 100% !important;
+
+  object-fit: cover !important;
+}
+
+
+/* Show information */
+html.native-capacitor.native-route-shows .hotMeta {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+html.native-capacitor.native-route-shows .hotTitle {
+  margin: 0 !important;
+
+  font-size: 10px !important;
+  line-height: 1.15 !important;
+
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+html.native-capacitor.native-route-shows .hotSub {
+  margin-top: 1px !important;
+
+  font-size: 8px !important;
+  line-height: 1.15 !important;
+
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+html.native-capacitor.native-route-shows .hotActivity {
+  margin-top: 2px !important;
+
+  font-size: 7px !important;
+  line-height: 1.15 !important;
+
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+
+/* Remove any old horizontal-carousel sizing */
+html.native-capacitor.native-route-shows .hotList .hotItem {
+  scroll-snap-align: unset !important;
+}
+
+html.native-capacitor.native-route-shows .hotList {
+  scroll-snap-type: none !important;
+}
