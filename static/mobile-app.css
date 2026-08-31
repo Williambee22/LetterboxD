@@ -2553,3 +2553,153 @@ html.native-capacitor.native-route-profile .profile_hero_bg img {
 html.native-capacitor.native-route-profile .profile_hero_inner {
   min-height: 190px !important;
 }
+
+/* =========================================================
+   PROFILE HERO - MAKE BANNER FIT THE ENTIRE PROFILE BOX
+   ========================================================= */
+
+html.native-capacitor.native-route-profile .profile_hero {
+  position: relative !important;
+
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+
+  overflow: hidden !important;
+
+  margin-top: 8px !important;
+
+  background: #090909 !important;
+
+  border-radius: 0 !important;
+}
+
+
+/* Banner fills the ENTIRE profile hero */
+
+html.native-capacitor.native-route-profile .profile_hero_bg {
+  position: absolute !important;
+
+  inset: 0 !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  z-index: 0 !important;
+}
+
+
+html.native-capacitor.native-route-profile .profile_hero_bg img {
+  display: block !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+
+/* Dark overlay so text stays readable */
+
+html.native-capacitor.native-route-profile .profile_hero_overlay {
+  position: absolute !important;
+
+  inset: 0 !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  z-index: 1 !important;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.20) 0%,
+      rgba(0,0,0,0.48) 45%,
+      rgba(0,0,0,0.82) 100%
+    ) !important;
+}
+
+
+/* All profile information sits above the banner */
+
+html.native-capacitor.native-route-profile .profile_hero_inner {
+  position: relative !important;
+
+  z-index: 2 !important;
+
+  width: 100% !important;
+
+  height: auto !important;
+  min-height: 0 !important;
+
+  padding:
+    14px 10px 10px !important;
+
+  background: transparent !important;
+}
+
+
+/* Keep profile content readable */
+
+html.native-capacitor.native-route-profile .profile_hero_content,
+html.native-capacitor.native-route-profile .profile_avatar_column {
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+
+/* Followers / Following / Friends */
+
+html.native-capacitor.native-route-profile .profile_counts {
+  position: relative !important;
+
+  z-index: 4 !important;
+
+  margin-top: 8px !important;
+
+  background:
+    rgba(0,0,0,0.60) !important;
+}
+
+
+html.native-capacitor.native-route-profile .profile_counts > *,
+html.native-capacitor.native-route-profile .profile_counts .badge,
+html.native-capacitor.native-route-profile .profile_counts a {
+  background:
+    rgba(10,10,10,0.72) !important;
+}
+
+
+/* Profile buttons */
+
+html.native-capacitor.native-route-profile
+.profile_hero_content
+.row.gap:has(a.btn)
+a.btn {
+  background:
+    rgba(10,10,10,0.72) !important;
+
+  border:
+    1px solid rgba(255,255,255,0.16) !important;
+
+  border-radius: 0 !important;
+}
+
+
+/* Favorites remain inside the same hero/banner */
+
+html.native-capacitor.native-route-profile .profile_favorites_box {
+  position: relative !important;
+
+  z-index: 3 !important;
+
+  background:
+    rgba(5,5,5,0.70) !important;
+
+  border:
+    1px solid rgba(255,255,255,0.10) !important;
+
+  border-radius: 0 !important;
+}
