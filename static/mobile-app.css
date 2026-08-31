@@ -2371,3 +2371,163 @@ html.native-capacitor.native-route-profile
   margin-left: auto !important;
   margin-right: auto !important;
 }
+
+
+/* =========================================================
+   PROFILE ACTION BUTTONS + FOLLOW COUNTS CLEANUP
+   ========================================================= */
+
+
+/* =========================================================
+   CUSTOMIZE + ALL RATINGS & REVIEWS SIDE BY SIDE
+   ========================================================= */
+
+/*
+  This targets the action row underneath the profile info.
+*/
+
+html.native-capacitor.native-route-profile
+.profile_hero_content
+.row.gap:has(a.btn) {
+  display: grid !important;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr)) !important;
+
+  gap: 5px !important;
+
+  width: 100% !important;
+
+  margin-top: 6px !important;
+
+  flex-wrap: nowrap !important;
+}
+
+
+/* Make both buttons fill their half evenly */
+
+html.native-capacitor.native-route-profile
+.profile_hero_content
+.row.gap:has(a.btn)
+a.btn {
+  width: 100% !important;
+  min-width: 0 !important;
+
+  margin: 0 !important;
+
+  padding: 6px 4px !important;
+
+  font-size: 9px !important;
+  line-height: 1.1 !important;
+
+  text-align: center !important;
+
+  white-space: nowrap !important;
+
+  border-radius: 0 !important;
+}
+
+
+/* =========================================================
+   FOLLOWERS / FOLLOWING / FRIENDS
+   CLEAN SINGLE-COLOR ROW
+   ========================================================= */
+
+html.native-capacitor.native-route-profile
+.profile_counts {
+  display: grid !important;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr)) !important;
+
+  gap: 1px !important;
+
+  width: 100% !important;
+
+  margin: 6px 0 !important;
+  padding: 0 !important;
+
+  background: #2a2a2a !important;
+
+  border: 1px solid #2a2a2a !important;
+  border-radius: 0 !important;
+
+  overflow: hidden !important;
+}
+
+
+/*
+  Force every Followers / Following / Friends item
+  to use the same dark gray.
+*/
+
+html.native-capacitor.native-route-profile
+.profile_counts > *,
+
+html.native-capacitor.native-route-profile
+.profile_counts .badge,
+
+html.native-capacitor.native-route-profile
+.profile_counts a {
+  display: flex !important;
+
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: 100% !important;
+  min-width: 0 !important;
+
+  min-height: 32px !important;
+
+  margin: 0 !important;
+  padding: 5px 2px !important;
+
+  background: #171717 !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  box-shadow: none !important;
+
+  color: #ffffff !important;
+
+  font-size: 9px !important;
+  line-height: 1.1 !important;
+
+  text-align: center !important;
+  text-decoration: none !important;
+
+  white-space: nowrap !important;
+}
+
+
+/* Remove accent / hover colors inherited from desktop */
+
+html.native-capacitor.native-route-profile
+.profile_counts a:hover,
+
+html.native-capacitor.native-route-profile
+.profile_counts a:focus,
+
+html.native-capacitor.native-route-profile
+.profile_counts a:active {
+  background: #202020 !important;
+
+  color: #ffffff !important;
+
+  border: 0 !important;
+
+  box-shadow: none !important;
+}
+
+
+/* Remove any colored badge backgrounds */
+
+html.native-capacitor.native-route-profile
+.profile_counts .badge {
+  background: #171717 !important;
+
+  border-color: transparent !important;
+
+  color: #ffffff !important;
+}
