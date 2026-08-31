@@ -1568,6 +1568,9 @@ function createApp() {
     }
   });
 
+
+
+  
   app.get('/login', (req, res) => {
     res.render('auth_login', { next: req.query.next || '' });
   });
@@ -1748,7 +1751,12 @@ function createApp() {
     }
   });
 
+  app.get('/child-safety', (req, res) => {
+    res.render('child-safety');
+  });
 
+
+  
   app.get('/show/:show_id', async (req, res, next) => {
     const showId = Number(req.params.show_id);
     const viewerUid = req.session.uid ? Number(req.session.uid) : null;
