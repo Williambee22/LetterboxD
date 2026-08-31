@@ -685,6 +685,48 @@ function createApp() {
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json({ limit: `${MAX_UPLOAD_MB}mb` }));
 
+  // PRESSBOXD_NATIVE_APP_ASSET_INJECTION_V3
+  // Inject the app-only UI layer into every full HTML response. The CSS is inert
+  // in normal browsers and activates only when Capacitor is detected.
+  app.use((req, res, next) => {
+    const originalSend = res.send.bind(res);
+
+    res.send = function pressboxdNativeAppSend(body) {
+      let output = body;
+
+      if (
+        typeof output === 'string' &&
+        /<html[\s>]/i.test(output) &&
+        /<\/head>/i.test(output) &&
+        /<\/body>/i.test(output)
+      ) {
+        if (!output.includes('/static/mobile-app.css')) {
+          output = output.replace(
+            /<\/head>/i,
+            [
+              '<script>try{if(window.Capacitor&&typeof window.Capacitor.isNativePlatform===\'function\'&&window.Capacitor.isNativePlatform()){document.documentElement.classList.add(\'native-capacitor\');}}catch(e){}</script>',
+              '<link rel="stylesheet" href="/static/mobile-app.css?v=3">',
+              '</head>'
+            ].join('\n')
+          );
+        }
+
+        if (!output.includes('/static/mobile-app.js')) {
+          output = output.replace(
+            /<\/body>/i,
+            '<script src="/static/mobile-app.js?v=3"></script>\n</body>'
+          );
+        }
+      }
+
+      return originalSend(output);
+    };
+
+    next();
+  });
+
+
+  
   app.use(session({
     store: sessionStore,
   
