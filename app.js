@@ -2594,6 +2594,14 @@ function createApp() {
       if (conn) dbx.close(conn);
     }
   }));
+
+
+  app.get('/privacy', (req, res) => {
+    res.render('privacy');
+  });
+
+
+
   
   app.get('/tierlists/:id/shows.json', loginRequired(async (req, res, next) => {
     let conn;
