@@ -2810,3 +2810,73 @@ html.native-capacitor .native-wordmark-img {
   object-fit: contain !important;
 }
 
+/* =========================================================
+   SHORTER TOP APP BAR
+   Keep logo visually larger
+   ========================================================= */
+
+html.native-capacitor {
+  --native-header-h: 40px !important;
+}
+
+html.native-capacitor .native-app-header {
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+
+  align-items: center !important;
+}
+
+/* Keep center contents tight */
+html.native-capacitor .native-header-center {
+  height: 40px !important;
+  max-height: 40px !important;
+
+  gap: 0 !important;
+  justify-content: center !important;
+}
+
+/* Logo takes little layout space, but is visually larger */
+html.native-capacitor .native-wordmark {
+  height: 17px !important;
+  max-height: 17px !important;
+
+  overflow: visible !important;
+}
+
+html.native-capacitor .native-wordmark-img {
+  height: 17px !important;
+  max-height: 17px !important;
+
+  transform: scale(1.32) !important;
+  transform-origin: center center !important;
+}
+
+/* Keep "Profile", "Shows", etc. very tight under logo */
+html.native-capacitor .native-page-title {
+  margin: 0 !important;
+
+  font-size: 7px !important;
+  line-height: 8px !important;
+
+  height: 8px !important;
+}
+
+/* Shrink left/right controls too */
+html.native-capacitor .native-header-leading,
+html.native-capacitor .native-header-actions {
+  height: 40px !important;
+
+  display: flex !important;
+  align-items: center !important;
+}
+
+html.native-capacitor .native-icon-btn,
+html.native-capacitor .native-header-actions .bellBtn {
+  width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+}
