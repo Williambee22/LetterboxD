@@ -115,9 +115,9 @@
   nav.innerHTML = `
     ${tab('/shows', 'shows', 'Shows', icons.shows, activeTab)}
     ${tab('/top', 'top', 'Top', icons.top, activeTab)}
+    ${tab('/me', 'me', 'Me', icons.me, activeTab)}
     ${tab('/predictions', 'predictions', 'Predict', icons.predict, activeTab)}
     ${tab('/forums', 'forums', 'Forums', icons.forums, activeTab)}
-    ${tab('/me', 'me', 'Me', icons.me, activeTab)}
   `;
   document.body.appendChild(nav);
 
