@@ -3071,7 +3071,7 @@ html.native-capacitor .native-app-header::before {
 
   top: 50% !important;
 
-  height: 24px !important;
+  height: 20px !important;
 
   transform: translateY(-50%) !important;
 
@@ -3125,6 +3125,6 @@ html.native-capacitor .native-wordmark-img {
 html.native-capacitor .native-header-leading,
 html.native-capacitor .native-header-center,
 html.native-capacitor .native-header-actions {
-  transform: translateY(-3px) !important;
+  transform: translateY(-12px) !important;
 }
 
