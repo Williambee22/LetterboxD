@@ -1700,3 +1700,97 @@ html.native-capacitor.native-route-profile .native-profile-friends-link {
   text-decoration: none !important;
   white-space: nowrap !important;
 }
+
+
+/* =========================================================
+   APP WIDTH / HORIZONTAL SCROLL FIX
+   ========================================================= */
+
+html.native-capacitor,
+html.native-capacitor body {
+  width: 100% !important;
+  max-width: 100% !important;
+
+  overflow-x: hidden !important;
+}
+
+html.native-capacitor body {
+  margin: 0 !important;
+}
+
+html.native-capacitor *,
+html.native-capacitor *::before,
+html.native-capacitor *::after {
+  box-sizing: border-box !important;
+}
+
+html.native-capacitor .wrap,
+html.native-capacitor main.wrap,
+html.native-capacitor .panel,
+html.native-capacitor .profile_hero,
+html.native-capacitor .hotWrap,
+html.native-capacitor .hotCard,
+html.native-capacitor .postergrid,
+html.native-capacitor .predGrid,
+html.native-capacitor .forumPage,
+html.native-capacitor .reviewsLayout {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Prevent flex/grid children from forcing the page wider */
+html.native-capacitor .row,
+html.native-capacitor .gap,
+html.native-capacitor .hotItem,
+html.native-capacitor .poster,
+html.native-capacitor .reviewcard,
+html.native-capacitor .forumRow,
+html.native-capacitor .threadPost,
+html.native-capacitor .predPanel,
+html.native-capacitor .ts_card,
+html.native-capacitor .profile_hero_content,
+html.native-capacitor .profile_favorites_box {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* Make media respect their containers */
+html.native-capacitor img,
+html.native-capacitor video,
+html.native-capacitor svg,
+html.native-capacitor canvas {
+  max-width: 100% !important;
+}
+
+/* Fixed app bars must stay inside viewport */
+html.native-capacitor .native-app-header,
+html.native-capacitor .native-bottom-nav,
+html.native-capacitor .native-offline-banner {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+}
+
+/* Avoid 100vw + padding causing overflow */
+html.native-capacitor [style*="width:100vw"],
+html.native-capacitor [style*="width: 100vw"] {
+  width: 100% !important;
+}
+
+/* Long text / URLs should wrap instead of widening the app */
+html.native-capacitor a,
+html.native-capacitor p,
+html.native-capacitor div,
+html.native-capacitor span {
+  overflow-wrap: anywhere;
+}
+
+/* Selects and form controls must remain inside parent */
+html.native-capacitor input,
+html.native-capacitor select,
+html.native-capacitor textarea,
+html.native-capacitor button {
+  max-width: 100% !important;
+}
