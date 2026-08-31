@@ -2973,3 +2973,64 @@ html.native-capacitor .native-header-actions .bellBtn {
   height: 30px !important;
   min-height: 30px !important;
 }
+
+
+/* =========================================================
+   EVEN SHORTER TOP BAR
+   KEEP LOGO SIZE THE SAME
+   ========================================================= */
+
+html.native-capacitor {
+  --native-header-h: 34px !important;
+}
+
+html.native-capacitor .native-app-header {
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+html.native-capacitor .native-header-center {
+  height: 34px !important;
+  max-height: 34px !important;
+}
+
+/* keep current logo sizing */
+html.native-capacitor .native-wordmark {
+  height: 20px !important;
+  max-height: 20px !important;
+}
+
+html.native-capacitor .native-wordmark-img {
+  height: 20px !important;
+  max-height: 20px !important;
+
+  transform: scale(1.38) !important;
+  transform-origin: center center !important;
+}
+
+/* tighten page label underneath */
+html.native-capacitor .native-page-title {
+  height: 6px !important;
+
+  margin-top: 0 !important;
+
+  font-size: 6px !important;
+  line-height: 6px !important;
+}
+
+/* shrink side controls so they don't force the bar taller */
+html.native-capacitor .native-header-leading,
+html.native-capacitor .native-header-actions {
+  height: 34px !important;
+}
+
+html.native-capacitor .native-icon-btn,
+html.native-capacitor .native-header-actions .bellBtn {
+  width: 26px !important;
+  height: 26px !important;
+  min-height: 26px !important;
+}
