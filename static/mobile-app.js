@@ -403,21 +403,26 @@
   }
 
   /* =========================================================
-   LOGOUT BUTTON ON ME PAGE
+   LOGOUT BUTTON ON LEFT SIDE OF ME PAGE
    ========================================================= */
 
-  if (path === '/me' && actions) {
+  if (path === '/me') {
     const logoutLink =
       document.querySelector(
         '.topbar a[href="/logout"]'
       );
   
-    if (logoutLink) {
+    const leading =
+      document.querySelector(
+        '#nativeAppHeader .native-header-leading'
+      );
+  
+    if (logoutLink && leading) {
       logoutLink.classList.add(
         'native-logout-btn'
       );
   
-      actions.appendChild(
+      leading.appendChild(
         logoutLink
       );
     }
