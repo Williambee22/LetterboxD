@@ -1439,3 +1439,218 @@ html.native-capacitor.native-route-show .commentBodyText {
   word-break: normal !important;
   overflow-wrap: break-word !important;
 }
+
+
+/* Remove Random Show from the mobile app */
+html.native-capacitor.native-route-shows .randomCard {
+  display: none !important;
+}
+
+/* Make rating/status text on show cards smaller */
+
+html.native-capacitor.native-route-shows .tile_rating {
+  font-size: 7px !important;
+  line-height: 1 !important;
+  padding: 1px 2px !important;
+}
+
+html.native-capacitor.native-route-shows .tile_star {
+  font-size: 7px !important;
+}
+
+html.native-capacitor.native-route-shows .myShowStatusPill {
+  font-size: 6px !important;
+  line-height: 1 !important;
+  padding: 1px 2px !important;
+  gap: 1px !important;
+}
+
+html.native-capacitor.native-route-shows .myShowStatusIcon {
+  font-size: 6px !important;
+}
+
+/* Any rating count / metadata text under posters */
+html.native-capacitor.native-route-shows .poster_sub,
+html.native-capacitor.native-route-shows .poster_meta .small,
+html.native-capacitor.native-route-shows .poster_meta .muted {
+  font-size: 7px !important;
+  line-height: 1.1 !important;
+}
+
+/* Fix profile follower/following/friends clipping into banner */
+
+html.native-capacitor.native-route-profile .profile_counts {
+  position: relative !important;
+  z-index: 5 !important;
+
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+
+  padding-top: 6px !important;
+
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 4px !important;
+}
+
+html.native-capacitor.native-route-profile .profile_counts .badge {
+  position: relative !important;
+  z-index: 6 !important;
+
+  margin: 0 !important;
+  padding: 4px 6px !important;
+
+  font-size: 9px !important;
+  line-height: 1.1 !important;
+}
+
+/* Give the profile content a little more room below the banner */
+html.native-capacitor.native-route-profile .profile_hero_inner {
+  padding-bottom: 14px !important;
+}
+
+/* Prevent the banner/background from overlapping profile controls */
+html.native-capacitor.native-route-profile .profile_hero_bg,
+html.native-capacitor.native-route-profile .profile_hero_overlay {
+  z-index: 0 !important;
+}
+
+html.native-capacitor.native-route-profile .profile_hero_content,
+html.native-capacitor.native-route-profile .profile_avatar_column,
+html.native-capacitor.native-route-profile .profile_counts {
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+/* =========================================================
+   PROFILE MOBILE ROW FIX
+   ========================================================= */
+
+/* Keep profile action buttons on one row */
+html.native-capacitor.native-route-profile .profile_hero_content .row.gap {
+  flex-wrap: nowrap !important;
+}
+
+html.native-capacitor.native-route-profile .profile_hero_content .row.gap .btn {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+
+  padding: 6px 5px !important;
+
+  font-size: 9px !important;
+  line-height: 1.1 !important;
+
+  white-space: nowrap !important;
+  text-align: center !important;
+}
+
+/* If there are 2 main profile action buttons, keep them side-by-side */
+html.native-capacitor.native-route-profile
+.profile_hero_content
+.row.gap
+a.btn {
+  width: auto !important;
+}
+
+
+/* =========================================================
+   ALL 5 FAVORITE SHOWS IN ONE ROW
+   ========================================================= */
+
+html.native-capacitor.native-route-profile .profile_favorites_box {
+  width: 100% !important;
+  overflow: hidden !important;
+}
+
+html.native-capacitor.native-route-profile .profile_favorites_box > div {
+  min-width: 0 !important;
+}
+
+/* Favorite show container */
+html.native-capacitor.native-route-profile .profile_favorite_item {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+/*
+  The parent containing the favorite items should become
+  a 5-column grid.
+*/
+html.native-capacitor.native-route-profile
+.profile_favorites_box
+.profile_favorite_item:first-of-type {
+  margin-top: 0 !important;
+}
+
+/* Handle the common favorites wrapper */
+html.native-capacitor.native-route-profile
+.profile_favorites_box
+> div:has(.profile_favorite_item) {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+
+  gap: 3px !important;
+
+  width: 100% !important;
+  overflow: visible !important;
+}
+
+
+/* Each favorite becomes a compact poster tile */
+html.native-capacitor.native-route-profile .profile_favorite_item {
+  display: block !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  text-align: center !important;
+}
+
+html.native-capacitor.native-route-profile .profile_favorite_art {
+  width: 100% !important;
+  height: auto !important;
+
+  aspect-ratio: 2 / 3 !important;
+
+  margin: 0 !important;
+}
+
+html.native-capacitor.native-route-profile .profile_favorite_art img,
+html.native-capacitor.native-route-profile .profile_favorite_art .poster_fallback {
+  width: 100% !important;
+  height: 100% !important;
+
+  object-fit: cover !important;
+}
+
+
+/* Smaller rank marker */
+html.native-capacitor.native-route-profile .profile_favorite_rank {
+  font-size: 7px !important;
+  line-height: 1 !important;
+
+  padding: 1px 2px !important;
+}
+
+
+/* Smaller favorite show title */
+html.native-capacitor.native-route-profile .profile_favorite_name {
+  margin-top: 2px !important;
+
+  font-size: 7px !important;
+  line-height: 1.05 !important;
+
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+
+/* Tighten favorites heading */
+html.native-capacitor.native-route-profile .profile_favorites_title_row {
+  margin-bottom: 5px !important;
+}
+
+html.native-capacitor.native-route-profile .profile_favorites_title {
+  font-size: 10px !important;
+}
