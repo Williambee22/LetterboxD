@@ -167,12 +167,12 @@ html.native-capacitor .notifDropdown {
   width: auto !important;
   max-width: none !important;
   max-height: min(64vh, 520px) !important;
-  border-radius: 16px !important;
+  border-radius: 0 !important;
   background: rgba(12,12,12,.99) !important;
   border: 1px solid rgba(255,255,255,.14) !important;
 }
 
-/* Native bottom tabs */
+/* Native bottom tabs — flat, Letterboxd-style app navigation. */
 html.native-capacitor .native-bottom-nav {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -182,44 +182,65 @@ html.native-capacitor .native-bottom-nav {
   right: 0;
   bottom: 0;
   z-index: 12000;
-  min-height: calc(var(--native-nav-h) + env(safe-area-inset-bottom));
-  padding: 5px 5px calc(5px + env(safe-area-inset-bottom));
-  background: rgba(5,5,5,.97);
-  border-top: 1px solid rgba(255,255,255,.11);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  height: calc(var(--native-nav-h) + env(safe-area-inset-bottom));
+  padding: 0 4px env(safe-area-inset-bottom);
+  background: #11161d;
+  border-top: 1px solid #2b3542;
+  box-shadow: 0 -8px 24px rgba(0,0,0,.28);
 }
 
 html.native-capacitor .native-bottom-nav a {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 3px;
   min-width: 0;
-  min-height: 54px;
-  padding: 4px 1px;
-  border-radius: 12px !important;
-  color: #7f8793;
+  min-height: var(--native-nav-h);
+  padding: 7px 1px 5px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #8d99a7;
   text-decoration: none;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 700;
   -webkit-tap-highlight-color: transparent;
 }
 
+html.native-capacitor .native-bottom-nav a::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 22%;
+  right: 22%;
+  height: 3px;
+  background: transparent;
+}
+
 html.native-capacitor .native-bottom-nav a.active {
-  color: var(--accent, #fff);
-  background: color-mix(in srgb, var(--accent, #fff) 11%, transparent);
+  color: #f4f7fa;
+  background: transparent !important;
+}
+
+html.native-capacitor .native-bottom-nav a.active::before {
+  background: var(--accent, #00c030);
 }
 
 html.native-capacitor .native-bottom-nav svg {
-  width: 22px;
-  height: 22px;
+  width: 23px;
+  height: 23px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+html.native-capacitor .native-bottom-nav a:active {
+  background: rgba(255,255,255,.035) !important;
 }
 
 html.native-capacitor .native-offline-banner {
@@ -230,7 +251,7 @@ html.native-capacitor .native-offline-banner {
   right: 12px;
   z-index: 12500;
   padding: 10px 12px;
-  border-radius: 12px !important;
+  border-radius: 0 !important;
   border: 1px solid rgba(245,158,11,.55);
   background: rgba(48,31,0,.98);
   color: #ffd78a;
@@ -252,7 +273,7 @@ html.native-capacitor textarea {
 
 html.native-capacitor .btn,
 html.native-capacitor button:not(.bellBtn):not(.native-icon-btn) {
-  border-radius: 12px !important;
+  border-radius: 0 !important;
 }
 
 html.native-capacitor input,
@@ -260,7 +281,7 @@ html.native-capacitor select,
 html.native-capacitor textarea {
   width: 100%;
   max-width: 100%;
-  border-radius: 12px !important;
+  border-radius: 0 !important;
   font-size: 16px !important; /* avoids iOS zoom */
 }
 
@@ -273,7 +294,7 @@ html.native-capacitor .predPanel,
 html.native-capacitor .forumBox,
 html.native-capacitor .threadPost,
 html.native-capacitor .ts_card {
-  border-radius: 16px !important;
+  border-radius: 0 !important;
   background: #0b0b0b !important;
   border: 1px solid rgba(255,255,255,.09) !important;
   box-shadow: none !important;
@@ -289,7 +310,7 @@ html.native-capacitor h2 { font-size: 21px !important; }
 html.native-capacitor h3 { font-size: 17px !important; }
 
 html.native-capacitor .flashes { margin-top: 8px; }
-html.native-capacitor .flash { border-radius: 12px !important; }
+html.native-capacitor .flash { border-radius: 0 !important; }
 
 /* =========================================================
    SHOWS / HOME
@@ -348,7 +369,7 @@ html.native-capacitor.native-route-shows .hotItem {
   scroll-snap-align: start;
   min-height: 116px;
   padding: 10px !important;
-  border-radius: 14px !important;
+  border-radius: 0 !important;
 }
 
 html.native-capacitor.native-route-shows .hotRank {
@@ -361,7 +382,7 @@ html.native-capacitor.native-route-shows .hotPosterBox {
   width: 62px !important;
   height: 90px !important;
   flex-basis: 62px !important;
-  border-radius: 10px !important;
+  border-radius: 0 !important;
 }
 
 html.native-capacitor.native-route-shows .hotMeta { min-width: 0; }
@@ -384,7 +405,7 @@ html.native-capacitor.native-route-shows .randomControls {
 
 html.native-capacitor.native-route-shows .randomPosterBox {
   height: 190px !important;
-  border-radius: 12px !important;
+  border-radius: 0 !important;
 }
 
 html.native-capacitor.native-route-shows .panel {
@@ -402,7 +423,7 @@ html.native-capacitor.native-route-shows .native-filter-toggle {
   color: #fff;
   background: #101010;
   border: 1px solid rgba(255,255,255,.11);
-  border-radius: 12px !important;
+  border-radius: 0 !important;
   font-weight: 850;
 }
 
@@ -437,7 +458,7 @@ html.native-capacitor .postergrid {
 html.native-capacitor .poster {
   min-width: 0 !important;
   width: 100% !important;
-  border-radius: 14px !important;
+  border-radius: 0 !important;
   overflow: hidden;
   background: #080808 !important;
 }
@@ -462,7 +483,7 @@ html.native-capacitor .poster_title {
   white-space: normal !important;
 }
 html.native-capacitor .poster_sub { font-size: 11px !important; }
-html.native-capacitor .tile_rating { border-radius: 9px !important; }
+html.native-capacitor .tile_rating { border-radius: 0 !important; }
 
 /* =========================================================
    SHOW DETAIL
@@ -495,7 +516,7 @@ html.native-capacitor.native-route-show .showposter {
   aspect-ratio: 2 / 3;
   flex: 0 0 auto !important;
   margin: 0 auto !important;
-  border-radius: 12px !important;
+  border-radius: 0 !important;
 }
 
 html.native-capacitor.native-route-show .showmeta {
@@ -537,7 +558,7 @@ html.native-capacitor.native-route-show .favoritePanel {
 html.native-capacitor.native-route-show .favoriteHeartBtn {
   width: 56px !important;
   height: 56px !important;
-  border-radius: 16px !important;
+  border-radius: 0 !important;
 }
 
 html.native-capacitor.native-route-show .ratingPanel {
@@ -559,7 +580,7 @@ html.native-capacitor.native-route-show .starwrap {
 html.native-capacitor.native-route-show .ratingDistPanel {
   width: 100% !important;
   padding: 12px !important;
-  border-radius: 14px !important;
+  border-radius: 0 !important;
 }
 
 html.native-capacitor.native-route-show .ratingDistRow {
@@ -673,7 +694,7 @@ html.native-capacitor.native-route-profile .profile_favorites_box {
   width: 100% !important;
   margin-top: 14px !important;
   text-align: left !important;
-  border-radius: 16px !important;
+  border-radius: 0 !important;
 }
 
 html.native-capacitor.native-route-profile .profile_layout,
@@ -750,7 +771,7 @@ html.native-capacitor.native-route-forums .forumRow {
 html.native-capacitor.native-route-forums .forumIcon {
   width: 42px !important;
   height: 42px !important;
-  border-radius: 12px !important;
+  border-radius: 0 !important;
 }
 
 html.native-capacitor.native-route-forums .forumStat,
@@ -808,7 +829,7 @@ html.native-capacitor.native-route-predictions .predHero > .row {
 
 html.native-capacitor.native-route-predictions .statusPill {
   align-self: flex-start;
-  border-radius: 999px !important;
+  border-radius: 0 !important;
 }
 
 html.native-capacitor.native-route-predictions .predGrid {
@@ -896,7 +917,7 @@ html.native-capacitor.native-route-top .topshows_page .ts_thumb {
   grid-row: 1;
   width: 74px !important;
   height: 108px !important;
-  border-radius: 10px !important;
+  border-radius: 0 !important;
 }
 
 html.native-capacitor.native-route-top .topshows_page .ts_meta {
@@ -957,4 +978,63 @@ html.native-capacitor.native-route-top .topusers_page .ts_review_box {
     min-width: 76px !important;
     max-width: 76px !important;
   }
+}
+
+
+/* =========================================================
+   BOXED APP LANGUAGE
+   Keep the app rectangular rather than pill/card-heavy.
+   ========================================================= */
+html.native-capacitor .panel,
+html.native-capacitor .accentCard,
+html.native-capacitor .reviewcard,
+html.native-capacitor .predPanel,
+html.native-capacitor .forumBox,
+html.native-capacitor .threadPost,
+html.native-capacitor .ts_card,
+html.native-capacitor .hotItem,
+html.native-capacitor .hotPosterBox,
+html.native-capacitor .randomCard,
+html.native-capacitor .randomPosterBox,
+html.native-capacitor .randomShowBox,
+html.native-capacitor .poster,
+html.native-capacitor .showposter,
+html.native-capacitor .favoritePanel,
+html.native-capacitor .favoriteHeartBtn,
+html.native-capacitor .ratingPanel,
+html.native-capacitor .ratingDistPanel,
+html.native-capacitor .profile_hero,
+html.native-capacitor .profile_favorites_box,
+html.native-capacitor .forumIcon,
+html.native-capacitor .notifDropdown,
+html.native-capacitor .notifItem,
+html.native-capacitor .native-filter-toggle,
+html.native-capacitor .native-offline-banner,
+html.native-capacitor .btn,
+html.native-capacitor button:not(.bellBtn):not(.native-icon-btn),
+html.native-capacitor input,
+html.native-capacitor select,
+html.native-capacitor textarea,
+html.native-capacitor .badge,
+html.native-capacitor .rolebadge,
+html.native-capacitor .statusPill,
+html.native-capacitor .myShowStatusPill,
+html.native-capacitor .tile_rating {
+  border-radius: 0 !important;
+}
+
+/* Avatars stay circular so profiles remain easy to scan. */
+html.native-capacitor .avatar_sm,
+html.native-capacitor .avatar_sm img,
+html.native-capacitor .avatar_lg,
+html.native-capacitor .avatar_lg img,
+html.native-capacitor .threadAvatar,
+html.native-capacitor .threadAvatar img,
+html.native-capacitor .reviewavatar,
+html.native-capacitor .reviewavatar img,
+html.native-capacitor .showPresenceAvatar,
+html.native-capacitor .showPresenceAvatar img,
+html.native-capacitor .topusers_page .ts_thumb,
+html.native-capacitor .topusers_page .ts_thumb img {
+  border-radius: 50% !important;
 }
