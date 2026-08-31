@@ -402,6 +402,27 @@
     actions.prepend(existingBell);
   }
 
+  /* =========================================================
+   LOGOUT BUTTON ON ME PAGE
+   ========================================================= */
+
+  if (path === '/me' && actions) {
+    const logoutLink =
+      document.querySelector(
+        '.topbar a[href="/logout"]'
+      );
+  
+    if (logoutLink) {
+      logoutLink.classList.add(
+        'native-logout-btn'
+      );
+  
+      actions.appendChild(
+        logoutLink
+      );
+    }
+  }
+  
 
   document
     .getElementById('nativeBackBtn')
