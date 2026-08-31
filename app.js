@@ -705,7 +705,7 @@ function createApp() {
             /<\/head>/i,
             [
               '<script>try{if(window.Capacitor&&typeof window.Capacitor.isNativePlatform===\'function\'&&window.Capacitor.isNativePlatform()){document.documentElement.classList.add(\'native-capacitor\');}}catch(e){}</script>',
-              '<link rel="stylesheet" href="/static/mobile-app.css?v=3">',
+              '<link rel="stylesheet" href="/static/mobile-app.css?v=4">',
               '</head>'
             ].join('\n')
           );
