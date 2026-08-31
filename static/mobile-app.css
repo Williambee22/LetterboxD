@@ -2880,3 +2880,96 @@ html.native-capacitor .native-header-actions .bellBtn {
   height: 30px !important;
   min-height: 30px !important;
 }
+
+
+/* =========================================================
+   SHORT TOP BAR + LARGE LOGO
+   ========================================================= */
+
+html.native-capacitor {
+  --native-header-h: 40px !important;
+}
+
+html.native-capacitor .native-app-header {
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+
+  overflow: visible !important;
+}
+
+
+/* Center area stays within the short header */
+html.native-capacitor .native-header-center {
+  height: 40px !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  align-items: center !important;
+  justify-content: center !important;
+
+  gap: 0 !important;
+
+  overflow: visible !important;
+}
+
+
+/* Give the logo normal layout height again */
+html.native-capacitor .native-wordmark {
+  width: auto !important;
+
+  height: 20px !important;
+  max-height: 20px !important;
+
+  margin: 0 !important;
+
+  overflow: visible !important;
+}
+
+
+/* Make the logo visually MUCH larger without changing bar height */
+html.native-capacitor .native-wordmark-img {
+  width: auto !important;
+
+  height: 20px !important;
+  max-height: 20px !important;
+
+  transform: scale(1.38) !important;
+  transform-origin: center center !important;
+
+  object-fit: contain !important;
+}
+
+
+/* Keep Profile / Shows / Forums text underneath */
+html.native-capacitor .native-page-title {
+  height: 8px !important;
+
+  margin: 1px 0 0 !important;
+
+  font-size: 7px !important;
+  line-height: 8px !important;
+
+  text-align: center !important;
+}
+
+
+/* Left / right controls remain compact */
+html.native-capacitor .native-header-leading,
+html.native-capacitor .native-header-actions {
+  height: 40px !important;
+
+  display: flex !important;
+  align-items: center !important;
+}
+
+html.native-capacitor .native-icon-btn,
+html.native-capacitor .native-header-actions .bellBtn {
+  width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+}
