@@ -1,0 +1,29 @@
+COPY MAP
+========
+
+Pressboxd-Mobile-Kit/mobile/
+    -> LetterboxD/mobile/
+
+Pressboxd-Mobile-Kit/website-additions/static/mobile-app.css
+    -> LetterboxD/static/mobile-app.css
+
+Pressboxd-Mobile-Kit/website-additions/static/mobile-app.js
+    -> LetterboxD/static/mobile-app.js
+
+LetterboxD/templates/base.ejs
+    -> is patched automatically by setup-mobile.js
+
+AUTOMATIC INSTALL
+=================
+
+Put Pressboxd-Mobile-Kit inside LetterboxD, open terminal in LetterboxD, run:
+
+    node Pressboxd-Mobile-Kit/setup-mobile.js
+
+Then:
+
+    cd mobile
+    npm install
+    npm run add:android
+    npm run sync
+    npm run open:android
