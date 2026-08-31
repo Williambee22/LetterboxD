@@ -1,119 +1,220 @@
-/* Pressboxd native Capacitor-only UI. Hidden in normal browsers. */
+/* Pressboxd native app UI v3
+   These rules only activate inside the Capacitor Android/iOS app. */
+
+:root {
+  --native-header-h: 58px;
+  --native-nav-h: 68px;
+}
+
+.native-app-header,
 .native-bottom-nav,
-.native-share-fab,
-.native-offline-banner {
+.native-offline-banner,
+.native-filter-toggle {
   display: none;
+}
+
+html.native-capacitor {
+  background: #000;
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;
 }
 
 html.native-capacitor,
-html.native-capacitor body {
-  background: #000;
-  overscroll-behavior-y: contain;
+html.native-capacitor body,
+html.native-capacitor body.app {
+  min-height: 100%;
+  background: #000 !important;
+  background-image: none !important;
 }
 
 html.native-capacitor body {
-  padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  padding-top: calc(var(--native-header-h) + env(safe-area-inset-top));
+  padding-bottom: calc(var(--native-nav-h) + env(safe-area-inset-bottom) + 12px);
+  overflow-x: hidden;
 }
 
-html.native-capacitor .wrap {
-  width: min(1400px, calc(100% - 24px));
-}
-
-html.native-capacitor .topbar {
-  padding-top: env(safe-area-inset-top);
-}
-
-html.native-capacitor .topbar .wrap {
-  min-height: 56px;
-}
-
-html.native-capacitor .topbar .nav {
+/* Hide the desktop site chrome only in the installed app. */
+html.native-capacitor body > .topbar,
+html.native-capacitor body > header.topbar,
+html.native-capacitor .footer {
   display: none !important;
 }
 
-html.native-capacitor .brand {
-  font-size: 20px;
-  letter-spacing: .10em;
+html.native-capacitor .wrap,
+html.native-capacitor main.wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
 }
 
-html.native-capacitor .auth > a[href="/logout"] {
-  display: none;
+html.native-capacitor main.wrap {
+  margin-top: 0 !important;
+  padding-top: 12px !important;
 }
 
-.native-bottom-nav {
+/* Native top app bar */
+html.native-capacitor .native-app-header {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
   position: fixed;
+  top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  z-index: 10050;
-  min-height: calc(62px + env(safe-area-inset-bottom));
-  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  align-items: stretch;
-  border-top: 1px solid rgba(255,255,255,.15);
+  z-index: 12000;
+  height: calc(var(--native-header-h) + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) 10px 0;
   background: rgba(0,0,0,.96);
+  border-bottom: 1px solid rgba(255,255,255,.10);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
 
-html.native-capacitor .native-bottom-nav {
-  display: grid;
+html.native-capacitor .native-header-leading,
+html.native-capacitor .native-header-actions {
+  display: flex;
+  align-items: center;
+  min-width: 44px;
 }
 
-.native-bottom-nav a {
+html.native-capacitor .native-header-actions {
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+html.native-capacitor .native-header-center {
   min-width: 0;
-  min-height: 50px;
+  text-align: center;
+}
+
+html.native-capacitor .native-wordmark {
+  display: block;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 950;
+  letter-spacing: .12em;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html.native-capacitor .native-page-title {
+  margin-top: 3px;
+  color: rgba(255,255,255,.58);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html.native-capacitor .native-icon-btn {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.native-capacitor .native-icon-btn:active {
+  background: rgba(255,255,255,.08) !important;
+}
+
+html.native-capacitor .native-icon-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Re-home the existing notification bell into the native header. */
+html.native-capacitor .native-header-actions .notifWrap {
+  display: inline-flex !important;
+  position: relative !important;
+}
+
+html.native-capacitor .native-header-actions .bellBtn {
+  width: 42px !important;
+  height: 42px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+}
+
+html.native-capacitor .notifDropdown {
+  position: fixed !important;
+  top: calc(var(--native-header-h) + env(safe-area-inset-top) + 6px) !important;
+  left: 10px !important;
+  right: 10px !important;
+  width: auto !important;
+  max-width: none !important;
+  max-height: min(64vh, 520px) !important;
+  border-radius: 16px !important;
+  background: rgba(12,12,12,.99) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+}
+
+/* Native bottom tabs */
+html.native-capacitor .native-bottom-nav {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: stretch;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 12000;
+  min-height: calc(var(--native-nav-h) + env(safe-area-inset-bottom));
+  padding: 5px 5px calc(5px + env(safe-area-inset-bottom));
+  background: rgba(5,5,5,.97);
+  border-top: 1px solid rgba(255,255,255,.11);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+html.native-capacitor .native-bottom-nav a {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 3px;
-  padding: 4px 2px;
-  color: #8f98a6;
+  min-width: 0;
+  min-height: 54px;
+  padding: 4px 1px;
+  border-radius: 12px !important;
+  color: #7f8793;
+  text-decoration: none;
   font-size: 10px;
   font-weight: 800;
-  text-decoration: none;
   -webkit-tap-highlight-color: transparent;
 }
 
-.native-bottom-nav a svg {
-  width: 20px;
-  height: 20px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.native-bottom-nav a.active {
+html.native-capacitor .native-bottom-nav a.active {
   color: var(--accent, #fff);
+  background: color-mix(in srgb, var(--accent, #fff) 11%, transparent);
 }
 
-.native-share-fab {
-  position: fixed;
-  right: 14px;
-  bottom: calc(78px + env(safe-area-inset-bottom));
-  z-index: 10040;
-  width: 46px;
-  height: 46px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255,255,255,.22);
-  background: rgba(16,16,16,.96);
-  color: #fff;
-  box-shadow: 0 8px 24px rgba(0,0,0,.4);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-html.native-capacitor .native-share-fab {
-  display: inline-flex;
-}
-
-.native-share-fab svg {
-  width: 21px;
-  height: 21px;
+html.native-capacitor .native-bottom-nav svg {
+  width: 22px;
+  height: 22px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -121,45 +222,739 @@ html.native-capacitor .native-share-fab {
   stroke-linejoin: round;
 }
 
-.native-offline-banner {
+html.native-capacitor .native-offline-banner {
+  display: none;
   position: fixed;
-  top: calc(56px + env(safe-area-inset-top));
+  top: calc(var(--native-header-h) + env(safe-area-inset-top) + 6px);
   left: 12px;
   right: 12px;
-  z-index: 10060;
-  padding: 9px 12px;
-  border: 1px solid rgba(245,158,11,.65);
-  background: rgba(55,35,0,.96);
+  z-index: 12500;
+  padding: 10px 12px;
+  border-radius: 12px !important;
+  border: 1px solid rgba(245,158,11,.55);
+  background: rgba(48,31,0,.98);
   color: #ffd78a;
   text-align: center;
   font-size: 12px;
   font-weight: 800;
 }
 
-html.native-capacitor .native-offline-banner.show {
-  display: block;
+html.native-capacitor .native-offline-banner.show { display: block; }
+
+/* Touch-friendly global app controls */
+html.native-capacitor .btn,
+html.native-capacitor button,
+html.native-capacitor input,
+html.native-capacitor select,
+html.native-capacitor textarea {
+  min-height: 44px;
 }
 
-@media (max-width: 640px) {
-  html.native-capacitor .topbar .auth {
-    gap: 4px;
+html.native-capacitor .btn,
+html.native-capacitor button:not(.bellBtn):not(.native-icon-btn) {
+  border-radius: 12px !important;
+}
+
+html.native-capacitor input,
+html.native-capacitor select,
+html.native-capacitor textarea {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 12px !important;
+  font-size: 16px !important; /* avoids iOS zoom */
+}
+
+html.native-capacitor textarea { min-height: 110px; }
+
+html.native-capacitor .panel,
+html.native-capacitor .accentCard,
+html.native-capacitor .reviewcard,
+html.native-capacitor .predPanel,
+html.native-capacitor .forumBox,
+html.native-capacitor .threadPost,
+html.native-capacitor .ts_card {
+  border-radius: 16px !important;
+  background: #0b0b0b !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  box-shadow: none !important;
+}
+
+html.native-capacitor h1 {
+  font-size: clamp(25px, 7vw, 34px) !important;
+  line-height: 1.08 !important;
+  letter-spacing: -.025em;
+}
+
+html.native-capacitor h2 { font-size: 21px !important; }
+html.native-capacitor h3 { font-size: 17px !important; }
+
+html.native-capacitor .flashes { margin-top: 8px; }
+html.native-capacitor .flash { border-radius: 12px !important; }
+
+/* =========================================================
+   SHOWS / HOME
+   ========================================================= */
+html.native-capacitor.native-route-shows .hotWrap {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  padding: 0 0 8px !important;
+}
+
+html.native-capacitor.native-route-shows .hotIntro {
+  order: -3;
+  min-width: 0 !important;
+  width: 100% !important;
+  padding: 8px 2px 0 !important;
+  text-align: left !important;
+}
+
+html.native-capacitor.native-route-shows .hotIntro > div:first-child {
+  margin: 0 !important;
+  font-size: 31px !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.035em !important;
+}
+
+html.native-capacitor.native-route-shows .showsWelcomeMessage {
+  margin-top: 8px !important;
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+
+html.native-capacitor.native-route-shows .hotCard {
+  order: -2;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  padding: 14px !important;
+}
+
+html.native-capacitor.native-route-shows .hotList {
+  display: grid !important;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(250px, 82vw);
+  gap: 10px !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 7px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+html.native-capacitor.native-route-shows .hotList::-webkit-scrollbar { display: none; }
+
+html.native-capacitor.native-route-shows .hotItem {
+  scroll-snap-align: start;
+  min-height: 116px;
+  padding: 10px !important;
+  border-radius: 14px !important;
+}
+
+html.native-capacitor.native-route-shows .hotRank {
+  width: 28px !important;
+  flex: 0 0 28px !important;
+  font-size: 19px !important;
+}
+
+html.native-capacitor.native-route-shows .hotPosterBox {
+  width: 62px !important;
+  height: 90px !important;
+  flex-basis: 62px !important;
+  border-radius: 10px !important;
+}
+
+html.native-capacitor.native-route-shows .hotMeta { min-width: 0; }
+html.native-capacitor.native-route-shows .hotTitle { font-size: 15px !important; }
+html.native-capacitor.native-route-shows .hotActivity { font-size: 11px !important; }
+
+html.native-capacitor.native-route-shows .randomCard {
+  order: -1;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 14px !important;
+}
+
+html.native-capacitor.native-route-shows .randomControls {
+  display: grid !important;
+  grid-template-columns: 1fr auto;
+  gap: 8px !important;
+}
+
+html.native-capacitor.native-route-shows .randomPosterBox {
+  height: 190px !important;
+  border-radius: 12px !important;
+}
+
+html.native-capacitor.native-route-shows .panel {
+  padding: 14px !important;
+}
+
+html.native-capacitor.native-route-shows .native-filter-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 0 8px;
+  padding: 0 14px;
+  color: #fff;
+  background: #101010;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 12px !important;
+  font-weight: 850;
+}
+
+html.native-capacitor.native-route-shows #showsFilterForm.native-collapsible:not(.is-open) {
+  display: none !important;
+}
+
+html.native-capacitor.native-route-shows #showsFilterForm {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px !important;
+  align-items: end !important;
+}
+
+html.native-capacitor.native-route-shows #showsFilterForm .field {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+html.native-capacitor.native-route-shows #showsFilterForm .field:first-child,
+html.native-capacitor.native-route-shows #showsFilterForm .actions,
+html.native-capacitor.native-route-shows #showsFilterForm > .btn {
+  grid-column: 1 / -1;
+}
+
+html.native-capacitor .postergrid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+html.native-capacitor .poster {
+  min-width: 0 !important;
+  width: 100% !important;
+  border-radius: 14px !important;
+  overflow: hidden;
+  background: #080808 !important;
+}
+
+html.native-capacitor .poster_art {
+  width: 100% !important;
+  aspect-ratio: 2 / 3;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+html.native-capacitor .poster_img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+html.native-capacitor .poster_meta { padding: 9px !important; }
+html.native-capacitor .poster_title {
+  font-size: 13px !important;
+  line-height: 1.25 !important;
+  white-space: normal !important;
+}
+html.native-capacitor .poster_sub { font-size: 11px !important; }
+html.native-capacitor .tile_rating { border-radius: 9px !important; }
+
+/* =========================================================
+   SHOW DETAIL
+   ========================================================= */
+html.native-capacitor.native-route-show main.wrap {
+  padding-top: 8px !important;
+}
+
+html.native-capacitor.native-route-show main.wrap > div:first-of-type > .panel,
+html.native-capacitor.native-route-show main.wrap > .panel:first-child {
+  padding: 14px !important;
+}
+
+html.native-capacitor.native-route-show .panel > div[style*="display:flex"],
+html.native-capacitor.native-route-show .showActionPanels {
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+html.native-capacitor.native-route-show .posterHistoryColumn {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+html.native-capacitor.native-route-show .showposter {
+  width: min(45vw, 165px) !important;
+  height: auto !important;
+  aspect-ratio: 2 / 3;
+  flex: 0 0 auto !important;
+  margin: 0 auto !important;
+  border-radius: 12px !important;
+}
+
+html.native-capacitor.native-route-show .showmeta {
+  width: 100% !important;
+  text-align: center !important;
+}
+
+html.native-capacitor.native-route-show .showmeta h1 {
+  margin: 10px 0 5px !important;
+}
+
+html.native-capacitor.native-route-show .showmeta .row,
+html.native-capacitor.native-route-show .showmeta > div[style*="display:flex"] {
+  justify-content: center !important;
+  flex-wrap: wrap !important;
+}
+
+html.native-capacitor.native-route-show .showTopRight {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  flex: 1 1 auto !important;
+  margin-left: 0 !important;
+}
+
+html.native-capacitor.native-route-show .showActionPanels {
+  display: grid !important;
+  grid-template-columns: 88px minmax(0, 1fr) !important;
+  gap: 10px !important;
+}
+
+html.native-capacitor.native-route-show .favoritePanel {
+  width: 88px !important;
+  min-width: 88px !important;
+  max-width: 88px !important;
+  padding: 10px 6px !important;
+}
+
+html.native-capacitor.native-route-show .favoriteHeartBtn {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 16px !important;
+}
+
+html.native-capacitor.native-route-show .ratingPanel {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 11px !important;
+}
+
+html.native-capacitor.native-route-show .stars {
+  max-width: 100%;
+  font-size: clamp(28px, 9vw, 38px) !important;
+}
+
+html.native-capacitor.native-route-show .starwrap {
+  justify-content: center !important;
+  gap: 7px !important;
+}
+
+html.native-capacitor.native-route-show .ratingDistPanel {
+  width: 100% !important;
+  padding: 12px !important;
+  border-radius: 14px !important;
+}
+
+html.native-capacitor.native-route-show .ratingDistRow {
+  grid-template-columns: 42px 1fr 32px !important;
+  gap: 7px !important;
+}
+
+html.native-capacitor.native-route-show .reviewsLayout {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+html.native-capacitor.native-route-show .reviewsMain,
+html.native-capacitor.native-route-show .reviewsSide {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  flex: 1 1 auto !important;
+  position: static !important;
+  margin: 0 !important;
+  padding: 13px !important;
+}
+
+html.native-capacitor.native-route-show .reviewsSide { order: -1; }
+
+html.native-capacitor.native-route-show .reviewToolbar {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 9px !important;
+}
+
+html.native-capacitor.native-route-show .reviewSortForm,
+html.native-capacitor.native-route-show .reviewSortSelect {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+html.native-capacitor.native-route-show .reviewcard {
+  padding: 12px !important;
+  margin-bottom: 10px !important;
+}
+
+html.native-capacitor.native-route-show .review_footer {
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+html.native-capacitor.native-route-show .review_votes {
+  justify-content: flex-start !important;
+}
+
+/* =========================================================
+   PROFILE
+   ========================================================= */
+html.native-capacitor.native-route-profile .profile_hero {
+  margin: -12px -14px 14px !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-radius: 0 0 20px 20px !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
+}
+
+html.native-capacitor.native-route-profile .profile_hero_inner {
+  padding: 18px 14px !important;
+}
+
+html.native-capacitor.native-route-profile .profile_hero_inner > .row,
+html.native-capacitor.native-route-profile .profile_hero_content {
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  width: 100% !important;
+}
+
+html.native-capacitor.native-route-profile .profile_avatar_column {
+  align-items: center !important;
+}
+
+html.native-capacitor.native-route-profile .avatar_lg {
+  width: 104px !important;
+  height: 104px !important;
+  border-radius: 50% !important;
+  border: 3px solid rgba(255,255,255,.92) !important;
+  box-shadow: 0 8px 26px rgba(0,0,0,.4) !important;
+}
+
+html.native-capacitor.native-route-profile .avatar_lg img,
+html.native-capacitor.native-route-profile .avatar_lg .avatar_fallback {
+  border-radius: 50% !important;
+}
+
+html.native-capacitor.native-route-profile .profile_username_row {
+  justify-content: center !important;
+}
+
+html.native-capacitor.native-route-profile .profile_username_row h1 {
+  margin: 8px 0 3px !important;
+}
+
+html.native-capacitor.native-route-profile .profile_bio {
+  max-width: 520px !important;
+  margin: 9px auto !important;
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+
+html.native-capacitor.native-route-profile .profile_favorites_box {
+  width: 100% !important;
+  margin-top: 14px !important;
+  text-align: left !important;
+  border-radius: 16px !important;
+}
+
+html.native-capacitor.native-route-profile .profile_layout,
+html.native-capacitor.native-route-profile .profile_content_stack {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  gap: 12px !important;
+}
+
+html.native-capacitor.native-route-profile .profile_main_panel,
+html.native-capacitor.native-route-profile .profile_ratings_panel,
+html.native-capacitor.native-route-profile .profile_reviews_panel {
+  width: 100% !important;
+  padding: 13px !important;
+}
+
+html.native-capacitor.native-route-profile .profile_account_floating {
+  position: static !important;
+  width: 100% !important;
+  margin-bottom: 12px !important;
+}
+
+html.native-capacitor.native-route-profile .profile_account_panel,
+html.native-capacitor.native-route-profile .profile_account_forms {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+html.native-capacitor.native-route-profile .profile_account_forms {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 18px !important;
+}
+
+/* =========================================================
+   FORUMS
+   ========================================================= */
+html.native-capacitor.native-route-forums .forumPage,
+html.native-capacitor.native-route-forums .forumBox,
+html.native-capacitor.native-route-forums .forumBoxBody {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+html.native-capacitor.native-route-forums .forumTop {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 10px !important;
+}
+
+html.native-capacitor.native-route-forums .forumTitle {
+  font-size: 28px !important;
+}
+
+html.native-capacitor.native-route-forums .forumBox {
+  margin-bottom: 12px !important;
+  overflow: hidden;
+}
+
+html.native-capacitor.native-route-forums .forumRow,
+html.native-capacitor.native-route-forums .threadList > * {
+  min-width: 0 !important;
+}
+
+html.native-capacitor.native-route-forums .forumRow {
+  display: grid !important;
+  grid-template-columns: 42px minmax(0, 1fr) !important;
+  gap: 10px !important;
+  padding: 13px !important;
+}
+
+html.native-capacitor.native-route-forums .forumIcon {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 12px !important;
+}
+
+html.native-capacitor.native-route-forums .forumStat,
+html.native-capacitor.native-route-forums .forumLatest {
+  grid-column: 2 !important;
+  width: auto !important;
+  text-align: left !important;
+  font-size: 11px !important;
+}
+
+html.native-capacitor.native-route-forums .threadPost {
+  padding: 13px !important;
+  margin-bottom: 10px !important;
+}
+
+html.native-capacitor.native-route-forums .threadPostHead,
+html.native-capacitor.native-route-forums .threadRight,
+html.native-capacitor.native-route-forums .threadActions,
+html.native-capacitor.native-route-forums .reactionBar {
+  flex-wrap: wrap !important;
+}
+
+html.native-capacitor.native-route-forums .threadAvatar {
+  width: 36px !important;
+  height: 36px !important;
+  flex-basis: 36px !important;
+  border-radius: 50% !important;
+}
+
+html.native-capacitor.native-route-forums .threadBodyText {
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
+html.native-capacitor.native-route-forums .forumFormGrid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+}
+
+/* =========================================================
+   PREDICTIONS
+   ========================================================= */
+html.native-capacitor.native-route-predictions .predShell {
+  padding-top: 10px !important;
+}
+
+html.native-capacitor.native-route-predictions .predHero {
+  margin-bottom: 12px !important;
+}
+
+html.native-capacitor.native-route-predictions .predHero > .row {
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+html.native-capacitor.native-route-predictions .statusPill {
+  align-self: flex-start;
+  border-radius: 999px !important;
+}
+
+html.native-capacitor.native-route-predictions .predGrid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+
+html.native-capacitor.native-route-predictions .predPanel {
+  padding: 14px !important;
+}
+
+html.native-capacitor.native-route-predictions .pickRow {
+  display: grid !important;
+  grid-template-columns: 58px minmax(0, 1fr) !important;
+  gap: 9px !important;
+  align-items: center !important;
+  padding: 7px 0 !important;
+}
+
+html.native-capacitor.native-route-predictions .placement {
+  font-size: 14px !important;
+  font-weight: 900 !important;
+}
+
+html.native-capacitor.native-route-predictions .pickSelect {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+html.native-capacitor.native-route-predictions .resultRow,
+html.native-capacitor.native-route-predictions .leaderRow {
+  gap: 8px !important;
+  padding: 10px 0 !important;
+}
+
+/* =========================================================
+   TOP SHOWS / TOP USERS
+   ========================================================= */
+html.native-capacitor.native-route-top .topshows_page .row.between,
+html.native-capacitor.native-route-top .topusers_page header {
+  align-items: stretch !important;
+}
+
+html.native-capacitor.native-route-top .seg {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 7px !important;
+}
+
+html.native-capacitor.native-route-top .seg .btn {
+  width: 100% !important;
+  padding: 8px !important;
+  font-size: 11px !important;
+}
+
+html.native-capacitor.native-route-top .panel {
+  padding: 10px !important;
+}
+
+html.native-capacitor.native-route-top .ts_card {
+  height: auto !important;
+  min-height: 0 !important;
+  margin-bottom: 9px !important;
+  padding: 11px !important;
+}
+
+html.native-capacitor.native-route-top .topshows_page .ts_card {
+  display: grid !important;
+  grid-template-columns: 42px 74px minmax(0, 1fr) !important;
+  grid-template-rows: auto auto !important;
+  gap: 8px 10px !important;
+  align-items: start !important;
+}
+
+html.native-capacitor.native-route-top .topshows_page .ts_rank {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  padding-top: 4px;
+  font-size: 15px !important;
+}
+
+html.native-capacitor.native-route-top .topshows_page .ts_thumb {
+  grid-column: 2;
+  grid-row: 1;
+  width: 74px !important;
+  height: 108px !important;
+  border-radius: 10px !important;
+}
+
+html.native-capacitor.native-route-top .topshows_page .ts_meta {
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 0 !important;
+}
+
+html.native-capacitor.native-route-top .topshows_page .ts_review {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  min-height: 0 !important;
+  padding: 8px 0 0 !important;
+  border-left: 0 !important;
+  border-top: 1px solid rgba(255,255,255,.08) !important;
+}
+
+html.native-capacitor.native-route-top .topusers_page .ts_card {
+  display: grid !important;
+  grid-template-columns: 36px 58px minmax(0, 1fr) !important;
+  grid-template-rows: auto auto !important;
+  gap: 8px 10px !important;
+  align-items: center !important;
+}
+
+html.native-capacitor.native-route-top .topusers_page .ts_rank { grid-column: 1; grid-row: 1; }
+html.native-capacitor.native-route-top .topusers_page .ts_thumb {
+  grid-column: 2;
+  grid-row: 1;
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 50% !important;
+}
+html.native-capacitor.native-route-top .topusers_page .ts_meta { grid-column: 3; grid-row: 1; }
+html.native-capacitor.native-route-top .topusers_page .ts_review_box {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  height: auto !important;
+  padding: 9px 0 0 !important;
+  border-left: 0 !important;
+  border-top: 1px solid rgba(255,255,255,.08) !important;
+}
+
+/* Small phones */
+@media (max-width: 390px) {
+  html.native-capacitor .wrap,
+  html.native-capacitor main.wrap {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
   }
 
-  html.native-capacitor .topbar .auth .nav_user .muted.small {
-    display: none;
+  html.native-capacitor .postergrid { gap: 8px !important; }
+  html.native-capacitor.native-route-show .showActionPanels {
+    grid-template-columns: 76px minmax(0,1fr) !important;
   }
-
-  html.native-capacitor .topbar .auth > a[href="/login"],
-  html.native-capacitor .topbar .auth > a[href="/register"] {
-    padding: 7px 8px;
-  }
-
-  html.native-capacitor .notifDropdown {
-    position: fixed;
-    left: 12px;
-    right: 12px;
-    top: calc(62px + env(safe-area-inset-top));
-    width: auto;
-    max-height: 60vh;
+  html.native-capacitor.native-route-show .favoritePanel {
+    width: 76px !important;
+    min-width: 76px !important;
+    max-width: 76px !important;
   }
 }
