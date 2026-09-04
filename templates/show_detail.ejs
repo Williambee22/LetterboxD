@@ -1965,6 +1965,35 @@
 
                   <% if (meUser && Number(meUser.is_admin) === 1) { %>
                     <form
+                      class="posterHistoryRefreshForm"
+                      method="post"
+                      action="/admin/show/<%= showRow.id %>/history/refresh"
+                    >
+                      <button
+                        class="btn ghost posterHistoryRefresh"
+                        type="submit"
+                        title="Refresh Internet Data"
+                      >
+                        ↻
+                      </button>
+                    </form>
+                  <% } %>
+                  </div>
+                  <% } %>
+                  <% } else { %>
+                    <div class="posterHistoryEmpty">
+                      No historical data found yet.
+                    </div>
+                  <% } %>
+                  
+                  
+                  <% if (meUser && Number(meUser.is_admin) === 1) { %>
+                  
+                    <!-- =============================== -->
+                    <!-- ADMIN PLACEMENT EDITOR -->
+                    <!-- =============================== -->
+                  
+                    <form
                       method="post"
                       action="/admin/show/<%= showRow.id %>/history/placement"
                       style="
@@ -2006,10 +2035,60 @@
                         Save Place
                       </button>
                     </form>
+                  
+                  
+                    <!-- =============================== -->
+                    <!-- ADMIN FINAL SCORE EDITOR -->
+                    <!-- =============================== -->
+                  
+                    <form
+                      method="post"
+                      action="/admin/show/<%= showRow.id %>/history/score"
+                      style="
+                        margin-top:4px;
+                        display:flex;
+                        align-items:center;
+                        gap:4px;
+                      "
+                    >
+                      <input
+                        type="number"
+                        name="final_score"
+                        min="0"
+                        max="100"
+                        step="0.001"
+                        value="<%= historicalHasScore ? historicalScore : '' %>"
+                        placeholder="Score"
+                        title="Leave blank and save to clear score"
+                        style="
+                          width:70px;
+                          height:24px;
+                          padding:2px 5px;
+                          font-size:9px;
+                          background:#111;
+                          color:#fff;
+                          border:1px solid rgba(255,255,255,.15);
+                        "
+                      >
+                  
+                      <button
+                        class="btn ghost"
+                        type="submit"
+                        style="
+                          min-height:24px;
+                          padding:2px 7px;
+                          font-size:8px;
+                        "
+                      >
+                        Save Score
+                      </button>
+                    </form>
+                  
                   <% } %>
-                </div>
-              <% } %>
-            </div>
+                  
+                  </div>
+                  <% } %>
+                  </div>
 
             <div class="showmeta" style="flex:1 1 auto; min-width:0;">
               <div class="kicker">Show</div>
