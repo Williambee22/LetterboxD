@@ -1964,6 +1964,48 @@
                   <% } %>
 
                   <% if (meUser && Number(meUser.is_admin) === 1) { %>
+                    <form
+                      method="post"
+                      action="/admin/show/<%= showRow.id %>/history/placement"
+                      style="
+                        margin-top:6px;
+                        display:flex;
+                        align-items:center;
+                        gap:4px;
+                      "
+                    >
+                      <input
+                        type="number"
+                        name="placement"
+                        min="1"
+                        max="99"
+                        step="1"
+                        value="<%= historicalHasPlacement ? historicalPlacement : '' %>"
+                        placeholder="Place"
+                        title="Leave blank and save to clear placement"
+                        style="
+                          width:58px;
+                          height:24px;
+                          padding:2px 5px;
+                          font-size:9px;
+                          background:#111;
+                          color:#fff;
+                          border:1px solid rgba(255,255,255,.15);
+                        "
+                      >
+                  
+                      <button
+                        class="btn ghost"
+                        type="submit"
+                        style="
+                          min-height:24px;
+                          padding:2px 7px;
+                          font-size:8px;
+                        "
+                      >
+                        Save Place
+                      </button>
+                    </form>
                   <% } %>
                 </div>
               <% } %>
