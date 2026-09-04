@@ -1978,8 +1978,10 @@
                       </button>
                     </form>
                   <% } %>
+                  
                   </div>
                   <% } %>
+                  
                   <% } else { %>
                     <div class="posterHistoryEmpty">
                       No historical data found yet.
@@ -2057,7 +2059,7 @@
                         min="0"
                         max="100"
                         step="0.001"
-                        value="<%= historicalHasScore ? historicalScore : '' %>"
+                        value="<%= historicalHasScore ? historicalScore.toFixed(3) : '' %>"
                         placeholder="Score"
                         title="Leave blank and save to clear score"
                         style="
@@ -2089,7 +2091,6 @@
                   </div>
                   <% } %>
                   </div>
-
             <div class="showmeta" style="flex:1 1 auto; min-width:0;">
               <div class="kicker">Show</div>
               <h1 style="margin:6px 0 8px;"><%= showRow.title || "" %></h1>
