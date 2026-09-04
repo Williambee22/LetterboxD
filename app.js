@@ -1655,7 +1655,8 @@ function createApp() {
   }));
 
   app.get('/shows', async (req, res, next) => {
-    const sort = String(req.query.sort || 'year_desc').trim();
+    const sort = String(req.query.sort || '').trim();
+    const dbSort = sort || 'year_desc';
     const year = String(req.query.year || '').trim();
     const corps = String(req.query.corps || '').trim();
   
@@ -1671,22 +1672,120 @@ function createApp() {
         : null;
   
       const rows = await dbx.listShows(conn, {
-        sort,
+        sort: dbSort,
         year,
         corps,
         viewerUserId
       });
-  
+        
       const rows2 = (rows || []).map((r) => {
-        const d = normalizeRow(r);
-  
-        d.poster_url = posterUrlForShow(
-          d.corps || '',
-          d.year || 0
+      const d = normalizeRow(r);
+    
+      d.poster_url = posterUrlForShow(
+        d.corps || '',
+        d.year || 0
+      );
+    
+      return d;
+    });
+    
+    
+    // =========================================================
+    // DEFAULT SHOW SORT
+    // Newest year first, then final placement:
+    // 1st, 2nd, 3rd, 4th...
+    // =========================================================
+    if (!sort) {
+    
+      for (const showRow of rows2) {
+    
+        let placement = null;
+    
+        // If placement already exists on the show row, use it.
+        const directPlacement = Number(showRow.placement);
+    
+        if (
+          Number.isInteger(directPlacement) &&
+          directPlacement > 0
+        ) {
+          placement = directPlacement;
+    
+        } else {
+    
+          // Otherwise use the historical data already cached
+          // by Pressboxd.
+          try {
+            const historicalData =
+              showHistory.getCachedHistoricalShowData(
+                conn,
+                Number(showRow.id)
+              );
+    
+            const historicalPlacement =
+              Number(historicalData?.placement);
+    
+            if (
+              Number.isInteger(historicalPlacement) &&
+              historicalPlacement > 0
+            ) {
+              placement = historicalPlacement;
+            }
+    
+          } catch (err) {
+            console.error(
+              `Could not read cached placement for show ${showRow.id}:`,
+              err
+            );
+          }
+        }
+    
+        showRow.placement = placement;
+      }
+    
+    
+      rows2.sort((a, b) => {
+    
+        const aYear = Number(a.year || 0);
+        const bYear = Number(b.year || 0);
+    
+        // Newest season first.
+        if (aYear !== bYear) {
+          return bYear - aYear;
+        }
+    
+    
+        const aPlacement = Number(a.placement);
+        const bPlacement = Number(b.placement);
+    
+        const aHasPlacement =
+          Number.isInteger(aPlacement) &&
+          aPlacement > 0;
+    
+        const bHasPlacement =
+          Number.isInteger(bPlacement) &&
+          bPlacement > 0;
+    
+    
+        // Both shows have placements:
+        // 1st, 2nd, 3rd, etc.
+        if (aHasPlacement && bHasPlacement) {
+          return aPlacement - bPlacement;
+        }
+    
+    
+        // Placed shows before shows with unknown placement.
+        if (aHasPlacement) return -1;
+        if (bHasPlacement) return 1;
+    
+    
+        // If neither has placement, alphabetical.
+        return String(a.corps || '').localeCompare(
+          String(b.corps || ''),
+          undefined,
+          { sensitivity: 'base' }
         );
-  
-        return d;
       });
+    }
   
       let friendActivity = [];
   
