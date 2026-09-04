@@ -2542,6 +2542,164 @@ function createApp() {
   );
 
 
+  app.post(
+    '/admin/show/:show_id/history/score',
+  
+    adminRequired(async (req, res, next) => {
+      const showId = Number(req.params.show_id);
+  
+      const scoreRaw =
+        String(req.body.final_score ?? '').trim();
+  
+      let finalScore = null;
+  
+  
+      if (scoreRaw !== '') {
+        finalScore = Number(scoreRaw);
+  
+        if (
+          !Number.isFinite(finalScore) ||
+          finalScore < 0 ||
+          finalScore > 100
+        ) {
+          req.flash(
+            'error',
+            'Score must be a number from 0 to 100.'
+          );
+  
+          return res.redirect(`/show/${showId}`);
+        }
+  
+        // Keep scores consistent with DCI's 3-decimal format.
+        finalScore =
+          Math.round(finalScore * 1000) / 1000;
+      }
+  
+  
+      let conn;
+  
+      try {
+        conn = getConn();
+  
+        const row = normalizeRow(
+          await dbx.getShowById(conn, showId)
+        );
+  
+        if (!row) {
+          return res.sendStatus(404);
+        }
+  
+  
+        const cached =
+          showHistory.getCachedHistoricalShowData(
+            conn,
+            showId
+          );
+  
+  
+        const hasOtherHistoricalData =
+          cached &&
+          (
+            cached.placement != null ||
+            (
+              Array.isArray(cached.repertoire) &&
+              cached.repertoire.length > 0
+            )
+          );
+  
+  
+        showHistory.saveHistoricalShowData(
+          conn,
+          {
+            show_id: showId,
+  
+            show_title:
+              cached?.show_title ||
+              row.title ||
+              null,
+  
+            // Preserve manually-set/current placement.
+            placement:
+              cached?.placement ??
+              null,
+  
+            // Change only the score.
+            final_score:
+              finalScore,
+  
+            championship_round:
+              cached?.championship_round ??
+              null,
+  
+            repertoire:
+              Array.isArray(cached?.repertoire)
+                ? cached.repertoire
+                : [],
+  
+            // Preserve placement source information.
+            placement_source_url:
+              cached?.placement_source_url ??
+              null,
+  
+            placement_source_label:
+              cached?.placement_source_label ??
+              null,
+  
+            repertoire_source_url:
+              cached?.repertoire_source_url ??
+              null,
+  
+            repertoire_source_label:
+              cached?.repertoire_source_label ??
+              null,
+  
+            fetch_status:
+              finalScore != null ||
+              hasOtherHistoricalData
+                ? (
+                    cached?.fetch_status === 'ok'
+                      ? 'ok'
+                      : 'partial'
+                  )
+                : 'not_found',
+  
+            fetched_ts:
+              Math.floor(Date.now() / 1000),
+  
+            fetch_error: null
+          }
+        );
+  
+  
+        if (finalScore == null) {
+          req.flash(
+            'ok',
+            'Final score cleared.'
+          );
+  
+        } else {
+          req.flash(
+            'ok',
+            `Final score changed to ${finalScore.toFixed(3)}.`
+          );
+        }
+  
+  
+        return res.redirect(`/show/${showId}`);
+  
+      } catch (err) {
+        return next(err);
+  
+      } finally {
+        if (conn) {
+          dbx.close(conn);
+        }
+      }
+    })
+  );
+
+  
+
   
   
   app.post('/admin/show/:show_id/reply/:reply_id/delete', adminRequired(async (req, res) => {
