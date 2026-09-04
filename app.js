@@ -2390,6 +2390,159 @@ function createApp() {
   );
 
 
+  app.post(
+    '/admin/show/:show_id/history/placement',
+  
+    adminRequired(async (req, res, next) => {
+      const showId = Number(req.params.show_id);
+  
+      const placementRaw =
+        String(req.body.placement ?? '').trim();
+  
+      let placement = null;
+  
+      if (placementRaw !== '') {
+        placement = Number(placementRaw);
+  
+        if (
+          !Number.isInteger(placement) ||
+          placement < 1 ||
+          placement > 99
+        ) {
+          req.flash(
+            'error',
+            'Placement must be a whole number from 1 to 99.'
+          );
+  
+          return res.redirect(`/show/${showId}`);
+        }
+      }
+  
+  
+      let conn;
+  
+      try {
+        conn = getConn();
+  
+        const row = normalizeRow(
+          await dbx.getShowById(conn, showId)
+        );
+  
+        if (!row) {
+          return res.sendStatus(404);
+        }
+  
+  
+        const cached =
+          showHistory.getCachedHistoricalShowData(
+            conn,
+            showId
+          );
+  
+  
+        const hasOtherHistoricalData =
+          cached &&
+          (
+            cached.final_score != null ||
+            (
+              Array.isArray(cached.repertoire) &&
+              cached.repertoire.length > 0
+            )
+          );
+  
+  
+        showHistory.saveHistoricalShowData(
+          conn,
+          {
+            show_id: showId,
+  
+            show_title:
+              cached?.show_title ||
+              row.title ||
+              null,
+  
+            placement,
+  
+            final_score:
+              cached?.final_score ??
+              null,
+  
+            championship_round:
+              cached?.championship_round ??
+              null,
+  
+            repertoire:
+              Array.isArray(cached?.repertoire)
+                ? cached.repertoire
+                : [],
+  
+            // Manual placement should not claim
+            // that DCI/Wikipedia supplied this number.
+            placement_source_url: null,
+  
+            placement_source_label:
+              placement == null
+                ? null
+                : 'Admin override',
+  
+            repertoire_source_url:
+              cached?.repertoire_source_url ??
+              null,
+  
+            repertoire_source_label:
+              cached?.repertoire_source_label ??
+              null,
+  
+            fetch_status:
+              placement != null ||
+              hasOtherHistoricalData
+                ? (
+                    cached?.fetch_status === 'ok'
+                      ? 'ok'
+                      : 'partial'
+                  )
+                : 'not_found',
+  
+            fetched_ts:
+              Math.floor(Date.now() / 1000),
+  
+            fetch_error: null
+          }
+        );
+  
+  
+        if (placement == null) {
+          req.flash(
+            'ok',
+            'Placement cleared.'
+          );
+        } else {
+          req.flash(
+            'ok',
+            `Placement changed to ${
+              typeof showHistory.ordinal === 'function'
+                ? showHistory.ordinal(placement)
+                : placement
+            }.`
+          );
+        }
+  
+  
+        return res.redirect(`/show/${showId}`);
+  
+      } catch (err) {
+        return next(err);
+  
+      } finally {
+        if (conn) {
+          dbx.close(conn);
+        }
+      }
+    })
+  );
+
+
+  
   
   app.post('/admin/show/:show_id/reply/:reply_id/delete', adminRequired(async (req, res) => {
     const showId = Number(req.params.show_id);
