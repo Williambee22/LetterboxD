@@ -1344,11 +1344,34 @@
               </div>
               <div class="poster_sub">
                 <% if (row.corps) { %>
-                  <a href="/corps/<%= encodeURIComponent(row.corps) %>" style="color:inherit; text-decoration:none;"><%= row.corps %></a>
+                  <a href="/corps/<%= encodeURIComponent(row.corps) %>" style="color:inherit; text-decoration:none;">
+                    <%= row.corps %>
+                  </a>
                 <% } %>
+              
                 <% if (row.year) { %>
                   <span style="opacity: 0.5; margin: 0 4px;">&bull;</span>
-                  <a href="/shows?year=<%= encodeURIComponent(row.year) %>" style="color:inherit; text-decoration:none;"><%= row.year %></a>
+                  <a href="/shows?year=<%= encodeURIComponent(row.year) %>" style="color:inherit; text-decoration:none;">
+                    <%= row.year %>
+                  </a>
+                <% } %>
+              
+                <% if (Number.isInteger(Number(row.placement)) && Number(row.placement) > 0) { %>
+                  <span style="opacity: 0.5; margin: 0 4px;">&bull;</span>
+                  <span>
+                    <%= Number(row.placement) %><%=
+                      Number(row.placement) % 100 >= 11 &&
+                      Number(row.placement) % 100 <= 13
+                        ? "th"
+                        : Number(row.placement) % 10 === 1
+                          ? "st"
+                          : Number(row.placement) % 10 === 2
+                            ? "nd"
+                            : Number(row.placement) % 10 === 3
+                              ? "rd"
+                              : "th"
+                    %>
+                  </span>
                 <% } %>
               </div>
             </div>
