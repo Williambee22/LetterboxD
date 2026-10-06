@@ -1850,6 +1850,187 @@ function createApp() {
     }
   });
 
+
+// =========================================================
+// CORPS PAGE
+// /corps/:corps_name
+// =========================================================
+app.get('/corps/:corps_name', async (req, res, next) => {
+  const requestedCorps = String(req.params.corps_name || '').trim();
+
+  if (!requestedCorps) {
+    return res.sendStatus(404);
+  }
+
+  let conn;
+
+  try {
+    conn = getConn();
+
+    // Resolve the canonical spelling/capitalization stored in the DB.
+    const corpsRow = conn.prepare(`
+      SELECT corps
+      FROM shows
+      WHERE LOWER(TRIM(corps)) = LOWER(TRIM(?))
+      ORDER BY year DESC, id DESC
+      LIMIT 1
+    `).get(requestedCorps);
+
+    if (!corpsRow || !corpsRow.corps) {
+      return res.sendStatus(404);
+    }
+
+    const corpsName = String(corpsRow.corps);
+
+    // Reuse the existing show-list query so cards have the same
+    // avg_rating, cnt, my_rating_half, has_review, etc. as /shows.
+    const viewerUserId = req.session.uid
+      ? Number(req.session.uid)
+      : null;
+
+    const listedRows = await dbx.listShows(conn, {
+      sort: 'year_desc',
+      year: '',
+      corps: corpsName,
+      viewerUserId
+    });
+
+    // listShows() supports search/filter matching, so make the corps
+    // page exact even if another corps has a similar name.
+    const rows = (listedRows || [])
+      .map(normalizeRow)
+      .filter((row) => (
+        String(row.corps || '').trim().toLowerCase() ===
+        corpsName.trim().toLowerCase()
+      ));
+
+    // Add poster URLs and the same historical placement data used
+    // by the normal Shows page.
+    for (const showRow of rows) {
+      showRow.poster_url = posterUrlForShow(
+        showRow.corps || '',
+        showRow.year || 0
+      );
+
+      let placement = null;
+
+      const directPlacement = Number(showRow.placement);
+
+      if (
+        Number.isInteger(directPlacement) &&
+        directPlacement > 0
+      ) {
+        placement = directPlacement;
+      } else {
+        try {
+          const historicalData =
+            showHistory.getCachedHistoricalShowData(
+              conn,
+              Number(showRow.id)
+            );
+
+          const historicalPlacement =
+            Number(historicalData?.placement);
+
+          if (
+            Number.isInteger(historicalPlacement) &&
+            historicalPlacement > 0
+          ) {
+            placement = historicalPlacement;
+          }
+        } catch (err) {
+          console.error(
+            `Could not read cached placement for corps page show ${showRow.id}:`,
+            err
+          );
+        }
+      }
+
+      showRow.placement = placement;
+    }
+
+    // Newest season first. Within a season, order by Finals placement.
+    rows.sort((a, b) => {
+      const aYear = Number(a.year || 0);
+      const bYear = Number(b.year || 0);
+
+      if (aYear !== bYear) {
+        return bYear - aYear;
+      }
+
+      const aPlacement = Number(a.placement);
+      const bPlacement = Number(b.placement);
+
+      const aHasPlacement =
+        Number.isInteger(aPlacement) &&
+        aPlacement > 0;
+
+      const bHasPlacement =
+        Number.isInteger(bPlacement) &&
+        bPlacement > 0;
+
+      if (aHasPlacement && bHasPlacement) {
+        return aPlacement - bPlacement;
+      }
+
+      if (aHasPlacement) return -1;
+      if (bHasPlacement) return 1;
+
+      return Number(b.id || 0) - Number(a.id || 0);
+    });
+
+    // Corps-wide rating average across every rating submitted for
+    // every show belonging to this corps.
+    const ratingStats = conn.prepare(`
+      SELECT
+        ROUND(AVG(r.rating_half) / 2.0, 2) AS avg_rating,
+        COUNT(r.rating_half) AS rating_count
+      FROM shows s
+      LEFT JOIN ratings r
+        ON r.show_id = s.id
+      WHERE LOWER(TRIM(s.corps)) = LOWER(TRIM(?))
+    `).get(corpsName);
+
+    const placements = rows
+      .map((row) => Number(row.placement))
+      .filter((placement) => (
+        Number.isInteger(placement) &&
+        placement > 0
+      ));
+
+    const stats = {
+      titles: placements.filter((p) => p === 1).length,
+      silvers: placements.filter((p) => p === 2).length,
+      bronzes: placements.filter((p) => p === 3).length,
+
+      // DCI Finals is the Top 12.
+      finals_appearances: placements.filter((p) => p <= 12).length,
+
+      show_count: rows.length,
+
+      avg_rating:
+        ratingStats?.avg_rating != null
+          ? Number(ratingStats.avg_rating)
+          : null,
+
+      rating_count:
+        Number(ratingStats?.rating_count || 0)
+    };
+
+    return res.render('corps', {
+      corps_name: corpsName,
+      rows,
+      stats
+    });
+
+  } catch (err) {
+    return next(err);
+
+  } finally {
+    if (conn) dbx.close(conn);
+  }
+});
+
   app.get('/child-safety', (req, res) => {
     res.render('child-safety');
   });
