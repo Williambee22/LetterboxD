@@ -1635,6 +1635,48 @@
       }
     }
 
+
+    /* Participation stats docked in the empty lower-middle area
+       immediately to the left of the right-side ratings column. */
+    main.wrap > div:first-of-type > .panel {
+      position: relative;
+    }
+
+    .showParticipationDock {
+      position: absolute;
+      right: 520px;
+      bottom: 18px;
+      width: 270px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 42px;
+      z-index: 2;
+    }
+
+    .showParticipationDock .showParticipationStat {
+      min-width: 100px;
+    }
+
+    @media (max-width: 1180px) {
+      .showParticipationDock {
+        position: static;
+        width: 100%;
+        flex: 1 1 100%;
+        order: 3;
+        box-sizing: border-box;
+        margin-top: 12px;
+        padding-left: 0;
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .showParticipationDock {
+        justify-content: center;
+      }
+    }
+
   </style>
 </head>
 
@@ -2193,26 +2235,6 @@
                   <span class="badge muted"><%= showFavoriteCount %> favorite<%= showFavoriteCount === 1 ? '' : 's' %></span>
                 </div>
 
-                <div class="showParticipationStats">
-                  <div class="showParticipationStat">
-                    <div class="showParticipationValue">
-                      <%= ratedPercentSafe.toFixed(1) %>%
-                    </div>
-                    <div class="showParticipationLabel">Users rated</div>
-                    <div class="showParticipationCount">
-                      <%= ratedUsersSafe %> of <%= totalUsersSafe %>
-                    </div>
-                  </div>
-
-                  <div class="showParticipationStat">
-                    <div class="showParticipationValue">
-                      <%= reviewedPercentSafe.toFixed(1) %>%
-                    </div>
-                    <div class="showParticipationLabel">Users reviewed</div>
-                    <div class="showParticipationCount">
-                      <%= reviewedUsersSafe %> of <%= totalUsersSafe %>
-                    </div>
-                  </div>
                 </div>
 
                 <% if (meUser) { %>
@@ -2281,6 +2303,28 @@
                 <% if (meUser && Number(meUser.is_admin) === 1) { %>
                   <a class="btn ghost" href="/admin/show/<%= showRow.id %>/edit">Edit show</a>
                 <% } %>
+              </div>
+            </div>
+          </div>
+
+          <div class="showParticipationStats showParticipationDock">
+            <div class="showParticipationStat">
+              <div class="showParticipationValue">
+                <%= ratedPercentSafe.toFixed(1) %>%
+              </div>
+              <div class="showParticipationLabel">Users rated</div>
+              <div class="showParticipationCount">
+                <%= ratedUsersSafe %> of <%= totalUsersSafe %>
+              </div>
+            </div>
+
+            <div class="showParticipationStat">
+              <div class="showParticipationValue">
+                <%= reviewedPercentSafe.toFixed(1) %>%
+              </div>
+              <div class="showParticipationLabel">Users reviewed</div>
+              <div class="showParticipationCount">
+                <%= reviewedUsersSafe %> of <%= totalUsersSafe %>
               </div>
             </div>
           </div>
