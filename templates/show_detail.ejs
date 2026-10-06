@@ -1595,6 +1595,46 @@
       }
     }
 
+
+    .showParticipationStats {
+      margin-top: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .showParticipationStat {
+      min-width: 110px;
+    }
+
+    .showParticipationValue {
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -.02em;
+    }
+
+    .showParticipationLabel {
+      margin-top: 5px;
+      font-size: 11px;
+      font-weight: 800;
+      color: rgba(255,255,255,.70);
+    }
+
+    .showParticipationCount {
+      margin-top: 2px;
+      font-size: 9px;
+      color: rgba(255,255,255,.42);
+    }
+
+    @media (max-width: 768px) {
+      .showParticipationStats {
+        justify-content: center;
+        gap: 24px;
+      }
+    }
+
   </style>
 </head>
 
@@ -1643,6 +1683,31 @@
     historicalHasPlacement ||
     historicalHasScore ||
     historicalRepertoire.length > 0;
+
+  const ratedPercentSafe =
+    typeof rated_percent !== "undefined"
+      ? Number(rated_percent || 0)
+      : 0;
+
+  const reviewedPercentSafe =
+    typeof reviewed_percent !== "undefined"
+      ? Number(reviewed_percent || 0)
+      : 0;
+
+  const ratedUsersSafe =
+    typeof rated_users !== "undefined"
+      ? Number(rated_users || 0)
+      : 0;
+
+  const reviewedUsersSafe =
+    typeof reviewed_users !== "undefined"
+      ? Number(reviewed_users || 0)
+      : 0;
+
+  const totalUsersSafe =
+    typeof total_users !== "undefined"
+      ? Number(total_users || 0)
+      : 0;
 
   const historicalPlacementText =
     historicalData && historicalData.placement_display
@@ -2126,6 +2191,28 @@
 
                 <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                   <span class="badge muted"><%= showFavoriteCount %> favorite<%= showFavoriteCount === 1 ? '' : 's' %></span>
+                </div>
+
+                <div class="showParticipationStats">
+                  <div class="showParticipationStat">
+                    <div class="showParticipationValue">
+                      <%= ratedPercentSafe.toFixed(1) %>%
+                    </div>
+                    <div class="showParticipationLabel">Users rated</div>
+                    <div class="showParticipationCount">
+                      <%= ratedUsersSafe %> of <%= totalUsersSafe %>
+                    </div>
+                  </div>
+
+                  <div class="showParticipationStat">
+                    <div class="showParticipationValue">
+                      <%= reviewedPercentSafe.toFixed(1) %>%
+                    </div>
+                    <div class="showParticipationLabel">Users reviewed</div>
+                    <div class="showParticipationCount">
+                      <%= reviewedUsersSafe %> of <%= totalUsersSafe %>
+                    </div>
+                  </div>
                 </div>
 
                 <% if (meUser) { %>
