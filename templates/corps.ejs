@@ -142,13 +142,13 @@
       width: 500px;
       min-width: 500px;
       margin-left: auto;
+      padding-top: 8px;
     }
 
     .corpsStatsPanel {
-      padding: 12px !important;
-      border-radius: 13px;
-      border: 1px solid rgba(255,255,255,.08);
-      background: rgba(255,255,255,.025);
+      padding: 12px 4px !important;
+      border: none;
+      background: transparent;
       box-shadow: none;
     }
 
@@ -158,46 +158,44 @@
       text-transform: uppercase;
       letter-spacing: .1em;
       color: var(--corps-muted);
-      margin-bottom: 10px;
+      margin-bottom: 14px;
     }
 
     .corpsStatsGrid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      column-gap: 22px;
+      row-gap: 18px;
     }
 
     .corpsStat {
-      min-height: 76px;
-      padding: 11px 10px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      border-radius: 10px;
-      background: rgba(255,255,255,.025);
-      border: 1px solid rgba(255,255,255,.075);
+      min-width: 0;
+      padding: 0 0 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: transparent;
     }
 
     .corpsStatValue {
-      font-size: 23px;
+      font-size: 26px;
       line-height: 1;
       font-weight: 900;
       letter-spacing: -.025em;
     }
 
     .corpsStatLabel {
-      margin-top: 6px;
-      font-size: 9px;
+      margin-top: 7px;
+      font-size: 10px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: .07em;
-      color: var(--corps-muted);
+      color: rgba(255,255,255,.62);
     }
 
     .corpsStatSub {
       margin-top: 3px;
-      font-size: 8px;
-      color: rgba(255,255,255,.42);
+      font-size: 9px;
+      line-height: 1.3;
+      color: rgba(255,255,255,.38);
     }
 
     .corpsShowsHeader {
@@ -360,6 +358,8 @@
 
       .corpsStatsGrid {
         grid-template-columns: repeat(2, 1fr);
+        column-gap: 18px;
+        row-gap: 16px;
       }
     }
 
