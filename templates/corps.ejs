@@ -374,7 +374,15 @@
 
 <%
   const POSTER_FALLBACK = "/static/posters/placeholder.png";
-  const CORPS_POSTER = "/static/posters/corpsdefault.png";
+  const corpsPosterKey = String(corps_name || "")
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  const CORPS_POSTER = `/posters/${corpsPosterKey}default`;
   const safeRows = Array.isArray(rows) ? rows : [];
   const safeStats = stats || {};
   const meUser = typeof me !== "undefined" ? me : null;
