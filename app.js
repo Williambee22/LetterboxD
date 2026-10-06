@@ -44,37 +44,6 @@ fs.mkdirSync(path.dirname(SESSION_DB_PATH), {
   recursive: true
 });
 
-const totalUsersRow = conn.prepare(`
-  SELECT COUNT(*) AS count
-  FROM users
-`).get();
-
-const ratedUsersRow = conn.prepare(`
-  SELECT COUNT(DISTINCT user_id) AS count
-  FROM ratings
-  WHERE show_id = ?
-`).get(showId);
-
-const reviewedUsersRow = conn.prepare(`
-  SELECT COUNT(DISTINCT user_id) AS count
-  FROM reviews
-  WHERE show_id = ?
-`).get(showId);
-
-const totalUsers = Number(totalUsersRow?.count || 0);
-const ratedUsers = Number(ratedUsersRow?.count || 0);
-const reviewedUsers = Number(reviewedUsersRow?.count || 0);
-
-const ratedPercent =
-  totalUsers > 0
-    ? (ratedUsers / totalUsers) * 100
-    : 0;
-
-const reviewedPercent =
-  totalUsers > 0
-    ? (reviewedUsers / totalUsers) * 100
-    : 0;
-
 
 const sessionDb = new Database(SESSION_DB_PATH);
 
@@ -2140,7 +2109,43 @@ app.get('/corps/:corps_name', async (req, res, next) => {
       const show_favorite_count = showFavoriteCountRow
         ? Number(showFavoriteCountRow.cnt || 0)
         : 0;
-
+      
+      
+      // ADD THIS
+      
+      const totalUsersRow = conn.prepare(`
+        SELECT COUNT(*) AS count
+        FROM users
+      `).get();
+      
+      const ratedUsersRow = conn.prepare(`
+        SELECT COUNT(DISTINCT user_id) AS count
+        FROM ratings
+        WHERE show_id = ?
+      `).get(showId);
+      
+      const reviewedUsersRow = conn.prepare(`
+        SELECT COUNT(DISTINCT user_id) AS count
+        FROM reviews
+        WHERE show_id = ?
+      `).get(showId);
+      
+      const totalUsers = Number(totalUsersRow?.count || 0);
+      const ratedUsers = Number(ratedUsersRow?.count || 0);
+      const reviewedUsers = Number(reviewedUsersRow?.count || 0);
+      
+      const ratedPercent =
+        totalUsers > 0
+          ? (ratedUsers / totalUsers) * 100
+          : 0;
+      
+      const reviewedPercent =
+        totalUsers > 0
+          ? (reviewedUsers / totalUsers) * 100
+          : 0;
+      
+      
+      // then your existing code continues
       let friendRatings = [];
 
       if (viewerUid && typeof dbx.listFriendRatingsForShow === 'function') {
