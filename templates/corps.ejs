@@ -438,9 +438,6 @@
             <div class="corpsKicker">Drum Corps</div>
             <h1><%= corps_name %></h1>
 
-            <div class="corpsSummary">
-              <%= showCount %> <%= showCount === 1 ? "show" : "shows" %>
-            </div>
 
             <div class="corpsBadges">
               <% if (avgRatingText != null) { %>
@@ -499,7 +496,6 @@
               <div class="corpsStat">
                 <div class="corpsStatValue"><%= showCount %></div>
                 <div class="corpsStatLabel">Shows</div>
-                <div class="corpsStatSub">On Pressboxd</div>
               </div>
             </div>
           </div>
