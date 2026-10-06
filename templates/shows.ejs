@@ -803,17 +803,14 @@
 
     .poster_meta {
       padding-top: 8px;
-      height: 58px;
-      display: flex;
-      flex-direction: column;
-      box-sizing: border-box;
     }
-
+    
     .poster_title {
       font-size: 13px;
       font-weight: 800;
       line-height: 1.25;
       letter-spacing: -.01em;
+    }
 
       /* Keep long titles from pushing the corps/year/placement line down. */
       display: -webkit-box;
@@ -823,14 +820,12 @@
     }
 
     .poster_sub {
-      margin-top: auto;
-      padding-bottom: 4px;
+      margin-top: 8px;
       font-size: 10px;
-      line-height: 1.2;
       color: rgba(255,255,255,.52);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    
+      /* move only the corps/year/placement line down slightly */
+      transform: translateY(4px);
     }
 
     .tile_rating {
