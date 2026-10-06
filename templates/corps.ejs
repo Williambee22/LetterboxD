@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+
+  <title><%= corps_name %> — Pressboxd</title>
+  <meta
+    name="description"
+    content="Ratings, placements, Finals appearances, and shows from <%= corps_name %> on Pressboxd."
+  >
+
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <link rel="icon" type="image/png" href="/static/favicon.png"/>
+
+  <style>
+    html,
+    body,
+    body.app {
+      background: #000000 !important;
+      background-image: none !important;
+    }
+
+    :root {
+      --corps-line: rgba(255,255,255,.10);
+      --corps-muted: rgba(255,255,255,.58);
+    }
+
+    main.wrap {
+      max-width: 1440px;
+      padding-bottom: 48px;
+    }
+
+    .corpsHero {
+      margin-top: 28px;
+      padding: 24px 0 18px;
+      border-bottom: 1px solid var(--corps-line);
+    }
+
+    .corpsBack {
+      display: inline-block;
+      margin-bottom: 14px;
+      color: var(--corps-muted);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .corpsBack:hover {
+      color: #ffffff;
+    }
+
+    .corpsName {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 52px);
+      line-height: 1;
+      letter-spacing: -.04em;
+    }
+
+    .corpsSub {
+      margin-top: 8px;
+      color: var(--corps-muted);
+      font-size: 13px;
+    }
+
+    .corpsStats {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(110px, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .corpsStat {
+      min-width: 0;
+      padding: 14px 12px;
+      background: rgba(255,255,255,.025);
+      border: 1px solid var(--corps-line);
+    }
+
+    .corpsStatValue {
+      font-size: 25px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -.025em;
+    }
+
+    .corpsStatLabel {
+      margin-top: 7px;
+      color: var(--corps-muted);
+      font-size: 10px;
+      line-height: 1.2;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .corpsShowsHeader {
+      margin-top: 32px;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .corpsShowsHeader h2 {
+      margin: 0;
+      font-size: 25px;
+      letter-spacing: -.03em;
+    }
+
+    .corpsShowsCount {
+      color: var(--corps-muted);
+      font-size: 12px;
+    }
+
+    .postergrid {
+      margin-top: 16px !important;
+      gap: 18px 14px !important;
+    }
+
+    .poster {
+      min-width: 0;
+      transition: transform .17s ease;
+    }
+
+    .poster:hover {
+      transform: translateY(-3px);
+    }
+
+    .poster_art {
+      overflow: hidden;
+      border-radius: 9px;
+      background: #070707;
+      box-shadow: 0 8px 20px rgba(0,0,0,.18);
+      transition: box-shadow .17s ease;
+    }
+
+    .poster:hover .poster_art {
+      box-shadow: 0 14px 30px rgba(0,0,0,.34);
+    }
+
+    .poster_img {
+      display: block;
+      width: 100%;
+      transition:
+        transform .22s ease,
+        opacity .22s ease;
+    }
+
+    .poster:hover .poster_img {
+      transform: scale(1.015);
+      opacity: .96;
+    }
+
+    .poster_meta {
+      padding-top: 8px;
+    }
+
+    .poster_title {
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+
+    .poster_sub {
+      margin-top: 3px;
+      font-size: 10px;
+      color: rgba(255,255,255,.52);
+    }
+
+    .tile_rating {
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .myShowStatus {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      pointer-events: none;
+    }
+
+    .myShowStatusPill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      color: #ffffff;
+      font-size: 9px;
+      line-height: 1;
+      font-weight: 900;
+      white-space: nowrap;
+      border: 1px solid rgba(255,255,255,.24);
+      box-shadow: 0 2px 7px rgba(0,0,0,.55);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .myShowStatusPill.rated {
+      background: rgba(45,82,190,.64);
+    }
+
+    .myShowStatusPill.reviewed {
+      background: rgba(25,135,75,.64);
+    }
+
+    @media (max-width: 900px) {
+      .corpsStats {
+        grid-template-columns: repeat(3, minmax(100px, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .corpsStats {
+        grid-template-columns: repeat(2, minmax(100px, 1fr));
+      }
+
+      .postergrid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+        gap: 10px !important;
+      }
+
+      .poster_title {
+        font-size: 14px !important;
+      }
+    }
+  </style>
+</head>
+
+<%
+  const POSTER_FALLBACK = "/static/posters/placeholder.png";
+  const safeRows = Array.isArray(rows) ? rows : [];
+  const safeStats = stats || {};
+  const meUser = typeof me !== "undefined" ? me : null;
+%>
+
+<body class="app">
+  <header class="topbar">
+    <div class="wrap row between">
+      <a class="brand row" href="/shows" style="text-decoration:none; color:inherit;">
+        <img src="/static/logo.png" alt="Pressboxd" style="height:34px; width:auto;">
+      </a>
+
+      <nav class="nav row" style="gap:14px;">
+        <a href="/shows">Shows</a>
+        <a href="/top">Top</a>
+        <a href="/tierlists">Tierlists</a>
+        <a href="/forums">Forums</a>
+
+        <% if (meUser) { %>
+          <a href="/me">Me</a>
+        <% } else { %>
+          <a href="/">Login</a>
+        <% } %>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="corpsHero">
+      <a class="corpsBack" href="/shows">← Back to all shows</a>
+
+      <h1 class="corpsName"><%= corps_name %></h1>
+
+      <div class="corpsSub">
+        <%= Number(safeStats.show_count || 0) %>
+        <%= Number(safeStats.show_count || 0) === 1 ? "show" : "shows" %>
+        on Pressboxd
+      </div>
+
+      <div class="corpsStats">
+        <div class="corpsStat">
+          <div class="corpsStatValue"><%= Number(safeStats.titles || 0) %></div>
+          <div class="corpsStatLabel">Titles</div>
+        </div>
+
+        <div class="corpsStat">
+          <div class="corpsStatValue"><%= Number(safeStats.silvers || 0) %></div>
+          <div class="corpsStatLabel">Silvers</div>
+        </div>
+
+        <div class="corpsStat">
+          <div class="corpsStatValue"><%= Number(safeStats.bronzes || 0) %></div>
+          <div class="corpsStatLabel">Bronzes</div>
+        </div>
+
+        <div class="corpsStat">
+          <div class="corpsStatValue"><%= Number(safeStats.finals_appearances || 0) %></div>
+          <div class="corpsStatLabel">Finals Appearances</div>
+        </div>
+
+        <div class="corpsStat">
+          <div class="corpsStatValue">
+            <% if (safeStats.avg_rating != null) { %>
+              ★ <%= Number(safeStats.avg_rating).toFixed(2) %>
+            <% } else { %>
+              —
+            <% } %>
+          </div>
+          <div class="corpsStatLabel">
+            Average Rating
+            <% if (Number(safeStats.rating_count || 0) > 0) { %>
+              · <%= Number(safeStats.rating_count) %> ratings
+            <% } %>
+          </div>
+        </div>
+
+        <div class="corpsStat">
+          <div class="corpsStatValue"><%= Number(safeStats.show_count || 0) %></div>
+          <div class="corpsStatLabel">Shows</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="corpsShowsHeader">
+      <h2>Shows</h2>
+      <div class="corpsShowsCount">
+        Newest season first
+      </div>
+    </div>
+
+    <% if (safeRows.length > 0) { %>
+      <div class="postergrid">
+        <% for (const row of safeRows) {
+             const poster = row?.poster_url || POSTER_FALLBACK;
+             const avg =
+               row?.avg_rating != null
+                 ? Number(row.avg_rating)
+                 : (row?.avg != null ? Number(row.avg) : 0);
+
+             const pct = Math.max(0, Math.min(1, avg / 5));
+             const hue = 60 * Math.pow(pct, 2.6);
+
+             const myRatingHalf =
+               row?.my_rating_half != null
+                 ? Number(row.my_rating_half)
+                 : null;
+
+             const hasMyReview =
+               Number(row?.has_review || 0) === 1;
+        %>
+          <div class="poster">
+            <a
+              class="poster_art"
+              href="/show/<%= row.id %>"
+              style="position:relative; display:block;"
+            >
+              <img
+                class="poster_img"
+                src="<%= poster %>"
+                alt="<%= row.title || 'Show poster' %>"
+                loading="lazy"
+                onerror="this.src='<%= POSTER_FALLBACK %>';"
+              >
+
+              <% if (meUser && (myRatingHalf !== null || hasMyReview)) { %>
+                <div class="myShowStatus">
+                  <% if (myRatingHalf !== null) { %>
+                    <span
+                      class="myShowStatusPill rated"
+                      title="You rated this show <%= (myRatingHalf / 2).toFixed(1) %> out of 5"
+                    >
+                      ★ Rated <%= (myRatingHalf / 2).toFixed(1) %>
+                    </span>
+                  <% } %>
+
+                  <% if (hasMyReview) { %>
+                    <span
+                      class="myShowStatusPill reviewed"
+                      title="You wrote a review for this show"
+                    >
+                      ✓ Reviewed
+                    </span>
+                  <% } %>
+                </div>
+              <% } %>
+
+              <% if (Number(row.cnt || 0) > 0) { %>
+                <div
+                  class="tile_rating"
+                  style="
+                    color:hsl(<%= hue %>, 100%, 50%);
+                    text-shadow:
+                      -0.3px -0.3px 0 #000,
+                       0.3px -0.3px 0 #000,
+                      -0.3px  0.3px 0 #000,
+                       0.3px  0.3px 0 #000,
+                       0 0 4px rgba(0,0,0,.9);
+                  "
+                >
+                  <span class="tile_star">★</span>
+                  <%= avg.toFixed(2) %>
+                </div>
+
+                <div
+                  class="muted small"
+                  style="
+                    position:absolute;
+                    right:8px;
+                    top:8px;
+                    z-index:3;
+                    background:rgba(0,0,0,.60);
+                    color:#fff;
+                    padding:3px 6px;
+                    border-radius:999px;
+                    font-size:9px;
+                    line-height:1;
+                    border:1px solid rgba(255,255,255,.10);
+                  "
+                >
+                  <%= Number(row.cnt || 0) %> ratings
+                </div>
+              <% } else { %>
+                <span class="badge unrated bottom_left">Unrated</span>
+              <% } %>
+            </a>
+
+            <div class="poster_meta">
+              <div class="poster_title">
+                <a
+                  href="/show/<%= row.id %>"
+                  style="color:inherit; text-decoration:none;"
+                >
+                  <%= row.title || "Untitled" %>
+                </a>
+              </div>
+
+              <div class="poster_sub">
+                <a
+                  href="/corps/<%= encodeURIComponent(row.corps) %>"
+                  style="color:inherit; text-decoration:none;"
+                >
+                  <%= row.corps %>
+                </a>
+
+                <% if (row.year) { %>
+                  <span style="opacity:.5; margin:0 4px;">&bull;</span>
+                  <a
+                    href="/shows?year=<%= encodeURIComponent(row.year) %>"
+                    style="color:inherit; text-decoration:none;"
+                  >
+                    <%= row.year %>
+                  </a>
+                <% } %>
+
+                <% if (Number.isInteger(Number(row.placement)) && Number(row.placement) > 0) { %>
+                  <span style="opacity:.5; margin:0 4px;">&bull;</span>
+                  <span><%= Number(row.placement) %><%=
+                    Number(row.placement) % 100 >= 11 && Number(row.placement) % 100 <= 13
+                      ? "th"
+                      : Number(row.placement) % 10 === 1
+                        ? "st"
+                        : Number(row.placement) % 10 === 2
+                          ? "nd"
+                          : Number(row.placement) % 10 === 3
+                            ? "rd"
+                            : "th"
+                  %></span>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    <% } else { %>
+      <div class="panel" style="margin-top:14px;">
+        <div class="muted">No shows found for this corps.</div>
+      </div>
+    <% } %>
+  </main>
+
+  <footer class="wrap footer">
+    <div class="small">Rate drum corps shows.</div>
+  </footer>
+</body>
+</html>
