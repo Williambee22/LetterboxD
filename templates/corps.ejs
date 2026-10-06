@@ -17,18 +17,13 @@
     html,
     body,
     body.app {
-      background: #000000 !important;
+      background: #000 !important;
       background-image: none !important;
     }
 
     :root {
       --corps-line: rgba(255,255,255,.09);
       --corps-muted: rgba(255,255,255,.58);
-      --corps-panel: rgba(255,255,255,.025);
-    }
-
-    body.app {
-      color: #f5f6f8;
     }
 
     main.wrap {
@@ -36,17 +31,9 @@
       padding-bottom: 48px;
     }
 
-    /* =========================================================
-       SHOW-DETAIL STYLE CORPS HEADER
-       ========================================================= */
-
-    .corpsDetailWrap {
-      margin-top: 18px;
-    }
-
     .corpsBack {
       display: inline-block;
-      margin-bottom: 10px;
+      margin: 14px 0 10px;
       color: var(--corps-muted);
       text-decoration: none;
       font-size: 12px;
@@ -60,23 +47,56 @@
     .corpsDetailPanel {
       padding: 16px !important;
       border-radius: 16px;
-      background: var(--corps-panel);
-      border: 1px solid var(--corps-line);
+      background: rgba(255,255,255,.025);
+      border: 1px solid rgba(255,255,255,.09);
     }
 
     .corpsDetailInner {
       display: flex;
-      gap: 20px;
-      align-items: stretch;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 28px;
+      width: 100%;
     }
 
-    .corpsIdentity {
+    .corpsLeft {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
       flex: 1 1 auto;
       min-width: 0;
-      padding: 8px 4px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+    }
+
+    .corpsPosterColumn {
+      flex: 0 0 210px;
+      width: 210px;
+      min-width: 210px;
+    }
+
+    .corpsPoster {
+      position: relative;
+      width: 210px;
+      height: 315px;
+      overflow: hidden;
+      border-radius: 0;
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 12px 28px rgba(0,0,0,.32);
+      background: #070707;
+    }
+
+    .corpsPoster img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .corpsMeta {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding-top: 4px;
     }
 
     .corpsKicker {
@@ -87,56 +107,44 @@
       color: var(--corps-muted);
     }
 
-    .corpsName {
-      margin: 6px 0 8px;
+    .corpsMeta h1 {
+      margin: 4px 0 6px !important;
       font-size: clamp(1.8rem, 3vw, 2.6rem);
       line-height: 1.05;
       letter-spacing: -.025em;
     }
 
     .corpsSummary {
-      color: var(--corps-muted);
       font-size: 14px;
-      line-height: 1.5;
+      color: var(--corps-muted);
     }
 
     .corpsBadges {
-      margin-top: 12px;
       display: flex;
+      gap: 6px;
       flex-wrap: wrap;
-      gap: 7px;
-      align-items: center;
+      margin-top: 10px;
     }
 
     .corpsBadge {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
       padding: 5px 9px;
       border-radius: 999px;
       font-size: 11px;
       font-weight: 800;
-      line-height: 1;
       background: rgba(255,255,255,.04);
       border: 1px solid rgba(255,255,255,.10);
-      color: rgba(255,255,255,.88);
-    }
-
-    .corpsBadge.rating {
-      color: #fff;
-      border-color: color-mix(in srgb, var(--accent, #3252b3) 30%, rgba(255,255,255,.10));
-      background: color-mix(in srgb, var(--accent, #3252b3) 12%, rgba(255,255,255,.02));
     }
 
     .corpsTopRight {
-      flex: 0 0 520px;
-      width: 520px;
-      min-width: 520px;
+      flex: 0 0 500px;
+      width: 500px;
+      min-width: 500px;
       margin-left: auto;
     }
 
     .corpsStatsPanel {
-      height: 100%;
       padding: 12px !important;
       border-radius: 13px;
       border: 1px solid rgba(255,255,255,.08);
@@ -145,12 +153,12 @@
     }
 
     .corpsStatsLabel {
-      margin-bottom: 10px;
       font-size: 10px;
       font-weight: 900;
       text-transform: uppercase;
-      letter-spacing: .10em;
+      letter-spacing: .1em;
       color: var(--corps-muted);
+      margin-bottom: 10px;
     }
 
     .corpsStatsGrid {
@@ -160,7 +168,6 @@
     }
 
     .corpsStat {
-      min-width: 0;
       min-height: 76px;
       padding: 11px 10px;
       display: flex;
@@ -180,24 +187,18 @@
 
     .corpsStatLabel {
       margin-top: 6px;
-      color: var(--corps-muted);
       font-size: 9px;
-      line-height: 1.25;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: .07em;
+      color: var(--corps-muted);
     }
 
     .corpsStatSub {
       margin-top: 3px;
-      color: rgba(255,255,255,.42);
       font-size: 8px;
-      line-height: 1.2;
+      color: rgba(255,255,255,.42);
     }
-
-    /* =========================================================
-       SHOWS SECTION
-       ========================================================= */
 
     .corpsShowsHeader {
       margin-top: 24px;
@@ -205,7 +206,6 @@
       align-items: end;
       justify-content: space-between;
       gap: 14px;
-      padding: 0 2px;
     }
 
     .corpsShowsHeader h2 {
@@ -248,9 +248,7 @@
     .poster_img {
       display: block;
       width: 100%;
-      transition:
-        transform .22s ease,
-        opacity .22s ease;
+      transition: transform .22s ease, opacity .22s ease;
     }
 
     .poster:hover .poster_img {
@@ -299,15 +297,13 @@
       gap: 3px;
       padding: 3px 6px;
       border-radius: 999px;
-      color: #ffffff;
+      color: #fff;
       font-size: 9px;
       line-height: 1;
       font-weight: 900;
       white-space: nowrap;
       border: 1px solid rgba(255,255,255,.24);
       box-shadow: 0 2px 7px rgba(0,0,0,.55);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
     }
 
     .myShowStatusPill.rated {
@@ -317,10 +313,6 @@
     .myShowStatusPill.reviewed {
       background: rgba(25,135,75,.64);
     }
-
-    /* =========================================================
-       RESPONSIVE
-       ========================================================= */
 
     @media (max-width: 1180px) {
       .corpsDetailInner {
@@ -337,11 +329,29 @@
     @media (max-width: 768px) {
       .corpsDetailInner {
         flex-direction: column;
+        align-items: center;
       }
 
-      .corpsIdentity {
-        text-align: center;
+      .corpsLeft {
+        flex-direction: column;
         align-items: center;
+        width: 100%;
+      }
+
+      .corpsPosterColumn {
+        flex: 0 0 150px;
+        width: 150px;
+        min-width: 150px;
+      }
+
+      .corpsPoster {
+        width: 150px;
+        height: 225px;
+      }
+
+      .corpsMeta {
+        text-align: center;
+        width: 100%;
       }
 
       .corpsBadges {
@@ -351,37 +361,12 @@
       .corpsStatsGrid {
         grid-template-columns: repeat(2, 1fr);
       }
-
-      .corpsShowsHeader {
-        margin-top: 20px;
-      }
     }
 
     @media (max-width: 560px) {
-      .corpsDetailPanel {
-        padding: 12px !important;
-      }
-
-      .corpsStatsGrid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .corpsStat {
-        min-height: 68px;
-        padding: 9px 8px;
-      }
-
-      .corpsStatValue {
-        font-size: 20px;
-      }
-
       .postergrid {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
         gap: 10px !important;
-      }
-
-      .poster_title {
-        font-size: 14px !important;
       }
     }
   </style>
@@ -389,6 +374,7 @@
 
 <%
   const POSTER_FALLBACK = "/static/posters/placeholder.png";
+  const CORPS_POSTER = "/static/posters/corpsdefault.png";
   const safeRows = Array.isArray(rows) ? rows : [];
   const safeStats = stats || {};
   const meUser = typeof me !== "undefined" ? me : null;
@@ -398,11 +384,8 @@
       ? Number(safeStats.avg_rating).toFixed(2)
       : null;
 
-  const ratingCount =
-    Number(safeStats.rating_count || 0);
-
-  const showCount =
-    Number(safeStats.show_count || 0);
+  const ratingCount = Number(safeStats.rating_count || 0);
+  const showCount = Number(safeStats.show_count || 0);
 %>
 
 <body class="app" style="--accent: <%= typeof accent_color !== 'undefined' ? accent_color : '#3252b3' %>;">
@@ -428,15 +411,24 @@
   </header>
 
   <main class="wrap">
-    <div class="corpsDetailWrap">
-      <a class="corpsBack" href="/shows">← Back to all shows</a>
+    <a class="corpsBack" href="/shows">← Back to all shows</a>
 
-      <section class="panel corpsDetailPanel">
-        <div class="corpsDetailInner">
-          <div class="corpsIdentity">
+    <section class="panel corpsDetailPanel">
+      <div class="corpsDetailInner">
+        <div class="corpsLeft">
+          <div class="corpsPosterColumn">
+            <div class="corpsPoster">
+              <img
+                src="<%= CORPS_POSTER %>"
+                alt="<%= corps_name %> poster"
+                onerror="this.onerror=null;this.src='<%= POSTER_FALLBACK %>';"
+              >
+            </div>
+          </div>
+
+          <div class="corpsMeta">
             <div class="corpsKicker">Drum Corps</div>
-
-            <h1 class="corpsName"><%= corps_name %></h1>
+            <h1><%= corps_name %></h1>
 
             <div class="corpsSummary">
               <%= showCount %> <%= showCount === 1 ? "show" : "shows" %> on Pressboxd
@@ -444,7 +436,7 @@
 
             <div class="corpsBadges">
               <% if (avgRatingText != null) { %>
-                <span class="corpsBadge rating">★ <%= avgRatingText %> average</span>
+                <span class="corpsBadge">★ <%= avgRatingText %> average</span>
               <% } else { %>
                 <span class="corpsBadge">Unrated</span>
               <% } %>
@@ -454,57 +446,58 @@
               </span>
 
               <span class="corpsBadge">
-                <%= Number(safeStats.finals_appearances || 0) %> Finals appearance<%= Number(safeStats.finals_appearances || 0) === 1 ? "" : "s" %>
+                <%= Number(safeStats.finals_appearances || 0) %>
+                Finals appearance<%= Number(safeStats.finals_appearances || 0) === 1 ? "" : "s" %>
               </span>
             </div>
           </div>
+        </div>
 
-          <div class="corpsTopRight">
-            <div class="panel corpsStatsPanel">
-              <div class="corpsStatsLabel">Corps History</div>
+        <div class="corpsTopRight">
+          <div class="panel corpsStatsPanel">
+            <div class="corpsStatsLabel">Corps History</div>
 
-              <div class="corpsStatsGrid">
-                <div class="corpsStat">
-                  <div class="corpsStatValue"><%= Number(safeStats.titles || 0) %></div>
-                  <div class="corpsStatLabel">Titles</div>
-                  <div class="corpsStatSub">1st place</div>
-                </div>
+            <div class="corpsStatsGrid">
+              <div class="corpsStat">
+                <div class="corpsStatValue"><%= Number(safeStats.titles || 0) %></div>
+                <div class="corpsStatLabel">Titles</div>
+                <div class="corpsStatSub">1st place</div>
+              </div>
 
-                <div class="corpsStat">
-                  <div class="corpsStatValue"><%= Number(safeStats.silvers || 0) %></div>
-                  <div class="corpsStatLabel">Silvers</div>
-                  <div class="corpsStatSub">2nd place</div>
-                </div>
+              <div class="corpsStat">
+                <div class="corpsStatValue"><%= Number(safeStats.silvers || 0) %></div>
+                <div class="corpsStatLabel">Silvers</div>
+                <div class="corpsStatSub">2nd place</div>
+              </div>
 
-                <div class="corpsStat">
-                  <div class="corpsStatValue"><%= Number(safeStats.bronzes || 0) %></div>
-                  <div class="corpsStatLabel">Bronzes</div>
-                  <div class="corpsStatSub">3rd place</div>
-                </div>
+              <div class="corpsStat">
+                <div class="corpsStatValue"><%= Number(safeStats.bronzes || 0) %></div>
+                <div class="corpsStatLabel">Bronzes</div>
+                <div class="corpsStatSub">3rd place</div>
+              </div>
 
-                <div class="corpsStat">
-                  <div class="corpsStatValue"><%= Number(safeStats.finals_appearances || 0) %></div>
-                  <div class="corpsStatLabel">Finals</div>
-                  <div class="corpsStatSub">Top 12 finishes</div>
-                </div>
+              <div class="corpsStat">
+                <div class="corpsStatValue"><%= Number(safeStats.finals_appearances || 0) %></div>
+                <div class="corpsStatLabel">Finals</div>
+                <div class="corpsStatSub">Top 12 finishes</div>
+              </div>
 
-                <div class="corpsStat">
-                  <div class="corpsStatValue"><%= avgRatingText != null ? "★ " + avgRatingText : "—" %></div>
-                  <div class="corpsStatLabel">Avg. Rating</div>
-                  <div class="corpsStatSub"><%= ratingCount %> total ratings</div>
-                </div>
+              <div class="corpsStat">
+                <div class="corpsStatValue"><%= avgRatingText != null ? "★ " + avgRatingText : "—" %></div>
+                <div class="corpsStatLabel">Avg. Rating</div>
+                <div class="corpsStatSub"><%= ratingCount %> total ratings</div>
+              </div>
 
-                <div class="corpsStat">
-                  <div class="corpsStatValue"><%= showCount %></div>
-                  <div class="corpsStatLabel">Shows</div>
-                  <div class="corpsStatSub">On Pressboxd</div>
-                </div>
+              <div class="corpsStat">
+                <div class="corpsStatValue"><%= showCount %></div>
+                <div class="corpsStatLabel">Shows</div>
+                <div class="corpsStatSub">On Pressboxd</div>
               </div>
             </div>
           </div>
         </div>
-      </section>
-    </div>
+      </div>
+    </section>
 
     <div class="corpsShowsHeader">
       <h2>Shows</h2>
@@ -661,6 +654,7 @@
         <div class="muted">No shows found for this corps.</div>
       </div>
     <% } %>
+
 
   </main>
 
