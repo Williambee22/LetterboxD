@@ -803,6 +803,10 @@
 
     .poster_meta {
       padding-top: 8px;
+      height: 58px;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
     }
 
     .poster_title {
@@ -810,12 +814,23 @@
       font-weight: 800;
       line-height: 1.25;
       letter-spacing: -.01em;
+
+      /* Keep long titles from pushing the corps/year/placement line down. */
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
     }
 
     .poster_sub {
-      margin-top: 3px;
+      margin-top: auto;
+      padding-bottom: 4px;
       font-size: 10px;
+      line-height: 1.2;
       color: rgba(255,255,255,.52);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .tile_rating {
@@ -1344,18 +1359,13 @@
               </div>
               <div class="poster_sub">
                 <% if (row.corps) { %>
-                  <a href="/corps/<%= encodeURIComponent(row.corps) %>" style="color:inherit; text-decoration:none;">
-                    <%= row.corps %>
-                  </a>
+                  <a href="/corps/<%= encodeURIComponent(row.corps) %>" style="color:inherit; text-decoration:none;"><%= row.corps %></a>
                 <% } %>
-              
                 <% if (row.year) { %>
                   <span style="opacity: 0.5; margin: 0 4px;">&bull;</span>
-                  <a href="/shows?year=<%= encodeURIComponent(row.year) %>" style="color:inherit; text-decoration:none;">
-                    <%= row.year %>
-                  </a>
+                  <a href="/shows?year=<%= encodeURIComponent(row.year) %>" style="color:inherit; text-decoration:none;"><%= row.year %></a>
                 <% } %>
-              
+
                 <% if (Number.isInteger(Number(row.placement)) && Number(row.placement) > 0) { %>
                   <span style="opacity: 0.5; margin: 0 4px;">&bull;</span>
                   <span>
