@@ -369,6 +369,251 @@
         gap: 10px !important;
       }
     }
+
+    .auth { align-items:center; gap: 12px; }
+
+    .notifWrap {
+      position: relative;
+      display: inline-flex;
+      align-items:center;
+    }
+
+    .bellBtn {
+      position: relative;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: inherit;
+      padding: 6px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.95;
+    }
+
+    .bellBtn:hover {
+      background: rgba(255,255,255,0.06);
+    }
+
+    .badge,
+    .badgeDot {
+      position:absolute;
+      top: 3px;
+      right: 3px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #ff3b30;
+      color: #fff;
+      font-size: 11px;
+      line-height: 18px;
+      text-align: center;
+      font-weight: 800;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    }
+
+    .notifDropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 40px;
+      width: 340px;
+      max-height: 420px;
+      overflow: auto;
+      background: rgba(15,23,42,.98);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      z-index: 9999;
+    }
+
+    .notifDropdown.open {
+      display:block;
+    }
+
+    .notifHeader {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      position: sticky;
+      top: 0;
+      background: rgba(15,23,42,.98);
+      backdrop-filter: blur(8px);
+    }
+
+    .notifTitle {
+      font-weight: 900;
+    }
+
+    .markReadBtn {
+      border: none;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      opacity: .85;
+      font-size: 12px;
+      padding: 6px 8px;
+      border-radius: 10px;
+    }
+
+    .notifList {
+      padding: 8px;
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+    }
+
+    .notifItem {
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .notifItem.unread {
+      background: rgba(99,102,241,.18);
+      border-color: rgba(99,102,241,.25);
+    }
+
+    .notifTime {
+      font-size: 12px;
+      opacity: .7;
+      margin-top: 4px;
+    }
+
+    .notifEmpty {
+      padding: 12px;
+      opacity: .8;
+    }
+
+    .authBellSlot {
+      display:inline-flex;
+      align-items:center;
+    }
+
+    .userSearchWrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .userSearchInput {
+      width: 220px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      color: inherit;
+      padding: 0 12px;
+      outline: none;
+    }
+
+    .userSearchInput::placeholder {
+      color: rgba(255,255,255,.55);
+    }
+
+    .userSearchDropdown {
+      display: none;
+      position: absolute;
+      top: 44px;
+      right: 0;
+      width: 280px;
+      max-height: 320px;
+      overflow: auto;
+      background: rgba(13,13,16,.98);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      z-index: 9999;
+    }
+
+    .userSearchDropdown.open {
+      display:block;
+    }
+
+    .userSearchItem {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      text-decoration:none;
+      color:inherit;
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+
+    .userSearchItem:last-child {
+      border-bottom:none;
+    }
+
+    .userSearchAvatar {
+      width:30px;
+      height:30px;
+      border-radius:999px;
+      overflow:hidden;
+      flex:0 0 auto;
+      background:rgba(255,255,255,.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .userSearchAvatar img {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .userSearchEmpty {
+      padding:12px;
+      opacity:.8;
+    }
+
+    @media (max-width: 768px) {
+      .topbar .wrap {
+        flex-direction: column !important;
+        gap: 15px;
+        padding: 15px 10px !important;
+      }
+
+      .nav.row {
+        width: 100%;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .auth.row {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .userSearchInput {
+        width: 100% !important;
+        min-width: 280px;
+      }
+
+      .userSearchDropdown {
+        width: 100%;
+        right: 0;
+        left: 0;
+      }
+
+      .notifDropdown {
+        width: 90vw;
+        position: fixed;
+        left: 5vw;
+        right: 5vw;
+        top: 60px;
+      }
+    }
+
   </style>
 </head>
 
@@ -386,6 +631,13 @@
   const safeRows = Array.isArray(rows) ? rows : [];
   const safeStats = stats || {};
   const meUser = typeof me !== "undefined" ? me : null;
+  const notifCountSafe =
+    typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
+
+  const notifItemsSafe =
+    Array.isArray(typeof notif_items !== "undefined" ? notif_items : [])
+      ? notif_items
+      : [];
 
   const avgRatingText =
     safeStats.avg_rating != null
@@ -399,22 +651,182 @@
 <body class="app" style="--accent: <%= typeof accent_color !== 'undefined' ? accent_color : '#3252b3' %>;">
   <header class="topbar">
     <div class="wrap row between">
-      <a class="brand row" href="/shows" style="text-decoration:none; color:inherit;">
-        <img src="/static/logo.png" alt="Pressboxd" style="height:34px; width:auto;">
-      </a>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <a
+          href="https://www.generaleffect.media/"
+          target="_blank"
+          rel="noopener"
+          style="display:flex; align-items:center;"
+        >
+          <img
+            src="/static/logo.png"
+            alt="Logo"
+            style="width:40px; height:40px; object-fit:contain; transition: transform 0.6s ease-in-out;"
+            onmouseover="this.style.transform='rotate(360deg)'"
+            onmouseout="this.style.transform='rotate(0deg)'"
+          >
+        </a>
 
-      <nav class="nav row" style="gap:14px;">
+        <a class="brand" href="/shows" style="display:flex; align-items:center;">
+          <img
+            src="/static/pressboxd-wordmark.png"
+            alt="Pressboxd"
+            style="height:90px; width:auto; display:block; object-fit:contain;"
+          >
+        </a>
+      </div>
+
+      <nav class="nav row">
         <a href="/shows">Shows</a>
-        <a href="/top">Top</a>
-        <a href="/tierlists">Tierlists</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+        <a href="/predictions">Predictions</a>
         <a href="/forums">Forums</a>
+        <a href="/tierlists">Tierlists</a>
 
-        <% if (meUser) { %>
-          <a href="/me">Me</a>
-        <% } else { %>
-          <a href="/">Login</a>
+        <% if (meUser && Number(meUser.is_admin) === 1) { %>
+          <a href="/admin/bulk_add">Mass Add</a>
+          <a href="/admin/roles">Roles</a>
+          <a href="/admin/users">Users</a>
+          <a href="/admin/stats">Stats</a>
+          <a href="/admin/predictions">Predictions Admin</a>
+          <a href="/admin/site-message">Site Message</a>
         <% } %>
       </nav>
+
+      <div class="auth row">
+        <% if (meUser) { %>
+          <div class="userSearchWrap">
+            <input
+              id="userSearchInput"
+              class="userSearchInput"
+              type="text"
+              placeholder="Search users..."
+              autocomplete="off"
+            >
+            <div id="userSearchDropdown" class="userSearchDropdown"></div>
+          </div>
+
+          <div class="authBellSlot">
+            <div class="notifWrap">
+              <button
+                class="bellBtn"
+                id="bellBtn"
+                aria-label="Notifications"
+                title="Notifications"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z"
+                    stroke="currentColor"
+                    stroke-width="1"
+                  />
+                  <path
+                    d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z"
+                    stroke="currentColor"
+                    stroke-width="1"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+
+                <% if (notifCountSafe > 0) { %>
+                  <span class="badge"><%= notifCountSafe %></span>
+                <% } %>
+              </button>
+
+              <div class="notifDropdown" id="notifDropdown">
+                <div class="notifHeader">
+                  <div class="notifTitle">Notifications</div>
+
+                  <form method="post" action="/me/notifications/read">
+                    <button class="markReadBtn" type="submit">Mark all read</button>
+                  </form>
+                </div>
+
+                <% if (notifItemsSafe.length > 0) { %>
+                  <div class="notifList">
+                    <% for (const n of notifItemsSafe) {
+                         const kind = n?.kind || "";
+                         const actor = n?.actor_username || "Someone";
+                         const created = n?.created_at || "";
+                         const unread = Number(n?.is_read ?? 0) === 0;
+                         const sid = n?.show_id || null;
+                         const showName = n?.show_title
+                           ? `${n.show_title}${n.show_corps ? " — " + n.show_corps : ""}${n.show_year ? " (" + n.show_year + ")" : ""}`
+                           : "";
+                    %>
+                      <div class="notifItem <%= unread ? 'unread' : '' %>">
+                        <% if (kind === "friend_request") { %>
+                          <div><b><%= actor %></b> sent you a friend request.</div>
+
+                        <% } else if (kind === "follow") { %>
+                          <div><b><%= actor %></b> followed you.</div>
+
+                        <% } else if (kind === "review_upvote") { %>
+                          <div>
+                            <b><%= actor %></b> upvoted your review
+                            <% if (showName) { %>
+                              of <a href="/show/<%= sid %>"><%= showName %></a>
+                            <% } else if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
+                          </div>
+
+                        <% } else if (kind === "review_comment") { %>
+                          <div>
+                            <b><%= actor %></b> commented on your review
+                            <% if (showName) { %>
+                              of <a href="/show/<%= sid %>"><%= showName %></a>
+                            <% } else if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
+                          </div>
+
+                        <% } else if (kind === "comment_reply") { %>
+                          <div>
+                            <b><%= actor %></b> replied to your comment
+                            <% if (showName) { %>
+                              on <a href="/show/<%= sid %>"><%= showName %></a>
+                            <% } else if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
+                          </div>
+
+                        <% } else { %>
+                          <div>New activity.</div>
+                        <% } %>
+
+                        <% if (created) { %>
+                          <div class="notifTime"><%= created %></div>
+                        <% } %>
+                      </div>
+                    <% } %>
+                  </div>
+                <% } else { %>
+                  <div class="notifEmpty">No notifications.</div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+          <a class="nav_user" href="/me">
+            <span class="avatar_sm">
+              <% if (meUser.avatar_url) { %>
+                <img src="<%= meUser.avatar_url %>" alt="avatar">
+              <% } else { %>
+                <span class="avatar_fallback"></span>
+              <% } %>
+            </span>
+
+            <span class="muted small"><%= meUser.username || "me" %></span>
+          </a>
+
+          <a href="/logout">Logout</a>
+        <% } else { %>
+          <a href="/login">Login</a>
+          <a class="btn" href="/register">Register</a>
+        <% } %>
+      </div>
     </div>
   </header>
 
@@ -438,6 +850,7 @@
             <div class="corpsKicker">Drum Corps</div>
             <h1><%= corps_name %></h1>
 
+      
 
             <div class="corpsBadges">
               <% if (avgRatingText != null) { %>
@@ -496,6 +909,7 @@
               <div class="corpsStat">
                 <div class="corpsStatValue"><%= showCount %></div>
                 <div class="corpsStatLabel">Shows</div>
+            
               </div>
             </div>
           </div>
@@ -665,5 +1079,125 @@
   <footer class="wrap footer">
     <div class="small">Rate drum corps shows.</div>
   </footer>
+
+  <script>
+    (() => {
+      const btn = document.getElementById("bellBtn");
+      const dd = document.getElementById("notifDropdown");
+
+      if (btn && dd) {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dd.classList.toggle("open");
+        });
+
+        dd.addEventListener("click", (e) => e.stopPropagation());
+        document.addEventListener("click", () => dd.classList.remove("open"));
+      }
+    })();
+
+    (() => {
+      const input = document.getElementById("userSearchInput");
+      const dropdown = document.getElementById("userSearchDropdown");
+
+      if (!input || !dropdown) return;
+
+      let timer = null;
+      let requestId = 0;
+
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function renderUsers(users) {
+        if (!Array.isArray(users) || users.length === 0) {
+          dropdown.innerHTML =
+            '<div class="userSearchEmpty">No users found.</div>';
+          dropdown.classList.add("open");
+          return;
+        }
+
+        dropdown.innerHTML = users.map(u => {
+          const avatar = u.avatar_url
+            ? `<img src="${escapeHtml(u.avatar_url)}" alt="${escapeHtml(u.username)}">`
+            : `<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;opacity:.7;">👤</span>`;
+
+          return `
+            <a class="userSearchItem" href="/u/${encodeURIComponent(u.username)}">
+              <div class="userSearchAvatar">${avatar}</div>
+              <div style="min-width:0;">
+                <div style="font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                  ${escapeHtml(u.username)}
+                </div>
+              </div>
+            </a>
+          `;
+        }).join("");
+
+        dropdown.classList.add("open");
+      }
+
+      function clearDropdown() {
+        dropdown.innerHTML = "";
+        dropdown.classList.remove("open");
+      }
+
+      input.addEventListener("input", () => {
+        const q = input.value.trim();
+        clearTimeout(timer);
+
+        if (!q) {
+          clearDropdown();
+          return;
+        }
+
+        timer = setTimeout(async () => {
+          const currentRequest = ++requestId;
+
+          try {
+            const res = await fetch(
+              `/api/users/search?q=${encodeURIComponent(q)}`,
+              { headers: { Accept: "application/json" } }
+            );
+
+            if (!res.ok) throw new Error("search request failed");
+
+            const data = await res.json();
+
+            if (currentRequest !== requestId) return;
+
+            renderUsers(Array.isArray(data.users) ? data.users : []);
+          } catch (err) {
+            console.error("user search failed:", err);
+
+            if (currentRequest !== requestId) return;
+
+            dropdown.innerHTML =
+              '<div class="userSearchEmpty">Search failed.</div>';
+            dropdown.classList.add("open");
+          }
+        }, 200);
+      });
+
+      input.addEventListener("focus", () => {
+        if (dropdown.innerHTML.trim()) {
+          dropdown.classList.add("open");
+        }
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!dropdown.contains(e.target) && e.target !== input) {
+          dropdown.classList.remove("open");
+        }
+      });
+    })();
+  </script>
+
 </body>
 </html>
