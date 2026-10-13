@@ -42,6 +42,56 @@ module.exports = function mountBetting(app, getConn) {
   const admin=(req,res,next)=>Number(res.locals.me?.is_admin)===1?next():res.sendStatus(403);
   function validOrigin(req) { const o=req.get('origin'); if (!o) return true; try { return new URL(o).host===req.get('host'); } catch {return false;} }
   function write(req,res,next){ if(!validOrigin(req))return res.status(403).json({error:'Invalid request origin'}); next(); }
+  // Standalone Gems management: authenticated admins only.
+  const adminLogin=(req,res,next)=>req.session?.uid?next():res.redirect('/login?next=%2Fbetsadmin');
+  const csrfToken=(req)=>{
+    if(!req.session.betsadmin_csrf)req.session.betsadmin_csrf=require('crypto').randomBytes(32).toString('hex');
+    return req.session.betsadmin_csrf;
+  };
+  function loadAdminPage(req,res,next) {
+    try {
+      const search=String(req.query.q||'').trim().slice(0,80);
+      withDb(db=>{
+        initialize(db);
+        const users=search?db.prepare(`SELECT id,username FROM users WHERE username LIKE ? ESCAPE '\' ORDER BY username LIMIT 30`).all('%'+search.replace(/[\%_]/g,'\$&')+'%'):[];
+        const results=users.map(u=>({...u,balance:wallet(db,Number(u.id))}));
+        const history=db.prepare(`SELECT a.id,a.user_id,a.username,a.admin_id,a.admin_username,a.delta,a.balance_before,a.balance_after,a.reason,a.created_ts FROM pb_gems_admin_adjustments a ORDER BY a.id DESC LIMIT 35`).all();
+        res.setHeader('Cache-Control','private, no-store');
+        res.render('betsadmin',{me:res.locals.me,accent_color:res.locals.accent_color,search,users:results,history,csrf:csrfToken(req),notice:req.query.ok==='1'?'Gems successfully adjusted.':'',error:String(req.query.error||'').slice(0,120)});
+      });
+    } catch(e){next(e);}
+  }
+  withDb(db=>db.exec(`CREATE TABLE IF NOT EXISTS pb_gems_admin_adjustments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,username TEXT NOT NULL,
+    admin_id INTEGER NOT NULL,admin_username TEXT NOT NULL,delta INTEGER NOT NULL,
+    balance_before INTEGER NOT NULL,balance_after INTEGER NOT NULL,reason TEXT NOT NULL,
+    created_ts INTEGER NOT NULL DEFAULT (unixepoch())
+  )`));
+  app.get('/betsadmin',adminLogin,admin,loadAdminPage);
+  app.post('/betsadmin/adjust',adminLogin,admin,(req,res,next)=>{
+    if(!validOrigin(req))return res.sendStatus(403);
+    const supplied=String(req.body.csrf||'');
+    const expected=String(req.session.betsadmin_csrf||'');
+    const crypto=require('crypto');
+    if(!expected||supplied.length!==expected.length||!crypto.timingSafeEqual(Buffer.from(supplied),Buffer.from(expected)))return res.sendStatus(403);
+    try {
+      const username=String(req.body.username||'').trim();
+      const amount=Number(req.body.amount);
+      const reason=String(req.body.reason||'').trim();
+      if(!username||!Number.isSafeInteger(amount)||amount===0||Math.abs(amount)>1000000||reason.length<3||reason.length>300)throw Error('Enter a username, nonzero whole Gems amount, and a reason (3–300 characters).');
+      withDb(db=>db.transaction(()=>{
+        const user=db.prepare('SELECT id,username FROM users WHERE username=? COLLATE NOCASE LIMIT 1').get(username);
+        if(!user)throw Error('Username not found.');
+        const before=wallet(db,Number(user.id));
+        const after=before+amount;
+        if(!Number.isSafeInteger(after)||after<0)throw Error('Cannot subtract more Gems than the user has.');
+        db.prepare('UPDATE pb_betting_wallets SET balance=? WHERE user_id=?').run(after,user.id);
+        db.prepare('INSERT INTO pb_betting_ledger(user_id,delta,reason) VALUES(?,?,?)').run(user.id,amount,'admin_adjustment');
+        db.prepare(`INSERT INTO pb_gems_admin_adjustments(user_id,username,admin_id,admin_username,delta,balance_before,balance_after,reason) VALUES(?,?,?,?,?,?,?,?)`).run(user.id,user.username,Number(req.session.uid),String(res.locals.me.username),amount,before,after,reason);
+      })());
+      return res.redirect(303,'/betsadmin?ok=1');
+    }catch(e){return res.redirect(303,'/betsadmin?error='+encodeURIComponent(String(e.message||'Adjustment failed').slice(0,120)));}
+  });
   app.get('/betting', loggedIn, (req,res,next)=>{ try {withDb(db=>{
     gems.creditHistoricalPredictionScores(db);
     const now=Math.floor(Date.now()/1000),uid=Number(req.session.uid);
@@ -77,28 +127,6 @@ module.exports = function mountBetting(app, getConn) {
       return {bet_id:Number(b.lastInsertRowid),balance:wallet(db,uid)};
     })();
   });res.json({ok:true,...result});}catch(e){res.status(400).json({error:e.message});} });
-  // Admin-managed balance adjustments. All changes are atomic and audited.
-  app.post('/api/admin/gems/adjust', loggedIn, admin, write, (req,res)=>{
-    try {
-      const data=withDb(db=>db.transaction(()=>{
-        const identifier=String(req.body.username||'').trim();
-        const delta=Number(req.body.delta);
-        const note=String(req.body.note||'').trim();
-        if(!identifier || identifier.length>100) throw Error('Enter a username.');
-        if(!Number.isSafeInteger(delta) || delta===0 || Math.abs(delta)>1000000) throw Error('Enter a nonzero whole number between -1,000,000 and 1,000,000.');
-        if(!note || note.length>250) throw Error('An adjustment reason (max 250 characters) is required.');
-        const user=db.prepare('SELECT id,username FROM users WHERE LOWER(username)=LOWER(?) LIMIT 1').get(identifier);
-        if(!user) throw Error('User not found.');
-        wallet(db,Number(user.id));
-        const change=db.prepare('UPDATE pb_betting_wallets SET balance=balance+? WHERE user_id=? AND balance+?>=0').run(delta,user.id,delta);
-        if(change.changes!==1) throw Error('Cannot remove more Gems than the user owns.');
-        const adminId=Number(req.session.uid);
-        db.prepare('INSERT INTO pb_betting_ledger(user_id,delta,reason) VALUES(?,?,?)').run(user.id,delta,'admin:'+adminId+':'+note);
-        return {ok:true,username:user.username,delta,balance:wallet(db,Number(user.id))};
-      })());
-      return res.json(data);
-    } catch(e) {return res.status(400).json({error:e.message||'Adjustment failed'});}
-  });
   app.post('/api/admin/betting/import',loggedIn,admin,write,(req,res)=>{try{ const imported=withDb(db=>db.transaction(()=>{
     const items=req.body.events; if(!Array.isArray(items)||items.length>500)throw Error('Supply events array (up to 500).');
     let count=0;for(const ev of items){
