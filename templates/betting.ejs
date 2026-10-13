@@ -100,19 +100,6 @@
 
   <div class="pb-app-layout">
 
-    <% if (me && Number(me.is_admin) === 1) { %>
-    <section class="pb-gems-admin" aria-label="Gems administration">
-      <div class="pb-gems-admin-title">💎 Admin: Adjust Gems</div>
-      <form id="gemAdminForm" class="pb-gems-admin-form">
-        <input type="text" name="username" placeholder="Exact username" required maxlength="100" aria-label="Username">
-        <input type="number" name="delta" placeholder="+100 or -100" required step="1" min="-1000000" max="1000000" aria-label="Gems to add or remove">
-        <input type="text" name="note" placeholder="Reason for adjustment" maxlength="250" required aria-label="Reason">
-        <button type="submit">Apply Adjustment</button>
-      </form>
-      <p id="gemAdminResult" role="status"></p>
-    </section>
-    <% } %>
-
     <main class="pb-board">
 
       <!-- PAGE HEADING -->
