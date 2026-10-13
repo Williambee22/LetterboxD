@@ -1,414 +1,1687 @@
-
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
 
-  <title>Betting | Pressboxd</title>
+  <title>Pressboxd — Rate and Review Drum Corps Shows</title>
+  <meta
+    name="description"
+    content="Pressboxd is a drum corps show rating site where fans can browse shows, rate performances, write reviews, and track their favorite DCI shows."
+  >
+  <link rel="canonical" href="https://www.pressboxd.com/">
+
+  <meta property="og:title" content="Pressboxd — Rate and Review Drum Corps Shows">
+  <meta
+    property="og:description"
+    content="Browse drum corps shows, rate performances, write reviews, and track your favorite DCI shows on Pressboxd."
+  >
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.pressboxd.com/">
+  <meta property="og:image" content="https://www.pressboxd.com/static/logo.png">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Pressboxd — Rate and Review Drum Corps Shows">
+  <meta
+    name="twitter:description"
+    content="Browse drum corps shows, rate performances, write reviews, and track your favorite DCI shows on Pressboxd."
+  >
+  <meta name="twitter:image" content="https://www.pressboxd.com/static/logo.png">
 
   <link rel="stylesheet" href="/static/styles.css"/>
-  <link rel="stylesheet" href="/static/betting.css"/>
   <link rel="icon" type="image/png" href="/static/favicon.png"/>
+
+  <style>
+    html,
+    body,
+    body.app {
+      background: #000000 !important;
+      background-image: none !important;
+    }
+
+    .accentBorder { border: 1px solid color-mix(in srgb, var(--accent) 28%, rgba(255,255,255,0.10)); }
+    .accentBorderSoft { border: 1px solid color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,0.10)); }
+
+    .accentCard {
+      background: #000000;
+      border: 1px solid color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,0.10));
+      border-radius: 12px;
+    }
+
+    .accentThumb {
+      background: color-mix(in srgb, var(--accent) 10%, rgba(255,255,255,0.05));
+      border: 1px solid color-mix(in srgb, var(--accent) 16%, rgba(255,255,255,0.10));
+    }
+
+    .accentLink { color: var(--accent); }
+    .accentLink:hover { text-decoration: underline; }
+
+    .accentMutedLink { color: color-mix(in srgb, var(--accent) 55%, rgba(255,255,255,0.65)); }
+    .accentMutedLink:hover { color: var(--accent); }
+
+    .auth { align-items:center; gap: 12px; }
+
+    .notifWrap { position: relative; display: inline-flex; align-items:center; }
+    .bellBtn {
+      position: relative;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: inherit;
+      padding: 6px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.95;
+    }
+    .bellBtn:hover { background: rgba(255,255,255,0.06); }
+
+    .badge,
+    .badgeDot {
+      position:absolute;
+      top: 3px;
+      right: 3px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #ff3b30;
+      color: #fff;
+      font-size: 11px;
+      line-height: 18px;
+      text-align: center;
+      font-weight: 800;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    }
+
+    .notifDropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 40px;
+      width: 340px;
+      max-height: 420px;
+      overflow: auto;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.45);
+      z-index: 9999;
+    }
+    .notifDropdown.open { display:block; }
+
+    .notifHeader {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      position: sticky;
+      top: 0;
+      background: rgba(15, 23, 42, 0.98);
+      backdrop-filter: blur(8px);
+    }
+    .notifTitle { font-weight: 900; }
+    .markReadBtn {
+      border: none;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      opacity: 0.85;
+      font-size: 12px;
+      padding: 6px 8px;
+      border-radius: 10px;
+    }
+    .markReadBtn:hover { background: rgba(255,255,255,0.06); opacity: 1; }
+
+    .notifList { padding: 8px; display:flex; flex-direction:column; gap: 8px; }
+    .notifItem {
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .notifItem.unread { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.25); }
+    .notifTime { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+    .notifEmpty { padding: 12px; opacity: 0.8; }
+
+    .authBellSlot { display:inline-flex; align-items:center; }
+
+    .notifDropdown,
+    .notifDropdown * {
+      pointer-events: auto !important;
+    }
+
+    .userSearchWrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .userSearchInput {
+      width: 220px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: inherit;
+      padding: 0 12px;
+      outline: none;
+    }
+
+    .userSearchInput::placeholder {
+      color: rgba(255,255,255,0.55);
+    }
+
+    .userSearchInput:focus {
+      border-color: color-mix(in srgb, var(--accent) 40%, rgba(255,255,255,0.15));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+
+    .userSearchDropdown {
+      display: none;
+      position: absolute;
+      top: 44px;
+      right: 0;
+      width: 280px;
+      max-height: 320px;
+      overflow: auto;
+      background: rgba(103, 103, 103, 0.89);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.45);
+      z-index: 9999;
+    }
+
+    .userSearchDropdown.open {
+      display: block;
+    }
+
+    .userSearchItem {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      text-decoration: none;
+      color: inherit;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .userSearchItem:last-child {
+      border-bottom: none;
+    }
+
+    .userSearchItem:hover {
+      background: rgba(255,255,255,0.06);
+    }
+
+    .userSearchAvatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      overflow: hidden;
+      flex: 0 0 auto;
+      background: rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .userSearchAvatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .userSearchEmpty {
+      padding: 12px;
+      opacity: 0.8;
+    }
+
+    .hotWrap {
+      width: 100%;
+      padding: 20px 0;
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .hotIntro {
+      flex: 1 1 560px;
+      min-width: 320px;
+      text-align: center;
+      display: block;
+      padding-top: 68px;
+    }
+
+    .hotCard {
+      flex: 0 1 470px;
+      min-width: 320px;
+      max-width: 440px;
+      min-height: 440px;
+      padding: 20px;
+      text-align: left;
+    }
+    
+    .hotList {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .notifItem a,
+    .notifItem a:visited {
+      color: inherit;
+      text-decoration: none;
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      border-radius: 0 !important;
+    }
+    
+    .notifItem a:hover,
+    .notifItem a:focus,
+    .notifItem a:active {
+      color: var(--accent);
+      text-decoration: underline;
+      background: transparent !important;
+      box-shadow: none !important;
+      outline: none !important;
+    }
+
+
+    .hotItem {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,1.00);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .hotRank {
+      width: 38px;
+      flex: 0 0 38px;
+      text-align: center;
+      font-weight: 900;
+      font-size: 24px;
+      opacity: .92;
+    }
+    
+    .hotPosterBox {
+      width: 66px;
+      height: 94px;
+      padding: 4px;
+      box-sizing: border-box;
+      border-radius: 12px;
+      overflow: hidden;
+      flex: 0 0 66px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,1.00);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .hotTitle {
+      font-weight: 900;
+      font-size: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .randomSelect,
+    #showsFilterForm select {
+      background: rgba(20,20,20,0.98) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+    
+    .randomSelect option,
+    #showsFilterForm select option {
+      background: #111111 !important;
+      color: #ffffff !important;
+    }
+
+    .hotSub {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 13px;
+    }
+    
+    .hotActivity {
+      margin-top: 6px;
+      font-size: 13px;
+      opacity: .92;
+    }
+
+    .randomCard {
+      flex: 0 1 340px;
+      min-width: 280px;
+      max-width: 360px;
+      padding: 12px;
+      text-align: left;
+    }
+  
+    .randomControls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+  
+    .randomSelect {
+      flex: 1;
+      min-width: 140px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.08);
+      color: inherit;
+      padding: 0 10px;
+      outline: none;
+    }
+  
+    .randomSelect:focus {
+      border-color: color-mix(in srgb, var(--accent) 40%, rgba(255,255,255,0.15));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+  
+    .randomShowBox {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(0,0,0,1.00);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+  
+    .randomPosterBox {
+      width: 100%;
+      height: 240px;
+      padding: 6px;
+      box-sizing: border-box;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,1.00);
+      border: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 12px;
+    }
+  
+    .randomPosterImg {
+      width: 100%;
+      height: 100%;
+      object-fit: scale-down;
+      object-position: center;
+      display: block;
+      background: transparent;
+    }
+  
+    .randomTitle {
+      font-weight: 900;
+      font-size: 18px;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+  
+    .randomSub {
+      margin-bottom: 8px;
+    }
+  
+    .randomMeta {
+      font-size: 13px;
+      opacity: 0.92;
+    }
+  
+    .randomEmpty {
+      padding: 12px 2px;
+    }
+  
+    @media (max-width: 768px) {
+      .randomCard {
+        max-width: none !important;
+        width: 100% !important;
+      }
+    }
+
+    /* =========================================================
+       MY RATING / REVIEW STATUS
+       ========================================================= */
+    
+    .myShowStatus {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      z-index: 10;
+    
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    
+      gap: 4px;
+    
+      pointer-events: none;
+    }
+    
+    .myShowStatusPill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    
+      gap: 3px;
+    
+      padding: 3px 6px;
+    
+      border-radius: 999px;
+    
+      color: #ffffff;
+    
+      font-size: 9px;
+      line-height: 1;
+      font-weight: 900;
+    
+      white-space: nowrap;
+    
+      border: 1px solid rgba(255, 255, 255, 0.24);
+    
+      box-shadow:
+        0 2px 7px rgba(0, 0, 0, 0.55);
+    
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    
+    .myShowStatusPill.rated {
+      background: rgba(45, 82, 190, 0.64);
+    }
+    
+    .myShowStatusPill.reviewed {
+      background: rgba(25, 135, 75, 0.64);
+    }
+    
+    .myShowStatusIcon {
+      font-size: 9px;
+      line-height: 1;
+    }
+
+
+
+    @media (max-width: 768px) {
+      .topbar .wrap {
+        flex-direction: column !important;
+        gap: 15px;
+        padding: 15px 10px !important;
+      }
+
+      .nav.row {
+        width: 100%;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .auth.row {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .userSearchInput {
+        width: 100% !important;
+        min-width: 280px;
+      }
+
+      .userSearchDropdown {
+        width: 100%;
+        right: 0;
+        left: 0;
+      }
+
+      .hotWrap {
+        flex-direction: column !important;
+        align-items: stretch !important;
+      }
+
+      .hotIntro,
+      .hotCard {
+        max-width: none !important;
+        width: 100% !important;
+      }
+
+      .hotIntro div[style*="font-size: 42px"] {
+        font-size: 28px !important;
+      }
+
+      div[style*="flex: 1 1 240px"] {
+        flex: 1 1 100% !important;
+        max-width: none !important;
+      }
+
+      #showsFilterForm {
+        flex-direction: column !important;
+        align-items: stretch !important;
+      }
+
+      #showsFilterForm .field {
+        width: 100% !important;
+        min-width: 0 !important;
+      }
+
+      #showsFilterForm .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      #showsFilterForm .actions .btn {
+        flex: 1;
+        text-align: center;
+      }
+
+      .notifDropdown {
+        width: 90vw;
+        position: fixed;
+        left: 5vw;
+        right: 5vw;
+        top: 60px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .postergrid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+        gap: 10px !important;
+      }
+
+      .poster_title {
+        font-size: 14px !important;
+      }
+    }
+  
+    /* =========================================================
+       PROFESSIONAL LOWER-PAGE REFINEMENT
+       Top header / Random Show / Welcome / Hot Shows preserved.
+       ========================================================= */
+
+    :root {
+      --pb-surface: #0a0a0c;
+      --pb-line: rgba(255,255,255,.09);
+      --pb-shadow: 0 14px 38px rgba(0,0,0,.28);
+    }
+
+    body.app {
+      color: #f5f6f8;
+    }
+
+    main.wrap {
+      max-width: 1440px;
+      padding-bottom: 46px;
+    }
+
+    /* -------------------------
+       FRIEND ACTIVITY
+       Keep the professional cleanup, but use square corners.
+       ------------------------- */
+    main.wrap > .panel[style*="margin-top:12px"] {
+      margin-top: 12px !important;
+      padding: 14px !important;
+      border-radius: 0 !important;
+      border: 1px solid var(--pb-line);
+      background: #000000 !important;
+      );
+    }
+
+    main.wrap > .panel[style*="margin-top:12px"] > .row.between {
+      margin-bottom: 0 !important;
+    }
+
+    main.wrap > .panel[style*="margin-top:12px"]
+      > div[style*="display:flex; flex-wrap:wrap"] {
+      gap: 8px !important;
+      margin-top: 10px !important;
+    }
+
+    main.wrap > .panel[style*="margin-top:12px"]
+      > div[style*="display:flex; flex-wrap:wrap"]
+      > div {
+      background: rgba(255,255,255,.025) !important;
+      border-color: rgba(255,255,255,.075) !important;
+      border-radius: 0 !important;
+      padding: 9px 10px !important;
+      transition:
+        background .15s ease,
+        border-color .15s ease;
+    }
+
+    main.wrap > .panel[style*="margin-top:12px"]
+      > div[style*="display:flex; flex-wrap:wrap"]
+      > div:hover {
+      background: rgba(255,255,255,.04) !important;
+      border-color: rgba(255,255,255,.12) !important;
+    }
+
+    /* -------------------------
+       ALL SHOWS HEADING
+       ------------------------- */
+    main.wrap > div[style*="margin-top:24px"] {
+      margin-top: 32px !important;
+    }
+
+    main.wrap > div[style*="margin-top:24px"] h1 {
+      font-size: 26px;
+      letter-spacing: -.03em;
+      margin: 0 !important;
+    }
+
+    main.wrap > div[style*="margin-top:24px"] .muted.small {
+      margin-top: 5px;
+      font-size: 12px;
+      color: rgba(255,255,255,.55);
+    }
+
+    /* -------------------------
+       ALL SHOWS FILTER BAR
+       Professional styling, square corners.
+       ------------------------- */
+    main.wrap > .panel[style*="margin-top:14px"] {
+      margin-top: 12px !important;
+      padding: 12px 14px !important;
+      border-radius: 0 !important;
+      background: #000000 !important;
+      border: 1px solid var(--pb-line);
+      box-shadow: none;
+    }
+
+    #showsFilterForm {
+      gap: 10px;
+    }
+
+    #showsFilterForm .field label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: rgba(255,255,255,.46);
+    }
+
+    #showsFilterForm input,
+    #showsFilterForm select {
+      height: 36px;
+      border-radius: 0 !important;
+      background: rgba(255,255,255,.035) !important;
+      border: 1px solid rgba(255,255,255,.10) !important;
+      color: #fff !important;
+      font-size: 12px;
+      padding: 0 10px;
+      outline: none;
+      transition:
+        border-color .15s ease,
+        background .15s ease,
+        box-shadow .15s ease;
+    }
+
+    #showsFilterForm input:focus,
+    #showsFilterForm select:focus {
+      background: rgba(255,255,255,.05) !important;
+      border-color:
+        color-mix(
+          in srgb,
+          var(--accent) 48%,
+          rgba(255,255,255,.16)
+        ) !important;
+      box-shadow:
+        0 0 0 3px
+        color-mix(
+          in srgb,
+          var(--accent) 14%,
+          transparent
+        );
+    }
+
+    #showsFilterForm .actions {
+      min-height: 36px;
+    }
+
+    /* -------------------------
+       POSTER GRID
+       ------------------------- */
+    .postergrid {
+      margin-top: 16px !important;
+      gap: 18px 14px !important;
+    }
+
+    .poster {
+      min-width: 0;
+      transition: transform .17s ease;
+    }
+
+    .poster:hover {
+      transform: translateY(-3px);
+    }
+
+    .poster_art {
+      overflow: hidden;
+      border-radius: 9px;
+      background: #070707;
+      box-shadow: 0 8px 20px rgba(0,0,0,.18);
+      transition: box-shadow .17s ease;
+    }
+
+    .poster:hover .poster_art {
+      box-shadow: 0 14px 30px rgba(0,0,0,.34);
+    }
+
+    .poster_img {
+      display: block;
+      width: 100%;
+      transition:
+        transform .22s ease,
+        opacity .22s ease;
+    }
+
+    .poster:hover .poster_img {
+      transform: scale(1.015);
+      opacity: .96;
+    }
+
+    .poster_meta {
+      padding-top: 8px;
+    }
+    
+    .poster_title {
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+
+      /* Keep long titles from pushing the corps/year/placement line down. */
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+    }
+
+    .poster_sub {
+      margin-top: 8px;
+      font-size: 5px !important;;
+      color: rgba(255,255,255,.52);
+    
+      /* move only the corps/year/placement line down slightly */
+      transform: translateY(2px) !important;
+    }
+
+    .tile_rating {
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    /* -------------------------
+       NOTIFICATION / SEARCH DROPDOWNS
+       ------------------------- */
+    .notifDropdown,
+    .userSearchDropdown {
+      border-radius: 12px;
+      background: rgba(13,13,16,.98);
+      border-color: rgba(255,255,255,.10);
+      box-shadow: var(--pb-shadow);
+    }
+
+    .userSearchDropdown {
+      background: rgba(13,13,16,.98);
+    }
+
+    .notifItem,
+    .userSearchItem {
+      border-radius: 8px;
+    }
+
+
+    .poster .poster_sub {
+      font-size: 10px !important;
+      transform: translateY(2px) !important;
+    }
+
+    @media (max-width: 768px) {
+      main.wrap > div[style*="margin-top:24px"] {
+        margin-top: 24px !important;
+      }
+
+      #showsFilterForm {
+        gap: 8px;
+      }
+    }
+
+    
+  </style>
 </head>
+<%
+  const POSTER_FALLBACK = "/static/posters/placeholder.png";
 
-<body class="pb-body">
+  const rawRows = Array.isArray(rows) ? rows : [];
+  
+  const activeSort =
+    typeof sort !== "undefined"
+      ? String(sort || "").trim()
+      : "";
+  
+  // Copy so we don't modify the original rows array.
+  const safeRows = [...rawRows];
+  
+  // DEFAULT VIEW:
+  // Newest year first, then placement 1st, 2nd, 3rd, etc.
+  // Shows without a placement go after placed shows.
+  if (!activeSort) {
+    safeRows.sort((a, b) => {
+      const aYear = Number(a?.year || 0);
+      const bYear = Number(b?.year || 0);
+  
+      // Newest year first.
+      if (aYear !== bYear) {
+        return bYear - aYear;
+      }
+  
+      const aPlacement = Number(a?.placement);
+      const bPlacement = Number(b?.placement);
+  
+      const aHasPlacement =
+        Number.isInteger(aPlacement) &&
+        aPlacement > 0;
+  
+      const bHasPlacement =
+        Number.isInteger(bPlacement) &&
+        bPlacement > 0;
+  
+      // If both have placements:
+      // 1st, 2nd, 3rd, 4th...
+      if (aHasPlacement && bHasPlacement) {
+        return aPlacement - bPlacement;
+      }
+  
+      // Known placements before unknown placements.
+      if (aHasPlacement) return -1;
+      if (bHasPlacement) return 1;
+  
+      // Fallback for shows with no placement.
+      return String(a?.corps || "").localeCompare(
+        String(b?.corps || ""),
+        undefined,
+        { sensitivity: "base" }
+      );
+    });
+  }
+  const safeFriendActivity = Array.isArray(friend_activity) ? friend_activity : [];
+  const safeHotShows = Array.isArray(hot_shows) ? hot_shows : [];
+  const meUser = typeof me !== "undefined" ? me : null;
+  const notifCountSafe = typeof notif_count !== "undefined" ? Number(notif_count || 0) : 0;
+  const notifItemsSafe = Array.isArray(typeof notif_items !== "undefined" ? notif_items : []) ? notif_items : [];
+  const safeRandomRows = safeRows.map(r => ({
+    id: r?.id || null,
+    title: r?.title || "Untitled",
+    corps: r?.corps || "",
+    year: r?.year != null ? Number(r.year) : null,
+    poster_url: r?.poster_url || POSTER_FALLBACK,
+    avg_rating: r?.avg_rating != null ? Number(r.avg_rating) : (r?.avg != null ? Number(r.avg) : 0),
+    cnt: Number(r?.cnt || 0)
+  })).filter(r => r.id);
 
-<!-- NORMAL PRESSBOXD HEADER WITH GEM LOGO -->
-<header class="topbar gem-betting-header">
-  <div class="wrap row between gem-header-inner">
+  const selectedYearForAvg = typeof year !== "undefined" ? String(year || "").trim() : "";
 
-    <div class="gem-brand-area">
-      <a
-        href="https://www.generaleffect.media/"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="gem-logo-link"
-        title="General Effect Media"
-      >
-        <img
-          src="/static/logo.png"
-          alt="General Effect Media"
-          class="gem-header-logo"
-        />
-      </a>
-    </div>
+  const yearAverageRows = selectedYearForAvg
+    ? safeRows.filter(r => {
+        const showYear = r?.year != null ? String(r.year).trim() : "";
+        const ratingCount = Number(r?.cnt || 0);
+        const avgValue = r?.avg_rating != null
+          ? Number(r.avg_rating)
+          : (r?.avg != null ? Number(r.avg) : 0);
 
-    <nav class="nav row gem-nav" aria-label="Main navigation">
-      <a href="/shows">Shows</a>
-      <a href="/top">Top Shows</a>
-      <a href="/top_users">Top Users</a>
-      <a href="/predictions">Predictions</a>
-      <a
-        href="/betting"
-        class="gem-nav-active"
-        aria-current="page"
-      >Betting</a>
-      <a href="/forums">Forums</a>
-      <a href="/tierlists">Tierlists</a>
+        return showYear === selectedYearForAvg && ratingCount >= 5 && avgValue > 0;
+      })
+    : [];
 
-      <% if (me && Number(me.is_admin) === 1) { %>
-        <a href="/admin/bulk_add">Mass Add</a>
-        <a href="/admin/roles">Roles</a>
-        <a href="/admin/users">Users</a>
-        <a href="/admin/stats">Stats</a>
-        <a href="/admin/predictions">Predictions Admin</a>
-        <a href="/admin/site-message">Site Message</a>
-      <% } %>
-    </nav>
-
-    <div class="auth row gem-header-auth">
-
-      <a href="#history" class="gem-header-picks">
-        My Picks
-      </a>
-
-      <div class="pb-balance">
-        <span class="pb-coin">P</span>
-        <strong id="balance">
-          <%= Number(typeof balance !== 'undefined' ? balance : 0).toLocaleString() %>
-        </strong>
-        <span class="pb-point-unit">PTS</span>
-      </div>
-
-      <% if (me) { %>
-        <a class="nav_user" href="/me">
-          <span class="avatar_sm">
-            <% if (me.avatar_url) { %>
-              <img src="<%= me.avatar_url %>" alt="Avatar"/>
-            <% } else { %>
-              <span class="avatar_fallback"></span>
-            <% } %>
-          </span>
-          <span class="muted small">
-            <%= me.username || 'me' %>
-          </span>
+  const yearAverageRating = yearAverageRows.length
+    ? yearAverageRows.reduce((sum, r) => {
+        const avgValue = r?.avg_rating != null
+          ? Number(r.avg_rating)
+          : (r?.avg != null ? Number(r.avg) : 0);
+        return sum + avgValue;
+      }, 0) / yearAverageRows.length
+    : null;
+  %>
+<body class="app" style="--accent: <%= accent_color || '#3252b3' %>;">
+  <header class="topbar">
+    <div class="wrap row between">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" style="display:flex; align-items:center;">
+          <img
+            src="/static/logo.png"
+            alt="Logo"
+            style="width:40px; height:40px; object-fit:contain; transition: transform 0.6s ease-in-out;"
+            onmouseover="this.style.transform='rotate(360deg)'"
+            onmouseout="this.style.transform='rotate(0deg)'"
+          >
         </a>
-
-        <a href="/logout">Logout</a>
-
-      <% } else { %>
-        <a href="/login">Login</a>
-        <a class="btn" href="/register">Register</a>
-      <% } %>
-
-    </div>
-  </div>
-</header>
-
-<!-- BETTING PAGE -->
-<div class="pb-app-layout">
-
-  <main class="pb-board">
-
-    <!-- PAGE HEADING -->
-    <section class="pb-board-heading">
-      <div>
-        <div class="pb-eyebrow">
-          DRUM CORPS INTERNATIONAL
-          <span class="pb-live-dot"></span>
-          PROJECTION BOARD
-        </div>
-
-        <h1>Board</h1>
-      </div>
-
-      <span class="pb-virtual">
-        VIRTUAL POINTS ONLY
-      </span>
-    </section>
-
-    <!-- EVENTS -->
-    <section class="pb-event-section">
-
-      <div class="pb-shelf-label">
-        COMPETITIONS
-        <span class="pb-muted">SELECT AN EVENT</span>
-      </div>
-
-      <div class="bt-events" id="eventTabs">
-
-        <button data-id="all" class="on">
-          <b>ALL EVENTS</b>
-          <small>Open projections</small>
-        </button>
-
-        <% events.forEach(e => { %>
-
-          <button
-            data-id="<%= e.id %>"
-            class="<%= now >= e.start_ts - 86400 && now < e.start_ts ? '' : 'locked' %>"
+      
+        <a class="brand" href="/shows" style="display:flex; align-items:center;">
+          <img
+            src="/static/pressboxd-wordmark.png"
+            alt="Pressboxd"
+            style="height:90px; width:auto; display:block; object-fit:contain;"
           >
-            <b><%= e.name %></b>
-
-            <small>
-              <%= new Date(e.start_ts * 1000).toLocaleString(
-                'en-US',
-                {
-                  month: 'short',
-                  day: 'numeric',
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  timeZone: 'America/Chicago'
-                }
-              ) %> CT
-            </small>
-
-            <% if (now < e.start_ts - 86400) { %>
-              <small>Opens 24h before</small>
-            <% } %>
-          </button>
-
-        <% }) %>
-
-      </div>
-    </section>
-
-    <!-- MARKET FILTERS -->
-    <section class="pb-controls">
-
-      <div class="pb-shelf-label">MARKET TYPE</div>
-
-      <div class="bt-tabs" id="kindTabs">
-        <button data-kind="all" class="on">
-          All Lines
-        </button>
-
-        <button data-kind="absolute">
-          Final Score
-        </button>
-
-        <button data-kind="change">
-          Score Change
-        </button>
+        </a>
       </div>
 
-      <div class="pb-category-row">
-
-        <div class="bt-captions" id="captionTabs">
-          <button data-cat="all" class="on">Popular</button>
-          <button data-cat="total">Overall</button>
-          <button data-cat="ge">General Effect</button>
-          <button data-cat="music">Music</button>
-          <button data-cat="visual">Visual</button>
-          <button data-cat="other">Other</button>
-        </div>
-
-        <label class="pb-search">
-
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <circle cx="11" cy="11" r="7"/>
-            <path d="m16 16 5 5"/>
-          </svg>
-
-          <input
-            type="search"
-            id="search"
-            placeholder="Search corps, captions"
-            aria-label="Search corps or caption"
-          />
-
-        </label>
-
-      </div>
-    </section>
-
-    <!-- PROJECTION GRID -->
-    <div class="pb-list-heading">
-      <div>
-        <h2>Projections</h2>
-        <span id="shownCount"></span>
-      </div>
-
-      <span class="pb-list-note">
-        Pick MORE or LESS than the projected line
-      </span>
-    </div>
-
-    <div id="marketGrid" class="bt-grid"></div>
-
-    <div class="bt-empty" id="empty" hidden>
-      <div class="pb-empty-icon">—</div>
-      <h3>No projections available</h3>
-      <p>
-        Markets go live 24 hours before the competition.
-        Check the event schedule above.
-      </p>
-    </div>
-
-    <!-- BET HISTORY -->
-    <section id="history" class="bt-history">
-
-      <div class="pb-list-heading">
-        <h2>My recent picks</h2>
-      </div>
-
-      <div class="bt-history-list">
-
-        <% if (!bets.length) { %>
-          <p class="pb-muted">
-            Your selections will appear here after
-            you submit an entry.
-          </p>
+      <nav class="nav row">
+        <a href="/shows">Shows</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+        <a href="/predictions">Predictions</a>
+        <a href="/forums">Forums</a>
+        <a href="/tierlists">Tierlists</a>
+        <% if (meUser && Number(meUser.is_admin) === 1) { %>
+          <a href="/admin/bulk_add">Mass Add</a>
+          <a href="/admin/roles">Roles</a>
+          <a href="/admin/users">Users</a>
+          <a href="/admin/stats">Stats</a>
+          <a href="/admin/predictions">Predictions Admin</a>
+          <a href="/admin/site-message">Site Message</a>
         <% } %>
+      </nav>
 
-        <% bets.forEach(b => { %>
-
-          <div class="bt-history-item">
-
-            <div>
-              <b>
-                <%= b.corps %>
-                <span class="pb-muted">/</span>
-                <%= b.caption %>
-              </b>
-
-              <small>
-                <%= b.event_name %>
-                ·
-                <%= b.choice.toUpperCase() %>
-                <%= b.line.toFixed(3) %>
-              </small>
-            </div>
-
-            <div>
-              <b><%= b.stake %> pts</b>
-
-              <small>
-                <%= b.result %>
-
-                <% if (b.payout) { %>
-                  · +<%= b.payout %> pts
-                <% } %>
-              </small>
-            </div>
-
+      <div class="auth row">
+        <% if (meUser) { %>
+          <div class="userSearchWrap">
+            <input id="userSearchInput" class="userSearchInput" type="text" placeholder="Search users..." autocomplete="off">
+            <div id="userSearchDropdown" class="userSearchDropdown"></div>
           </div>
 
-        <% }) %>
+          <div class="authBellSlot">
+            <div class="notifWrap">
+              <button class="bellBtn" id="bellBtn" aria-label="Notifications" title="Notifications">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" stroke="currentColor" stroke-width="1"/>
+                  <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
+                </svg>
+                <% if (notifCountSafe > 0) { %>
+                  <span class="badge"><%= notifCountSafe %></span>
+                <% } %>
+              </button>
+              <div class="notifDropdown" id="notifDropdown">
+                <div class="notifHeader">
+                  <div class="notifTitle">Notifications</div>
+                  <form method="post" action="/me/notifications/read">
+                    <button class="markReadBtn" type="submit">Mark all read</button>
+                  </form>
+                </div>
+                <% if (notifItemsSafe.length > 0) { %>
+                  <div class="notifList">
+                    <% for (const n of notifItemsSafe) {
+                         const kind = n?.kind || "";
+                         const actor = n?.actor_username || "Someone";
+                         const created = n?.created_at || "";
+                         const unread = Number(n?.is_read ?? 0) === 0;
+                         const sid = n?.show_id || null;
+                         const forumTopicId = n?.forum_topic_id || null;
+                         const forumPostId = n?.forum_post_id || null;
+                         const showName = n?.show_title
+                           ? `${n.show_title}${n.show_corps ? " — " + n.show_corps : ""}${n.show_year ? " (" + n.show_year + ")" : ""}`
+                           : "";
+                    %>
+                      <div class="notifItem <%= unread ? 'unread' : '' %>">
+                        <% if (kind === "friend_request") { %>
+                          <div><b><%= actor %></b> sent you a friend request.</div>
+                        
+                        <% } else if (kind === "follow") { %>
+                          <div><b><%= actor %></b> followed you.</div>
+                        
+                        <% } else if (kind === "review_upvote") { %>
+                          <div>
+                            <b><%= actor %></b> upvoted your review
+                            <% if (showName) { %>
+                              of <a href="/show/<%= sid %>"><%= showName %></a>
+                            <% } else if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
+                          </div>
+                        
+                        <% } else if (kind === "review_comment") { %>
+                          <div>
+                            <b><%= actor %></b> commented on your review
+                            <% if (showName) { %>
+                              of <a href="/show/<%= sid %>"><%= showName %></a>
+                            <% } else if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
+                          </div>
+                        
+                        <% } else if (kind === "comment_reply") { %>
+                          <div>
+                            <b><%= actor %></b> replied to your comment
+                            <% if (showName) { %>
+                              on <a href="/show/<%= sid %>"><%= showName %></a>
+                            <% } else if (sid) { %>
+                              — <a href="/show/<%= sid %>">View show</a>
+                            <% } %>
+                          </div>
+                        
+                        <% } else if (kind === "forum_reply") { %>
+                          <div>
+                            <a href="/forums/topic/<%= forumTopicId %>#post-<%= forumPostId %>">
+                              <b><%= actor %></b> replied to your forum post.
+                            </a>
+                          </div>
+                        
+                        <% } else { %>
+                          <div>New activity.</div>
+                        <% } %>
+                        <% if (created) { %> <div class="notifTime"><%= created %></div> <% } %>
+                      </div>
+                    <% } %>
+                  </div>
+                <% } else { %>
+                  <div class="notifEmpty">No notifications.</div>
+                <% } %>
+              </div>
+            </div>
+          </div>
 
+          <a class="nav_user" href="/me">
+            <span class="avatar_sm">
+              <% if (meUser.avatar_url) { %><img src="<%= meUser.avatar_url %>" alt="avatar"><% } else { %><span class="avatar_fallback"></span><% } %>
+            </span>
+            <span class="muted small"><%= meUser.username || "me" %></span>
+          </a>
+          <a href="/logout">Logout</a>
+        <% } else { %>
+          <a href="/login">Login</a>
+          <a class="btn" href="/register">Register</a>
+        <% } %>
       </div>
-    </section>
+    </div>
+  </header>
 
+  <main class="wrap">
+    <div class="hotWrap">
+      <div class="accentCard accentBorderSoft randomCard">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+          <div>
+            <div style="font-weight:900; font-size:18px; line-height:1.1;">Random Show</div>
+            <div class="muted small">Want to rate something new?</div>
+          </div>
+        </div>
+    
+        <div class="randomControls">
+          <select id="randomEraSelect" class="randomSelect">
+            <option value="all">Any era</option>
+            <option value="post2000">Post-2000s</option>
+            <option value="pre2000">Pre-2000s</option>
+          </select>
+          <button type="button" id="rerollRandomBtn" class="btn ghost">Reroll</button>
+        </div>
+    
+        <div id="randomShowMount"></div>
+      </div>
+    
+      <div class="hotIntro">
+        <div style="font-weight: 900; font-size: 42px; line-height: 1.1; letter-spacing: -1px; margin-top: 10px; margin-bottom: 10px; color: #ffffff;">
+          Welcome to <span style="color: #3252b3;">Pressboxd</span>
+        </div>
+      
+        <%
+          const showsWelcomeMessageSafe =
+            typeof shows_welcome_message !== "undefined" && shows_welcome_message
+              ? shows_welcome_message
+              : "";
+        %>
+      
+        <% if (showsWelcomeMessageSafe) { %>
+          <div class="showsWelcomeMessage">
+            <%- showsWelcomeMessageSafe %>
+          </div>
+        <% } %>
+      </div>
+    
+      <div class="accentCard accentBorderSoft hotCard">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+          <div>
+            <div style="font-weight:900; font-size:18px; line-height:1.1;">Hot Shows</div>
+            <div class="muted small">Top 3 most popular shows in the last 48h.</div>
+          </div>
+        </div>
+    
+        <% if (safeHotShows.length > 0) { %>
+          <div class="hotList">
+            <% for (let i = 0; i < safeHotShows.length; i++) {
+                 const hs = safeHotShows[i] || {};
+                 const hotPoster = hs.poster_url || POSTER_FALLBACK;
+            %>
+              <a class="hotItem" href="/show/<%= hs.id %>">
+                <div class="hotRank"><%= i + 1 %></div>
+    
+                <div class="hotPosterBox accentThumb">
+                  <img
+                    class="hotPosterImg"
+                    src="<%= hotPoster %>"
+                    alt="poster"
+                    onerror="this.src='<%= POSTER_FALLBACK %>';"
+                  >
+                </div>
+    
+                <div class="hotMeta">
+                  <div class="hotTitle"><%= hs.title || 'Untitled' %></div>
+                  <div class="hotSub muted small">
+                    <%= hs.corps || '' %><% if (hs.year) { %> • <%= hs.year %><% } %>
+                  </div>
+                
+                  <div class="hotActivity">
+                    <% const hotAvg = Number(hs.avg_rating || 0); %>
+                    <% if (hotAvg > 0) { %>
+                      <span style="font-weight:800;">★ <%= hotAvg.toFixed(2) %></span>
+                      <span style="opacity:.5; margin:0 6px;">•</span>
+                    <% } else { %>
+                      <span class="muted">Unrated</span>
+                      <span style="opacity:.5; margin:0 6px;">•</span>
+                    <% } %>
+                  
+                    <span><%= Number(hs.ratings_2d || 0) %> ratings</span>
+                    <span style="opacity:.5; margin:0 6px;">•</span>
+                    <span><%= Number(hs.reviews_2d || 0) %> reviews</span>
+                  </div>
+                </div>
+              </a>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="muted small" style="padding:8px 2px;">No trending shows in the last 48h yet.</div>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (meUser) { %>
+      <div class="panel" style="margin-top:12px; padding:12px;">
+        <div class="row between" style="align-items:center; margin-bottom:-10px;">
+          <div style="font-weight:900;">Friends / Following Activity</div>
+          <a class="muted small" href="/me/friends" style="text-decoration:none;">Friend List</a>
+        </div>
+        <% if (safeFriendActivity.length > 0) { %>
+          <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; align-items:stretch;">
+            <% for (const a of safeFriendActivity) { 
+                 const kind = a?.kind || "";
+                 const who = a?.actor_username || "Someone";
+                 const sid = a?.show_id || null;
+                 const corpsv = a?.corps || "";
+                 const yearv = a?.year || "";
+                 const stars = a?.rating_half != null ? Number(a.rating_half) / 2 : null;
+            %>
+              <div style="flex: 1 1 240px; max-width: 360px; padding:10px; border-radius:12px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); overflow:hidden;">
+                <div class="small" style="line-height:1.35; min-width:0;">
+                  <b><%= who %></b>
+                  <%= kind === "rating" ? "rated" : (kind === "review" ? "reviewed" : "did something on") %>
+                  <% if (sid) { %> <a href="/show/<%= sid %>" style="text-decoration:none;"><%= corpsv %><%= yearv ? ' ' + yearv : '' %></a> <% } else { %> <%= corpsv %><%= yearv ? ' ' + yearv : '' %> <% } %>
+                  <% if (kind === "rating" && stars != null) { %> <span class="muted">(<%= stars %>★)</span> <% } %>
+                </div>
+              </div>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="muted small" style="margin-top:20px;">No recent friend activity.</div>
+        <% } %>
+      </div>
+    <% } %>
+
+    <div style="margin-top:24px;">
+      <div class="row between" style="align-items:flex-end; gap:12px;">
+        <div>
+          <h1 style="margin:6px 0 0;">All Shows</h1>
+          <div class="muted small">Browse, sort, and click a show to rate and review.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:14px;">
+      <form id="showsFilterForm" method="get" action="/shows" class="row gap" style="flex-wrap:wrap; align-items:flex-end;">
+        <div class="field" style="min-width:220px;">
+          <label>Sort</label>
+          <select id="sortFilterSelect" name="sort">
+            <option value="" <%= typeof sort === 'undefined' || !sort ? "selected" : "" %>>Default</option>
+            <option value="year_desc" <%= typeof sort !== 'undefined' && sort === "year_desc" ? "selected" : "" %>>Year Newest to Oldest</option>
+            <option value="year_asc" <%= typeof sort !== 'undefined' && sort === "year_asc" ? "selected" : "" %>>Year Oldest to Newest</option>
+            <option value="top" <%= typeof sort !== 'undefined' && sort === "top" ? "selected" : "" %>>Top Average Rating</option>
+            <option value="bottom" <%= typeof sort !== 'undefined' && sort === "bottom" ? "selected" : "" %>>Lowest Average Rating</option>
+            <option value="corps" <%= typeof sort !== 'undefined' && sort === "corps" ? "selected" : "" %>>Corps (A → Z)</option>
+          </select>
+        </div>
+        <div class="field" style="width:140px;">
+          <label>Year</label>
+          <input id="yearFilterInput" name="year" value="<%= typeof year !== 'undefined' ? year : '' %>" placeholder="2014" autocomplete="off">
+        </div>
+        <div class="field" style="min-width:240px;">
+          <label>Corps</label>
+          <input id="corpsFilterInput" name="corps" value="<%= typeof corps !== 'undefined' ? corps : '' %>" placeholder="Blue Devils" autocomplete="off">
+        </div>
+        <div class="actions" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <% if (selectedYearForAvg && yearAverageRating != null) { %>
+            <span class="muted small" style="white-space: nowrap;">
+              <%= selectedYearForAvg %> average:
+              <b style="color:#ffffff;">★ <%= yearAverageRating.toFixed(2) %></b>
+              <span style="opacity:.65;">(<%= yearAverageRows.length %> eligible shows)</span>
+            </span>
+          <% } else if (selectedYearForAvg) { %>
+            <span class="muted small" style="white-space: nowrap;">
+              No eligible <%= selectedYearForAvg %> shows yet
+            </span>
+          <% } %>
+        </div>
+      </form>
+    </div>
+    
+    <% if (safeRows.length > 0) { %>
+      <div class="postergrid" style="margin-top:14px;">
+        <% for (const row of safeRows) {
+             const poster = row?.poster_url || POSTER_FALLBACK;
+             const avg = row?.avg_rating != null ? Number(row.avg_rating) : (row?.avg != null ? Number(row.avg) : 0);
+             const pct = Math.max(0, Math.min(1, avg / 5));
+             const hue = 60 * Math.pow(pct, 2.6);
+             const myRatingHalf = row?.my_rating_half != null ? Number(row.my_rating_half) : null;
+             const hasMyReview = Number(row?.has_review || 0) === 1;
+        %>
+          <div class="poster">
+            <a class="poster_art" href="/show/<%= row.id %>" style="position:relative; display:block;">
+              <img class="poster_img" src="<%= poster %>" alt="poster" loading="lazy" onerror="this.src='<%= POSTER_FALLBACK %>';">
+              <% if (meUser && (myRatingHalf !== null || hasMyReview)) { %>
+                <div class="myShowStatus">
+                  <% if (myRatingHalf !== null) { %>
+                    <span
+                      class="myShowStatusPill rated"
+                      title="You rated this show <%= (myRatingHalf / 2).toFixed(1) %> out of 5"
+                    >
+                      ★ Rated <%= (myRatingHalf / 2).toFixed(1) %>
+                    </span>
+                  <% } %>
+
+                  <% if (hasMyReview) { %>
+                    <span
+                      class="myShowStatusPill reviewed"
+                      title="You wrote a review for this show"
+                    >
+                      ✓ Reviewed
+                    </span>
+                  <% } %>
+                </div>
+              <% } %>
+
+              <% if (row.cnt > 0) { %>
+                <div class="tile_rating" style="color: hsl(<%= hue %>, 100%, 50%); text-shadow: -0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000, 0 0 4px rgba(0,0,0,0.9);"><span class="tile_star">★</span> <%= avg.toFixed(2) %></div>
+    
+                <div
+                  class="muted small"
+                  style="
+                    position:absolute;
+                    right:8px;
+                    top:8px;
+                    z-index:3;
+                    background: rgba(0,0,0,0.60);
+                    color:#ffffff;
+                    padding:3px 6px;
+                    border-radius:999px;
+                    font-size:9px;
+                    line-height:1;
+                    border:1px solid rgba(255,255,255,0.10);
+                  "
+                >
+                  <%= Number(row.cnt || 0) %> ratings
+                </div>
+              <% } else { %>
+                <span class="badge unrated bottom_left">Unrated</span>
+              <% } %>
+            </a>
+    
+            <div class="poster_meta">
+              <div class="poster_title">
+                <a href="/show/<%= row.id %>" style="color:inherit; text-decoration:none;">
+                  <%= row.title || 'Untitled' %>
+                </a>
+              </div>
+              <div class="poster_sub">
+                <% if (row.corps) { %>
+                  <a href="/corps/<%= encodeURIComponent(row.corps) %>" style="color:inherit; text-decoration:none;"><%= row.corps %></a>
+                <% } %>
+                <% if (row.year) { %>
+                  <span style="opacity: 0.5; margin: 0 4px;">&bull;</span>
+                  <a href="/shows?year=<%= encodeURIComponent(row.year) %>" style="color:inherit; text-decoration:none;"><%= row.year %></a>
+                <% } %>
+
+                <% if (Number.isInteger(Number(row.placement)) && Number(row.placement) > 0) { %>
+                  <span style="opacity: 0.5; margin: 0 4px;">&bull;</span>
+                  <span>
+                    <%= Number(row.placement) %><%=
+                      Number(row.placement) % 100 >= 11 &&
+                      Number(row.placement) % 100 <= 13
+                        ? "th"
+                        : Number(row.placement) % 10 === 1
+                          ? "st"
+                          : Number(row.placement) % 10 === 2
+                            ? "nd"
+                            : Number(row.placement) % 10 === 3
+                              ? "rd"
+                              : "th"
+                    %>
+                  </span>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    <% } else { %>
+      <div class="panel" style="margin-top:14px;">
+        <div class="muted">No shows found.</div>
+      </div>
+    <% } %>
   </main>
 
-  <!-- RIGHT-SIDE ENTRY SLIP -->
-  <aside class="bt-slip">
+  <footer class="wrap footer">
+    <div class="small">Rate drum corps shows.</div>
+  </footer>
 
-    <div class="bt-slip-head">
-      <h2>My Entry</h2>
-      <span>1 PICK MAX</span>
-    </div>
+  <script>
+    (() => {
+      const btn = document.getElementById("bellBtn");
+      const dd = document.getElementById("notifDropdown");
+      if (btn && dd) {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dd.classList.toggle("open");
+        });
 
-    <!-- EMPTY ENTRY -->
-    <div id="slipEmpty" class="bt-slip-empty">
+        dd.addEventListener("click", (e) => e.stopPropagation());
+        document.addEventListener("click", () => dd.classList.remove("open"));
+      }
+    })();
 
-      <div class="pb-slip-symbol">
-        <svg width="46" height="46" viewBox="0 0 46 46" fill="none">
-          <rect
-            x="6"
-            y="12"
-            width="34"
-            height="24"
-            rx="3"
-            stroke="currentColor"
-            stroke-width="1.5"
-          />
+    (() => {
+      const form = document.getElementById("showsFilterForm");
+      const sortSelect = document.getElementById("sortFilterSelect");
+      const yearInput = document.getElementById("yearFilterInput");
+      const corpsInput = document.getElementById("corpsFilterInput");
+    
+      if (!form || !sortSelect || !yearInput || !corpsInput) return;
+    
+      let timer = null;
+      let isSubmitting = false;
+    
+      function submitAndRestore(restoreKey, delay = 400) {
+        if (isSubmitting) return;
+    
+        clearTimeout(timer);
+    
+        timer = setTimeout(() => {
+          isSubmitting = true;
+          sessionStorage.setItem(restoreKey, "1");
+          sessionStorage.setItem("showsScrollY", String(window.scrollY || 0));
+          form.submit();
+        }, delay);
+      }
+    
+      sortSelect.addEventListener("change", () => {
+        submitAndRestore("restoreSortFocus", 0);
+      });
+    
+      yearInput.addEventListener("input", () => {
+        submitAndRestore("restoreYearFocus", 1200);
+      });
+    
+      corpsInput.addEventListener("input", () => {
+        submitAndRestore("restoreCorpsFocus", 1200);
+      });
+    
+      window.addEventListener("load", () => {
+        const savedScrollY = sessionStorage.getItem("showsScrollY");
+        const shouldRestoreSort = sessionStorage.getItem("restoreSortFocus");
+        const shouldRestoreYear = sessionStorage.getItem("restoreYearFocus");
+        const shouldRestoreCorps = sessionStorage.getItem("restoreCorpsFocus");
+    
+        if (savedScrollY !== null) {
+          sessionStorage.removeItem("showsScrollY");
+          window.scrollTo(0, Number(savedScrollY || 0));
+        }
+    
+        if (shouldRestoreSort === "1") {
+          sessionStorage.removeItem("restoreSortFocus");
+          sortSelect.focus();
+          return;
+        }
+    
+        if (shouldRestoreYear === "1") {
+          sessionStorage.removeItem("restoreYearFocus");
+          yearInput.focus();
+          const len = yearInput.value.length;
+          yearInput.setSelectionRange(len, len);
+          return;
+        }
+    
+        if (shouldRestoreCorps === "1") {
+          sessionStorage.removeItem("restoreCorpsFocus");
+          corpsInput.focus();
+          const len = corpsInput.value.length;
+          corpsInput.setSelectionRange(len, len);
+        }
+      });
+    })();
 
-          <path
-            d="M12 21h22M12 27h14M29 27h5"
-            stroke="currentColor"
-            stroke-width="1.5"
-          />
-        </svg>
-      </div>
+    (() => {
+      const rows = <%- JSON.stringify(safeRandomRows) %>;
+      const mount = document.getElementById("randomShowMount");
+      const eraSelect = document.getElementById("randomEraSelect");
+      const rerollBtn = document.getElementById("rerollRandomBtn");
+      const posterFallback = "<%= POSTER_FALLBACK %>";
+    
+      if (!mount || !eraSelect || !rerollBtn) return;
+    
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+    
+      function pickRandom(list) {
+        if (!Array.isArray(list) || list.length === 0) return null;
+        return list[Math.floor(Math.random() * list.length)];
+      }
+    
+      function getFilteredRows() {
+        const mode = eraSelect.value;
+    
+        if (mode === "post2000") {
+          return rows.filter(r => r.year != null && r.year >= 2000);
+        }
+    
+        if (mode === "pre2000") {
+          return rows.filter(r => r.year != null && r.year < 2000);
+        }
+    
+        return rows;
+      }
+    
+      function renderRandomShow() {
+        const filtered = getFilteredRows();
+        const show = pickRandom(filtered);
+    
+        if (!show) {
+          mount.innerHTML = `
+            <div class="randomEmpty muted small">
+              No shows found for that era.
+            </div>
+          `;
+          return;
+        }
+    
+        const avg = Number(show.avg_rating || 0);
+        const count = Number(show.cnt || 0);
+    
+        mount.innerHTML = `
+          <a class="randomShowBox" href="/show/${encodeURIComponent(show.id)}">
+            <div class="randomPosterBox accentThumb">
+              <img
+                class="randomPosterImg"
+                src="${escapeHtml(show.poster_url || posterFallback)}"
+                alt="poster"
+                onerror="this.src='${posterFallback}';"
+              >
+            </div>
+    
+            <div class="randomTitle">${escapeHtml(show.title)}</div>
+    
+            <div class="randomSub muted small">
+              ${escapeHtml(show.corps || "")}${show.year ? ` • ${escapeHtml(show.year)}` : ""}
+            </div>
+    
+            <div class="randomMeta">
+              ${
+                count > 0
+                  ? `<span style="font-weight:800;">★ ${avg.toFixed(2)}</span>
+                     <span style="opacity:.5; margin:0 6px;">•</span>
+                     <span>${count} ratings</span>`
+                  : `<span class="muted">Unrated</span>`
+              }
+            </div>
+          </a>
+        `;
+      }
+    
+      eraSelect.addEventListener("change", renderRandomShow);
+      rerollBtn.addEventListener("click", renderRandomShow);
+    
+      renderRandomShow();
+    })();
 
-      <strong>Your entry is empty</strong>
 
-      <span>
-        Tap MORE or LESS on any projection
-        to start your entry.
-      </span>
 
-    </div>
 
-    <!-- SELECTED ENTRY -->
-    <div id="slipFilled" hidden>
+    (() => {
+      const input = document.getElementById("userSearchInput");
+      const dropdown = document.getElementById("userSearchDropdown");
+      if (!input || !dropdown) return;
 
-      <div class="bt-picked">
-        <small id="slipEvent"></small>
-        <b id="slipCorps"></b>
-        <span id="slipDetail"></span>
+      let timer = null;
+      let requestId = 0;
 
-        <button id="removePick" aria-label="Remove selection">
-          ×
-        </button>
-      </div>
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
 
-      <div class="pb-slip-divider"></div>
+      function renderUsers(users) {
+        if (!Array.isArray(users) || users.length === 0) {
+          dropdown.innerHTML = '<div class="userSearchEmpty">No users found.</div>';
+          dropdown.classList.add("open");
+          return;
+        }
 
-      <label for="stake">
-        Entry Amount
-        <span>POINTS</span>
-      </label>
+        dropdown.innerHTML = users.map(u => {
+          const avatar = u.avatar_url
+            ? `<img src="${escapeHtml(u.avatar_url)}" alt="${escapeHtml(u.username)}">`
+            : `<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;opacity:.7;">👤</span>`;
 
-      <div class="pb-stake-wrap">
-        <input
-          type="number"
-          id="stake"
-          value="100"
-          min="1"
-          max="10000"
-          step="1"
-        />
-        <span>PTS</span>
-      </div>
+          return `
+            <a class="userSearchItem" href="/u/${encodeURIComponent(u.username)}">
+              <div class="userSearchAvatar">${avatar}</div>
+              <div style="min-width:0;">
+                <div style="font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                  ${escapeHtml(u.username)}
+                </div>
+              </div>
+            </a>
+          `;
+        }).join("");
 
-      <div class="bt-quick">
-        <button data-amount="25">25</button>
-        <button data-amount="100">100</button>
-        <button data-amount="250">250</button>
-        <button data-amount="500">500</button>
-      </div>
+        dropdown.classList.add("open");
+      }
 
-      <div class="bt-slip-math">
-        <span>Payout multiplier</span>
-        <b id="slipOdds"></b>
+      function clearDropdown() {
+        dropdown.innerHTML = "";
+        dropdown.classList.remove("open");
+      }
 
-        <span>To Win (incl. stake)</span>
-        <b id="slipPayout"></b>
-      </div>
+      input.addEventListener("input", () => {
+        const q = input.value.trim();
+        clearTimeout(timer);
 
-      <button id="placeBet" class="bt-submit">
-        SUBMIT ENTRY
-      </button>
+        if (!q) {
+          clearDropdown();
+          return;
+        }
 
-    </div>
+        timer = setTimeout(async () => {
+          const currentRequest = ++requestId;
 
-    <p id="btMessage" role="status"></p>
+          try {
+            const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`, {
+              headers: { "Accept": "application/json" }
+            });
 
-    <div class="bt-fineprint">
-      For entertainment only. Virtual Pressboxd points
-      have no cash value, cannot be purchased,
-      and cannot be redeemed for prizes.
-    </div>
+            if (!res.ok) throw new Error("search request failed");
 
-  </aside>
+            const data = await res.json();
 
-</div>
+            if (currentRequest !== requestId) return;
 
-<script>
-  const MARKETS = <%- JSON.stringify(markets).replace(/</g, '\\u003c') %>;
-</script>
+            renderUsers(Array.isArray(data.users) ? data.users : []);
+          } catch (err) {
+            console.error("user search failed:", err);
+            if (currentRequest !== requestId) return;
+            dropdown.innerHTML = '<div class="userSearchEmpty">Search failed.</div>';
+            dropdown.classList.add("open");
+          }
+        }, 200);
+      });
 
-<script src="/static/betting.js"></script>
+      input.addEventListener("focus", () => {
+        if (dropdown.innerHTML.trim()) {
+          dropdown.classList.add("open");
+        }
+      });
 
+      document.addEventListener("click", (e) => {
+        if (!dropdown.contains(e.target) && e.target !== input) {
+          dropdown.classList.remove("open");
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
