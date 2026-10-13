@@ -1,5 +1,6 @@
 'use strict';
 const gems = require('./gems');
+const historicalLines = require('./betting_lines');
 // Mount AFTER express-session, body parsing, and res.locals middleware.
 module.exports = function mountBetting(app, getConn) {
   function withDb(fn) { const db=getConn(); try {return fn(db);} finally {db.close();} }
@@ -53,17 +54,7 @@ module.exports = function mountBetting(app, getConn) {
       const search=String(req.query.q||'').trim().slice(0,80);
       withDb(db=>{
         initialize(db);
-        const users = search
-          ? db.prepare(`
-              SELECT id, username
-              FROM users
-              WHERE username LIKE ? ESCAPE '!'
-              ORDER BY username
-              LIMIT 30
-            `).all(
-              '%' + search.replace(/[!%_]/g, ch => '!' + ch) + '%'
-            )
-          : [];
+        const users=search?db.prepare("SELECT id,username FROM users WHERE username LIKE ? ESCAPE '!' ORDER BY username LIMIT 30").all('%'+search.replace(/[!%_]/g, ch=>'!'+ch)+'%'):[];
         const results=users.map(u=>({...u,balance:wallet(db,Number(u.id))}));
         const history=db.prepare(`SELECT a.id,a.user_id,a.username,a.admin_id,a.admin_username,a.delta,a.balance_before,a.balance_after,a.reason,a.created_ts FROM pb_gems_admin_adjustments a ORDER BY a.id DESC LIMIT 35`).all();
         res.setHeader('Cache-Control','private, no-store');
@@ -153,6 +144,25 @@ module.exports = function mountBetting(app, getConn) {
       }
     }return count;
   })());res.json({ok:true,markets:imported});}catch(e){res.status(400).json({error:e.message});}});
+  // Generate lines for a previously imported, verified event and an explicit lineup.
+  // Never invents events, never touches settled/used lines, and does not alter wallets.
+  app.post('/api/admin/betting/generate-lines', loggedIn, admin, write, (req,res)=>{
+    try {
+      const result=withDb(db=>db.transaction(()=>{
+        const eventId=String(req.body.event_id||'').trim();
+        const event=db.prepare('SELECT id,name,start_ts,season,status FROM pb_betting_events WHERE id=?').get(eventId);
+        if(!event)throw Error('Event not found. Import the official event first.');
+        if(event.status!=='scheduled')throw Error('Only scheduled events can receive new lines.');
+        if(event.start_ts<=Math.floor(Date.now()/1000))throw Error('Cannot generate lines for an event that has already started.');
+        if(event.start_ts-86400<=Math.floor(Date.now()/1000))throw Error('Generate and review lines BEFORE the 24-hour betting window opens.');
+        const markets=historicalLines.makeMarkets({eventId:event.id,startTs:event.start_ts,season:event.season,lineup:req.body.lineup});
+        if(!markets.length)throw Error('No qualifying historical scores for this event lineup; check corps names and classes.');
+        return {event_id:event.id,...historicalLines.saveMarkets(db,event,markets)};
+      })());
+      return res.json({ok:true,...result});
+    } catch(e){return res.status(400).json({error:String(e.message||e)});}
+  });
+
   app.post('/api/admin/betting/settle',loggedIn,admin,write,(req,res)=>{try{const result=withDb(db=>db.transaction(()=>{
     const id=String(req.body.market_id||''),voidMarket=req.body.void===true,actual=Number(req.body.actual);
     const m=db.prepare('SELECT m.*,e.start_ts FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE m.id=?').get(id);
