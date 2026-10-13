@@ -21,7 +21,7 @@ function syncPredictionRewards(db, season) {
   const old=new Map(oldRows.map(r=>[Number(r.user_id),Number(r.amount)]));
   const desired=new Map(rows.map(r=>[Number(r.user_id),Math.max(0,Math.trunc(Number(r.total_points)||0))]));
   for (const uid of new Set([...old.keys(),...desired.keys()])) {
-   const prior=old.get(uid)||0, wanted=desired.get(uid)||0, delta=wanted-prior;
+   const prior=old.get(uid)||0, scored=desired.get(uid)||0, wanted=Math.max(prior,scored), delta=wanted-prior;
    if(delta){
     balance(db,uid);
     // Don't make balances negative if an admin reduces an already spent reward.
@@ -30,16 +30,40 @@ function syncPredictionRewards(db, season) {
     if(changed.changes!==1)throw Error('Cannot reduce already-spent prediction Gems for user '+uid);
     db.prepare('INSERT INTO pb_betting_ledger(user_id,delta,reason) VALUES(?,?,?)').run(uid,delta,'prediction:'+label);
    }
-   if(desired.has(uid)) db.prepare('INSERT INTO pb_gems_prediction_rewards(season_label,user_id,amount) VALUES(?,?,?) ON CONFLICT(season_label,user_id) DO UPDATE SET amount=excluded.amount').run(label,uid,wanted);
+   if(wanted>0) db.prepare('INSERT INTO pb_gems_prediction_rewards(season_label,user_id,amount) VALUES(?,?,?) ON CONFLICT(season_label,user_id) DO UPDATE SET amount=excluded.amount').run(label,uid,wanted);
    else db.prepare('DELETE FROM pb_gems_prediction_rewards WHERE season_label=? AND user_id=?').run(label,uid);
   }
   return {users:rows.length};
  })();
 }
+
+function creditHistoricalPredictionScores(db) {
+ initialize(db);
+ if(!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='season_prediction_scores'").get())return 0;
+ return db.transaction(()=>{
+  const rows=db.prepare('SELECT season_label,user_id,total_points FROM season_prediction_scores').all();
+  let credits=0;
+  for(const row of rows){
+   const label=String(row.season_label),uid=Number(row.user_id),earned=Math.max(0,Math.trunc(Number(row.total_points)||0));
+   if(!uid||!earned)continue;
+   const prev=db.prepare('SELECT amount FROM pb_gems_prediction_rewards WHERE season_label=? AND user_id=?').get(label,uid);
+   const prior=prev?Number(prev.amount):0;
+   const delta=Math.max(0,earned-prior);
+   if(!delta)continue;
+   balance(db,uid);
+   db.prepare('UPDATE pb_betting_wallets SET balance=balance+? WHERE user_id=?').run(delta,uid);
+   db.prepare('INSERT INTO pb_betting_ledger(user_id,delta,reason) VALUES(?,?,?)').run(uid,delta,'prediction:'+label);
+   db.prepare('INSERT INTO pb_gems_prediction_rewards(season_label,user_id,amount) VALUES(?,?,?) ON CONFLICT(season_label,user_id) DO UPDATE SET amount=excluded.amount').run(label,uid,earned);
+   credits+=delta;
+  }
+  return credits;
+ })();
+}
+
 function gemLeaderboard(db, rows) {
  const enriched=rows.map(row=>({ ...row, prediction_points:row.total_points, total_points:balance(db,Number(row.user_id)) }));
  enriched.sort((a,b)=>Number(b.total_points)-Number(a.total_points)||String(a.username).localeCompare(String(b.username)));
  enriched.forEach((r,i)=>{r.rank=1+enriched.findIndex(x=>x.total_points===r.total_points);});
  return enriched;
 }
-module.exports={initialize,balance,syncPredictionRewards,gemLeaderboard};
+module.exports={initialize,balance,syncPredictionRewards,creditHistoricalPredictionScores,gemLeaderboard};
