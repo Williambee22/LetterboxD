@@ -53,7 +53,17 @@ module.exports = function mountBetting(app, getConn) {
       const search=String(req.query.q||'').trim().slice(0,80);
       withDb(db=>{
         initialize(db);
-        const users=search?db.prepare(`SELECT id,username FROM users WHERE username LIKE ? ESCAPE '\' ORDER BY username LIMIT 30`).all('%'+search.replace(/[\%_]/g,'\$&')+'%'):[];
+        const users = search
+          ? db.prepare(`
+              SELECT id, username
+              FROM users
+              WHERE username LIKE ? ESCAPE '!'
+              ORDER BY username
+              LIMIT 30
+            `).all(
+              '%' + search.replace(/[!%_]/g, ch => '!' + ch) + '%'
+            )
+          : [];
         const results=users.map(u=>({...u,balance:wallet(db,Number(u.id))}));
         const history=db.prepare(`SELECT a.id,a.user_id,a.username,a.admin_id,a.admin_username,a.delta,a.balance_before,a.balance_after,a.reason,a.created_ts FROM pb_gems_admin_adjustments a ORDER BY a.id DESC LIMIT 35`).all();
         res.setHeader('Cache-Control','private, no-store');
