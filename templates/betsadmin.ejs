@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Gems Administration | Pressboxd Bets</title>
+  <link rel="stylesheet" href="/static/betting.css">
+  <link rel="stylesheet" href="/static/betsadmin.css">
+</head>
+<body class="pb-body">
+  <header class="ba-header">
+    <a href="/betting" class="ba-brand"><img src="/static/logo.png" alt="GEM" width="38" height="38"> <strong>BETS ADMIN</strong></a>
+    <nav><a href="/betting">← Back to Bets</a><a href="/predictions">Back to Pressboxd</a></nav>
+  </header>
+  <main class="ba-main">
+    <div class="ba-heading"><div><span class="ba-kicker">ADMINISTRATOR ONLY</span><h1>💎 Gems Management</h1><p>Add or remove Gems from any user. Existing balances are never reset.</p></div></div>
+    <% if (notice) { %><div class="ba-alert ba-ok"><%= notice %></div><% } %>
+    <% if (error) { %><div class="ba-alert ba-error"><%= error %></div><% } %>
+    <div class="ba-cols">
+      <section class="ba-panel">
+        <h2>Adjust Gems</h2>
+        <form action="/betsadmin/adjust" method="POST" class="ba-form">
+          <input type="hidden" name="csrf" value="<%= csrf %>">
+          <label>Username<input name="username" required maxlength="80" placeholder="Exact Pressboxd username" autocomplete="off"></label>
+          <label>Gem change<input name="amount" type="number" required min="-1000000" max="1000000" step="1" placeholder="100 or -100"></label>
+          <small>Use +100 to add or -100 to subtract. Balance cannot go below zero.</small>
+          <label>Reason<textarea name="reason" required minlength="3" maxlength="300" rows="3" placeholder="Why is this balance being changed?"></textarea></label>
+          <button type="submit">Apply Gems Adjustment</button>
+        </form>
+      </section>
+      <section class="ba-panel"><h2>Find user</h2>
+        <form action="/betsadmin" method="GET" class="ba-search"><input name="q" value="<%= search %>" maxlength="80" placeholder="Search username"><button type="submit">Search</button></form>
+        <% if (search && !users.length) { %><p class="ba-muted">No matching users.</p><% } %>
+        <% users.forEach(u=>{ %><div class="ba-user"><span><%= u.username %></span><strong>💎 <%= Number(u.balance).toLocaleString() %></strong></div><% }) %>
+      </section>
+    </div>
+    <section class="ba-panel ba-history"><h2>Recent Admin Adjustments</h2><div class="ba-table-wrap"><table><thead><tr><th>Time (UTC)</th><th>User</th><th>Change</th><th>Balance</th><th>Admin</th><th>Reason</th></tr></thead><tbody>
+      <% if (!history.length) { %><tr><td colspan="6" class="ba-muted">No changes yet.</td></tr><% } %>
+      <% history.forEach(h=>{ %><tr><td><%= new Date(h.created_ts*1000).toLocaleString('en-US',{timeZone:'UTC'}) %></td><td><%= h.username %></td><td class="<%= h.delta > 0 ? 'ba-positive' : 'ba-negative' %>"><%= h.delta > 0 ? '+' : '' %><%= h.delta %></td><td><%= h.balance_before %> → <%= h.balance_after %></td><td><%= h.admin_username %></td><td><%= h.reason %></td></tr><% }) %>
+    </tbody></table></div></section>
+  </main>
+</body>
+</html>
