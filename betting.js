@@ -4,7 +4,7 @@ module.exports = function mountBetting(app, getConn) {
   function withDb(fn) { const db=getConn(); try {return fn(db);} finally {db.close();} }
   function initialize(db) {
     db.exec(`
-      CREATE TABLE IF NOT EXISTS pb_betting_wallets (user_id INTEGER PRIMARY KEY, balance INTEGER NOT NULL DEFAULT 1000 CHECK(balance>=0));
+      CREATE TABLE IF NOT EXISTS pb_betting_wallets (user_id INTEGER PRIMARY KEY, balance INTEGER NOT NULL DEFAULT 200 CHECK(balance>=0));
       CREATE TABLE IF NOT EXISTS pb_betting_events (
         id TEXT PRIMARY KEY, name TEXT NOT NULL, start_ts INTEGER NOT NULL, season INTEGER NOT NULL,
         status TEXT NOT NULL DEFAULT 'scheduled' CHECK(status IN ('scheduled','canceled','completed')),
@@ -26,6 +26,8 @@ module.exports = function mountBetting(app, getConn) {
         payout INTEGER NOT NULL DEFAULT 0
       );
       CREATE INDEX IF NOT EXISTS pb_betting_bets_user ON pb_betting_bets(user_id,placed_ts);
+      CREATE TABLE IF NOT EXISTS pb_gems_daily_claims (user_id INTEGER PRIMARY KEY, last_claim_ts INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS pb_gems_prediction_rewards (season_label TEXT NOT NULL, user_id INTEGER NOT NULL, amount INTEGER NOT NULL, PRIMARY KEY(season_label,user_id));
       CREATE TABLE IF NOT EXISTS pb_betting_ledger (
         id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL, bet_id INTEGER, delta INTEGER NOT NULL,
         reason TEXT NOT NULL, created_ts INTEGER NOT NULL DEFAULT (unixepoch())
@@ -33,7 +35,8 @@ module.exports = function mountBetting(app, getConn) {
     `);
   }
   withDb(initialize);
-  function wallet(db, uid) { db.prepare('INSERT OR IGNORE INTO pb_betting_wallets(user_id,balance) VALUES (?,1000)').run(uid); return db.prepare('SELECT balance FROM pb_betting_wallets WHERE user_id=?').get(uid).balance; }
+  function wallet(db, uid) { db.prepare('INSERT OR IGNORE INTO pb_betting_wallets(user_id,balance) VALUES (?,200)').run(uid); return db.prepare('SELECT balance FROM pb_betting_wallets WHERE user_id=?').get(uid).balance; }
+  // Existing wallets are intentionally retained; only NEW wallets begin with 200 Gems.
   const loggedIn=(req,res,next)=>req.session?.uid?next():res.redirect('/login?next=%2Fbetting');
   const admin=(req,res,next)=>Number(res.locals.me?.is_admin)===1?next():res.sendStatus(403);
   function validOrigin(req) { const o=req.get('origin'); if (!o) return true; try { return new URL(o).host===req.get('host'); } catch {return false;} }
@@ -44,18 +47,29 @@ module.exports = function mountBetting(app, getConn) {
     const markets=db.prepare(`SELECT m.*, e.name event_name,e.start_ts,e.season FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE e.status='scheduled' AND m.status='active' AND e.start_ts>? AND e.start_ts-86400<=? ORDER BY e.start_ts,m.corps,m.caption,m.kind`).all(now,now);
     const bets=db.prepare(`SELECT b.*, m.caption,m.corps,e.name event_name FROM pb_betting_bets b JOIN pb_betting_markets m ON m.id=b.market_id JOIN pb_betting_events e ON e.id=m.event_id WHERE b.user_id=? ORDER BY b.id DESC LIMIT 30`).all(uid);
     res.setHeader('Cache-Control','private, no-store');
-    res.render('betting',{ me:res.locals.me,accent_color:res.locals.accent_color,events,markets,bets,balance:wallet(db,uid),now });
+    const claim=db.prepare('SELECT last_claim_ts FROM pb_gems_daily_claims WHERE user_id=?').get(uid);
+    res.render('betting',{ me:res.locals.me,accent_color:res.locals.accent_color,events,markets,bets,balance:wallet(db,uid),now,next_claim_ts:claim?claim.last_claim_ts+86400:0 });
   }); } catch(e){next(e);} });
+  app.post('/api/gems/daily',loggedIn,write,(req,res)=>{try{const result=withDb(db=>db.transaction(()=>{
+    const uid=Number(req.session.uid), now=Math.floor(Date.now()/1000);
+    wallet(db,uid);
+    const claim=db.prepare('SELECT last_claim_ts FROM pb_gems_daily_claims WHERE user_id=?').get(uid);
+    if(claim && now-claim.last_claim_ts<86400) return {ok:false,next_claim_ts:claim.last_claim_ts+86400,balance:wallet(db,uid)};
+    db.prepare('INSERT INTO pb_gems_daily_claims(user_id,last_claim_ts) VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET last_claim_ts=excluded.last_claim_ts').run(uid,now);
+    db.prepare('UPDATE pb_betting_wallets SET balance=balance+10 WHERE user_id=?').run(uid);
+    db.prepare('INSERT INTO pb_betting_ledger(user_id,delta,reason) VALUES(?,?,?)').run(uid,10,'daily_gems');
+    return {ok:true,awarded:10,balance:wallet(db,uid),next_claim_ts:now+86400};
+  })());res.status(result.ok?200:429).json(result);}catch(e){res.status(500).json({error:'Could not claim daily Gems'});} });
   app.post('/api/betting/bets',loggedIn,write,(req,res)=>{ try {const result=withDb(db=>{
     const uid=Number(req.session.uid), marketId=String(req.body.market_id||''),choice=String(req.body.choice||''),stake=Number(req.body.stake);
-    if(!['over','under'].includes(choice)||!Number.isSafeInteger(stake)||stake<1||stake>10000)throw Error('Invalid selection or stake (1–10,000 points).');
+    if(!['over','under'].includes(choice)||!Number.isSafeInteger(stake)||stake<1||stake>10000)throw Error('Invalid selection or stake (1–10,000 Gems).');
     return db.transaction(()=>{
       const m=db.prepare(`SELECT m.*,e.start_ts,e.status event_status FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE m.id=?`).get(marketId);
       const now=Math.floor(Date.now()/1000);
       if(!m||m.status!=='active'||m.event_status!=='scheduled'||now<m.start_ts-86400||now>=m.start_ts)throw Error('This market is not open.');
       wallet(db,uid);
       const paid=db.prepare('UPDATE pb_betting_wallets SET balance=balance-? WHERE user_id=? AND balance>=?').run(stake,uid,stake);
-      if(paid.changes!==1)throw Error('Not enough virtual points.');
+      if(paid.changes!==1)throw Error('Not enough Gems.');
       const b=db.prepare('INSERT INTO pb_betting_bets(user_id,market_id,choice,stake,line,odds) VALUES(?,?,?,?,?,?)').run(uid,marketId,choice,stake,m.line,m.odds);
       db.prepare('INSERT INTO pb_betting_ledger(user_id,bet_id,delta,reason) VALUES(?,?,?,?)').run(uid,b.lastInsertRowid,-stake,'stake');
       return {bet_id:Number(b.lastInsertRowid),balance:wallet(db,uid)};
