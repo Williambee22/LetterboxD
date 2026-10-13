@@ -73,15 +73,16 @@
         </a>
 
         <div class="pb-balance">
-          <span class="pb-coin">P</span>
+          <span class="pb-coin">💎</span>
 
           <strong id="balance">
             <%= balance.toLocaleString() %>
           </strong>
 
-          <span class="pb-point-unit">PTS</span>
+          <span class="pb-point-unit">GEMS</span>
         </div>
 
+        <button id="dailyGemClaim" type="button" class="pb-daily-claim" data-next="<%= next_claim_ts || 0 %>">💎 Claim 10</button>
         <a href="/me" class="pb-profile" title="Profile">
           <%= String((me && me.username) || 'U').charAt(0).toUpperCase() %>
         </a>
@@ -356,14 +357,14 @@
               <div>
 
                 <b>
-                  <%= b.stake %> pts
+                  💎 <%= b.stake %> Gems
                 </b>
 
                 <small>
                   <%= b.result %>
 
                   <% if (b.payout) { %>
-                    · +<%= b.payout %> pts
+                    · +💎 <%= b.payout %> Gems
                   <% } %>
                 </small>
 
@@ -469,7 +470,7 @@
 
         <label for="stake">
           Entry Amount
-          <span>POINTS</span>
+          <span>GEMS</span>
         </label>
 
         <div class="pb-stake-wrap">
@@ -483,7 +484,7 @@
             step="1"
           >
 
-          <span>PTS</span>
+          <span>💎</span>
 
         </div>
 
@@ -534,7 +535,7 @@
 
       <div class="bt-fineprint">
         For entertainment only.
-        Virtual Pressboxd points have no cash value,
+        Virtual Pressboxd Gems have no cash value,
         cannot be purchased, and cannot be
         redeemed for prizes.
       </div>
