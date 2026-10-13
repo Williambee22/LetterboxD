@@ -12,6 +12,7 @@ const { uploadBufferToR2, deleteFromR2 } = require('./r2');
 
 const dbx = require('./db');
 const showHistory = require('./historical_show_data');
+const mountBetting = require('./betting');
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -3412,6 +3413,9 @@ app.get('/corps/:corps_name', async (req, res, next) => {
     }
     res.redirect(`/show/${showId}`);
   }));
+
+    // Virtual-only Pressboxd betting page and market APIs
+    mountBetting(app, getConn);
 
     app.get('/predictions', loginRequired(async (req, res, next) => {
       let conn;
