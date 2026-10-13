@@ -1,4 +1,5 @@
 'use strict';
+const gems = require('./gems');
 // Mount AFTER express-session, body parsing, and res.locals middleware.
 module.exports = function mountBetting(app, getConn) {
   function withDb(fn) { const db=getConn(); try {return fn(db);} finally {db.close();} }
@@ -42,6 +43,7 @@ module.exports = function mountBetting(app, getConn) {
   function validOrigin(req) { const o=req.get('origin'); if (!o) return true; try { return new URL(o).host===req.get('host'); } catch {return false;} }
   function write(req,res,next){ if(!validOrigin(req))return res.status(403).json({error:'Invalid request origin'}); next(); }
   app.get('/betting', loggedIn, (req,res,next)=>{ try {withDb(db=>{
+    gems.creditHistoricalPredictionScores(db);
     const now=Math.floor(Date.now()/1000),uid=Number(req.session.uid);
     const events=db.prepare('SELECT *, (start_ts-86400) AS open_ts FROM pb_betting_events WHERE start_ts>? AND status=? ORDER BY start_ts LIMIT 100').all(now-86400,'scheduled');
     const markets=db.prepare(`SELECT m.*, e.name event_name,e.start_ts,e.season FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE e.status='scheduled' AND m.status='active' AND e.start_ts>? AND e.start_ts-86400<=? ORDER BY e.start_ts,m.corps,m.caption,m.kind`).all(now,now);
@@ -75,6 +77,28 @@ module.exports = function mountBetting(app, getConn) {
       return {bet_id:Number(b.lastInsertRowid),balance:wallet(db,uid)};
     })();
   });res.json({ok:true,...result});}catch(e){res.status(400).json({error:e.message});} });
+  // Admin-managed balance adjustments. All changes are atomic and audited.
+  app.post('/api/admin/gems/adjust', loggedIn, admin, write, (req,res)=>{
+    try {
+      const data=withDb(db=>db.transaction(()=>{
+        const identifier=String(req.body.username||'').trim();
+        const delta=Number(req.body.delta);
+        const note=String(req.body.note||'').trim();
+        if(!identifier || identifier.length>100) throw Error('Enter a username.');
+        if(!Number.isSafeInteger(delta) || delta===0 || Math.abs(delta)>1000000) throw Error('Enter a nonzero whole number between -1,000,000 and 1,000,000.');
+        if(!note || note.length>250) throw Error('An adjustment reason (max 250 characters) is required.');
+        const user=db.prepare('SELECT id,username FROM users WHERE LOWER(username)=LOWER(?) LIMIT 1').get(identifier);
+        if(!user) throw Error('User not found.');
+        wallet(db,Number(user.id));
+        const change=db.prepare('UPDATE pb_betting_wallets SET balance=balance+? WHERE user_id=? AND balance+?>=0').run(delta,user.id,delta);
+        if(change.changes!==1) throw Error('Cannot remove more Gems than the user owns.');
+        const adminId=Number(req.session.uid);
+        db.prepare('INSERT INTO pb_betting_ledger(user_id,delta,reason) VALUES(?,?,?)').run(user.id,delta,'admin:'+adminId+':'+note);
+        return {ok:true,username:user.username,delta,balance:wallet(db,Number(user.id))};
+      })());
+      return res.json(data);
+    } catch(e) {return res.status(400).json({error:e.message||'Adjustment failed'});}
+  });
   app.post('/api/admin/betting/import',loggedIn,admin,write,(req,res)=>{try{ const imported=withDb(db=>db.transaction(()=>{
     const items=req.body.events; if(!Array.isArray(items)||items.length>500)throw Error('Supply events array (up to 500).');
     let count=0;for(const ev of items){
