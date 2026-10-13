@@ -1,6 +1,7 @@
 'use strict';
 const gems = require('./gems');
 const historicalLines = require('./betting_lines');
+const dciSync = require('./dci_sync');
 // Mount AFTER express-session, body parsing, and res.locals middleware.
 module.exports = function mountBetting(app, getConn) {
   function withDb(fn) { const db=getConn(); try {return fn(db);} finally {db.close();} }
@@ -37,6 +38,7 @@ module.exports = function mountBetting(app, getConn) {
     `);
   }
   withDb(initialize);
+  withDb(dciSync.init);
   function wallet(db, uid) { db.prepare('INSERT OR IGNORE INTO pb_betting_wallets(user_id,balance) VALUES (?,200)').run(uid); return db.prepare('SELECT balance FROM pb_betting_wallets WHERE user_id=?').get(uid).balance; }
   // Existing wallets are intentionally retained; only NEW wallets begin with 200 Gems.
   const loggedIn=(req,res,next)=>req.session?.uid?next():res.redirect('/login?next=%2Fbetting');
@@ -68,6 +70,68 @@ module.exports = function mountBetting(app, getConn) {
     balance_before INTEGER NOT NULL,balance_after INTEGER NOT NULL,reason TEXT NOT NULL,
     created_ts INTEGER NOT NULL DEFAULT (unixepoch())
   )`));
+  // Separate admin-only sync page and sandbox; never uses real wallets for replay.
+  app.get('/betsadmin/sync',adminLogin,admin,(req,res,next)=>{
+    try{withDb(db=>{
+      const logs=db.prepare('SELECT * FROM pb_dci_sync_log ORDER BY id DESC LIMIT 30').all();
+      const sandbox=db.prepare('SELECT id,name,original_date,markets_json FROM pb_dci_sandbox_events ORDER BY created_ts DESC LIMIT 10').all().map(x=>({...x,market_count:JSON.parse(x.markets_json).length}));
+      const current=Number(req.session.uid),testBalance=dciSync.sandboxWallet(db,current);
+      const recent=db.prepare('SELECT * FROM pb_dci_sandbox_bets WHERE user_id=? ORDER BY id DESC LIMIT 20').all(current);
+      const events=db.prepare("SELECT id,name,start_ts,season,status FROM pb_betting_events WHERE source_url LIKE 'https://www.dci.org/%' ORDER BY start_ts DESC LIMIT 35").all();
+      res.setHeader('Cache-Control','private,no-store');
+      res.render('betsadmin_sync',{me:res.locals.me,logs,sandbox,events,recent,testBalance,csrf:csrfToken(req),notice:String(req.query.notice||'').slice(0,300)});
+    });}catch(e){next(e);}
+  });
+  function verifySyncAdmin(req,res,next){
+    if(!validOrigin(req))return res.sendStatus(403);
+    const a=String(req.body.csrf||''),b=String(req.session.betsadmin_csrf||'');
+    if(!a||a!==b)return res.sendStatus(403);
+    next();
+  }
+  app.post('/betsadmin/sync/action',adminLogin,admin,verifySyncAdmin,async(req,res,next)=>{
+    try{
+      const action=String(req.body.action||'');let result;
+      if(action==='discover'){
+        const year=Number(req.body.year||new Date().getFullYear());
+        if(!Number.isInteger(year)||year<2022||year>2100)throw Error('Invalid season');
+        result=await withDbAsync(async db=>dciSync.discover(db,{year,limit:100}));
+      } else if(action==='scores'){
+        result=await withDbAsync(async db=>dciSync.checkScores(db));
+      } else if(action==='replay'){
+        // Real historical event from XLSX; no arbitrary fake events.
+        const slug=String(req.body.slug||'2026-dci-dallas');
+        if(!/^20\d\d-[a-z0-9-]+$/.test(slug))throw Error('Invalid historical slug');
+        result=withDb(db=>dciSync.replay(db,{year:Number(slug.slice(0,4)),slug}));
+      } else if(action==='testbet'){
+        result=withDb(db=>({id:dciSync.sandboxBet(db,Number(req.session.uid),{
+          event_id:String(req.body.event_id||''),market_id:String(req.body.market_id||''),choice:String(req.body.choice||''),stake:Number(req.body.stake)
+        })}));
+      } else if(action==='settle'){
+        result=withDb(db=>dciSync.replaySettle(db,Number(req.session.uid),String(req.body.event_id||'')));
+      } else throw Error('Unknown action');
+      res.redirect(303,'/betsadmin/sync?notice='+encodeURIComponent(JSON.stringify(result).slice(0,290)));
+    }catch(e){res.redirect(303,'/betsadmin/sync?notice='+encodeURIComponent('ERROR: '+String(e.message||e).slice(0,280)));}
+  });
+  async function withDbAsync(fn){const db=getConn();try{return await fn(db);}finally{db.close();}}
+  // One Railway replica/worker only: set DCI_SYNC_ENABLED=true on that service.
+  // Polls after start and thereafter by interval; never touches sandbox balances.
+  if(process.env.DCI_SYNC_ENABLED==='true'){
+    let busy=false;
+    async function tick(){if(busy)return;busy=true;try{
+      await withDbAsync(async db=>{
+        if(dciSync.allowRefresh(db,'events',6*3600)){
+          try{const today=new Date();const yr=today.getUTCFullYear();
+            await dciSync.discover(db,{year:today.getUTCMonth()>=8?yr+1:yr,limit:100});}
+          catch(e){dciSync.log(db,'events','error',e.message);dciSync.stamp(db,'events');}
+        }
+        if(dciSync.allowRefresh(db,'scores',15*60)){
+          try{await dciSync.checkScores(db);}catch(e){dciSync.log(db,'scores','error',e.message);dciSync.stamp(db,'scores');}
+        }
+      });
+    }catch(e){console.error('[DCI SYNC]',e);}finally{busy=false;}}
+    const t=setInterval(tick,15*60*1000);t.unref();
+    setTimeout(tick,20000).unref();
+  }
   app.get('/betsadmin',adminLogin,admin,loadAdminPage);
   app.post('/betsadmin/adjust',adminLogin,admin,(req,res,next)=>{
     if(!validOrigin(req))return res.sendStatus(403);

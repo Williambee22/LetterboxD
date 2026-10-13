@@ -108,6 +108,7 @@ function saveMarkets(db,event,markets){
   let inserted=0,skipped=0;
   const insert=db.prepare(`INSERT INTO pb_betting_markets(id,event_id,corps,caption,kind,line,odds)
     VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING`);
+  const exists=db.prepare('SELECT id FROM pb_betting_markets WHERE id=?').get.bind(db.prepare('SELECT id FROM pb_betting_markets WHERE id=?'));
   for(const m of markets){
     const row=insert.run(m.id,event.id,m.corps,m.caption,m.kind,m.line,m.odds);
     if(row.changes)inserted++;else skipped++;
