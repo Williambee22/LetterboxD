@@ -3440,6 +3440,7 @@ app.get('/corps/:corps_name', async (req, res, next) => {
         const myPrediction = dbx.getUserPredictionRows(conn, seasonLabel, Number(req.session.uid));
         const results = dbx.getPredictionResultsRows(conn, seasonLabel);
     
+        gems.creditHistoricalPredictionScores(conn);
         const leaderboard = gems.gemLeaderboard(conn, dbx.listPredictionLeaderboard(conn, seasonLabel)).map((r) => {
           const d = normalizeRow(r);
           if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
@@ -3593,6 +3594,7 @@ app.get('/corps/:corps_name', async (req, res, next) => {
         const activeSet = activeCorps;
   
         const results = dbx.getPredictionResultsRows(conn, seasonLabel);
+        gems.creditHistoricalPredictionScores(conn);
         const leaderboard = gems.gemLeaderboard(conn, dbx.listPredictionLeaderboard(conn, seasonLabel)).map((r) => {
           const d = normalizeRow(r);
           if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
