@@ -13,6 +13,7 @@ const { uploadBufferToR2, deleteFromR2 } = require('./r2');
 const dbx = require('./db');
 const showHistory = require('./historical_show_data');
 const mountBetting = require('./betting');
+const gems = require('./gems');
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -3439,13 +3440,13 @@ app.get('/corps/:corps_name', async (req, res, next) => {
         const myPrediction = dbx.getUserPredictionRows(conn, seasonLabel, Number(req.session.uid));
         const results = dbx.getPredictionResultsRows(conn, seasonLabel);
     
-        const leaderboard = dbx.listPredictionLeaderboard(conn, seasonLabel).map((r) => {
+        const leaderboard = gems.gemLeaderboard(conn, dbx.listPredictionLeaderboard(conn, seasonLabel)).map((r) => {
           const d = normalizeRow(r);
           if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
           return d;
         });
     
-        const allTimeLeaderboard = dbx.listPredictionAllTimeLeaderboard(conn).map((r) => {
+        const allTimeLeaderboard = gems.gemLeaderboard(conn, dbx.listPredictionAllTimeLeaderboard(conn)).map((r) => {
           const d = normalizeRow(r);
           if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
           return d;
@@ -3592,13 +3593,13 @@ app.get('/corps/:corps_name', async (req, res, next) => {
         const activeSet = activeCorps;
   
         const results = dbx.getPredictionResultsRows(conn, seasonLabel);
-        const leaderboard = dbx.listPredictionLeaderboard(conn, seasonLabel).map((r) => {
+        const leaderboard = gems.gemLeaderboard(conn, dbx.listPredictionLeaderboard(conn, seasonLabel)).map((r) => {
           const d = normalizeRow(r);
           if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
           return d;
         });
 
-        const allTimeLeaderboard = dbx.listPredictionAllTimeLeaderboard(conn).map((r) => {
+        const allTimeLeaderboard = gems.gemLeaderboard(conn, dbx.listPredictionAllTimeLeaderboard(conn)).map((r) => {
           const d = normalizeRow(r);
           if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
           return d;
@@ -3748,10 +3749,11 @@ app.get('/corps/:corps_name', async (req, res, next) => {
   
         const settings = dbx.getPredictionSettings(conn);
         const result = dbx.awardPredictionScores(conn, settings.season_label);
+        gems.syncPredictionRewards(conn, settings.season_label);
   
         await dbx.commit(conn);
   
-        req.flash('ok', `Points awarded. Users scored: ${result.users_scored}.`);
+        req.flash('ok', `Gems awarded. Users scored: ${result.users_scored}.`);
       } catch (err) {
         req.flash('error', String(err.message || err));
       } finally {
