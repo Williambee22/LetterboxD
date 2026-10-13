@@ -15,3 +15,16 @@ const daily=$('dailyGemClaim');
 function refreshClaim(){if(!daily)return;const ts=Number(daily.dataset.next)||0,seconds=Math.ceil(ts-Date.now()/1000);if(seconds>0){const h=Math.floor(seconds/3600),m=Math.ceil((seconds%3600)/60);daily.disabled=true;daily.textContent=`💎 Next in ${h}h ${m}m`;}else{daily.disabled=false;daily.textContent='💎 Claim 10';}}
 if(daily){daily.addEventListener('click',async()=>{daily.disabled=true;try{const response=await fetch('/api/gems/daily',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const data=await response.json();if(data.next_claim_ts)daily.dataset.next=String(data.next_claim_ts);if(data.balance!=null)$('balance').textContent=Number(data.balance).toLocaleString();if(!response.ok&&response.status!==429)throw Error(data.error||'Claim failed');$('btMessage').textContent=data.ok?'Claimed 10 Gems! 💎':'Daily Gems already claimed.';}catch(error){$('btMessage').textContent=error.message;}finally{refreshClaim();}});refreshClaim();setInterval(refreshClaim,60000);}
 render();slip();})();
+
+// Administration controls are present only for verified site admins.
+const gemAdminForm=document.getElementById('gemAdminForm');
+if(gemAdminForm){gemAdminForm.addEventListener('submit',async event=>{
+ event.preventDefault();
+ const btn=gemAdminForm.querySelector('button[type="submit"]'),out=document.getElementById('gemAdminResult');
+ const form=new FormData(gemAdminForm);
+ const payload={username:String(form.get('username')||''),delta:Number(form.get('delta')),note:String(form.get('note')||'')};
+ if(!window.confirm(`Adjust ${payload.username}'s balance by ${payload.delta>0?'+':''}${payload.delta} Gems?`))return;
+ btn.disabled=true;out.textContent='';
+ try{const r=await fetch('/api/admin/gems/adjust',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await r.json();if(!r.ok)throw Error(data.error||'Could not adjust Gems');out.textContent=`Updated ${data.username}: ${data.delta>0?'+':''}${data.delta} Gems. New balance: 💎 ${Number(data.balance).toLocaleString()}.`;gemAdminForm.reset();}
+ catch(e){out.textContent=e.message;}finally{btn.disabled=false;}
+});}
