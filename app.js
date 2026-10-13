@@ -3414,9 +3414,10 @@ app.get('/corps/:corps_name', async (req, res, next) => {
     res.redirect(`/show/${showId}`);
   }));
 
-    // Virtual-only Pressboxd betting page and market APIs
     mountBetting(app, getConn);
 
+
+  
     app.get('/predictions', loginRequired(async (req, res, next) => {
       let conn;
     
