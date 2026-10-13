@@ -9,6 +9,29 @@
   <title>Board | Pressboxd</title>
 
   <link rel="stylesheet" href="/static/betting.css">
+  <style>
+    /* Center the single navigation link without changing the rest of the header. */
+    .pb-header .pb-top-inner { position: relative; }
+    .pb-back-nav {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      height: 100%;
+      transform: translateX(-50%);
+      align-self: center;
+    }
+    .pb-back-nav a { white-space: nowrap; }
+    @media (max-width: 760px) {
+      .pb-back-nav {
+        position: static;
+        transform: none;
+        order: 3;
+        width: 100%;
+        height: 35px;
+        justify-content: center;
+      }
+    }
+  </style>
 </head>
 
 <body class="pb-body">
@@ -35,14 +58,12 @@
           onmouseover="this.style.transform='rotate(360deg)'"
           onmouseout="this.style.transform='rotate(0deg)'"
         >
+        <span style="font-family:'Barlow Condensed', Impact, sans-serif; font-size:30px; font-weight:800; letter-spacing:.5px; margin-left:10px; color:#fff;">BETS</span>
       </a>
 
 
-      <nav class="pb-main-nav">
-        <a href="/shows">Shows</a>
-        <a href="/predictions">Predictions</a>
-        <a class="active" href="/betting">Board</a>
-        <a href="/forums">Forums</a>
+      <nav class="pb-main-nav pb-back-nav" aria-label="Return to Pressboxd">
+        <a href="/predictions">Back to Pressboxd</a>
       </nav>
 
       <div class="pb-header-right">
@@ -85,14 +106,6 @@
       <section class="pb-board-heading">
 
         <div>
-
-          <div class="pb-eyebrow">
-            DRUM CORPS INTERNATIONAL
-
-            <span class="pb-live-dot"></span>
-
-            PROJECTION BOARD
-          </div>
 
           <h1>Board</h1>
 
