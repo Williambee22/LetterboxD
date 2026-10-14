@@ -17,13 +17,31 @@
 .pb-daily-claim:disabled{opacity:.7;cursor:not-allowed;}
 @media(max-width:760px){.pb-daily-claim{font-size:10px;padding:7px;}}
 
-/* Admin-only Gems adjustment panel */
-.pb-gems-admin{grid-column:1/-1;padding:15px 18px;margin-top:16px;border:1px solid #494054;border-radius:7px;background:#211b2b;}
-.pb-gems-admin-title{font-weight:800;font-size:14px;margin-bottom:10px;}
-.pb-gems-admin-form{display:grid;grid-template-columns:minmax(130px,1fr) minmax(120px,.6fr) minmax(180px,1.6fr) auto;gap:9px;}
-.pb-gems-admin-form input{min-width:0;background:#17151e;border:1px solid #514659;border-radius:5px;padding:10px;color:#fff;}
-.pb-gems-admin-form button{border:0;background:#c5ff42;color:#151b05;font-weight:800;border-radius:5px;padding:10px 14px;}
-.pb-gems-admin-form button:disabled{opacity:.5;}
-#gemAdminResult{margin:8px 0 0;font-size:12px;color:#cfeca0;}
-@media(max-width:900px){.pb-gems-admin-form{grid-template-columns:1fr 1fr;}}
-@media(max-width:560px){.pb-gems-admin-form{grid-template-columns:1fr;}}
+/* Corpsdefault portraits in betting cards, similar to circular player images */
+.bt-corp-symbol {
+  width: 66px;
+  height: 66px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+  background: #302b3c;
+  border: 2px solid #5d526e;
+  border-radius: 50%;
+}
+.bt-card-feature { height: 74px; }
+.bt-corp-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.bt-corp-initials {
+  font: 800 22px 'Barlow Condensed', Impact, sans-serif;
+  color: #ded6ee;
+}
+.bt-corp-photo[hidden], .bt-corp-initials[hidden] { display: none !important; }
+@media (max-width: 760px) {
+  .bt-corp-symbol { width: 58px; height: 58px; }
+  .bt-card-feature { height: 64px; }
+}

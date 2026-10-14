@@ -3,9 +3,21 @@ const $=x=>document.getElementById(x), state={event:'all',kind:'all',cat:'all',q
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cat=x=>/general effect|^ge\b|^ge\d/i.test(x)?'ge':/music|brass|percussion/i.test(x)?'music':/visual|guard/i.test(x)?'visual':/total score|overall/i.test(x)?'total':'other';
 const fmt=x=>(Number(x)>=0?'+':'')+Number(x).toFixed(3);
+// Match the slugify() convention used by the Pressboxd /posters/:name route.
+// /posters/<corps>default resolves its R2 image via the existing poster proxy.
+const corpsSlug=name=>String(name||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'_').replace(/_+/g,'_').replace(/^_+|_+$/g,'');
+const corpsInitials=name=>String(name||'').trim().split(/\s+/).map(w=>w[0]||'').slice(0,2).join('').toUpperCase();
+function corpsPortrait(name){
+  const slug=corpsSlug(name);
+  const fallback=esc(corpsInitials(name));
+  if(!slug)return `<span class="bt-corp-initials">${fallback}</span>`;
+  // The img uses an existing site route; if its fallback image fails, show initials.
+  return `<img class="bt-corp-photo" src="/posters/${encodeURIComponent(slug)}default" alt="${esc(name)} corps logo" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="bt-corp-initials" hidden>${fallback}</span>`;
+}
+
 function render(){ const items=MARKETS.filter(m=>(state.event==='all'||m.event_id===state.event)&&(state.kind==='all'||m.kind===state.kind)&&(state.cat==='all'||cat(m.caption)===state.cat)&&(`${m.corps} ${m.caption} ${m.event_name}`).toLowerCase().includes(state.q));
 $('shownCount').textContent=`${items.length} markets`;$('empty').hidden=items.length>0;
-$('marketGrid').innerHTML=items.map(m=>`<article class="bt-card"><div class="bt-card-head"><span>${esc(m.event_name)}</span><strong>${m.kind==='change'?'CHANGE':'FINAL'}</strong></div><div class="bt-card-feature"><div class="bt-corp-symbol">${esc(m.corps).split(/\s+/).map(w=>w[0]||'').slice(0,2).join('').toUpperCase()}</div></div><div class="bt-corps" title="${esc(m.corps)}">${esc(m.corps)}</div><div class="bt-caption">${esc(m.caption)}</div><div class="bt-line"><strong>${m.kind==='change'?fmt(m.line):Number(m.line).toFixed(3)}</strong><small>${m.kind==='change'?'Change':'Score'}</small></div><div class="bt-choices"><button class="more ${state.pick?.id===m.id&&state.pick.choice==='over'?'selected':''}" data-id="${esc(m.id)}" data-choice="over">↑ MORE</button><button class="less ${state.pick?.id===m.id&&state.pick.choice==='under'?'selected':''}" data-id="${esc(m.id)}" data-choice="under">↓ LESS</button></div></article>`).join('');}
+$('marketGrid').innerHTML=items.map(m=>`<article class="bt-card"><div class="bt-card-head"><span>${esc(m.event_name)}</span><strong>${m.kind==='change'?'CHANGE':'FINAL'}</strong></div><div class="bt-card-feature"><div class="bt-corp-symbol">${corpsPortrait(m.corps)}</div></div><div class="bt-corps" title="${esc(m.corps)}">${esc(m.corps)}</div><div class="bt-caption">${esc(m.caption)}</div><div class="bt-line"><strong>${m.kind==='change'?fmt(m.line):Number(m.line).toFixed(3)}</strong><small>${m.kind==='change'?'Change':'Score'}</small></div><div class="bt-choices"><button class="more ${state.pick?.id===m.id&&state.pick.choice==='over'?'selected':''}" data-id="${esc(m.id)}" data-choice="over">↑ MORE</button><button class="less ${state.pick?.id===m.id&&state.pick.choice==='under'?'selected':''}" data-id="${esc(m.id)}" data-choice="under">↓ LESS</button></div></article>`).join('');}
 function slip(){const p=state.pick,m=MARKETS.find(x=>x.id===p?.id);$('slipEmpty').hidden=!!m;$('slipFilled').hidden=!m;if(!m)return;$('slipEvent').textContent=m.event_name;$('slipCorps').textContent=m.corps;$('slipDetail').textContent=`${m.caption} · ${p.choice==='over'?'MORE':'LESS'} ${m.kind==='change'?fmt(m.line):Number(m.line).toFixed(3)}`;$('slipOdds').textContent=Number(m.odds).toFixed(2)+'×';let stake=Math.max(0,Number($('stake').value)||0);$('slipPayout').textContent=Math.round(stake*m.odds).toLocaleString()+' 💎 Gems';}
 $('marketGrid').addEventListener('click',e=>{let b=e.target.closest('button[data-id]');if(!b)return;state.pick={id:b.dataset.id,choice:b.dataset.choice};render();slip();$('btMessage').textContent='';});
 for(let [container,key,attribute] of [['eventTabs','event','id'],['kindTabs','kind','kind'],['captionTabs','cat','cat']]) $(container).addEventListener('click',e=>{let b=e.target.closest('button');if(!b)return;state[key]=b.dataset[attribute];$(container).querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));render();});
@@ -15,16 +27,3 @@ const daily=$('dailyGemClaim');
 function refreshClaim(){if(!daily)return;const ts=Number(daily.dataset.next)||0,seconds=Math.ceil(ts-Date.now()/1000);if(seconds>0){const h=Math.floor(seconds/3600),m=Math.ceil((seconds%3600)/60);daily.disabled=true;daily.textContent=`💎 Next in ${h}h ${m}m`;}else{daily.disabled=false;daily.textContent='💎 Claim 10';}}
 if(daily){daily.addEventListener('click',async()=>{daily.disabled=true;try{const response=await fetch('/api/gems/daily',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const data=await response.json();if(data.next_claim_ts)daily.dataset.next=String(data.next_claim_ts);if(data.balance!=null)$('balance').textContent=Number(data.balance).toLocaleString();if(!response.ok&&response.status!==429)throw Error(data.error||'Claim failed');$('btMessage').textContent=data.ok?'Claimed 10 Gems! 💎':'Daily Gems already claimed.';}catch(error){$('btMessage').textContent=error.message;}finally{refreshClaim();}});refreshClaim();setInterval(refreshClaim,60000);}
 render();slip();})();
-
-// Administration controls are present only for verified site admins.
-const gemAdminForm=document.getElementById('gemAdminForm');
-if(gemAdminForm){gemAdminForm.addEventListener('submit',async event=>{
- event.preventDefault();
- const btn=gemAdminForm.querySelector('button[type="submit"]'),out=document.getElementById('gemAdminResult');
- const form=new FormData(gemAdminForm);
- const payload={username:String(form.get('username')||''),delta:Number(form.get('delta')),note:String(form.get('note')||'')};
- if(!window.confirm(`Adjust ${payload.username}'s balance by ${payload.delta>0?'+':''}${payload.delta} Gems?`))return;
- btn.disabled=true;out.textContent='';
- try{const r=await fetch('/api/admin/gems/adjust',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await r.json();if(!r.ok)throw Error(data.error||'Could not adjust Gems');out.textContent=`Updated ${data.username}: ${data.delta>0?'+':''}${data.delta} Gems. New balance: 💎 ${Number(data.balance).toLocaleString()}.`;gemAdminForm.reset();}
- catch(e){out.textContent=e.message;}finally{btn.disabled=false;}
-});}
