@@ -3440,33 +3440,50 @@ app.get('/corps/:corps_name', async (req, res, next) => {
         const myPrediction = dbx.getUserPredictionRows(conn, seasonLabel, Number(req.session.uid));
         const results = dbx.getPredictionResultsRows(conn, seasonLabel);
     
+        
         gems.creditHistoricalPredictionScores(conn);
-        const leaderboard = gems.gemLeaderboard(conn, dbx.listPredictionLeaderboard(conn, seasonLabel)).map((r) => {
-          const d = normalizeRow(r);
-          if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
-          return d;
-        });
-    
-        const allTimeLeaderboard = gems.gemLeaderboard(conn, dbx.listPredictionAllTimeLeaderboard(conn)).map((r) => {
-          const d = normalizeRow(r);
-          if (!d.avatar_url) d.avatar_url = pfpUrlForUsername(d.username || '');
-          return d;
-        });
+        
+        const gemBalance = gems.balance(
+          conn,
+          Number(req.session.uid)
+        );
+        
+        gems.initialize(conn);
+        
+        const gemLeaders = conn.prepare(`
+          SELECT
+            u.id AS user_id,
+            u.username,
+            w.balance AS gem_balance,
+            RANK() OVER (
+              ORDER BY w.balance DESC
+            ) AS rank
+          FROM pb_betting_wallets AS w
+          INNER JOIN users AS u
+            ON u.id = w.user_id
+          ORDER BY
+            w.balance DESC,
+            u.username COLLATE NOCASE ASC
+          LIMIT 100
+        `).all();
+
     
         const submissionCount = dbx.countPredictionSubmissions(conn, seasonLabel);
     
+        
         return res.render('predictions', {
           me,
           settings,
           active_corps: activeCorps,
           my_prediction: myPrediction,
           results,
-          leaderboard,
-          all_time_leaderboard: allTimeLeaderboard,
+          gem_leaders: gemLeaders,
+          gem_balance: gemBalance,
           submission_count: submissionCount,
           can_submit_prediction: canSubmitPredictionSafe,
           prediction_remaining_hours: predictionRemainingHours,
         });
+
       } catch (err) {
         return next(err);
       } finally {
