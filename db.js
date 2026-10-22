@@ -1605,9 +1605,9 @@ function awardPredictionScores(conn, seasonLabel = null) {
           const distance = Math.abs(actualSlot - predictedSlot);
       
           if (distance === 0) {
-            points += 20;
+            points += 1000;
           } else if (distance === 1) {
-            points += 10;
+            points += 500;
           }
       
           break;
