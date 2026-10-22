@@ -217,6 +217,61 @@
       font-size: 11px;
     }
 
+    .corpsShowsControls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .corpsSortLabel {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--corps-muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .corpsSortSelect {
+      width: 168px;
+      max-width: 100%;
+      padding: 9px 32px 9px 11px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 9px;
+      background: #141414;
+      color: #fff;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .corpsSortSelect:focus-visible {
+      outline: 2px solid var(--accent, #3252b3);
+      outline-offset: 2px;
+    }
+
+    .corpsSortSelect:disabled {
+      cursor: default;
+      opacity: .6;
+    }
+
+    @media (max-width: 560px) {
+      .corpsShowsHeader {
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .corpsShowsControls {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .corpsSortLabel {
+        margin-left: auto;
+      }
+    }
+
     .postergrid {
       margin-top: 14px !important;
       gap: 18px 14px !important;
@@ -919,13 +974,24 @@
 
     <div class="corpsShowsHeader">
       <h2>Shows</h2>
-      <div class="corpsShowsCount">
-        Newest season first
+      <div class="corpsShowsControls">
+        <span class="corpsShowsCount"><%= safeRows.length %> shows</span>
+        <label class="corpsSortLabel" for="corpsShowSort">
+          Sort by
+          <select class="corpsSortSelect" id="corpsShowSort" <%= safeRows.length < 2 ? 'disabled' : '' %>>
+            <option value="year_desc" selected>Recent to Old</option>
+            <option value="year_asc">Old to Recent</option>
+            <option value="top">Highest Rated</option>
+            <option value="bottom">Lowest Rated</option>
+            <option value="most_ratings">Most Ratings</option>
+            <option value="least_ratings">Least Ratings</option>
+          </select>
+        </label>
       </div>
     </div>
 
     <% if (safeRows.length > 0) { %>
-      <div class="postergrid">
+      <div class="postergrid" id="corpsShowsGrid">
         <% for (const row of safeRows) {
              const poster = row?.poster_url || POSTER_FALLBACK;
              const avg =
@@ -944,7 +1010,10 @@
              const hasMyReview =
                Number(row?.has_review || 0) === 1;
         %>
-          <div class="poster">
+          <div class="poster"
+               data-year="<%= Number(row.year || 0) %>"
+               data-rating="<%= avg %>"
+               data-rating-count="<%= Number(row.cnt || 0) %>">
             <a
               class="poster_art"
               href="/show/<%= row.id %>"
@@ -1081,6 +1150,53 @@
   </footer>
 
   <script>
+    // Sort existing show cards without another database query or page reload.
+    (() => {
+      const select = document.getElementById('corpsShowSort');
+      const grid = document.getElementById('corpsShowsGrid');
+      if (!select || !grid) return;
+
+      const shows = Array.from(grid.querySelectorAll('.poster')).map((node, index) => ({
+        node,
+        index,
+        year: Number(node.dataset.year) || 0,
+        rating: Number(node.dataset.rating) || 0,
+        count: Number(node.dataset.ratingCount) || 0
+      }));
+
+      // Use the original server order for year ties (including Finals placements).
+      const newestFirst = (a, b) => b.year - a.year || a.index - b.index;
+      const unratedLast = (a, b) => Number(a.count === 0) - Number(b.count === 0);
+
+      function applySort() {
+        const sorted = [...shows];
+        switch (select.value) {
+          case 'top':
+            sorted.sort((a, b) => unratedLast(a, b) || b.rating - a.rating || b.count - a.count || newestFirst(a, b));
+            break;
+          case 'bottom':
+            sorted.sort((a, b) => unratedLast(a, b) || a.rating - b.rating || b.count - a.count || newestFirst(a, b));
+            break;
+          case 'year_asc':
+            sorted.sort((a, b) => a.year - b.year || a.index - b.index);
+            break;
+          case 'most_ratings':
+            sorted.sort((a, b) => b.count - a.count || newestFirst(a, b));
+            break;
+          case 'least_ratings':
+            sorted.sort((a, b) => a.count - b.count || newestFirst(a, b));
+            break;
+          case 'year_desc':
+          default:
+            sorted.sort(newestFirst);
+            break;
+        }
+        grid.append(...sorted.map(show => show.node));
+      }
+
+      select.addEventListener('change', applySort);
+    })();
+
     (() => {
       const btn = document.getElementById("bellBtn");
       const dd = document.getElementById("notifDropdown");
