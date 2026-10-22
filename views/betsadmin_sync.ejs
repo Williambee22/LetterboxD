@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pressboxd | DCI Sync Diagnostics</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,system-ui,-apple-system,sans-serif;color:#f0f3fa;background:#090c12}
+*{box-sizing:border-box}body{margin:0}header{padding:22px max(3%,calc((100vw - 1150px)/2));background:#111823;border-bottom:1px solid #253047}
+header a{color:#acc7ff;text-decoration:none}main{max-width:1150px;margin:auto;padding:24px 3% 80px}
+h1{font-size:26px;margin:0 0 7px}h2{font-size:17px;margin:0 0 14px}p,.muted{color:#a6b4c8}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}.card{padding:19px;background:#141b28;border:1px solid #2a364b;border-radius:12px;margin:0 0 16px}
+label{display:block;color:#b3bfd3;font-size:13px;margin-bottom:5px}input,select,button{padding:10px 12px;font:inherit;border:1px solid #33445b;border-radius:8px;background:#1b2636;color:white}
+input{width:100%;max-width:280px}button{cursor:pointer;background:#285bb9;border-color:#285bb9;font-weight:650}button.secondary{background:#28354c;border-color:#42526f}
+form{margin:8px 0 16px}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;background:#0c111b;padding:10px;border-radius:7px}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:10px 8px;border-bottom:1px solid #2c3649;text-align:left;vertical-align:top}td.wrap{max-width:520px;overflow-wrap:anywhere}
+.table-scroll{overflow:auto}.status-ok{color:#6ed2ac}.status-warning{color:#f5bd67}.status-error{color:#f58385}.notice{padding:14px;background:#1d2b43;border-radius:8px;overflow-wrap:anywhere}
+small{color:#a7b5c8}
+</style></head><body>
+<header><a href="/betting">← Back to Pressboxd Betting</a> &nbsp;·&nbsp; <a href="/betsadmin">Gems Admin</a></header>
+<main>
+<h1>DCI Schedule & Score Sync</h1>
+<p>Admin-only live-source diagnostics. Previews never create bets or alter real Gems. Live imports may add events, lines, and verified scores; automatic payouts require the Railway feature flag.</p>
+<% if (notice) { %><p class="notice"><%= notice %></p><% } %>
+<section class="grid">
+<div class="card"><h2>Worker status</h2><p>Automatic polls: <strong><%= health.autoSync?'Enabled':'Disabled' %></strong></p>
+<p>Automatic Gems settlement: <strong><%= health.autoSettle?'Enabled':'Disabled — verification only' %></strong></p>
+<p>Official verified score rows: <strong><%= health.verifiedCount %></strong></p>
+<p>Past events with unsettled markets: <strong><%= health.pendingMarkets %></strong></p>
+<small>Set DCI_SYNC_ENABLED=true for schedule/score polling. Set DCI_AUTO_SETTLE_ENABLED=true only after successful recap verification.</small></div>
+<div class="card"><h2>Run schedule discovery</h2>
+<form method="POST" action="/betsadmin/sync/action">
+<input type="hidden" name="csrf" value="<%= csrf %>">
+<label for="year">DCI season</label><input id="year" type="number" min="2022" max="2100" name="year" value="<%= new Date().getUTCFullYear() %>">
+<div class="actions"><button name="action" value="discover_preview" class="secondary">Preview only</button><button name="action" value="discover">Import official events</button></div>
+</form><small>If the DCI AJAX endpoint blocks requests, errors appear in the logs rather than inventing events.</small></div>
+<div class="card"><h2>Official score verification</h2>
+<form method="POST" action="/betsadmin/sync/action"><input type="hidden" name="csrf" value="<%= csrf %>">
+<div class="actions"><button name="action" value="scores_preview" class="secondary">Preview scores</button><button name="action" value="scores">Verify / import scores</button></div>
+</form><small>Final standings and detailed recap totals must agree. With automatic settlement disabled, verified scores are saved but real bets remain pending.</small></div>
+</section>
+<div class="card"><h2>Polling timestamps</h2><div class="table-scroll"><table><thead><tr><th>Process</th><th>Last success</th></tr></thead><tbody>
+<% health.states.forEach(function(s){ %><tr><td><%= s.key %></td><td><%= new Date(s.last_ts*1000).toLocaleString() %></td></tr><% }); %>
+<% if(!health.states.length){%><tr><td colspan="2">No successful polls yet</td></tr><%}%>
+</tbody></table></div></div>
+<div class="card"><h2>Recent synchronization attempts</h2><div class="table-scroll"><table><thead><tr><th>Time</th><th>Type</th><th>Status</th><th>Details</th></tr></thead><tbody>
+<% logs.forEach(function(l){ %><tr><td><%=new Date(l.created_ts*1000).toLocaleString()%></td><td><%=l.kind%></td><td class="status-<%= ['ok','warning','error'].includes(l.status)?l.status:'warning' %>"><%=l.status%></td><td class="wrap"><%=l.details%></td></tr><% }); %>
+<% if(!logs.length){%><tr><td colspan="4">No sync attempts logged</td></tr><%}%>
+</tbody></table></div></div>
+<div class="card"><h2>Imported DCI events</h2><div class="table-scroll"><table><thead><tr><th>Name</th><th>Start time (local browser timezone)</th><th>Status</th></tr></thead><tbody>
+<% events.forEach(function(e){ %><tr><td><%=e.name%></td><td><%=new Date(e.start_ts*1000).toLocaleString()%></td><td><%=e.status%></td></tr><% });%>
+<% if(!events.length){%><tr><td colspan="3">No official events imported</td></tr><%}%></tbody></table></div></div>
+<div class="card"><h2>Historical replay — isolated test Gems</h2><p>This mode does not contact DCI and never changes production wallets.</p>
+<form method="POST" action="/betsadmin/sync/action"><input type="hidden" name="csrf" value="<%=csrf%>">
+<label for="slug">Historical event slug from your bundled XLSX</label><input name="slug" id="slug" value="2026-dci-dallas" required>
+<div class="actions"><button name="action" value="replay">Load historical replay</button></div></form>
+<p>Sandbox balance: <strong><%=testBalance%> test Gems</strong></p>
+<div class="table-scroll"><table><thead><tr><th>Event</th><th>Date</th><th>Market count</th></tr></thead><tbody>
+<% sandbox.forEach(function(e){%><tr><td><%=e.name%> <code><%=e.id%></code></td><td><%=e.original_date%></td><td><%=e.market_count%></td></tr><%});%>
+</tbody></table></div>
+<form method="POST" action="/betsadmin/sync/action"><input type="hidden" name="csrf" value="<%=csrf%>">
+<label for="replayEvent">Replay event</label>
+<select name="event_id" id="replayEvent"><% sandbox.forEach(function(e){%><option value="<%=e.id%>"><%=e.name%> — <%=e.original_date%></option><%});%></select>
+<label for="market">Market</label><select name="market_id" id="market"><% sandbox.forEach(function(e){%>
+<optgroup label="<%=e.name%>"><% e.markets.forEach(function(m){%><option value="<%=m.id%>"><%=m.corps%>: <%=m.caption%> (<%=m.kind%>) · <%=m.line%></option><%});%></optgroup><%});%></select>
+<label>Choice</label><select name="choice"><option value="over">Over</option><option value="under">Under</option></select>
+<label>Stake (test Gems)</label><input name="stake" type="number" min="1" max="1000" value="10" required>
+<div class="actions"><button name="action" value="testbet">Place test bet</button><button name="action" value="settle" class="secondary" formnovalidate>Settle test event</button></div></form>
+<div class="table-scroll"><table><thead><tr><th>Market</th><th>Choice</th><th>Result</th><th>Payout</th></tr></thead><tbody><% recent.forEach(function(b){%><tr><td><%=b.caption%> — <%=b.corps%></td><td><%=b.choice%></td><td><%=b.result%></td><td><%=b.payout%></td></tr><%});%></tbody></table></div>
+</div></main></body></html>
