@@ -74,12 +74,16 @@ module.exports = function mountBetting(app, getConn) {
   app.get('/betsadmin/sync',adminLogin,admin,(req,res,next)=>{
     try{withDb(db=>{
       const logs=db.prepare('SELECT * FROM pb_dci_sync_log ORDER BY id DESC LIMIT 30').all();
-      const sandbox=db.prepare('SELECT id,name,original_date,markets_json FROM pb_dci_sandbox_events ORDER BY created_ts DESC LIMIT 10').all().map(x=>({...x,market_count:JSON.parse(x.markets_json).length}));
+      const sandbox=db.prepare('SELECT id,name,original_date,markets_json FROM pb_dci_sandbox_events ORDER BY created_ts DESC LIMIT 10').all().map(x=>{const markets=JSON.parse(x.markets_json);return {id:x.id,name:x.name,original_date:x.original_date,market_count:markets.length,markets:markets.slice(0,250)};});
       const current=Number(req.session.uid),testBalance=dciSync.sandboxWallet(db,current);
       const recent=db.prepare('SELECT * FROM pb_dci_sandbox_bets WHERE user_id=? ORDER BY id DESC LIMIT 20').all(current);
       const events=db.prepare("SELECT id,name,start_ts,season,status FROM pb_betting_events WHERE source_url LIKE 'https://www.dci.org/%' ORDER BY start_ts DESC LIMIT 35").all();
+      const states=db.prepare('SELECT key,last_ts FROM pb_dci_sync_state ORDER BY key').all();
+      const verifiedCount=db.prepare('SELECT count(*) AS n FROM pb_dci_verified_scores').get().n;
+      const pendingMarkets=db.prepare(`SELECT count(*) AS n FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE m.status='active' AND e.start_ts<unixepoch()`).get().n;
+      const health={states,verifiedCount,pendingMarkets,autoSync:process.env.DCI_SYNC_ENABLED==='true',autoSettle:process.env.DCI_AUTO_SETTLE_ENABLED==='true'};
       res.setHeader('Cache-Control','private,no-store');
-      res.render('betsadmin_sync',{me:res.locals.me,logs,sandbox,events,recent,testBalance,csrf:csrfToken(req),notice:String(req.query.notice||'').slice(0,300)});
+      res.render('betsadmin_sync',{me:res.locals.me,accent_color:res.locals.accent_color,logs,sandbox,events,recent,testBalance,health,csrf:csrfToken(req),notice:String(req.query.notice||'').slice(0,1000)});
     });}catch(e){next(e);}
   });
   function verifySyncAdmin(req,res,next){
@@ -91,12 +95,16 @@ module.exports = function mountBetting(app, getConn) {
   app.post('/betsadmin/sync/action',adminLogin,admin,verifySyncAdmin,async(req,res,next)=>{
     try{
       const action=String(req.body.action||'');let result;
-      if(action==='discover'){
+      if(action==='diagnose'){
+        result=withDb(db=>({states:db.prepare('SELECT * FROM pb_dci_sync_state').all(),
+          verified:db.prepare('SELECT count(*) AS n FROM pb_dci_verified_scores').get().n,
+          logs:db.prepare('SELECT kind,status,details,created_ts FROM pb_dci_sync_log ORDER BY id DESC LIMIT 5').all()}));
+      } else if(action==='discover'||action==='discover_preview'){
         const year=Number(req.body.year||new Date().getFullYear());
         if(!Number.isInteger(year)||year<2022||year>2100)throw Error('Invalid season');
-        result=await withDbAsync(async db=>dciSync.discover(db,{year,limit:100}));
-      } else if(action==='scores'){
-        result=await withDbAsync(async db=>dciSync.checkScores(db));
+        result=await withDbAsync(async db=>dciSync.discover(db,{year,limit:150,dryRun:action==='discover_preview'}));
+      } else if(action==='scores'||action==='scores_preview'){
+        result=await withDbAsync(async db=>dciSync.checkScores(db,{dryRun:action==='scores_preview'}));
       } else if(action==='replay'){
         // Real historical event from XLSX; no arbitrary fake events.
         const slug=String(req.body.slug||'2026-dci-dallas');
@@ -113,23 +121,35 @@ module.exports = function mountBetting(app, getConn) {
     }catch(e){res.redirect(303,'/betsadmin/sync?notice='+encodeURIComponent('ERROR: '+String(e.message||e).slice(0,280)));}
   });
   async function withDbAsync(fn){const db=getConn();try{return await fn(db);}finally{db.close();}}
-  // One Railway replica/worker only: set DCI_SYNC_ENABLED=true on that service.
-  // Polls after start and thereafter by interval; never touches sandbox balances.
+  // A single dedicated Railway worker is preferred; SQLite locks also suppress overlaps.
+  // DCI_AUTO_SETTLE_ENABLED defaults to false until official recap parsing is validated.
   if(process.env.DCI_SYNC_ENABLED==='true'){
     let busy=false;
-    async function tick(){if(busy)return;busy=true;try{
-      await withDbAsync(async db=>{
-        if(dciSync.allowRefresh(db,'events',6*3600)){
-          try{const today=new Date();const yr=today.getUTCFullYear();
-            await dciSync.discover(db,{year:today.getUTCMonth()>=8?yr+1:yr,limit:100});}
-          catch(e){dciSync.log(db,'events','error',e.message);dciSync.stamp(db,'events');}
-        }
-        if(dciSync.allowRefresh(db,'scores',15*60)){
-          try{await dciSync.checkScores(db);}catch(e){dciSync.log(db,'scores','error',e.message);dciSync.stamp(db,'scores');}
-        }
-      });
-    }catch(e){console.error('[DCI SYNC]',e);}finally{busy=false;}}
-    const t=setInterval(tick,15*60*1000);t.unref();
+    async function tick(){
+      if(busy)return;
+      busy=true;
+      try{
+        await withDbAsync(async db=>{
+          const token=dciSync.acquireLock(db,'poller',1800);
+          if(!token)return;
+          try{
+            const yr=new Date().getUTCFullYear();
+            // Scan current AND next calendar year independently; don't assume September means next season.
+            for(const year of [yr,yr+1]){
+              if(!dciSync.allowRefresh(db,`events:${year}`,6*3600))continue;
+              try{await dciSync.discover(db,{year,limit:150});}
+              catch(e){dciSync.log(db,'events','error',`${year}: ${e.message}`);}
+            }
+            if(dciSync.allowRefresh(db,'scores',15*60)){
+              try{await dciSync.checkScores(db);}
+              catch(e){dciSync.log(db,'scores','error',e.message);}
+            }
+          }finally{dciSync.releaseLock(db,'poller',token);}
+        });
+      }catch(e){console.error('[DCI SYNC]',e);}
+      finally{busy=false;}
+    }
+    const timer=setInterval(tick,15*60*1000);timer.unref();
     setTimeout(tick,20000).unref();
   }
   app.get('/betsadmin',adminLogin,admin,loadAdminPage);
@@ -219,7 +239,7 @@ module.exports = function mountBetting(app, getConn) {
         if(event.status!=='scheduled')throw Error('Only scheduled events can receive new lines.');
         if(event.start_ts<=Math.floor(Date.now()/1000))throw Error('Cannot generate lines for an event that has already started.');
         if(event.start_ts-86400<=Math.floor(Date.now()/1000))throw Error('Generate and review lines BEFORE the 24-hour betting window opens.');
-        const markets=historicalLines.makeMarkets({eventId:event.id,startTs:event.start_ts,season:event.season,lineup:req.body.lineup});
+        const markets=historicalLines.makeMarkets({eventId:event.id,startTs:event.start_ts,season:event.season,lineup:req.body.lineup,db,eventDate:db.prepare('SELECT local_date FROM pb_dci_event_dates WHERE event_id=?').get(event.id)?.local_date});
         if(!markets.length)throw Error('No qualifying historical scores for this event lineup; check corps names and classes.');
         return {event_id:event.id,...historicalLines.saveMarkets(db,event,markets)};
       })());

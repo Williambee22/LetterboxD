@@ -1,14 +1,35 @@
 'use strict';
-// Builds event markets from the bundled historical DCI_Scores.xlsx dataset (2022+).
+// Builds markets from bundled historical scores plus verified DCI score recaps saved in SQLite.
 // Never fetches official schedules and never posts lines to an event without an explicit lineup.
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const HISTORY_PATH = path.join(__dirname, 'pressboxd_history_2022.json');
 let cache;
-function history() {
+function history(db) {
   if (!cache) cache = JSON.parse(fs.readFileSync(HISTORY_PATH,'utf8')).records;
-  return cache;
+  if (!db) return cache;
+  const exists=db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='pb_dci_verified_scores'").get();
+  if (!exists) return cache;
+  const records=db.prepare('SELECT season,date,event_slug,event_name,corps,cls,total,groups_json,captions_json FROM pb_dci_verified_scores').all();
+  const merged=new Map(cache.map(r=>[`${r.event_id}|${r.cls}|${canonicalCorps(r.corps)}`,r]));
+  for(const r of records){
+    const row={year:r.season,date:r.date,event_id:r.event_slug,event:r.event_name,corps:r.corps,
+      cls:r.cls,total:r.total,groups:JSON.parse(r.groups_json),captions:JSON.parse(r.captions_json)};
+    // Verified official results take priority over old bundled data.
+    merged.set(`${row.event_id}|${row.cls}|${canonicalCorps(row.corps)}`,row);
+  }
+  return [...merged.values()];
+}
+const CORPS_ALIASES = {'the cavaliers':'cavaliers','cavaliers':'cavaliers',
+ 'the academy':'academy','academy':'academy','scv':'santa clara vanguard',
+ 'spirit':'spirit of atlanta','seattle cascades':'cascades',
+ 'cascades':'cascades','the cadets':'cadets','cadets':'cadets'};
+function canonicalCorps(corps){const s=String(corps||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();return CORPS_ALIASES[s]||s;}
+function getPreviousScore(db,{season,cls,corps,date}){
+  return history(db).filter(r=>r.year===season && r.date<date && r.cls===cls &&
+    canonicalCorps(r.corps)===canonicalCorps(corps))
+    .sort((a,b)=>b.date.localeCompare(a.date))[0]||null;
 }
 function median(xs) { if(!xs.length) return null; const a=[...xs].sort((x,y)=>x-y); const n=a.length;return n%2?a[(n-1)/2]:(a[n/2-1]+a[n/2])/2; }
 function clamp(x,lo,hi) {return Math.max(lo,Math.min(hi,x));}
@@ -21,7 +42,7 @@ function trend(rows,season,cls,corps,metric,targetDate,previous) {
     if(r.cls!==cls || r.date>=targetDate || r.year>season) continue;
     const v=metricValue(r,metric);
     if(!Number.isFinite(v))continue;
-    const key=r.year+'|'+r.corps;
+    const key=r.year+'|'+canonicalCorps(r.corps);
     if(!grouped.has(key))grouped.set(key,[]);
     grouped.get(key).push(r);
   }
@@ -42,7 +63,7 @@ function trend(rows,season,cls,corps,metric,targetDate,previous) {
   }
   if(!previous)return null;
   const days=clamp(Math.round((Date.parse(targetDate+'T12:00:00Z')-Date.parse(previous.date+'T12:00:00Z'))/86400000),1,21);
-  const own=deltas.filter(x=>x.corps.toLowerCase()===corps.toLowerCase()&&Math.abs(x.days-days)<=5).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,12);
+  const own=deltas.filter(x=>canonicalCorps(x.corps)===canonicalCorps(corps)&&Math.abs(x.days-days)<=5).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,12);
   const peers=deltas.filter(x=>Math.abs(x.days-days)<=4).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,100);
   const fallback=deltas.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,150);
   const ownMean=median(own.map(x=>x.diff)); const peerMean=median((peers.length>=5?peers:fallback).map(x=>x.diff))??0;
@@ -57,37 +78,37 @@ function firstShowEstimate(rows,season,cls,corps,metric,targetDate) {
     if(r.year>=season || r.cls!==cls || r.date>=targetDate)continue;
     const v=metricValue(r,metric);
     if(!Number.isFinite(v))continue;
-    const key=r.year+'|'+r.corps;
+    const key=r.year+'|'+canonicalCorps(r.corps);
     if(!openers.has(key)||r.date<openers.get(key).date)openers.set(key,r);
   }
-  const all=[...openers.values()], own=all.filter(x=>x.corps.toLowerCase()===corps.toLowerCase());
+  const all=[...openers.values()], own=all.filter(x=>canonicalCorps(x.corps)===canonicalCorps(corps));
   const pool=own.sort((a,b)=>b.year-a.year).slice(0,4);
   const baseline=median(all.map(x=>metricValue(x,metric)));
   if(baseline==null)return null;
   const ownAvg=median(pool.map(x=>metricValue(x,metric)));
   return {value: (pool.length/(pool.length+3))*(ownAvg??baseline)+(3/(pool.length+3))*baseline,sample:pool.length+all.length};
 }
-function makeMarkets({eventId,startTs,season,lineup,asOfDate}){
+function makeMarkets({eventId,startTs,season,lineup,asOfDate,db,eventDate}){
   if(!/^[a-zA-Z0-9_-]{1,120}$/.test(String(eventId)))throw Error('Invalid event ID');
   if(!Number.isSafeInteger(Number(startTs)))throw Error('Invalid start timestamp');
   if(!Number.isInteger(Number(season))||Number(season)<2022)throw Error('Invalid season');
   if(!Array.isArray(lineup)||!lineup.length||lineup.length>100)throw Error('Provide 1–100 corps with optional class.');
   // Event start is the cutoff; the last known score must precede the event date.
-  const day=asOfDate||new Date(Number(startTs)*1000).toISOString().slice(0,10);
-  const data=history().filter(r=>r.date<day);
+  const day=asOfDate||eventDate||new Date(Number(startTs)*1000).toISOString().slice(0,10);
+  const data=history(db).filter(r=>r.date<day);
   const out=[];
   const used=new Set();
   for(const item of lineup){
     const corps=String(typeof item==='string'?item:item?.corps||'').trim();
     const cls=String(typeof item==='string'?'World Class':item?.cls||item?.class||'World Class').trim();
-    const key=corps.toLowerCase()+'|'+cls;
+    const key=canonicalCorps(corps)+'|'+cls;
     if(!corps||corps.length>120||used.has(key))continue;
     used.add(key);
-    const seasonRows=data.filter(r=>r.year===Number(season)&&r.cls===cls&&r.corps.toLowerCase()===corps.toLowerCase()).sort((a,b)=>b.date.localeCompare(a.date));
+    const seasonRows=data.filter(r=>r.year===Number(season)&&r.cls===cls&&canonicalCorps(r.corps)===canonicalCorps(corps)).sort((a,b)=>b.date.localeCompare(a.date));
     const previous=seasonRows[0]||null;
     // Only captions actually seen this season (or in a historical opener on the first show).
     const metrics=new Set(['Overall']);
-    const basis=previous||data.filter(r=>r.year<Number(season)&&r.cls===cls&&r.corps.toLowerCase()===corps.toLowerCase()).sort((a,b)=>a.date.localeCompare(b.date))[0];
+    const basis=previous||data.filter(r=>r.year<Number(season)&&r.cls===cls&&canonicalCorps(r.corps)===canonicalCorps(corps)).sort((a,b)=>b.year-a.year||a.date.localeCompare(b.date))[0];
     if(basis){for(const k of Object.keys(basis.groups||{}))metrics.add(k);for(const k of Object.keys(basis.captions||{}))metrics.add(k);}
     for(const metric of metrics){
       if(previous&& !Number.isFinite(metricValue(previous,metric)))continue;
@@ -108,11 +129,10 @@ function saveMarkets(db,event,markets){
   let inserted=0,skipped=0;
   const insert=db.prepare(`INSERT INTO pb_betting_markets(id,event_id,corps,caption,kind,line,odds)
     VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING`);
-  const exists=db.prepare('SELECT id FROM pb_betting_markets WHERE id=?').get.bind(db.prepare('SELECT id FROM pb_betting_markets WHERE id=?'));
-  for(const m of markets){
+    for(const m of markets){
     const row=insert.run(m.id,event.id,m.corps,m.caption,m.kind,m.line,m.odds);
     if(row.changes)inserted++;else skipped++;
   }
   return {generated:markets.length,inserted,existing:skipped};
 }
-module.exports={makeMarkets,saveMarkets};
+module.exports={makeMarkets,saveMarkets,history,canonicalCorps,metricValue,getPreviousScore};
