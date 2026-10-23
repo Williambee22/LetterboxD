@@ -15,6 +15,9 @@ const showHistory = require('./historical_show_data');
 const mountBetting = require('./betting');
 const gems = require('./gems');
 
+const cosmetics = require('./cosmetics');
+const globalCosmetics = require('./global_cosmetics');
+
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -842,6 +845,9 @@ function createApp() {
     ensureFavoriteShowOrderTable(conn);
     return conn;
   }
+
+  // Register global cosmetics only once
+  globalCosmetics.mount(app, getConn);
 
   async function getOrderedFavoriteShows(conn, userId, limit = 5) {
     const favorites = (
@@ -3417,6 +3423,65 @@ app.get('/corps/:corps_name', async (req, res, next) => {
 
     mountBetting(app, getConn);
 
+    
+    // GEM STORE
+    cosmetics.mount(app, getConn);
+
+    // Apply equipped cosmetics to profile pages
+    app.use((req, res, next) => {
+      const oldSend = res.send.bind(res);
+
+      res.send = function withProfileCosmetics(body) {
+        const data =
+          res.locals.pbProfileCosmetics ||
+          res.locals.pbCustomizeCosmetics;
+
+        const isCustomize =
+          !res.locals.pbProfileCosmetics &&
+          !!res.locals.pbCustomizeCosmetics;
+
+        if (
+          data &&
+          typeof body === 'string' &&
+          body.includes('</head>') &&
+          body.includes('</body>')
+        ) {
+          const safeJson = JSON.stringify(data)
+            .replace(/&/g, '\\u0026')
+            .replace(/</g, '\\u003c')
+            .replace(/>/g, '\\u003e')
+            .replace(/\u2028/g, '\\u2028')
+            .replace(/\u2029/g, '\\u2029');
+
+          body = body.replace(
+            '</head>',
+            '<link rel="stylesheet" href="/static/cosmetics.css?v=1">\n</head>'
+          );
+
+          body = body.replace(
+            '</body>',
+            '<script id="' +
+              (isCustomize
+                ? 'pb-cosmetics-customize-data'
+                : 'pb-cosmetics-profile-data') +
+              '" type="application/json">' +
+              safeJson +
+              '</script>\n' +
+              '<script defer src="/static/' +
+              (isCustomize
+                ? 'cosmetics-customize'
+                : 'cosmetics-profile') +
+              '.js?v=1"></script>\n</body>'
+          );
+        }
+
+        return oldSend(body);
+      };
+
+      next();
+    });
+
+
 
   
     app.get('/predictions', loginRequired(async (req, res, next) => {
@@ -4002,12 +4067,38 @@ app.get('/corps/:corps_name', async (req, res, next) => {
         const me = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
         if (!me) return res.sendStatus(404);
 
-        let ext = path.extname(req.file.originalname || '').toLowerCase();
-        if (!ALLOWED_IMAGE_EXTS.has(ext)) {
-          req.flash('error', 'Invalid file type.');
+        
+      let ext = path.extname(req.file.originalname || '').toLowerCase();
+      const isGif = ext === '.gif';
+      
+      if (!ALLOWED_IMAGE_EXTS.has(ext) && !isGif) {
+        req.flash('error', 'Invalid file type.');
+        return res.redirect('/me/customize');
+      }
+      
+      if (isGif) {
+        if (!cosmetics.owns(conn, Number(me.id), 'avatar_gif')) {
+          req.flash(
+            'error',
+            'Unlock Animated Avatar Upload in the GEM Store first.'
+          );
+          return res.redirect(
+            '/store?error=Unlock+Animated+Avatar+Upload+first#special'
+          );
+        }
+      
+        const header = req.file.buffer
+          ?.subarray(0, 6)
+          .toString('ascii');
+      
+        if (header !== 'GIF87a' && header !== 'GIF89a') {
+          req.flash('error', 'Not a valid GIF file.');
           return res.redirect('/me/customize');
         }
-        if (ext === '.jpeg') ext = '.jpg';
+      }
+      
+      if (ext === '.jpeg') ext = '.jpg';
+
 
         const oldAvatarUrl = String(me.avatar_url || '').trim();
         const fileName = `pfp_${slugify(me.username)}_${crypto.randomUUID()}${ext}`;
@@ -4016,7 +4107,9 @@ app.get('/corps/:corps_name', async (req, res, next) => {
         const avatarUrl = await uploadBufferToR2({
           key,
           buffer: req.file.buffer,
-          contentType: req.file.mimetype || 'application/octet-stream',
+          contentType: isGif
+            ? 'image/gif'
+            : (req.file.mimetype || 'application/octet-stream'),
           cacheControl: 'public, max-age=604800',
         });
 
@@ -4837,8 +4930,16 @@ app.get('/corps/:corps_name', async (req, res, next) => {
           5
         );
 
+      
       if (!u.avatar_url) u.avatar_url = pfpUrlForUsername(u.username || '');
-
+      
+      res.locals.pbProfileCosmetics = {
+        username: u.username,
+        avatar_url: u.avatar_url || '',
+        isMe: true,
+        equipped: cosmetics.getEquipped(conn, uid)
+      };
+      
       return res.render('profile', {
         profile_user: u,
         user_roles: rolesForMe,
@@ -4898,8 +4999,18 @@ app.get('/corps/:corps_name', async (req, res, next) => {
         me = meRow ? normalizeRow(meRow) : null;
       }
 
+      
       const isMe = !!(me && me.username === profile.username);
+      
+      res.locals.pbProfileCosmetics = {
+        username: profile.username,
+        avatar_url: profile.avatar_url || '',
+        isMe,
+        equipped: cosmetics.getEquipped(conn, Number(profile.id))
+      };
+      
       return res.render('profile', {
+
         profile_user: profile,
         user_roles: rolesForUser,
         recent_ratings: recentRatings,
@@ -4917,9 +5028,23 @@ app.get('/corps/:corps_name', async (req, res, next) => {
     let conn;
     try {
       conn = getConn();
+      
       const u = normalizeRow(await dbx.userById(conn, Number(req.session.uid)));
       if (!u) return res.sendStatus(404);
-      res.render('profile_customize', { u, me: res.locals.me });
+      
+      res.locals.pbCustomizeCosmetics = {
+        gifUnlocked: cosmetics.owns(
+          conn,
+          Number(u.id),
+          'avatar_gif'
+        )
+      };
+      
+      res.render('profile_customize', {
+        u,
+        me: res.locals.me
+      });
+
     } finally {
       if (conn) dbx.close(conn);
     }
