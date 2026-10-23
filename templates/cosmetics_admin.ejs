@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#000000">
-  <title>Store Price Manager — Pressboxd Admin</title>
+  <title>Store Catalog Manager — Pressboxd Admin</title>
   <link rel="stylesheet" href="/static/styles.css">
   <link rel="icon" href="/static/favicon.png" type="image/png">
   <style>
@@ -46,6 +46,13 @@
     .adm-modified{color:#9ed3a9;font-size:10px;display:block;margin-top:3px}.adm-unchanged{color:#737780;font-size:10px;display:block;margin-top:3px}
     .adm-form{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}.adm-form input[type=number]{width:110px;background:#0c0c0e;border:1px solid rgba(255,255,255,.21);color:#fff;border-radius:2px;padding:8px 8px;outline:none;font-size:12px;font-variant-numeric:tabular-nums}.adm-form input[type=number]:focus{border-color:#6388ed}
     .adm-form button{min-height:35px}.adm-reset{display:inline-flex;margin-left:6px}
+    .adm-detail-cell{min-width:300px}.adm-detail-form{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+    .adm-detail-form input[type=text]{width:172px;background:#0c0c0e;border:1px solid rgba(255,255,255,.21);color:#fff;border-radius:2px;padding:8px;outline:none;font-size:12px;max-width:100%}
+    .adm-detail-form select{max-width:124px;padding:8px;background:#0c0c0e;border:1px solid rgba(255,255,255,.21);color:#fff;border-radius:2px;font-size:12px}
+    .adm-detail-form input:focus,.adm-detail-form select:focus{border-color:#6388ed}
+    .adm-catalog-defaults{color:#82848f;font-size:10px;line-height:1.5}.adm-catalog-defaults strong{color:#bcbfc9}
+    .adm-rarity{font-weight:750;color:#dadbe4}
+    .adm-rarity-legendary{color:#e5beff}.adm-rarity-mythic{color:#ffbf8c}.adm-rarity-celestial{color:#ffdf82}.adm-rarity-epic{color:#a9bcff}
     .adm-history{margin-top:30px}.adm-history h2{font-size:19px;margin:0 0 7px}.adm-history p{color:var(--adm-muted);font-size:12px;margin:0 0 12px}
     .adm-history .adm-table{min-width:620px}.adm-history .adm-table td{font-size:11px}.adm-history .adm-table th{font-size:10px}
     .adm-empty{color:#999ca5;text-align:center;padding:30px}
@@ -67,9 +74,9 @@
   </header>
 
   <main class="adm-page">
-    <div class="adm-breadcrumb"><a href="/shows">Pressboxd</a><span>/</span><a href="/store">GEM Store</a><span>/</span><span>Price Manager</span></div>
+    <div class="adm-breadcrumb"><a href="/shows">Pressboxd</a><span>/</span><a href="/store">GEM Store</a><span>/</span><span>Catalog Manager</span></div>
     <div class="adm-heading">
-      <div><div class="adm-kicker">Store administration</div><h1>Cosmetic Price Manager</h1><p>Change Gem prices instantly without editing the catalog or redeploying. Purchases already made keep their original recorded price.</p></div>
+      <div><div class="adm-kicker">Store administration</div><h1>Cosmetic Catalog Manager</h1><p>Edit any item's display name, rarity, and Gem price without editing code or redeploying. Permanent item IDs, effects, and existing purchases remain untouched.</p></div>
       <div class="adm-heading-buttons"><a class="adm-btn adm-btn--quiet" href="/store">View Store ↗</a></div>
     </div>
     <% if(notice){ %><div class="adm-notice" role="status"><%= notice %></div><% } %>
@@ -78,7 +85,7 @@
     <% const allPrices=catalog.map(item=>item.price); %>
     <div class="adm-summary">
       <div class="adm-stat"><label>Available Items</label><strong><%= catalog.length %></strong></div>
-      <div class="adm-stat"><label>Custom Prices</label><strong><%= catalog.filter(item=>item.isOverridden).length %></strong></div>
+      <div class="adm-stat"><label>Customized Items</label><strong><%= catalog.filter(item=>item.isOverridden || item.metadataOverridden).length %></strong></div>
       <div class="adm-stat"><label>Lowest Price</label><strong>💎 <%= Math.min(...allPrices).toLocaleString() %></strong></div>
       <div class="adm-stat"><label>Highest Price</label><strong>💎 <%= Math.max(...allPrices).toLocaleString() %></strong></div>
     </div>
@@ -91,15 +98,35 @@
     </div>
     <div class="adm-table-scroll">
       <table class="adm-table">
-        <thead><tr><th>Cosmetic</th><th>Category</th><th>Rarity</th><th>Current Price</th><th>Default Price</th><th>Change Price</th></tr></thead>
+        <thead><tr><th>Cosmetic</th><th>Category</th><th>Rarity</th><th>Current Price</th><th>Default Price</th><th>Edit Name &amp; Rarity</th><th>Change Price</th></tr></thead>
         <tbody id="adm-rows">
           <% for(const [index,item] of catalog.entries()){ %>
           <tr id="item-<%= item.id %>" data-name="<%= item.name.toLowerCase() %>" data-item-id="<%= item.id.toLowerCase() %>" data-category="<%= item.category %>" data-rarity="<%= item.rarity.toLowerCase() %>" data-price="<%= item.price %>" data-order="<%= index %>">
-            <td><div class="adm-item-name"><%= item.name %></div><div class="adm-item-id"><%= item.id %></div></td>
+            <td><div class="adm-item-name"><%= item.name %></div><div class="adm-item-id"><%= item.id %></div><% if(item.metadataOverridden){ %><span class="adm-modified">Custom details</span><% } %></td>
             <td><span class="adm-category"><%= item.category==='frame'?'Avatar Frame':item.category==='motion'?'Animation':item.category==='nameplate'?'Nameplate':'Unlock' %></span></td>
-            <td><%= item.rarity %></td>
+            <td><span class="adm-rarity adm-rarity-<%= item.rarity.toLowerCase() %>"><%= item.rarity %></span></td>
             <td><span class="adm-price">💎 <%= item.price.toLocaleString() %></span><span class="<%= item.isOverridden?'adm-modified':'adm-unchanged' %>"><%= item.isOverridden?'Custom price':'Catalog price' %></span></td>
             <td><span class="adm-default">💎 <%= item.defaultPrice.toLocaleString() %></span></td>
+            <td class="adm-detail-cell">
+              <form class="adm-detail-form" method="post" action="/store/admin/metadata">
+                <input type="hidden" name="csrf" value="<%= csrf %>">
+                <input type="hidden" name="item_id" value="<%= item.id %>">
+                <input type="text" name="name" value="<%= item.name %>" maxlength="80" required aria-label="Display name for <%= item.id %>" autocomplete="off">
+                <select name="rarity" required aria-label="Rarity for <%= item.id %>">
+                  <% for(const rarity of rarities){ %><option value="<%= rarity %>" <%= item.rarity===rarity?'selected':'' %>><%= rarity %></option><% } %>
+                </select>
+                <button class="adm-btn adm-btn--primary" type="submit">Save</button>
+              </form>
+              <% if(item.metadataOverridden){ %>
+                <form class="adm-detail-form" method="post" action="/store/admin/metadata" onsubmit="return confirm('Restore the original name and rarity for this cosmetic?')">
+                  <input type="hidden" name="csrf" value="<%= csrf %>">
+                  <input type="hidden" name="item_id" value="<%= item.id %>">
+                  <input type="hidden" name="reset" value="1">
+                  <button class="adm-btn adm-btn--reset" type="submit">Reset details</button>
+                </form>
+              <% } %>
+              <div class="adm-catalog-defaults">Default: <strong><%= item.defaultName %></strong> · <%= item.defaultRarity %></div>
+            </td>
             <td>
               <div class="adm-form">
                 <form class="adm-form" method="post" action="/store/admin/price">
@@ -125,6 +152,25 @@
       <div class="adm-empty" id="adm-empty" hidden>No matching cosmetics found.</div>
     </div>
 
+    <section class="adm-history" aria-label="Name and rarity change history">
+      <h2>Recent Name &amp; Rarity Changes</h2>
+      <p>The last 25 display name and rarity changes, with the administrator responsible.</p>
+      <div class="adm-table-scroll"><table class="adm-table"><thead><tr><th>When</th><th>Item ID</th><th>Previous Name</th><th>New Name</th><th>Rarity</th><th>Action</th><th>Admin</th></tr></thead><tbody>
+      <% if(!metadataHistory.length){ %><tr><td colspan="7" class="adm-empty">No name or rarity changes yet.</td></tr><% } %>
+      <% for(const entry of metadataHistory){ %>
+      <tr>
+        <td><time data-unix="<%= entry.changed_ts %>"><%= new Date(Number(entry.changed_ts)*1000).toISOString().slice(0,16).replace('T',' ') %> UTC</time></td>
+        <td><%= entry.item_id %></td>
+        <td><%= entry.old_name %></td>
+        <td><%= entry.new_name %></td>
+        <td><%= entry.old_rarity %> → <%= entry.new_rarity %></td>
+        <td><%= entry.operation==='reset'?'Reset':'Updated' %></td>
+        <td><%= entry.admin_name %></td>
+      </tr>
+      <% } %>
+      </tbody></table></div>
+    </section>
+
     <section class="adm-history" aria-label="Price change history">
       <h2>Recent Price Changes</h2>
       <p>The last 25 price updates, including who made them. Resetting a price is recorded too.</p>
@@ -135,7 +181,7 @@
       <% } %>
       </tbody></table></div>
     </section>
-    <p class="adm-footnote">Prices can range from 0 to <%= maxPrice.toLocaleString() %> Gems. A price of 0 makes an item free. Changes take effect immediately; they do not refund purchases, modify balances, or change existing inventory records.</p>
+    <p class="adm-footnote">Prices can range from 0 to <%= maxPrice.toLocaleString() %> Gems (0 = free). Display names can contain 1–80 characters. Rarity is selected from the catalog's existing tiers. Cosmetic IDs, categories, ownership, equipped effects, previously paid prices, and Gems balances are never changed.</p>
   </main>
   <script>
     (() => {
