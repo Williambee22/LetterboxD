@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#000000">
   <title>GEM Store — Pressboxd</title>
   <link rel="stylesheet" href="/static/styles.css">
-  <link rel="stylesheet" href="/static/cosmetics.css?v=16">
+  <link rel="stylesheet" href="/static/cosmetics.css?v=20">
   <link rel="icon" type="image/png" href="/static/favicon.png">
 </head>
 <body class="app pc-store-page pc2-page" style="--accent:<%= (typeof accent_color !== 'undefined' && /^#[0-9a-fA-F]{6}$/.test(String(accent_color))) ? accent_color : '#3252b3' %>">
@@ -75,7 +75,7 @@
             <strong>Make your profile yours.</strong>
             <span>Preview items below before you buy. Equip owned items whenever you want.</span>
           </div>
-          <div class="pc2-intro-preview"><div class="pc-preview-avatar pc-frame-sapphire"><img src="/static/logo.png" alt=""></div></div>
+          <div class="pc2-intro-preview"><div class="pc-preview-avatar pc-frame_sapphire"><img src="/static/logo.png" alt=""></div></div>
         </div>
         <% const sections=[['frame','frames','Avatar Frames','Decorative borders and ambient glows for your profile picture.'],['motion','motion','Avatar Motion','Animated effects that give your profile picture movement.'],['nameplate','nameplates','Nameplates','Special treatments for your display name.'],['unlock','special','Special Unlocks','Additional profile customization capabilities.']]; %>
         <% for(const [cat,id,title,description] of sections){ %>
