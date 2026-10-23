@@ -78,9 +78,9 @@ function mount(app, getConn) {
           : '';
         // Append a versioned stylesheet AFTER the existing profile CSS, if present.
         body = body.replace(/<\/head\s*>/i,
-          `${meta}<link rel="stylesheet" href="/static/cosmetics.css?v=4">\n</head>`);
+          `${meta}<link rel="stylesheet" href="/static/cosmetics.css?v=11">\n</head>`);
         body = body.replace(/<\/body\s*>/i,
-          `<script defer src="/static/cosmetics-global.js?v=4"></script>\n</body>`);
+          `<script defer src="/static/cosmetics-global.js?v=11"></script>\n</body>`);
       }
       return oldSend(body);
     };
