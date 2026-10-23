@@ -1,0 +1,13 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>My Cosmetics — Pressboxd</title><link rel="stylesheet" href="/static/cosmetics.css?v=4"><link rel="icon" href="/static/favicon.png"></head>
+<body class="pc-store-page"><header class="pc-nav"><a class="pc-brand" href="/store">← GEM STORE</a><div class="pc-nav-right"><a href="/me">My Profile</a><span class="pc-wallet">💎 <%=Number(balance).toLocaleString()%> <small>GEMS</small></span></div></header>
+<main class="pc-container"><section class="pc-inventory-hero"><span class="pc-eyebrow">YOUR COLLECTION</span><h1>Customize your look ✦</h1><p>Everything you buy is permanent. Switch between owned items whenever you want at no extra cost.</p><a href="/store" class="pc-action">Browse the store →</a></section>
+<% if(notice){%><div class="pc-notice pc-good"><%=notice%></div><%}%><% if(error){%><div class="pc-notice pc-bad"><%=error%></div><%}%>
+<% const groups=[['frame','Avatar Frame'],['motion','Avatar Animation'],['background','Profile Background'],['nameplate','Username Style']]; %>
+<div class="pc-equip-grid"><% for(const [category,title] of groups){const mine=catalog.filter(item=>item.category===category&&owned_ids.has(item.id));%>
+<section class="pc-equip-card"><div class="pc-eyebrow"><%=category.toUpperCase()%></div><h2><%=title%></h2><p>Currently equipped: <strong><%=catalog.find(i=>i.id===equipped[category])?.name||'None'%></strong></p>
+<form method="post" action="/store/equip"><input type="hidden" name="csrf" value="<%=csrf%>"><input type="hidden" name="category" value="<%=category%>"><label class="pc-field">Choose an item <select name="item_id"><option value="none" <%=!equipped[category]?'selected':''%>>None (default)</option><% for(const item of mine){%><option value="<%=item.id%>" <%=equipped[category]===item.id?'selected':''%>><%=item.name%></option><%}%></select></label><button class="pc-action" type="submit">Equip selection</button></form>
+<% if(!mine.length){%><p class="pc-empty">Nothing in this category yet. <a href="/store">Shop cosmetics</a></p><%}%>
+</section><%}%></div>
+<section class="pc-catalog-section"><h2>Permanent Unlocks</h2><div class="pc-inventory-unlock"><strong>Animated GIF profile pictures</strong><span><%=owned_ids.has('avatar_gif')?'Unlocked ✓':'Locked — buy in the store'%></span></div><% if(owned_ids.has('avatar_gif')){%><p>You can now upload a .gif file (up to 5 MB) from your <a href="/me/customize">profile customization page</a>.</p><%}%></section>
+<p class="pc-footer">Purchases do not alter your existing ratings, predictions, reviews, or previously earned Gems.</p>
+</main></body></html>

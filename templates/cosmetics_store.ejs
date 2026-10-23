@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GEM Store — Pressboxd</title>
+<link rel="icon" href="/static/favicon.png"><link rel="stylesheet" href="/static/cosmetics.css?v=4">
+</head>
+<body class="pc-store-page">
+<header class="pc-nav">
+  <a class="pc-brand" href="/shows"><img src="/static/logo.png" alt="" width="35" height="35"><span>PRESSBOXD <b>STORE</b></span></a>
+  <div class="pc-nav-right"><a href="/predictions">Predictions</a><a href="/betting">Bets</a><a href="/me/cosmetics">My Collection</a><% if(me){ %><span class="pc-wallet">💎 <%= Number(balance).toLocaleString() %> <small>GEMS</small></span><% } else { %><a class="pc-action" href="/login?next=%2Fstore">Sign in</a><% } %></div>
+</header>
+<main class="pc-container">
+  <section class="pc-hero">
+    <div><div class="pc-eyebrow">PERSONALIZE YOUR PROFILE</div><h1>The GEM Store <span>✦</span></h1><p>Make your profile unmistakably yours. Unlock animated avatars, glowing borders, special nameplates, and vibrant profile backgrounds using the Gems you've earned.</p><div class="pc-hero-actions"><a class="pc-action" href="/me/cosmetics">Manage my cosmetics →</a><a class="pc-soft" href="/betting">Earn more Gems</a></div></div>
+    <div class="pc-hero-preview" aria-hidden="true"><div class="pc-preview-avatar pc-frame-prism pc-motion-float"><img src="/static/logo.png" alt=""></div><div class="pc-preview-title">YOUR PROFILE. YOUR STYLE.</div><div class="pc-preview-sub">Legendary • Prismatic</div></div>
+  </section>
+  <% if(notice){%><div class="pc-notice pc-good"><%=notice%></div><%}%>
+  <% if(error){%><div class="pc-notice pc-bad"><%=error%></div><%}%>
+  <nav class="pc-filter" aria-label="Cosmetics categories">
+    <a href="#frames">Avatar Frames</a><a href="#motion">Avatar Motion</a><a href="#backgrounds">Backgrounds</a><a href="#nameplates">Nameplates</a><a href="#special">Special Unlocks</a>
+  </nav>
+  <% const sections=[['frame','frames','Avatar Frames','Stand out with a decorative border around your profile picture.'],['motion','motion','Animated Effects','Bring your profile picture to life without replacing the image.'],['background','backgrounds','Profile Backgrounds','Give your profile a signature atmosphere.'],['nameplate','nameplates','Nameplates','Make your username impossible to miss.'],['unlock','special','Special Unlocks','Expand your profile customization capabilities.']]; %>
+  <% for(const [cat,id,title,description] of sections){ %>
+  <section class="pc-catalog-section" id="<%=id%>">
+    <div class="pc-section-heading"><div><span class="pc-eyebrow"><%=cat.toUpperCase()%></span><h2><%=title%></h2><p><%=description%></p></div></div>
+    <div class="pc-product-grid">
+    <% for(const item of catalog.filter(it=>it.category===cat)){ const isOwned=owned_ids.has(item.id); const isEquipped=equipped[cat]===item.id; %>
+      <article class="pc-product">
+        <div class="pc-item-art pc-item-<%=item.id%>">
+          <% if(cat==='frame' || cat==='motion' || cat==='unlock'){ %><div class="pc-preview-avatar <%=cat==='frame'?'pc-'+item.id:cat==='motion'?'pc-'+item.id:'pc-frame-prism'%>"><img src="/static/logo.png" alt=""></div><% } %>
+          <% if(cat==='background'){ %><div class="pc-background-sample pc-<%=item.id%>"><span>YOUR PROFILE</span><i>✧</i></div><% } %>
+          <% if(cat==='nameplate'){ %><div class="pc-name-sample pc-<%=item.id%>">YOUR NAME ✦</div><% } %>
+          <span class="pc-rarity pc-rarity-<%=item.rarity.toLowerCase()%>"><%=item.rarity%></span>
+        </div>
+        <div class="pc-product-body"><h3><%=item.name%></h3><p><%=item.description%></p><div class="pc-product-footer"><b>💎 <%=item.price.toLocaleString()%></b>
+          <% if(isEquipped){ %><span class="pc-owned">Equipped ✓</span>
+          <% } else if(isOwned){ %><a class="pc-owned" href="/me/cosmetics">Owned ✓</a>
+          <% } else if(!me){ %><a class="pc-buy" href="/login?next=%2Fstore">Sign in</a>
+          <% } else { %><form action="/store/buy" method="post"><input type="hidden" name="csrf" value="<%=csrf%>"><input type="hidden" name="item_id" value="<%=item.id%>"><button type="submit" class="pc-buy" <%=balance < item.price?'disabled title="Not enough Gems"':''%>>Buy</button></form><% } %>
+        </div></div>
+      </article>
+    <% } %>
+    </div>
+  </section>
+  <% } %>
+  <footer class="pc-footer">Cosmetics are permanent and cosmetic-only. All Gems are virtual, have no cash value, and cannot be redeemed for prizes. Animations respect reduced-motion settings.</footer>
+</main>
+</body></html>
