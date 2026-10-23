@@ -1,13 +1,60 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>My Cosmetics — Pressboxd</title><link rel="stylesheet" href="/static/cosmetics.css?v=4"><link rel="icon" href="/static/favicon.png"></head>
-<body class="pc-store-page"><header class="pc-nav"><a class="pc-brand" href="/store">← GEM STORE</a><div class="pc-nav-right"><a href="/me">My Profile</a><span class="pc-wallet">💎 <%=Number(balance).toLocaleString()%> <small>GEMS</small></span></div></header>
-<main class="pc-container"><section class="pc-inventory-hero"><span class="pc-eyebrow">YOUR COLLECTION</span><h1>Customize your look ✦</h1><p>Everything you buy is permanent. Switch between owned items whenever you want at no extra cost.</p><a href="/store" class="pc-action">Browse the store →</a></section>
-<% if(notice){%><div class="pc-notice pc-good"><%=notice%></div><%}%><% if(error){%><div class="pc-notice pc-bad"><%=error%></div><%}%>
-<% const groups=[['frame','Avatar Frame'],['motion','Avatar Animation'],['background','Profile Background'],['nameplate','Username Style']]; %>
-<div class="pc-equip-grid"><% for(const [category,title] of groups){const mine=catalog.filter(item=>item.category===category&&owned_ids.has(item.id));%>
-<section class="pc-equip-card"><div class="pc-eyebrow"><%=category.toUpperCase()%></div><h2><%=title%></h2><p>Currently equipped: <strong><%=catalog.find(i=>i.id===equipped[category])?.name||'None'%></strong></p>
-<form method="post" action="/store/equip"><input type="hidden" name="csrf" value="<%=csrf%>"><input type="hidden" name="category" value="<%=category%>"><label class="pc-field">Choose an item <select name="item_id"><option value="none" <%=!equipped[category]?'selected':''%>>None (default)</option><% for(const item of mine){%><option value="<%=item.id%>" <%=equipped[category]===item.id?'selected':''%>><%=item.name%></option><%}%></select></label><button class="pc-action" type="submit">Equip selection</button></form>
-<% if(!mine.length){%><p class="pc-empty">Nothing in this category yet. <a href="/store">Shop cosmetics</a></p><%}%>
-</section><%}%></div>
-<section class="pc-catalog-section"><h2>Permanent Unlocks</h2><div class="pc-inventory-unlock"><strong>Animated GIF profile pictures</strong><span><%=owned_ids.has('avatar_gif')?'Unlocked ✓':'Locked — buy in the store'%></span></div><% if(owned_ids.has('avatar_gif')){%><p>You can now upload a .gif file (up to 5 MB) from your <a href="/me/customize">profile customization page</a>.</p><%}%></section>
-<p class="pc-footer">Purchases do not alter your existing ratings, predictions, reviews, or previously earned Gems.</p>
-</main></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>My Cosmetics — Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/cosmetics.css?v=11">
+  <link rel="icon" type="image/png" href="/static/favicon.png">
+</head>
+<body class="app pc-store-page pc2-page" style="--accent:<%= (typeof accent_color !== 'undefined' && /^#[0-9a-fA-F]{6}$/.test(String(accent_color))) ? accent_color : '#3252b3' %>">
+  <header class="topbar pc2-site-header">
+    <div class="wrap pc2-topbar-inner">
+      <div class="pc2-brand-cluster">
+        <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" class="pc2-logo" aria-label="General Effect Media"><img src="/static/logo.png" alt="" width="36" height="36"></a>
+        <a href="/shows" class="pc2-wordmark"><img src="/static/pressboxd-wordmark.png" alt="Pressboxd" height="74"></a>
+      </div>
+      <nav class="pc2-top-nav" aria-label="Main navigation">
+        <a href="/shows">Shows</a><a href="/top">Top Shows</a><a href="/top_users">Top Users</a><a href="/predictions">Predictions</a><a href="/forums">Forums</a><a href="/tierlists">Tierlists</a>
+      </nav>
+      <div class="pc2-account-nav"><a href="/me" class="pc2-user-link"><% if(me && me.avatar_url){ %><img src="<%= me.avatar_url %>" alt="" width="28" height="28"><% } %><span><%= me ? me.username : 'My Profile' %></span></a><a href="/logout" class="pc2-logout">Logout</a></div>
+    </div>
+  </header>
+  <main class="wrap pc2-main">
+    <div class="pc2-breadcrumb"><a href="/me">My Profile</a><span>/</span> Cosmetics</div>
+    <section class="pc2-page-heading">
+      <div class="pc2-heading-copy"><div class="pc2-kicker">YOUR PROFILE</div><h1>My Cosmetics</h1><p>Equip your purchases. You can swap between owned items as often as you like.</p></div>
+      <div class="pc2-heading-aside"><div class="pc2-wallet-label">AVAILABLE BALANCE</div><div class="pc2-wallet-amount">💎 <%= Number(balance).toLocaleString() %> <span>GEMS</span></div><a class="pc2-button pc2-button-primary" href="/store">Browse Store</a></div>
+    </section>
+    <% if(notice){ %><div class="pc2-message pc2-message-success" role="status"><%= notice %></div><% } %>
+    <% if(error){ %><div class="pc2-message pc2-message-error" role="alert"><%= error %></div><% } %>
+    <% const groups=[['frame','Avatar Frame'],['motion','Avatar Animation'],['background','Profile Background'],['nameplate','Username Style']]; %>
+    <div class="pc2-inventory-grid">
+      <% for(const [category,title] of groups){ const mine=catalog.filter(item=>item.category===category && owned_ids.has(item.id));const chosen=catalog.find(i=>i.id===equipped[category]); %>
+        <section class="pc2-inventory-card">
+          <div class="pc2-inventory-card-heading"><div><div class="pc2-kicker"><%= category.toUpperCase() %></div><h2><%= title %></h2></div><span class="pc2-item-count"><%= mine.length %> OWNED</span></div>
+          <div class="pc2-equipped-status">Currently equipped: <strong><%= chosen ? chosen.name : 'None' %></strong></div>
+          <form method="post" action="/store/equip" class="pc2-equip-form">
+            <input type="hidden" name="csrf" value="<%= csrf %>">
+            <input type="hidden" name="category" value="<%= category %>">
+            <label for="pc2-equip-<%= category %>">SELECT COSMETIC</label>
+            <select id="pc2-equip-<%= category %>" name="item_id">
+              <option value="none" <%= !equipped[category] ? 'selected' : '' %>>None (default)</option>
+              <% for(const item of mine){ %><option value="<%= item.id %>" <%= equipped[category]===item.id?'selected':'' %>><%= item.name %></option><% } %>
+            </select>
+            <button class="pc2-button pc2-button-secondary" type="submit">Save Selection</button>
+          </form>
+          <% if(!mine.length){ %><p class="pc2-no-items">No items owned in this category. <a href="/store">Browse store</a></p><% } %>
+        </section>
+      <% } %>
+    </div>
+    <section class="pc2-unlock-section">
+      <div class="pc2-section-header"><div><h2>Permanent Unlocks</h2><p>Features unlocked for your profile.</p></div></div>
+      <div class="pc2-unlock-row"><div><strong>Animated GIF Avatar Upload</strong><p>Upload your own animated GIF as your profile picture.</p></div><div class="pc2-unlock-actions"><span class="<%= owned_ids.has('avatar_gif')?'pc2-unlocked':'pc2-locked' %>"><%= owned_ids.has('avatar_gif')?'Unlocked':'Not owned' %></span><a href="<%= owned_ids.has('avatar_gif')?'/me/customize':'/store#special' %>" class="pc2-button pc2-button-secondary pc2-button-small"><%= owned_ids.has('avatar_gif')?'Customize Profile':'View in Store' %></a></div></div>
+    </section>
+  </main>
+  <footer class="wrap pc2-footer">Cosmetics never change your ratings, reviews, predictions or other account data.</footer>
+</body>
+</html>

@@ -1,49 +1,131 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GEM Store — Pressboxd</title>
-<link rel="icon" href="/static/favicon.png"><link rel="stylesheet" href="/static/cosmetics.css?v=4">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>GEM Store — Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/cosmetics.css?v=11">
+  <link rel="icon" type="image/png" href="/static/favicon.png">
 </head>
-<body class="pc-store-page">
-<header class="pc-nav">
-  <a class="pc-brand" href="/shows"><img src="/static/logo.png" alt="" width="35" height="35"><span>PRESSBOXD <b>STORE</b></span></a>
-  <div class="pc-nav-right"><a href="/predictions">Predictions</a><a href="/betting">Bets</a><a href="/me/cosmetics">My Collection</a><% if(me){ %><span class="pc-wallet">💎 <%= Number(balance).toLocaleString() %> <small>GEMS</small></span><% } else { %><a class="pc-action" href="/login?next=%2Fstore">Sign in</a><% } %></div>
-</header>
-<main class="pc-container">
-  <section class="pc-hero">
-    <div><div class="pc-eyebrow">PERSONALIZE YOUR PROFILE</div><h1>The GEM Store <span>✦</span></h1><p>Make your profile unmistakably yours. Unlock animated avatars, glowing borders, special nameplates, and vibrant profile backgrounds using the Gems you've earned.</p><div class="pc-hero-actions"><a class="pc-action" href="/me/cosmetics">Manage my cosmetics →</a><a class="pc-soft" href="/betting">Earn more Gems</a></div></div>
-    <div class="pc-hero-preview" aria-hidden="true"><div class="pc-preview-avatar pc-frame-prism pc-motion-float"><img src="/static/logo.png" alt=""></div><div class="pc-preview-title">YOUR PROFILE. YOUR STYLE.</div><div class="pc-preview-sub">Legendary • Prismatic</div></div>
-  </section>
-  <% if(notice){%><div class="pc-notice pc-good"><%=notice%></div><%}%>
-  <% if(error){%><div class="pc-notice pc-bad"><%=error%></div><%}%>
-  <nav class="pc-filter" aria-label="Cosmetics categories">
-    <a href="#frames">Avatar Frames</a><a href="#motion">Avatar Motion</a><a href="#backgrounds">Backgrounds</a><a href="#nameplates">Nameplates</a><a href="#special">Special Unlocks</a>
-  </nav>
-  <% const sections=[['frame','frames','Avatar Frames','Stand out with a decorative border around your profile picture.'],['motion','motion','Animated Effects','Bring your profile picture to life without replacing the image.'],['background','backgrounds','Profile Backgrounds','Give your profile a signature atmosphere.'],['nameplate','nameplates','Nameplates','Make your username impossible to miss.'],['unlock','special','Special Unlocks','Expand your profile customization capabilities.']]; %>
-  <% for(const [cat,id,title,description] of sections){ %>
-  <section class="pc-catalog-section" id="<%=id%>">
-    <div class="pc-section-heading"><div><span class="pc-eyebrow"><%=cat.toUpperCase()%></span><h2><%=title%></h2><p><%=description%></p></div></div>
-    <div class="pc-product-grid">
-    <% for(const item of catalog.filter(it=>it.category===cat)){ const isOwned=owned_ids.has(item.id); const isEquipped=equipped[cat]===item.id; %>
-      <article class="pc-product">
-        <div class="pc-item-art pc-item-<%=item.id%>">
-          <% if(cat==='frame' || cat==='motion' || cat==='unlock'){ %><div class="pc-preview-avatar <%=cat==='frame'?'pc-'+item.id:cat==='motion'?'pc-'+item.id:'pc-frame-prism'%>"><img src="/static/logo.png" alt=""></div><% } %>
-          <% if(cat==='background'){ %><div class="pc-background-sample pc-<%=item.id%>"><span>YOUR PROFILE</span><i>✧</i></div><% } %>
-          <% if(cat==='nameplate'){ %><div class="pc-name-sample pc-<%=item.id%>">YOUR NAME ✦</div><% } %>
-          <span class="pc-rarity pc-rarity-<%=item.rarity.toLowerCase()%>"><%=item.rarity%></span>
-        </div>
-        <div class="pc-product-body"><h3><%=item.name%></h3><p><%=item.description%></p><div class="pc-product-footer"><b>💎 <%=item.price.toLocaleString()%></b>
-          <% if(isEquipped){ %><span class="pc-owned">Equipped ✓</span>
-          <% } else if(isOwned){ %><a class="pc-owned" href="/me/cosmetics">Owned ✓</a>
-          <% } else if(!me){ %><a class="pc-buy" href="/login?next=%2Fstore">Sign in</a>
-          <% } else { %><form action="/store/buy" method="post"><input type="hidden" name="csrf" value="<%=csrf%>"><input type="hidden" name="item_id" value="<%=item.id%>"><button type="submit" class="pc-buy" <%=balance < item.price?'disabled title="Not enough Gems"':''%>>Buy</button></form><% } %>
-        </div></div>
-      </article>
-    <% } %>
+<body class="app pc-store-page pc2-page" style="--accent:<%= (typeof accent_color !== 'undefined' && /^#[0-9a-fA-F]{6}$/.test(String(accent_color))) ? accent_color : '#3252b3' %>">
+  <header class="topbar pc2-site-header">
+    <div class="wrap pc2-topbar-inner">
+      <div class="pc2-brand-cluster">
+        <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" class="pc2-logo" aria-label="General Effect Media"><img src="/static/logo.png" alt="" width="36" height="36"></a>
+        <a href="/shows" class="pc2-wordmark"><img src="/static/pressboxd-wordmark.png" alt="Pressboxd" height="74"></a>
+      </div>
+      <nav class="pc2-top-nav" aria-label="Main navigation">
+        <a href="/shows">Shows</a>
+        <a href="/top">Top Shows</a>
+        <a href="/top_users">Top Users</a>
+        <a href="/predictions">Predictions</a>
+        <a href="/forums">Forums</a>
+        <a href="/tierlists">Tierlists</a>
+      </nav>
+      <div class="pc2-account-nav">
+        <% if(me){ %>
+          <a href="/me" class="pc2-user-link"><% if(me.avatar_url){ %><img src="<%= me.avatar_url %>" alt="" width="28" height="28"><% } %><span><%= me.username %></span></a>
+          <a href="/logout" class="pc2-logout">Logout</a>
+        <% } else { %>
+          <a href="/login?next=%2Fstore">Login</a>
+          <a class="pc2-register" href="/register">Register</a>
+        <% } %>
+      </div>
     </div>
-  </section>
-  <% } %>
-  <footer class="pc-footer">Cosmetics are permanent and cosmetic-only. All Gems are virtual, have no cash value, and cannot be redeemed for prizes. Animations respect reduced-motion settings.</footer>
-</main>
-</body></html>
+  </header>
+
+  <main class="wrap pc2-main">
+    <div class="pc2-breadcrumb"><a href="/shows">Pressboxd</a><span>/</span> GEM Store</div>
+    <section class="pc2-page-heading" aria-labelledby="pc2-store-title">
+      <div class="pc2-heading-copy">
+        <div class="pc2-kicker">PROFILE CUSTOMIZATION</div>
+        <h1 id="pc2-store-title">GEM Store</h1>
+        <p>Customize your profile with avatar frames, animations, backgrounds and nameplates. Purchases are permanent.</p>
+      </div>
+      <div class="pc2-heading-aside">
+        <% if(me){ %>
+          <div class="pc2-wallet-label">AVAILABLE BALANCE</div>
+          <div class="pc2-wallet-amount">💎 <%= Number(balance).toLocaleString() %> <span>GEMS</span></div>
+          <a href="/me/cosmetics" class="pc2-button pc2-button-primary">My Cosmetics</a>
+        <% } else { %>
+          <p class="pc2-signin-prompt">Sign in to buy cosmetics using Gems.</p>
+          <a href="/login?next=%2Fstore" class="pc2-button pc2-button-primary">Sign In</a>
+        <% } %>
+      </div>
+    </section>
+    <% if(notice){ %><div class="pc2-message pc2-message-success" role="status"><%= notice %></div><% } %>
+    <% if(error){ %><div class="pc2-message pc2-message-error" role="alert"><%= error %></div><% } %>
+
+    <div class="pc2-content-grid">
+      <aside class="pc2-sidebar" aria-label="Store categories">
+        <div class="pc2-sidebar-heading">CATEGORIES</div>
+        <a href="#frames">Avatar Frames <span>›</span></a>
+        <a href="#motion">Avatar Motion <span>›</span></a>
+        <a href="#backgrounds">Backgrounds <span>›</span></a>
+        <a href="#nameplates">Nameplates <span>›</span></a>
+        <a href="#special">Special Unlocks <span>›</span></a>
+        <div class="pc2-sidebar-divider"></div>
+        <a href="/me/cosmetics">My Collection <span>↗</span></a>
+        <a href="/betting">Earn Gems <span>↗</span></a>
+      </aside>
+      <div class="pc2-store-content">
+        <div class="pc2-intro-strip">
+          <div>
+            <strong>Make your profile yours.</strong>
+            <span>Preview items below before you buy. Equip owned items whenever you want.</span>
+          </div>
+          <div class="pc2-intro-preview"><div class="pc-preview-avatar pc-frame-sapphire"><img src="/static/logo.png" alt=""></div></div>
+        </div>
+        <% const sections=[['frame','frames','Avatar Frames','Decorative borders and ambient glows for your profile picture.'],['motion','motion','Avatar Motion','Animated effects that give your profile picture movement.'],['background','backgrounds','Profile Backgrounds','Atmospheres to customize your profile header.'],['nameplate','nameplates','Nameplates','Special treatments for your display name.'],['unlock','special','Special Unlocks','Additional profile customization capabilities.']]; %>
+        <% for(const [cat,id,title,description] of sections){ %>
+          <section class="pc2-category-section" id="<%= id %>">
+            <div class="pc2-section-header">
+              <div><h2><%= title %></h2><p><%= description %></p></div>
+              <span class="pc2-item-count"><%= catalog.filter(it=>it.category===cat).length %> ITEMS</span>
+            </div>
+            <div class="pc2-product-grid">
+              <% for(const item of catalog.filter(it=>it.category===cat)){ const isOwned=owned_ids.has(item.id); const isEquipped=equipped[cat]===item.id; %>
+                <article class="pc2-product">
+                  <div class="pc2-product-art pc-item-<%= item.id %>">
+                    <% if(cat==='frame' || cat==='motion' || cat==='unlock'){ %>
+                      <div class="pc-preview-avatar <%= cat==='frame'?'pc-'+item.id:cat==='motion'?'pc-'+item.id:'pc-frame-prism' %>"><img src="/static/logo.png" alt=""></div>
+                    <% } else if(cat==='background'){ %>
+                      <div class="pc-background-sample pc-<%= item.id %>"><span>PRESSBOXD</span><i>✧</i></div>
+                    <% } else if(cat==='nameplate'){ %>
+                      <div class="pc-name-sample pc-<%= item.id %>">USERNAME</div>
+                    <% } %>
+                    <span class="pc2-rarity"><%= item.rarity %></span>
+                  </div>
+                  <div class="pc2-product-info">
+                    <h3><%= item.name %></h3>
+                    <p><%= item.description %></p>
+                    <div class="pc2-product-buy-row">
+                      <span class="pc2-price">💎 <%= item.price.toLocaleString() %></span>
+                      <% if(isEquipped){ %>
+                        <span class="pc2-owned">Equipped</span>
+                      <% } else if(isOwned){ %>
+                        <a class="pc2-owned" href="/me/cosmetics">Owned · Equip</a>
+                      <% } else if(!me){ %>
+                        <a class="pc2-button pc2-button-secondary pc2-button-small" href="/login?next=%2Fstore">Sign In</a>
+                      <% } else { %>
+                        <form action="/store/buy" method="post">
+                          <input type="hidden" name="csrf" value="<%= csrf %>">
+                          <input type="hidden" name="item_id" value="<%= item.id %>">
+                          <button type="submit" class="pc2-button pc2-button-secondary pc2-button-small" <%= balance < item.price ? 'disabled title="Not enough Gems"' : '' %>>Buy</button>
+                        </form>
+                      <% } %>
+                    </div>
+                  </div>
+                </article>
+              <% } %>
+            </div>
+          </section>
+        <% } %>
+      </div>
+    </div>
+  </main>
+  <footer class="wrap pc2-footer">Cosmetic items only. Gems are virtual, have no cash value, and cannot be redeemed for prizes.</footer>
+</body>
+</html>
