@@ -10,10 +10,9 @@
   if (!main) return;
   const equipped = data.equipped || {};
   const allowed = {
-    frame: /^(frame_sapphire|frame_rose|frame_inferno|frame_gold|frame_aurora|frame_prism)$/,
-    motion: /^(motion_float|motion_pulse|motion_wobble)$/,
-    background: /^(profile_night|profile_galaxy|profile_sunset)$/,
-    nameplate: /^(name_electric|name_gold|name_rainbow)$/
+    frame: /^frame_[a-z_]+$/,
+    motion: /^motion_[a-z_]+$/,
+    nameplate: /^name_[a-z_]+$/
   };
   for (const [kind,re] of Object.entries(allowed)) {
     if (!re.test(equipped[kind] || '')) equipped[kind] = null;
@@ -47,10 +46,6 @@
   if (actions) actions.appendChild(links);
   else if (heading) heading.insertAdjacentElement('afterend', links);
 
-  if (equipped.background) {
-    const hero = main.querySelector('.profile_hero');
-    if (hero) hero.classList.add('pb-profile-themed-hero','pc-' + equipped.background);
-  }
   if (!equipped.frame && !equipped.motion) return;
   const images = [...main.querySelectorAll('img')].filter(img => !img.closest('nav,footer'));
   if (!images.length) return;

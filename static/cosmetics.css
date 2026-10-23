@@ -94,3 +94,517 @@
     0 0 9px 3px var(--pc-halo-core),
     0 0 22px 7px var(--pc-halo-fade);
   pointer-events: none;
+}
+
+/* Keep the avatar photograph crisp, while the light spills out behind it. */
+.pc-preview-avatar > img,
+.pb-cosmetic-avatar > img {
+  position: relative;
+  z-index: 1;
+  border-radius: 50% !important;
+}
+
+/* Premium gradients have an animated rim with a softly breathing halo. */
+.pc-preview-avatar.pc-frame_aurora::after,
+.pb-cosmetic-avatar.pc-frame_aurora::after {
+  animation: pc-ringspin 6s linear infinite;
+}
+.pc-preview-avatar.pc-frame_prism::after,
+.pb-cosmetic-avatar.pc-frame_prism::after {
+  animation: pc-ringspin 4s linear infinite;
+}
+.pc-preview-avatar.pc-frame_aurora::before,
+.pb-cosmetic-avatar.pc-frame_aurora::before,
+.pc-preview-avatar.pc-frame_prism::before,
+.pb-cosmetic-avatar.pc-frame_prism::before {
+  animation: pc-ambient-halo 3.7s ease-in-out infinite;
+}
+@keyframes pc-ambient-halo {
+  0%, 100% { opacity: .69; filter: blur(23px); }
+  50% { opacity: .88; filter: blur(27px); }
+}
+
+/* The original profile's small avatar holder sometimes clips box-shadows. */
+.pb-cosmetic-avatar-host {
+  overflow: visible !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-preview-avatar.pc-frame_aurora::after,
+  .pb-cosmetic-avatar.pc-frame_aurora::after,
+  .pc-preview-avatar.pc-frame_prism::after,
+  .pb-cosmetic-avatar.pc-frame_prism::after,
+  .pc-preview-avatar.pc-frame_aurora::before,
+  .pb-cosmetic-avatar.pc-frame_aurora::before,
+  .pc-preview-avatar.pc-frame_prism::before,
+  .pb-cosmetic-avatar.pc-frame_prism::before {
+    animation: none !important;
+  }
+}
+
+/* ============================================================
+   GLOBAL AVATAR COSMETICS · ALL PRESSBOXD PAGES
+   This is intentionally a child FX element, NOT ::after on the
+   existing avatar. Presence/online indicator dots stay intact.
+   Size-dependent variables are set per avatar by cosmetics-global.js.
+   ============================================================ */
+.pb-global-avatar-host {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: visible !important;
+  flex-shrink: 0;
+}
+.pb-global-avatar-shell {
+  display: inline-flex;
+  vertical-align: middle;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.pb-global-avatar-host > img,
+.pb-global-avatar-host > .avatar_fallback {
+  position: relative;
+  z-index: 1;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.pb-global-avatar-shell > img { width:100%; height:100%; }
+.pb-global-avatar-fx {
+  position: absolute;
+  display: block;
+  inset: 0;
+  border-radius: 50%;
+  z-index: 2;
+  pointer-events: none;
+  --pc-halo-gradient: conic-gradient(#5b7ffd,#9adfff,#5b7ffd);
+  --pc-halo-core: rgba(73,149,239,.60);
+  --pc-halo-fade: rgba(73,149,239,.22);
+}
+.pb-global-avatar-fx.pc-frame_sapphire { --pc-halo-gradient:conic-gradient(#557bff,#8adfff,#384acf,#557bff);--pc-halo-core:rgba(65,132,255,.75);--pc-halo-fade:rgba(72,162,255,.27); }
+.pb-global-avatar-fx.pc-frame_rose { --pc-halo-gradient:conic-gradient(#ff6abc,#d64eff,#ff9fa3,#ff6abc);--pc-halo-core:rgba(244,75,176,.75);--pc-halo-fade:rgba(247,91,188,.28); }
+.pb-global-avatar-fx.pc-frame_inferno { --pc-halo-gradient:conic-gradient(#ffcc45,#ee3324,#ff7d29,#ffcc45);--pc-halo-core:rgba(255,103,35,.80);--pc-halo-fade:rgba(255,112,30,.30); }
+.pb-global-avatar-fx.pc-frame_gold { --pc-halo-gradient:conic-gradient(#fff5af,#bb8021,#f9d76d,#fff5af);--pc-halo-core:rgba(231,181,62,.8);--pc-halo-fade:rgba(230,186,80,.26); }
+.pb-global-avatar-fx.pc-frame_aurora { --pc-halo-gradient:conic-gradient(#2ed6b6,#9372e5,#258dd2,#7bf4a1,#2ed6b6);--pc-halo-core:rgba(72,232,190,.75);--pc-halo-fade:rgba(84,210,224,.29); }
+.pb-global-avatar-fx.pc-frame_prism { --pc-halo-gradient:conic-gradient(#ff4666,#ffd05b,#65efab,#49baff,#ad5bfa,#ff4666);--pc-halo-core:rgba(195,106,255,.75);--pc-halo-fade:rgba(192,115,250,.30); }
+.pb-global-avatar-fx[class*="pc-frame_"]::before {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--pc-mini-spread, 6px));
+  border-radius: 50%;
+  background: var(--pc-halo-gradient);
+  filter: blur(var(--pc-mini-blur, 8px));
+  opacity: var(--pc-mini-opacity, .78);
+  box-shadow: 0 0 var(--pc-mini-softness, 18px) var(--pc-mini-spread, 6px) var(--pc-halo-fade);
+  pointer-events: none;
+}
+.pb-global-avatar-fx[class*="pc-frame_"]::after {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--pc-mini-rim, 2px));
+  border-radius: 50%;
+  border: var(--pc-mini-rim, 2px) solid transparent;
+  background: var(--pc-halo-gradient) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+/* Motion scales down along with smaller UI avatars. */
+.pb-global-avatar-host.pc-global-motion_float { animation: pc-global-float 3s ease-in-out infinite !important; }
+.pb-global-avatar-host.pc-global-motion_pulse { animation: pc-global-pulse 2.6s ease-in-out infinite !important; }
+.pb-global-avatar-host.pc-global-motion_wobble { animation: pc-global-wobble 3s ease-in-out infinite !important; }
+@keyframes pc-global-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(calc(-1 * min(6px,var(--pc-mini-spread, 4px))))} }
+@keyframes pc-global-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.035)} }
+@keyframes pc-global-wobble { 0%,100%{transform:rotate(0)} 25%{transform:rotate(2deg)} 75%{transform:rotate(-2deg)} }
+/* Border accents animate on premium frames without moving the avatar image. */
+.pb-global-avatar-fx.pc-frame_aurora::after { animation:pc-ringspin 6s linear infinite; }
+.pb-global-avatar-fx.pc-frame_prism::after { animation:pc-ringspin 4s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .pb-global-avatar-host.pc-global-motion_float,
+  .pb-global-avatar-host.pc-global-motion_pulse,
+  .pb-global-avatar-host.pc-global-motion_wobble,
+  .pb-global-avatar-fx.pc-frame_aurora::after,
+  .pb-global-avatar-fx.pc-frame_prism::after { animation:none !important; }
+}
+
+/* ============================================================
+   PRESSBOXD SITE-MATCHED STORE AND PROFILE CONTROLS
+   This block changes presentation only; wallet and ownership APIs
+   are untouched. Uses the same black / fine-rule language as shows.ejs.
+   ============================================================ */
+body.pc2-page,html:has(body.pc2-page){background:#000!important;background-image:none!important}
+body.pc2-page{font:14px/1.5 Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;color:#f4f4f6!important}
+.pc2-page *, .pc2-page *::before, .pc2-page *::after{box-sizing:border-box}
+.pc2-page a{color:inherit}
+.pc2-page h1,.pc2-page h2,.pc2-page h3{letter-spacing:-.025em}
+.pc2-site-header{background:#000!important;border-bottom:1px solid rgba(255,255,255,.1)!important;box-shadow:none!important}
+.pc2-site-header .pc2-topbar-inner{max-width:1440px;margin:auto;padding:8px 18px;display:flex;align-items:center;justify-content:space-between;gap:22px;min-height:78px}
+.pc2-brand-cluster{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.pc2-brand-cluster .pc2-logo{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.pc2-brand-cluster .pc2-logo img{width:36px;height:36px;object-fit:contain}
+.pc2-brand-cluster .pc2-wordmark{display:inline-flex;align-items:center}
+.pc2-brand-cluster .pc2-wordmark img{height:70px;max-width:200px;width:auto;object-fit:contain}
+.pc2-top-nav{display:flex;align-items:center;justify-content:center;gap:17px;flex-wrap:wrap}
+.pc2-top-nav a,.pc2-account-nav a{font-size:12px;font-weight:650;text-decoration:none;color:rgba(255,255,255,.78);transition:color .14s ease}
+.pc2-top-nav a:hover,.pc2-account-nav a:hover{color:#fff}
+.pc2-account-nav{display:flex;align-items:center;gap:14px;flex-shrink:0}
+.pc2-user-link{display:flex;gap:7px;align-items:center}
+.pc2-user-link img{border-radius:50%;width:27px;height:27px;object-fit:cover}
+.pc2-account-nav .pc2-register{background:var(--accent,#3252b3);padding:8px 12px;color:#fff;border:1px solid transparent}
+.pc2-page .pc2-main{max-width:1440px;margin:0 auto;padding:24px 18px 50px}
+.pc2-breadcrumb{display:flex;align-items:center;gap:9px;color:rgba(255,255,255,.45);font-size:11px;margin-bottom:19px}
+.pc2-breadcrumb a{color:rgba(255,255,255,.7);text-decoration:none}
+.pc2-breadcrumb a:hover{color:#fff}
+.pc2-page-heading{display:flex;justify-content:space-between;align-items:center;gap:22px;border-bottom:1px solid rgba(255,255,255,.11);padding:4px 0 28px;margin-bottom:24px}
+.pc2-heading-copy{max-width:660px}
+.pc2-kicker{font-size:10px;letter-spacing:.095em;color:rgba(255,255,255,.5);font-weight:800;margin:0 0 6px}
+.pc2-heading-copy h1{margin:0 0 8px!important;color:#fff!important;font-size:clamp(27px,3.5vw,38px)!important;font-weight:900;line-height:1.13}
+.pc2-heading-copy p{color:rgba(255,255,255,.59);margin:0;font-size:12px;line-height:1.7}
+.pc2-heading-aside{text-align:right;min-width:170px;display:flex;flex-direction:column;align-items:flex-end;gap:9px}
+.pc2-wallet-label{font-size:10px;color:rgba(255,255,255,.53);font-weight:800;letter-spacing:.1em}
+.pc2-wallet-amount{font-size:22px;font-weight:900;white-space:nowrap;line-height:1}
+.pc2-wallet-amount span{font-size:10px;letter-spacing:.07em;color:rgba(255,255,255,.65)}
+.pc2-signin-prompt{color:#aaa;max-width:200px;font-size:12px;margin:0}
+.pc2-page .pc2-button{appearance:none!important;display:inline-flex!important;align-items:center;justify-content:center!important;gap:7px;text-decoration:none!important;white-space:nowrap;cursor:pointer;font:750 11px/1.2 Inter,system-ui,sans-serif!important;letter-spacing:0!important;padding:10px 15px!important;border-radius:3px!important;transition:background .15s ease,border-color .15s ease!important;box-shadow:none!important}
+.pc2-page .pc2-button-primary{color:#fff!important;background:var(--accent,#3252b3)!important;border:1px solid var(--accent,#3252b3)!important}
+.pc2-page .pc2-button-primary:hover{filter:brightness(1.15)}
+.pc2-page .pc2-button-secondary{color:rgba(255,255,255,.9)!important;background:rgba(255,255,255,.045)!important;border:1px solid rgba(255,255,255,.19)!important}
+.pc2-page .pc2-button-secondary:hover{background:rgba(255,255,255,.1)!important;border-color:rgba(255,255,255,.32)!important}
+.pc2-page .pc2-button-small{padding:8px 12px!important}
+.pc2-page .pc2-button:disabled{opacity:.36;cursor:not-allowed}
+.pc2-message{border:1px solid rgba(255,255,255,.16);background:#0b0b0b;padding:10px 13px;margin-bottom:17px;color:#eee;font-size:12px}
+.pc2-message-success{border-left:3px solid #41865c}.pc2-message-error{border-left:3px solid #bd5555}
+.pc2-content-grid{display:grid;grid-template-columns:188px minmax(0,1fr);gap:34px;align-items:start}
+.pc2-sidebar{position:sticky;top:16px;display:flex;flex-direction:column;gap:0;padding-top:8px}
+.pc2-sidebar-heading{color:rgba(255,255,255,.42);font-size:10px;font-weight:900;letter-spacing:.08em;margin-bottom:9px;padding:0 10px}
+.pc2-sidebar a{display:flex;justify-content:space-between;align-items:center;text-decoration:none;padding:11px 10px;border-bottom:1px solid rgba(255,255,255,.055);font-size:12px;color:#b9b9bf}
+.pc2-sidebar a:hover{background:rgba(255,255,255,.04);color:#fff}
+.pc2-sidebar a span{font-size:13px;opacity:.6}
+.pc2-sidebar-divider{border-top:1px solid rgba(255,255,255,.13);margin:18px 0 6px}
+.pc2-intro-strip{border:1px solid rgba(255,255,255,.11);background:#070707;min-height:112px;display:flex;justify-content:space-between;gap:25px;align-items:center;padding:23px 30px 23px 22px;margin-bottom:29px}
+.pc2-intro-strip strong{font-size:17px;font-weight:900;display:block;line-height:1.3;margin-bottom:4px}
+.pc2-intro-strip span{font-size:12px;color:#9c9ca3}
+.pc2-intro-preview{width:96px;height:66px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pc2-intro-preview .pc-preview-avatar{width:60px;height:60px}
+.pc2-category-section{scroll-margin-top:18px;margin:0 0 36px}
+.pc2-section-header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:13px;padding-bottom:11px;border-bottom:1px solid rgba(255,255,255,.13)}
+.pc2-section-header h2{font-size:18px;font-weight:850;margin:0 0 2px;color:#f9f9fa;line-height:1.2}
+.pc2-section-header p{font-size:11px;color:rgba(255,255,255,.53);margin:0}
+.pc2-item-count{font-size:10px;letter-spacing:.07em;color:rgba(255,255,255,.44);font-weight:800;white-space:nowrap}
+.pc2-product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.pc2-product{min-width:0;border:1px solid rgba(255,255,255,.095);background:#060606;transition:border-color .15s ease;display:flex;flex-direction:column}
+.pc2-product:hover{border-color:rgba(255,255,255,.23)}
+.pc2-product-art{height:158px;display:flex;align-items:center;justify-content:center;background:#090909;position:relative;padding:14px;isolation:isolate}
+.pc2-product-art .pc-preview-avatar{width:82px;height:82px}
+.pc2-product-art .pc-background-sample{height:96px;width:92%;border:1px solid rgba(255,255,255,.08);border-radius:3px}
+.pc2-product-art .pc-name-sample{font-size:18px}
+.pc2-rarity{position:absolute;top:9px;left:10px;text-transform:uppercase;letter-spacing:.075em;font-size:9px;color:rgba(255,255,255,.7);font-weight:800;background:#111;border:1px solid rgba(255,255,255,.13);padding:3px 6px}
+.pc2-product-info{border-top:1px solid rgba(255,255,255,.07);padding:13px 13px 14px;display:flex;flex-direction:column;flex:1}
+.pc2-product-info h3{margin:0 0 3px;font-weight:800;font-size:13px;color:#fff}
+.pc2-product-info p{font-size:11px;color:rgba(255,255,255,.53);line-height:1.55;margin:0 0 16px;flex:1;min-height:32px}
+.pc2-product-buy-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pc2-product-buy-row form{margin:0}
+.pc2-price{font-size:12px;font-weight:900;white-space:nowrap}
+.pc2-owned{font-size:11px;color:#9ec6ad;font-weight:800;text-decoration:none}
+.pc2-owned:hover{text-decoration:underline}
+.pc2-inventory-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pc2-inventory-card{border:1px solid rgba(255,255,255,.105);background:#060606;padding:22px;min-width:0}
+.pc2-inventory-card-heading{display:flex;justify-content:space-between;gap:10px;align-items:start;margin-bottom:11px}
+.pc2-inventory-card h2{font-size:18px;margin:0;color:#f9f9fa;line-height:1.3}
+.pc2-equipped-status{color:rgba(255,255,255,.53);font-size:12px;margin:0 0 20px}.pc2-equipped-status strong{color:#f2f2f2}
+.pc2-equip-form{display:flex;flex-direction:column;gap:9px;align-items:stretch}
+.pc2-equip-form label{font-size:10px;font-weight:800;letter-spacing:.09em;color:#8d8d93}
+.pc2-equip-form select{background:#101013;border:1px solid rgba(255,255,255,.17);color:#f6f6f6;padding:10px 12px;width:100%;font:12px Inter,system-ui,sans-serif;border-radius:3px}
+.pc2-equip-form .pc2-button{align-self:flex-start;margin-top:6px}
+.pc2-no-items{font-size:11px;color:#999;margin-top:10px}.pc2-no-items a{color:#aac8ff}
+.pc2-unlock-section{margin:30px 0 0}
+.pc2-unlock-row{border:1px solid rgba(255,255,255,.1);background:#080808;padding:18px;display:flex;justify-content:space-between;gap:15px;align-items:center}
+.pc2-unlock-row strong{font-size:13px}.pc2-unlock-row p{font-size:11px;color:#909099;margin:4px 0 0}
+.pc2-unlock-actions{display:flex;align-items:center;gap:16px;flex-shrink:0}
+.pc2-unlocked{font-size:11px;font-weight:800;color:#9ec6ad}.pc2-locked{font-size:11px;color:#999}
+.pc2-footer{max-width:1440px;padding:10px 18px 40px;color:rgba(255,255,255,.42);font-size:11px;border-top:1px solid rgba(255,255,255,.08)}
+/* Move profile cosmetics controls to the far side of Followers / Following.
+   Flat dark buttons match the original profile's Follow/Friends controls. */
+.profile_top_actions .pb-cosmetic-profile-actions{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pb-cosmetic-profile-actions .pb-cosmetic-store-link,
+.pb-cosmetic-store-link{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;padding:7px 11px!important;margin:0!important;border-radius:4px!important;background:rgba(255,255,255,.045)!important;border:1px solid rgba(255,255,255,.19)!important;color:rgba(255,255,255,.88)!important;font-size:11px!important;font-weight:700!important;text-decoration:none!important;box-shadow:none!important;text-shadow:none!important;letter-spacing:0!important;line-height:1.35!important;transition:background .15s ease,border-color .15s ease!important}
+.pb-cosmetic-store-link:hover{background:rgba(255,255,255,.095)!important;border-color:rgba(255,255,255,.32)!important;color:white!important}
+/* Integrate background skins with the existing banner instead of inserting an alien-looking decorative strip. */
+.profile_hero.pb-profile-themed-hero.pc-profile_night .profile_hero_overlay{background:radial-gradient(circle at 85% 20%,rgba(75,45,175,.45),transparent 55%),linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.68))}
+.profile_hero.pb-profile-themed-hero.pc-profile_galaxy .profile_hero_overlay{background:radial-gradient(circle at 35% 15%,rgba(76,99,200,.40),transparent 50%),radial-gradient(circle at 85% 85%,rgba(136,64,160,.25),transparent 55%),linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.72))}
+.profile_hero.pb-profile-themed-hero.pc-profile_sunset .profile_hero_overlay{background:linear-gradient(120deg,rgba(172,31,92,.33),rgba(49,32,120,.32)),linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.7))}
+@media(max-width:1200px){.pc2-site-header .pc2-topbar-inner{flex-wrap:wrap;justify-content:center;gap:7px 18px}.pc2-top-nav{order:3;width:100%;padding:2px 0 9px}.pc2-content-grid{gap:20px}}
+@media(max-width:850px){.pc2-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pc2-content-grid{grid-template-columns:160px minmax(0,1fr);gap:18px}}
+@media(max-width:650px){.pc2-page .pc2-main{padding:17px 12px 35px}.pc2-site-header .pc2-topbar-inner{padding:8px 12px;justify-content:space-between}.pc2-brand-cluster .pc2-wordmark img{height:50px;max-width:148px}.pc2-top-nav{gap:8px 12px}.pc2-top-nav a{font-size:11px}.pc2-page-heading{align-items:flex-start;flex-wrap:wrap;gap:14px}.pc2-heading-aside{align-items:flex-start;text-align:left}.pc2-content-grid{display:block}.pc2-sidebar{position:static;flex-direction:row;flex-wrap:wrap;gap:6px;margin-bottom:18px;padding:0}.pc2-sidebar-heading,.pc2-sidebar-divider{display:none}.pc2-sidebar a{border:1px solid rgba(255,255,255,.13);padding:7px 10px;font-size:11px}.pc2-sidebar a span{display:none}.pc2-intro-strip{padding:16px;min-height:90px}.pc2-product-grid{gap:9px}.pc2-product-art{height:135px}.pc2-product-art .pc-preview-avatar{width:70px;height:70px}.pc2-inventory-grid{grid-template-columns:1fr}.pc2-unlock-row{align-items:flex-start;flex-direction:column}.pc2-unlock-actions{flex-wrap:wrap}.profile_top_actions .pb-cosmetic-profile-actions{margin-left:0;width:100%;border-top:1px solid rgba(255,255,255,.09);padding-top:9px}}
+@media(max-width:405px){.pc2-product-grid{grid-template-columns:1fr}.pc2-product-art{height:155px}.pc2-product-art .pc-preview-avatar{width:86px;height:86px}.pc2-intro-preview{display:none}}
+/* ============================================================
+   PRESSBOXD — SUBTLE OUTER-EDGE AVATAR GLOW (v13)
+   Add to the VERY BOTTOM of static/cosmetics.css.
+   The center stays completely transparent; the photo is untouched.
+   ============================================================ */
+
+/* Full-size profile avatars and previews: light ONLY outside the circle. */
+.pc-preview-avatar[class*="pc-frame_"]::before,
+.pb-cosmetic-avatar[class*="pc-frame_"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  z-index: 0;
+  background: transparent;
+  border: 0;
+  filter: none;
+  opacity: .7;
+  box-shadow:
+    0 0 5px 1px var(--pc-halo-core),
+    0 0 11px 2px var(--pc-halo-fade);
+  animation: none !important;
+  pointer-events: none;
+}
+
+/* The colored rim occupies the 2px OUTSIDE the photo, never its center. */
+.pc-preview-avatar[class*="pc-frame_"]::after,
+.pb-cosmetic-avatar[class*="pc-frame_"]::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 4px solid transparent;
+  border-radius: 50%;
+  z-index: 3;
+  background: var(--pc-halo-gradient) border-box;
+  box-shadow: none;
+  opacity: 1;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box,
+                linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) padding-box,
+        linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Photo always stays crisp and appears ABOVE the halo layer. */
+.pc-preview-avatar[class*="pc-frame_"] > img,
+.pb-cosmetic-avatar[class*="pc-frame_"] > img {
+  position: relative;
+  z-index: 1;
+  filter: none;
+}
+
+/* Small avatars site-wide: respect their scaled effect measurements. */
+.pb-global-avatar-fx[class*="pc-frame_"]::before {
+  content: '';
+  inset: 0;
+  background: transparent;
+  border: 0;
+  filter: none;
+  opacity: .68;
+  box-shadow:
+    0 0 clamp(3px, var(--pc-mini-rim, 2px), 6px) 0 var(--pc-halo-core),
+    0 0 clamp(6px, var(--pc-mini-blur, 8px), 10px) 1px var(--pc-halo-fade);
+}
+
+.pb-global-avatar-fx[class*="pc-frame_"]::after {
+  box-shadow: none;
+  filter: none;
+}
+
+/* ============================================================
+   v14 GLOBAL COVERAGE: subtle exterior-only frame effects.
+   Preserves profile photo pixels and correct per-frame palettes.
+   ============================================================ */
+.pb-global-avatar-host { position:relative !important; overflow:visible !important; isolation:isolate !important; }
+.pb-global-avatar-host > img,
+.pb-global-avatar-host > .avatar_fallback { position:relative; z-index:1; }
+.pb-global-avatar-fx { position:absolute; inset:0; border-radius:50%; z-index:2; pointer-events:none; }
+.pb-global-avatar-fx[class*="pc-frame_"]::before {
+  content:""; position:absolute; inset:0; border-radius:50%;
+  background:transparent; border:0; filter:none; opacity:.64;
+  box-shadow:0 0 4px 1px var(--pc-halo-core),
+             0 0 var(--pc-mini-blur,7px) 1px var(--pc-halo-fade);
+  animation:none !important; pointer-events:none;
+}
+.pb-global-avatar-fx[class*="pc-frame_"]::after {
+  content:""; position:absolute;
+  inset:calc(-1 * var(--pc-mini-rim,2px));
+  border:var(--pc-mini-rim,2px) solid transparent;
+  border-radius:50%; background:var(--pc-halo-gradient) border-box;
+  box-shadow:none; filter:none; pointer-events:none;
+  -webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;
+  mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  mask-composite:exclude;
+}
+/* Controls intensity on tiny 20px–35px avatars. */
+.pb-global-avatar-host[data-cosmetic-size="xs"] .pb-global-avatar-fx::before {opacity:.48;box-shadow:0 0 3px 0 var(--pc-halo-core),0 0 5px 0 var(--pc-halo-fade)}
+@media(prefers-reduced-motion:reduce){
+  .pb-global-avatar-host.pc-global-motion_float,
+  .pb-global-avatar-host.pc-global-motion_pulse,
+  .pb-global-avatar-host.pc-global-motion_wobble {animation:none !important}
+}
+
+/* BEGIN PB_INTEGRATED_NAMEPLATES_CSS_V18
+   Uses the same pc-name_* product IDs as the store, inventory and profile.
+   These scoped rules only affect confirmed equipped usernames. */
+.pb-global-nameplate.pc-name_electric {
+  color: #70cfff !important;
+  -webkit-text-fill-color: #70cfff !important;
+  text-shadow: 0 0 5px rgba(55,141,255,.60),0 0 11px rgba(55,141,255,.26) !important;
+}
+.pb-global-nameplate.pc-name_gold {
+  color: #ffdd70 !important;
+  -webkit-text-fill-color: #ffdd70 !important;
+  text-shadow: 0 0 5px rgba(217,172,35,.60),0 0 11px rgba(217,172,35,.26) !important;
+}
+.pb-global-nameplate.pc-name_rainbow {
+  display: inline !important;
+  background: linear-gradient(90deg,#fb5a93,#fddd88,#67e7ff,#cb84ff,#fb5a93) !important;
+  background-size: 200% 100% !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  animation: pb-integrated-spectrum-v18 4s linear infinite !important;
+}
+@keyframes pb-integrated-spectrum-v18 {
+  from { background-position:0% 50%; }
+  to { background-position:200% 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pb-global-nameplate.pc-name_rainbow { animation:none !important; }
+}
+/* END PB_INTEGRATED_NAMEPLATES_CSS_V18 */
+
+
+/* BEGIN PB_LUXURY_COSMETICS_V20 — integrated in original cosmetics.css */
+/* Catalog frames: each uses a unique palette. The photograph is never painted over. */
+.pc-preview-avatar.pc-frame_obsidian,
+.pb-cosmetic-avatar.pc-frame_obsidian,
+.pb-global-avatar-fx.pc-frame_obsidian{--pc-halo-gradient:conic-gradient(#a7afc8,#111827,#eff3ff,#a7afc8);--pc-halo-core:rgba(167,175,200,0.72);--pc-halo-fade:rgba(239,243,255,0.22);}
+.pc-preview-avatar.pc-frame_crimson,
+.pb-cosmetic-avatar.pc-frame_crimson,
+.pb-global-avatar-fx.pc-frame_crimson{--pc-halo-gradient:conic-gradient(#ff244d,#85091e,#ffa1b2,#ff244d);--pc-halo-core:rgba(255,36,77,0.72);--pc-halo-fade:rgba(255,161,178,0.22);}
+.pc-preview-avatar.pc-frame_emerald,
+.pb-cosmetic-avatar.pc-frame_emerald,
+.pb-global-avatar-fx.pc-frame_emerald{--pc-halo-gradient:conic-gradient(#7aff96,#097d48,#c1ffdf,#7aff96);--pc-halo-core:rgba(122,255,150,0.72);--pc-halo-fade:rgba(193,255,223,0.22);}
+.pc-preview-avatar.pc-frame_amethyst,
+.pb-cosmetic-avatar.pc-frame_amethyst,
+.pb-global-avatar-fx.pc-frame_amethyst{--pc-halo-gradient:conic-gradient(#d4a6ff,#663cd6,#ffbaf2,#d4a6ff);--pc-halo-core:rgba(212,166,255,0.72);--pc-halo-fade:rgba(255,186,242,0.22);}
+.pc-preview-avatar.pc-frame_frost,
+.pb-cosmetic-avatar.pc-frame_frost,
+.pb-global-avatar-fx.pc-frame_frost{--pc-halo-gradient:conic-gradient(#f8ffff,#76e7ff,#3891e3,#f8ffff);--pc-halo-core:rgba(248,255,255,0.72);--pc-halo-fade:rgba(56,145,227,0.22);}
+.pc-preview-avatar.pc-frame_copper,
+.pb-cosmetic-avatar.pc-frame_copper,
+.pb-global-avatar-fx.pc-frame_copper{--pc-halo-gradient:conic-gradient(#ffcf93,#bc612d,#f3976b,#ffcf93);--pc-halo-core:rgba(255,207,147,0.72);--pc-halo-fade:rgba(243,151,107,0.22);}
+.pc-preview-avatar.pc-frame_moonstone,
+.pb-cosmetic-avatar.pc-frame_moonstone,
+.pb-global-avatar-fx.pc-frame_moonstone{--pc-halo-gradient:conic-gradient(#ffffff,#b1c8eb,#d7b7ff,#ffffff);--pc-halo-core:rgba(255,255,255,0.72);--pc-halo-fade:rgba(215,183,255,0.22);}
+.pc-preview-avatar.pc-frame_nebula,
+.pb-cosmetic-avatar.pc-frame_nebula,
+.pb-global-avatar-fx.pc-frame_nebula{--pc-halo-gradient:conic-gradient(#bc59f9,#3533a3,#ff64cf,#56b8ff,#bc59f9);--pc-halo-core:rgba(188,89,249,0.72);--pc-halo-fade:rgba(86,184,255,0.22);}
+.pc-preview-avatar.pc-frame_nebula::after, .pb-cosmetic-avatar.pc-frame_nebula::after, .pb-global-avatar-fx.pc-frame_nebula::after{animation:pc-ringspin 12s linear infinite !important;}
+.pc-preview-avatar.pc-frame_solar,
+.pb-cosmetic-avatar.pc-frame_solar,
+.pb-global-avatar-fx.pc-frame_solar{--pc-halo-gradient:conic-gradient(#fffcba,#ff8f28,#e84826,#fffcba);--pc-halo-core:rgba(255,252,186,0.72);--pc-halo-fade:rgba(232,72,38,0.22);}
+.pc-preview-avatar.pc-frame_solar::after, .pb-cosmetic-avatar.pc-frame_solar::after, .pb-global-avatar-fx.pc-frame_solar::after{animation:pc-ringspin 10s linear infinite !important;}
+.pc-preview-avatar.pc-frame_phantom,
+.pb-cosmetic-avatar.pc-frame_phantom,
+.pb-global-avatar-fx.pc-frame_phantom{--pc-halo-gradient:conic-gradient(#fafafa,#7a849e,#b7f8ff,#fafafa);--pc-halo-core:rgba(250,250,250,0.72);--pc-halo-fade:rgba(183,248,255,0.22);}
+.pc-preview-avatar.pc-frame_toxic,
+.pb-cosmetic-avatar.pc-frame_toxic,
+.pb-global-avatar-fx.pc-frame_toxic{--pc-halo-gradient:conic-gradient(#e0ff35,#27e25d,#135d26,#e0ff35);--pc-halo-core:rgba(224,255,53,0.72);--pc-halo-fade:rgba(19,93,38,0.22);}
+.pc-preview-avatar.pc-frame_toxic::after, .pb-cosmetic-avatar.pc-frame_toxic::after, .pb-global-avatar-fx.pc-frame_toxic::after{animation:pc-ringspin 9s linear infinite !important;}
+.pc-preview-avatar.pc-frame_plasma,
+.pb-cosmetic-avatar.pc-frame_plasma,
+.pb-global-avatar-fx.pc-frame_plasma{--pc-halo-gradient:conic-gradient(#ff45e0,#4dbfff,#844bff,#ff45e0);--pc-halo-core:rgba(255,69,224,0.72);--pc-halo-fade:rgba(132,75,255,0.22);}
+.pc-preview-avatar.pc-frame_plasma::after, .pb-cosmetic-avatar.pc-frame_plasma::after, .pb-global-avatar-fx.pc-frame_plasma::after{animation:pc-ringspin 8s linear infinite !important;}
+.pc-preview-avatar.pc-frame_eclipse,
+.pb-cosmetic-avatar.pc-frame_eclipse,
+.pb-global-avatar-fx.pc-frame_eclipse{--pc-halo-gradient:conic-gradient(#fbd27b,#21101d,#fa6d36,#f7e0a5,#fbd27b);--pc-halo-core:rgba(251,210,123,0.72);--pc-halo-fade:rgba(247,224,165,0.22);}
+.pc-preview-avatar.pc-frame_eclipse::after, .pb-cosmetic-avatar.pc-frame_eclipse::after, .pb-global-avatar-fx.pc-frame_eclipse::after{animation:pc-ringspin 11s linear infinite !important;}
+.pc-preview-avatar.pc-frame_celestial,
+.pb-cosmetic-avatar.pc-frame_celestial,
+.pb-global-avatar-fx.pc-frame_celestial{--pc-halo-gradient:conic-gradient(#fef4d4,#f3d37a,#b1e4ff,#fef4d4);--pc-halo-core:rgba(254,244,212,0.72);--pc-halo-fade:rgba(177,228,255,0.22);}
+.pc-preview-avatar.pc-frame_celestial::after, .pb-cosmetic-avatar.pc-frame_celestial::after, .pb-global-avatar-fx.pc-frame_celestial::after{animation:pc-ringspin 10s linear infinite !important;}
+.pc-preview-avatar.pc-frame_stardust,
+.pb-cosmetic-avatar.pc-frame_stardust,
+.pb-global-avatar-fx.pc-frame_stardust{--pc-halo-gradient:conic-gradient(#f6e1ff,#74e3ff,#f7a6ff,#f6e1ff);--pc-halo-core:rgba(246,225,255,0.72);--pc-halo-fade:rgba(247,166,255,0.22);}
+.pc-preview-avatar.pc-frame_stardust::after, .pb-cosmetic-avatar.pc-frame_stardust::after, .pb-global-avatar-fx.pc-frame_stardust::after{animation:pc-ringspin 7s linear infinite !important;}
+.pc-preview-avatar.pc-frame_hologram,
+.pb-cosmetic-avatar.pc-frame_hologram,
+.pb-global-avatar-fx.pc-frame_hologram{--pc-halo-gradient:conic-gradient(#88ffff,#e8b2ff,#fff8aa,#74a9ff,#88ffff);--pc-halo-core:rgba(136,255,255,0.72);--pc-halo-fade:rgba(116,169,255,0.22);}
+.pc-preview-avatar.pc-frame_hologram::after, .pb-cosmetic-avatar.pc-frame_hologram::after, .pb-global-avatar-fx.pc-frame_hologram::after{animation:pc-ringspin 6s linear infinite !important;}
+.pc-preview-avatar.pc-frame_chromatic,
+.pb-cosmetic-avatar.pc-frame_chromatic,
+.pb-global-avatar-fx.pc-frame_chromatic{--pc-halo-gradient:conic-gradient(#ff5377,#ffcc67,#53f2d5,#667bff,#c465ff,#ff5377);--pc-halo-core:rgba(255,83,119,0.72);--pc-halo-fade:rgba(196,101,255,0.22);}
+.pc-preview-avatar.pc-frame_chromatic::after, .pb-cosmetic-avatar.pc-frame_chromatic::after, .pb-global-avatar-fx.pc-frame_chromatic::after{animation:pc-ringspin 5s linear infinite !important;}
+.pc-preview-avatar.pc-frame_lightning,
+.pb-cosmetic-avatar.pc-frame_lightning,
+.pb-global-avatar-fx.pc-frame_lightning{--pc-halo-gradient:conic-gradient(#ffffff,#5cadff,#353cd6,#ffffff);--pc-halo-core:rgba(255,255,255,0.72);--pc-halo-fade:rgba(53,60,214,0.22);}
+.pc-preview-avatar.pc-frame_lightning::after, .pb-cosmetic-avatar.pc-frame_lightning::after, .pb-global-avatar-fx.pc-frame_lightning::after{animation:pc-ringspin 4s linear infinite !important;}
+.pc-preview-avatar.pc-frame_nova,
+.pb-cosmetic-avatar.pc-frame_nova,
+.pb-global-avatar-fx.pc-frame_nova{--pc-halo-gradient:conic-gradient(#ffe0a3,#ff4b74,#f88d27,#ffe0a3);--pc-halo-core:rgba(255,224,163,0.72);--pc-halo-fade:rgba(248,141,39,0.22);}
+.pc-preview-avatar.pc-frame_nova::after, .pb-cosmetic-avatar.pc-frame_nova::after, .pb-global-avatar-fx.pc-frame_nova::after{animation:pc-ringspin 5s linear infinite !important;}
+.pc-preview-avatar.pc-frame_abyss,
+.pb-cosmetic-avatar.pc-frame_abyss,
+.pb-global-avatar-fx.pc-frame_abyss{--pc-halo-gradient:conic-gradient(#4cfff1,#052f50,#7226c2,#4cfff1);--pc-halo-core:rgba(76,255,241,0.72);--pc-halo-fade:rgba(114,38,194,0.22);}
+.pc-preview-avatar.pc-frame_abyss::after, .pb-cosmetic-avatar.pc-frame_abyss::after, .pb-global-avatar-fx.pc-frame_abyss::after{animation:pc-ringspin 8s linear infinite !important;}
+.pc-preview-avatar.pc-frame_supernova,
+.pb-cosmetic-avatar.pc-frame_supernova,
+.pb-global-avatar-fx.pc-frame_supernova{--pc-halo-gradient:conic-gradient(#fff9d7,#fdb34b,#ff3387,#7c45ff,#fff9d7);--pc-halo-core:rgba(255,249,215,0.72);--pc-halo-fade:rgba(124,69,255,0.22);}
+.pc-preview-avatar.pc-frame_supernova::after, .pb-cosmetic-avatar.pc-frame_supernova::after, .pb-global-avatar-fx.pc-frame_supernova::after{animation:pc-ringspin 4s linear infinite !important;}
+.pc-preview-avatar.pc-frame_quantum,
+.pb-cosmetic-avatar.pc-frame_quantum,
+.pb-global-avatar-fx.pc-frame_quantum{--pc-halo-gradient:conic-gradient(#64fff8,#6d68ff,#f873ed,#bbffff,#64fff8);--pc-halo-core:rgba(100,255,248,0.72);--pc-halo-fade:rgba(187,255,255,0.22);}
+.pc-preview-avatar.pc-frame_quantum::after, .pb-cosmetic-avatar.pc-frame_quantum::after, .pb-global-avatar-fx.pc-frame_quantum::after{animation:pc-ringspin 3.8s linear infinite !important;}
+.pc-preview-avatar.pc-frame_singularity,
+.pb-cosmetic-avatar.pc-frame_singularity,
+.pb-global-avatar-fx.pc-frame_singularity{--pc-halo-gradient:conic-gradient(#f7f7ff,#20202e,#984dff,#faf6ff,#f7f7ff);--pc-halo-core:rgba(247,247,255,0.72);--pc-halo-fade:rgba(250,246,255,0.22);}
+.pc-preview-avatar.pc-frame_singularity::after, .pb-cosmetic-avatar.pc-frame_singularity::after, .pb-global-avatar-fx.pc-frame_singularity::after{animation:pc-ringspin 5s linear infinite !important;}
+.pc-preview-avatar.pc-frame_divine,
+.pb-cosmetic-avatar.pc-frame_divine,
+.pb-global-avatar-fx.pc-frame_divine{--pc-halo-gradient:conic-gradient(#ffffff,#fff2b0,#ccefff,#ffffff,#ffffff);--pc-halo-core:rgba(255,255,255,0.72);--pc-halo-fade:rgba(255,255,255,0.22);}
+.pc-preview-avatar.pc-frame_divine::after, .pb-cosmetic-avatar.pc-frame_divine::after, .pb-global-avatar-fx.pc-frame_divine::after{animation:pc-ringspin 4s linear infinite !important;}
+/* Additional avatar motions, applied to both profile pages and global avatar hosts. */
+.pb-cosmetic-avatar.pc-motion_drift,.pc-preview-avatar.pc-motion_drift,.pb-global-avatar-host.pc-global-motion_drift{animation:pc-lux-drift 4.8s ease-in-out infinite !important;transform-origin:center center;}
+.pb-cosmetic-avatar.pc-motion_bounce,.pc-preview-avatar.pc-motion_bounce,.pb-global-avatar-host.pc-global-motion_bounce{animation:pc-lux-bounce 3.2s ease-in-out infinite !important;transform-origin:center center;}
+.pb-cosmetic-avatar.pc-motion_spin,.pc-preview-avatar.pc-motion_spin,.pb-global-avatar-host.pc-global-motion_spin{animation:pc-lux-spin 14s ease-in-out infinite !important;transform-origin:center center;}
+.pb-cosmetic-avatar.pc-motion_orbit,.pc-preview-avatar.pc-motion_orbit,.pb-global-avatar-host.pc-global-motion_orbit{animation:pc-lux-orbit 5.5s ease-in-out infinite !important;transform-origin:center center;}
+.pb-cosmetic-avatar.pc-motion_shiver,.pc-preview-avatar.pc-motion_shiver,.pb-global-avatar-host.pc-global-motion_shiver{animation:pc-lux-shiver 6s ease-in-out infinite !important;transform-origin:center center;}
+.pb-cosmetic-avatar.pc-motion_tilt,.pc-preview-avatar.pc-motion_tilt,.pb-global-avatar-host.pc-global-motion_tilt{animation:pc-lux-tilt 4s ease-in-out infinite !important;transform-origin:center center;}
+.pb-cosmetic-avatar.pc-motion_glitch,.pc-preview-avatar.pc-motion_glitch,.pb-global-avatar-host.pc-global-motion_glitch{animation:pc-lux-glitch 7s ease-in-out infinite !important;transform-origin:center center;}
+.pb-cosmetic-avatar.pc-motion_vortex,.pc-preview-avatar.pc-motion_vortex,.pb-global-avatar-host.pc-global-motion_vortex{animation:pc-lux-vortex 8s ease-in-out infinite !important;transform-origin:center center;}
+.pb-cosmetic-avatar.pc-motion_astral,.pc-preview-avatar.pc-motion_astral,.pb-global-avatar-host.pc-global-motion_astral{animation:pc-lux-astral 7s ease-in-out infinite !important;transform-origin:center center;}
+@keyframes pc-lux-drift{0%,100%{transform:translate(0,0)}25%{transform:translate(3px,-3px)}75%{transform:translate(-3px,2px)}}
+@keyframes pc-lux-bounce{0%,100%{transform:translateY(0)}24%{transform:translateY(-7px)}38%{transform:translateY(1px)}55%{transform:translateY(-3px)}74%{transform:translateY(0)}}
+@keyframes pc-lux-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@keyframes pc-lux-orbit{0%,100%{transform:translate(0,-3px)}25%{transform:translate(3px,0)}50%{transform:translate(0,3px)}75%{transform:translate(-3px,0)}}
+@keyframes pc-lux-shiver{0%,14%,24%,35%,100%{transform:translateX(0)}15%{transform:translateX(2px)}18%{transform:translateX(-2px)}21%{transform:translateX(1px)}}
+@keyframes pc-lux-tilt{0%,100%{transform:rotate(0deg)}25%{transform:rotate(-7deg) translateY(-2px)}75%{transform:rotate(7deg) translateY(-2px)}}
+@keyframes pc-lux-glitch{0%,46%,53%,100%{transform:translate(0,0) skew(0)}47%{transform:translate(3px,-1px) skew(-4deg)}49%{transform:translate(-3px,1px) skew(3deg)}51%{transform:translate(1px,0) skew(-1deg)}}
+@keyframes pc-lux-vortex{0%,100%{transform:rotate(-4deg) scale(.98)}50%{transform:rotate(4deg) scale(1.04)}}
+@keyframes pc-lux-astral{0%,100%{transform:translateY(0) rotate(0deg) scale(1)}30%{transform:translateY(-5px) rotate(-3deg) scale(1.02)}65%{transform:translateY(-2px) rotate(3deg) scale(1.035)}}
+/* New global, main-profile AND store-preview nameplates share one style. */
+.pc-name-sample.pc-name_ember,.pb-cosmetic-heading.pc-name_ember,.pb-global-nameplate.pc-name_ember{display:inline-block!important;background:linear-gradient(100deg,#ffd1a0,#fa713c,#e6332d,#ffd1a0)!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #ed662e55);}
+.pc-name-sample.pc-name_glacier,.pb-cosmetic-heading.pc-name_glacier,.pb-global-nameplate.pc-name_glacier{display:inline-block!important;background:linear-gradient(100deg,#f3ffff,#87e9ff,#4ea0ff,#f3ffff)!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #48c4ff55);}
+.pc-name-sample.pc-name_jade,.pb-cosmetic-heading.pc-name_jade,.pb-global-nameplate.pc-name_jade{display:inline-block!important;background:linear-gradient(100deg,#d5ffb9,#55eab8,#16874f,#d5ffb9)!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #37e1a155);}
+.pc-name-sample.pc-name_lavender,.pb-cosmetic-heading.pc-name_lavender,.pb-global-nameplate.pc-name_lavender{display:inline-block!important;background:linear-gradient(100deg,#e8c8ff,#a97dfc,#ffc5fb,#e8c8ff)!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #a97dfc55);}
+.pc-name-sample.pc-name_rosefire,.pb-cosmetic-heading.pc-name_rosefire,.pb-global-nameplate.pc-name_rosefire{display:inline-block!important;background:linear-gradient(100deg,#ff9dc2,#f53a92,#ffce9b,#ff9dc2)!important;background-size:250% 100%!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;animation:pc-lux-name-shift 5.8s linear infinite!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #f7479b55);}
+.pc-name-sample.pc-name_chrome,.pb-cosmetic-heading.pc-name_chrome,.pb-global-nameplate.pc-name_chrome{display:inline-block!important;background:linear-gradient(100deg,#fafcff,#7d91a7,#ffffff,#6d7188,#fafcff)!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #b5d5ff55);}
+.pc-name-sample.pc-name_ghost,.pb-cosmetic-heading.pc-name_ghost,.pb-global-nameplate.pc-name_ghost{display:inline-block!important;background:linear-gradient(100deg,#ffffff,#b5bdfb,#fbfbff,#ffffff)!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #acb4ff55);}
+.pc-name-sample.pc-name_neon,.pb-cosmetic-heading.pc-name_neon,.pb-global-nameplate.pc-name_neon{display:inline-block!important;background:linear-gradient(100deg,#f851fc,#7f59fa,#45d3ff,#f851fc)!important;background-size:250% 100%!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;animation:pc-lux-name-shift 5.8s linear infinite!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #e04dfa55);}
+.pc-name-sample.pc-name_copper,.pb-cosmetic-heading.pc-name_copper,.pb-global-nameplate.pc-name_copper{display:inline-block!important;background:linear-gradient(100deg,#ffe6bc,#b66b3d,#e4b87c,#ffe6bc)!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #f0ad6e55);}
+.pc-name-sample.pc-name_sunset,.pb-cosmetic-heading.pc-name_sunset,.pb-global-nameplate.pc-name_sunset{display:inline-block!important;background:linear-gradient(100deg,#fa648f,#ffbf5a,#c55df4,#fa648f)!important;background-size:250% 100%!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;animation:pc-lux-name-shift 5.8s linear infinite!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #ff849255);}
+.pc-name-sample.pc-name_ocean,.pb-cosmetic-heading.pc-name_ocean,.pb-global-nameplate.pc-name_ocean{display:inline-block!important;background:linear-gradient(100deg,#b3ffed,#2fdde3,#315bf3,#b3ffed)!important;background-size:250% 100%!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;animation:pc-lux-name-shift 5.8s linear infinite!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #51cafa55);}
+.pc-name-sample.pc-name_celestial,.pb-cosmetic-heading.pc-name_celestial,.pb-global-nameplate.pc-name_celestial{display:inline-block!important;background:linear-gradient(100deg,#fffefa,#f6d69c,#aff0ff,#fffefa)!important;background-size:250% 100%!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;animation:pc-lux-name-shift 5.8s linear infinite!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #f0dfb955);}
+.pc-name-sample.pc-name_static,.pb-cosmetic-heading.pc-name_static,.pb-global-nameplate.pc-name_static{display:inline-block!important;background:linear-gradient(100deg,#7ef5ff,#546cf9,#cb78ff,#7ef5ff)!important;background-size:250% 100%!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;animation:pc-lux-name-shift 3.5s linear infinite!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #669afa55);}
+.pc-name-sample.pc-name_fire,.pb-cosmetic-heading.pc-name_fire,.pb-global-nameplate.pc-name_fire{display:inline-block!important;background:linear-gradient(100deg,#fff7bc,#ffbc39,#ff4e33,#c12674,#fff7bc)!important;background-size:250% 100%!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;animation:pc-lux-name-shift 3.5s linear infinite!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #ff9b3a55);}
+.pc-name-sample.pc-name_void,.pb-cosmetic-heading.pc-name_void,.pb-global-nameplate.pc-name_void{display:inline-block!important;background:linear-gradient(100deg,#d8b7ff,#6f3be2,#eaf1ff,#d8b7ff)!important;background-size:250% 100%!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;animation:pc-lux-name-shift 5.8s linear infinite!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #945be955);}
+.pc-name-sample.pc-name_holographic,.pb-cosmetic-heading.pc-name_holographic,.pb-global-nameplate.pc-name_holographic{display:inline-block!important;background:linear-gradient(100deg,#9dfaff,#f4baff,#fff7c3,#779cff,#9dfaff)!important;background-size:250% 100%!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;animation:pc-lux-name-shift 5.8s linear infinite!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #92c4fb55);}
+.pc-name-sample.pc-name_royalty,.pb-cosmetic-heading.pc-name_royalty,.pb-global-nameplate.pc-name_royalty{display:inline-block!important;background:linear-gradient(100deg,#ffffff,#ffdb8a,#a5d4ff,#ffe9bc,#ffffff)!important;background-size:250% 100%!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;animation:pc-lux-name-shift 5.8s linear infinite!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #f8d18e55);}
+.pc-name-sample.pc-name_omnichrome,.pb-cosmetic-heading.pc-name_omnichrome,.pb-global-nameplate.pc-name_omnichrome{display:inline-block!important;background:linear-gradient(100deg,#ff6464,#ffcf67,#99f76b,#5de8fb,#bf75ff,#ff6464)!important;background-size:250% 100%!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;animation:pc-lux-name-shift 5.8s linear infinite!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #c177ff55);}
+@keyframes pc-lux-name-shift{from{background-position:0% 50%}to{background-position:250% 50%}}
+@media(prefers-reduced-motion:reduce){.pc-name-sample.pc-name_ember,.pb-cosmetic-heading.pc-name_ember,.pb-global-nameplate.pc-name_ember,.pc-name-sample.pc-name_glacier,.pb-cosmetic-heading.pc-name_glacier,.pb-global-nameplate.pc-name_glacier,.pc-name-sample.pc-name_jade,.pb-cosmetic-heading.pc-name_jade,.pb-global-nameplate.pc-name_jade,.pc-name-sample.pc-name_lavender,.pb-cosmetic-heading.pc-name_lavender,.pb-global-nameplate.pc-name_lavender,.pc-name-sample.pc-name_rosefire,.pb-cosmetic-heading.pc-name_rosefire,.pb-global-nameplate.pc-name_rosefire,.pc-name-sample.pc-name_chrome,.pb-cosmetic-heading.pc-name_chrome,.pb-global-nameplate.pc-name_chrome,.pc-name-sample.pc-name_ghost,.pb-cosmetic-heading.pc-name_ghost,.pb-global-nameplate.pc-name_ghost,.pc-name-sample.pc-name_neon,.pb-cosmetic-heading.pc-name_neon,.pb-global-nameplate.pc-name_neon,.pc-name-sample.pc-name_copper,.pb-cosmetic-heading.pc-name_copper,.pb-global-nameplate.pc-name_copper,.pc-name-sample.pc-name_sunset,.pb-cosmetic-heading.pc-name_sunset,.pb-global-nameplate.pc-name_sunset,.pc-name-sample.pc-name_ocean,.pb-cosmetic-heading.pc-name_ocean,.pb-global-nameplate.pc-name_ocean,.pc-name-sample.pc-name_celestial,.pb-cosmetic-heading.pc-name_celestial,.pb-global-nameplate.pc-name_celestial,.pc-name-sample.pc-name_static,.pb-cosmetic-heading.pc-name_static,.pb-global-nameplate.pc-name_static,.pc-name-sample.pc-name_fire,.pb-cosmetic-heading.pc-name_fire,.pb-global-nameplate.pc-name_fire,.pc-name-sample.pc-name_void,.pb-cosmetic-heading.pc-name_void,.pb-global-nameplate.pc-name_void,.pc-name-sample.pc-name_holographic,.pb-cosmetic-heading.pc-name_holographic,.pb-global-nameplate.pc-name_holographic,.pc-name-sample.pc-name_royalty,.pb-cosmetic-heading.pc-name_royalty,.pb-global-nameplate.pc-name_royalty,.pc-name-sample.pc-name_omnichrome,.pb-cosmetic-heading.pc-name_omnichrome,.pb-global-nameplate.pc-name_omnichrome{animation:none!important;}.pc-preview-avatar.pc-frame_nebula::after,.pb-cosmetic-avatar.pc-frame_nebula::after,.pb-global-avatar-fx.pc-frame_nebula::after,.pc-preview-avatar.pc-frame_solar::after,.pb-cosmetic-avatar.pc-frame_solar::after,.pb-global-avatar-fx.pc-frame_solar::after,.pc-preview-avatar.pc-frame_toxic::after,.pb-cosmetic-avatar.pc-frame_toxic::after,.pb-global-avatar-fx.pc-frame_toxic::after,.pc-preview-avatar.pc-frame_plasma::after,.pb-cosmetic-avatar.pc-frame_plasma::after,.pb-global-avatar-fx.pc-frame_plasma::after,.pc-preview-avatar.pc-frame_eclipse::after,.pb-cosmetic-avatar.pc-frame_eclipse::after,.pb-global-avatar-fx.pc-frame_eclipse::after,.pc-preview-avatar.pc-frame_celestial::after,.pb-cosmetic-avatar.pc-frame_celestial::after,.pb-global-avatar-fx.pc-frame_celestial::after,.pc-preview-avatar.pc-frame_stardust::after,.pb-cosmetic-avatar.pc-frame_stardust::after,.pb-global-avatar-fx.pc-frame_stardust::after,.pc-preview-avatar.pc-frame_hologram::after,.pb-cosmetic-avatar.pc-frame_hologram::after,.pb-global-avatar-fx.pc-frame_hologram::after,.pc-preview-avatar.pc-frame_chromatic::after,.pb-cosmetic-avatar.pc-frame_chromatic::after,.pb-global-avatar-fx.pc-frame_chromatic::after,.pc-preview-avatar.pc-frame_lightning::after,.pb-cosmetic-avatar.pc-frame_lightning::after,.pb-global-avatar-fx.pc-frame_lightning::after,.pc-preview-avatar.pc-frame_nova::after,.pb-cosmetic-avatar.pc-frame_nova::after,.pb-global-avatar-fx.pc-frame_nova::after,.pc-preview-avatar.pc-frame_abyss::after,.pb-cosmetic-avatar.pc-frame_abyss::after,.pb-global-avatar-fx.pc-frame_abyss::after,.pc-preview-avatar.pc-frame_supernova::after,.pb-cosmetic-avatar.pc-frame_supernova::after,.pb-global-avatar-fx.pc-frame_supernova::after,.pc-preview-avatar.pc-frame_quantum::after,.pb-cosmetic-avatar.pc-frame_quantum::after,.pb-global-avatar-fx.pc-frame_quantum::after,.pc-preview-avatar.pc-frame_singularity::after,.pb-cosmetic-avatar.pc-frame_singularity::after,.pb-global-avatar-fx.pc-frame_singularity::after,.pc-preview-avatar.pc-frame_divine::after,.pb-cosmetic-avatar.pc-frame_divine::after,.pb-global-avatar-fx.pc-frame_divine::after{animation:none!important;}.pc-preview-avatar.pc-motion_drift,.pb-cosmetic-avatar.pc-motion_drift,.pb-global-avatar-host.pc-global-motion_drift,.pc-preview-avatar.pc-motion_bounce,.pb-cosmetic-avatar.pc-motion_bounce,.pb-global-avatar-host.pc-global-motion_bounce,.pc-preview-avatar.pc-motion_spin,.pb-cosmetic-avatar.pc-motion_spin,.pb-global-avatar-host.pc-global-motion_spin,.pc-preview-avatar.pc-motion_orbit,.pb-cosmetic-avatar.pc-motion_orbit,.pb-global-avatar-host.pc-global-motion_orbit,.pc-preview-avatar.pc-motion_shiver,.pb-cosmetic-avatar.pc-motion_shiver,.pb-global-avatar-host.pc-global-motion_shiver,.pc-preview-avatar.pc-motion_tilt,.pb-cosmetic-avatar.pc-motion_tilt,.pb-global-avatar-host.pc-global-motion_tilt,.pc-preview-avatar.pc-motion_glitch,.pb-cosmetic-avatar.pc-motion_glitch,.pb-global-avatar-host.pc-global-motion_glitch,.pc-preview-avatar.pc-motion_vortex,.pb-cosmetic-avatar.pc-motion_vortex,.pb-global-avatar-host.pc-global-motion_vortex,.pc-preview-avatar.pc-motion_astral,.pb-cosmetic-avatar.pc-motion_astral,.pb-global-avatar-host.pc-global-motion_astral{animation:none!important;}}
+/* END PB_LUXURY_COSMETICS_V20 */
