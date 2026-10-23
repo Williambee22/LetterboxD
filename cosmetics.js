@@ -15,16 +15,64 @@ const CATALOG = Object.freeze([
   { id:'motion_float', category:'motion', name:'Levitate', price:2500, rarity:'Rare', description:'Your profile avatar gently floats.' },
   { id:'motion_pulse', category:'motion', name:'Heartbeat', price:5000, rarity:'Rare', description:'Your avatar gently pulses with energy.' },
   { id:'motion_wobble', category:'motion', name:'Wobble', price:8000, rarity:'Epic', description:'A playful, animated avatar tilt.' },
-  { id:'profile_night', category:'background', name:'Midnight', price:300, rarity:'Rare', description:'Deep violet profile atmosphere.' },
-  { id:'profile_galaxy', category:'background', name:'Starlight', price:650, rarity:'Epic', description:'A galaxy-like profile header.' },
-  { id:'profile_sunset', category:'background', name:'Synthwave', price:900, rarity:'Legendary', description:'Retro neon sunset profile styling.' },
   { id:'name_electric', category:'nameplate', name:'Electric Name', price:5000, rarity:'Rare', description:'Blue glowing username treatment.' },
   { id:'name_gold', category:'nameplate', name:'Royal Name', price:7500, rarity:'Epic', description:'Gold gradient username treatment.' },
   { id:'name_rainbow', category:'nameplate', name:'Spectrum Name', price:10000, rarity:'Legendary', description:'Animated gradient username treatment.' },
-  { id:'avatar_gif', category:'unlock', name:'Animated Avatar Upload', price:20000, rarity:'Epic', description:'Unlock GIF uploads for your profile picture. Permanent.' }
+  { id:'avatar_gif', category:'unlock', name:'Animated Avatar Upload', price:20000, rarity:'Epic', description:'Unlock GIF uploads for your profile picture. Permanent.' },
+  {"id":"frame_obsidian","category":"frame","name":"Obsidian Edge","price":3000,"rarity":"Rare","description":"Polished onyx edged with icy silver."},
+  {"id":"frame_crimson","category":"frame","name":"Crimson Crown","price":3500,"rarity":"Rare","description":"Deep ruby enamel with luminous crimson trim."},
+  {"id":"frame_emerald","category":"frame","name":"Emerald Halo","price":3750,"rarity":"Rare","description":"Vivid green crystal with a jade outer light."},
+  {"id":"frame_amethyst","category":"frame","name":"Amethyst Arc","price":4200,"rarity":"Epic","description":"Faceted violet light with a royal-purple gleam."},
+  {"id":"frame_frost","category":"frame","name":"Frostbite","price":4500,"rarity":"Epic","description":"Subzero cyan and snow-white frost."},
+  {"id":"frame_copper","category":"frame","name":"Molten Copper","price":5000,"rarity":"Epic","description":"Rose-copper shine with forged-metal depth."},
+  {"id":"frame_moonstone","category":"frame","name":"Moonstone","price":6000,"rarity":"Epic","description":"Iridescent white and silver-blue moonlight."},
+  {"id":"frame_nebula","category":"frame","name":"Nebula Veil","price":7500,"rarity":"Epic","description":"Clouds of indigo, fuchsia and blue."},
+  {"id":"frame_solar","category":"frame","name":"Solar Flare","price":8000,"rarity":"Epic","description":"Bright molten-yellow solar energy."},
+  {"id":"frame_phantom","category":"frame","name":"Phantom Silver","price":9000,"rarity":"Legendary","description":"Spectral white-silver with a faint blue shadow."},
+  {"id":"frame_toxic","category":"frame","name":"Toxic Reactor","price":10000,"rarity":"Legendary","description":"Radioactive chartreuse outlined in deep green."},
+  {"id":"frame_plasma","category":"frame","name":"Plasma Coil","price":12000,"rarity":"Legendary","description":"Hot pink, charged blue and electric purple."},
+  {"id":"frame_eclipse","category":"frame","name":"Total Eclipse","price":14000,"rarity":"Legendary","description":"A darkened sun rimmed by molten amber."},
+  {"id":"frame_celestial","category":"frame","name":"Celestial Crown","price":17000,"rarity":"Legendary","description":"Pearlescent starlight and heavenly gold."},
+  {"id":"frame_stardust","category":"frame","name":"Stardust Trail","price":18500,"rarity":"Legendary","description":"Glittering pale blue and pink cosmic dust."},
+  {"id":"frame_hologram","category":"frame","name":"Hologram","price":20000,"rarity":"Legendary","description":"Liquid chrome shifting through holographic hues."},
+  {"id":"frame_chromatic","category":"frame","name":"Chromatic Flux","price":24000,"rarity":"Legendary","description":"Saturated spectral bands in constant motion."},
+  {"id":"frame_lightning","category":"frame","name":"Thunderstrike","price":28000,"rarity":"Mythic","description":"White-hot lightning edged with electric cobalt."},
+  {"id":"frame_nova","category":"frame","name":"Nova Burst","price":32000,"rarity":"Mythic","description":"A radiant corona of red, pink and gold."},
+  {"id":"frame_abyss","category":"frame","name":"Abyssal Gate","price":38000,"rarity":"Mythic","description":"Deep-sea teal with a black-violet interior."},
+  {"id":"frame_supernova","category":"frame","name":"Supernova","price":45000,"rarity":"Mythic","description":"A blazing supernova with rolling spectral fire."},
+  {"id":"frame_quantum","category":"frame","name":"Quantum Shift","price":55000,"rarity":"Mythic","description":"Unstable electric cyan and violet energy."},
+  {"id":"frame_singularity","category":"frame","name":"Singularity","price":70000,"rarity":"Celestial","description":"A dark gravitational ring surrounded by intense light."},
+  {"id":"frame_divine","category":"frame","name":"Divine Ascension","price":100000,"rarity":"Celestial","description":"Radiant platinum, sunlight and diamond-white brilliance."},
+  {"id":"motion_drift","category":"motion","name":"Zero Gravity","price":6000,"rarity":"Epic","description":"An unhurried weightless side-to-side drift."},
+  {"id":"motion_bounce","category":"motion","name":"Spring Loaded","price":9500,"rarity":"Epic","description":"Smooth, elastic bounces without leaving the avatar spot."},
+  {"id":"motion_spin","category":"motion","name":"Orbiting","price":11500,"rarity":"Legendary","description":"A continuous, gentle full revolution."},
+  {"id":"motion_orbit","category":"motion","name":"Satellite","price":14500,"rarity":"Legendary","description":"Slow circular movement around the avatar position."},
+  {"id":"motion_shiver","category":"motion","name":"Static Charge","price":18000,"rarity":"Legendary","description":"Small intermittent charged micro-movements."},
+  {"id":"motion_tilt","category":"motion","name":"Pendulum","price":22000,"rarity":"Legendary","description":"Controlled alternating tilt with a subtle rise."},
+  {"id":"motion_glitch","category":"motion","name":"Digital Distortion","price":28000,"rarity":"Mythic","description":"Brief, purposeful glitch jolts and recovery."},
+  {"id":"motion_vortex","category":"motion","name":"Vortex","price":36000,"rarity":"Mythic","description":"A slow twisting magnetic pull."},
+  {"id":"motion_astral","category":"motion","name":"Astral Projection","price":50000,"rarity":"Celestial","description":"Dreamlike floating, tilting and breathing motion."},
+  {"id":"name_ember","category":"nameplate","name":"Ember Script","price":6000,"rarity":"Epic","description":"Burnished copper lettering with a warm ember glow."},
+  {"id":"name_glacier","category":"nameplate","name":"Glacial","price":7000,"rarity":"Epic","description":"Frozen-blue lettering with frosty white highlights."},
+  {"id":"name_jade","category":"nameplate","name":"Jade Monarch","price":8500,"rarity":"Epic","description":"Luxurious emerald and mint gemstone type."},
+  {"id":"name_lavender","category":"nameplate","name":"Lilac Dream","price":9500,"rarity":"Epic","description":"Soft lilac-to-violet lettering with delicate light."},
+  {"id":"name_rosefire","category":"nameplate","name":"Rosefire","price":12000,"rarity":"Legendary","description":"Hot magenta lettering with a rose-pink flare."},
+  {"id":"name_chrome","category":"nameplate","name":"Liquid Chrome","price":14000,"rarity":"Legendary","description":"Reflective silver metallic typography."},
+  {"id":"name_ghost","category":"nameplate","name":"Ghostwriter","price":16000,"rarity":"Legendary","description":"Spectral white lettering with a pale violet mist."},
+  {"id":"name_neon","category":"nameplate","name":"Neon Overdrive","price":18000,"rarity":"Legendary","description":"Hot fuchsia with an electric blue afterglow."},
+  {"id":"name_copper","category":"nameplate","name":"Copperplate","price":20000,"rarity":"Legendary","description":"Shimmering antiqued copper and golden highlights."},
+  {"id":"name_sunset","category":"nameplate","name":"Sunset Drive","price":22000,"rarity":"Legendary","description":"Moving coral, amber and purple-gold bands."},
+  {"id":"name_ocean","category":"nameplate","name":"Deep Current","price":24000,"rarity":"Legendary","description":"Rippling aqua, azure and deep-sea blue."},
+  {"id":"name_celestial","category":"nameplate","name":"Starborn","price":28000,"rarity":"Mythic","description":"White gold and distant starlight captured in letters."},
+  {"id":"name_static","category":"nameplate","name":"Voltage","price":32000,"rarity":"Mythic","description":"Iridescent electric blue with lively color shifts."},
+  {"id":"name_fire","category":"nameplate","name":"Phoenix Flame","price":40000,"rarity":"Mythic","description":"Rolling fire gradients without fast flashing."},
+  {"id":"name_void","category":"nameplate","name":"Voidwalker","price":50000,"rarity":"Mythic","description":"Violet twilight against cold cosmic white."},
+  {"id":"name_holographic","category":"nameplate","name":"Holographic Elite","price":60000,"rarity":"Mythic","description":"An animated cyan, purple and rose holographic finish."},
+  {"id":"name_royalty","category":"nameplate","name":"Imperial","price":75000,"rarity":"Celestial","description":"Animated champagne-gold and platinum prestige."},
+  {"id":"name_omnichrome","category":"nameplate","name":"Omnichrome","price":100000,"rarity":"Celestial","description":"A constantly flowing full-spectrum name treatment."}
 ]);
 const ITEMS = new Map(CATALOG.map(item => [item.id, item]));
-const CATEGORIES = Object.freeze(['frame','motion','background','nameplate']);
+const CATEGORIES = Object.freeze(['frame','motion','nameplate']);
 
 function initialize(db) {
   gems.initialize(db);
@@ -65,7 +113,7 @@ function inventory(db, userId) {
 function getEquipped(db, userId) {
   initialize(db);
   const uid = Number(userId);
-  const out = { frame: null, motion: null, background: null, nameplate: null };
+  const out = { frame: null, motion: null, nameplate: null };
   if (!Number.isSafeInteger(uid) || uid <= 0) return out;
   const rows = db.prepare(`
     SELECT e.category, e.item_id
