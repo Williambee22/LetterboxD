@@ -16,7 +16,7 @@ const CATALOG = Object.freeze([
   { id:'motion_pulse', category:'motion', name:'Heartbeat', price:5000, rarity:'Rare', description:'Your avatar gently pulses with energy.' },
   { id:'motion_wobble', category:'motion', name:'Wobble', price:8000, rarity:'Epic', description:'A playful, animated avatar tilt.' },
   { id:'name_electric', category:'nameplate', name:'Electric Name', price:5000, rarity:'Rare', description:'Blue glowing username treatment.' },
-  { id:'name_gold', category:'nameplate', name:'Royal Name', price:7500, rarity:'Epic', description:'Gold gradient username treatment.' },
+  { id:'name_gold', category:'nameplate', name:'Royal Name', price:7500, rarity:'Legendary', description:'Gold gradient username treatment.' },
   { id:'name_rainbow', category:'nameplate', name:'Spectrum Name', price:10000, rarity:'Legendary', description:'Animated gradient username treatment.' },
   { id:'avatar_gif', category:'unlock', name:'Animated Avatar Upload', price:20000, rarity:'Epic', description:'Unlock GIF uploads for your profile picture. Permanent.' },
   {"id":"frame_obsidian","category":"frame","name":"Obsidian Edge","price":3000,"rarity":"Rare","description":"Polished onyx edged with icy silver."},
