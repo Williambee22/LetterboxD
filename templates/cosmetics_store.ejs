@@ -68,6 +68,9 @@
         <div class="pc2-sidebar-divider"></div>
         <a href="/me/cosmetics">My Collection <span>↗</span></a>
         <a href="/betting">Earn Gems <span>↗</span></a>
+        <% if(me && Number(me.is_admin)===1){ %>
+          <a href="/store/admin">Store Admin <span>↗</span></a>
+        <% } %>
       </aside>
       <div class="pc2-store-content">
         <div class="pc2-intro-strip">

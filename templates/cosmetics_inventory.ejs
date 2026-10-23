@@ -26,7 +26,7 @@
     <div class="pc2-breadcrumb"><a href="/me">My Profile</a><span>/</span> Cosmetics</div>
     <section class="pc2-page-heading">
       <div class="pc2-heading-copy"><div class="pc2-kicker">YOUR PROFILE</div><h1>My Cosmetics</h1><p>Equip your purchases. You can swap between owned items as often as you like.</p></div>
-      <div class="pc2-heading-aside"><div class="pc2-wallet-label">AVAILABLE BALANCE</div><div class="pc2-wallet-amount">💎 <%= Number(balance).toLocaleString() %> <span>GEMS</span></div><a class="pc2-button pc2-button-primary" href="/store">Browse Store</a></div>
+      <div class="pc2-heading-aside"><div class="pc2-wallet-label">AVAILABLE BALANCE</div><div class="pc2-wallet-amount">💎 <%= Number(balance).toLocaleString() %> <span>GEMS</span></div><a class="pc2-button pc2-button-primary" href="/store">Browse Store</a><% if(me && Number(me.is_admin)===1){ %><a class="pc2-button pc2-button-secondary" href="/store/admin">Store Admin</a><% } %></div>
     </section>
     <% if(notice){ %><div class="pc2-message pc2-message-success" role="status"><%= notice %></div><% } %>
     <% if(error){ %><div class="pc2-message pc2-message-error" role="alert"><%= error %></div><% } %>
