@@ -1,10 +1,10 @@
 :root{--pc-bg:#08090e;--pc-surface:#151722;--pc-border:rgba(255,255,255,.10);--pc-muted:#a5a7b9;--pc-text:#f6f7ff;--pc-accent:#a58cff}*{box-sizing:border-box}
-.pc-store-page{margin:0;color:var(--pc-text);background:var(--pc-bg);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}.pc-store-page a{color:inherit}.pc-store-page button,.pc-store-page select{font:inherit}.pc-nav{padding:14px max(4%,calc((100% - 1200px)/2));display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;border-bottom:1px solid var(--pc-border);background:#10111a}.pc-brand{display:flex;align-items:center;gap:11px;font-size:17px;font-weight:900;letter-spacing:1px;text-decoration:none}.pc-brand img{object-fit:contain}.pc-brand b{color:#c2a9ff}.pc-nav-right{display:flex;gap:19px;align-items:center;flex-wrap:wrap}.pc-nav-right a{color:#d6d0e8;text-decoration:none}.pc-nav-right a:hover{color:#fff}.pc-wallet{white-space:nowrap;font-weight:900;padding:8px 13px;border-radius:10px;border:1px solid #6653a3;background:#211b35}.pc-wallet small{font-size:10px;color:#c6b5f5;letter-spacing:1px}.pc-container{max-width:1200px;padding:0 20px;margin:24px auto 0}.pc-hero{display:grid;grid-template-columns:1.3fr .7fr;gap:25px;align-items:center;padding:45px 50px;border-radius:24px;background:radial-gradient(ellipse at 82% 22%,rgba(126,93,255,.38),transparent 41%),linear-gradient(125deg,#171a2b,#120e1e 75%);border:1px solid #35304b;min-height:290px}.pc-eyebrow{font-size:10px;letter-spacing:2px;font-weight:900;color:#b8a3f6}.pc-hero h1,.pc-inventory-hero h1{font-size:clamp(32px,4.5vw,55px);letter-spacing:-2px;line-height:1.1;margin:10px 0}.pc-hero h1 span{color:#e2c6ff}.pc-hero p,.pc-inventory-hero p{max-width:560px;color:#b8b3cd;line-height:1.7;font-size:14px}.pc-hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-top:23px}.pc-action,.pc-buy{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border:0;border-radius:9px;color:#120d20!important;background:#c6a7ff;font-size:12px;font-weight:900;text-decoration:none;cursor:pointer}.pc-action:hover,.pc-buy:hover{background:#dfcbff}.pc-buy:disabled{background:#555265;color:#c0b9d3!important;cursor:not-allowed}.pc-soft{font-weight:800;color:#d2c4ed;text-decoration:none}.pc-hero-preview{justify-self:center;text-align:center}.pc-hero-preview .pc-preview-avatar{width:146px;height:146px;margin:0 auto 18px}.pc-preview-title{font-size:11px;font-weight:900;letter-spacing:1.6px}.pc-preview-sub{font-size:11px;color:#c8adfa}.pc-filter{margin:25px 0;display:flex;flex-wrap:wrap;gap:8px}.pc-filter a{padding:9px 13px;border:1px solid var(--pc-border);border-radius:9px;background:#141520;text-decoration:none;color:#d4cee4;font-size:11px;font-weight:800}.pc-filter a:hover{background:#28243b}.pc-catalog-section{margin:36px 0 50px;scroll-margin-top:15px}.pc-section-heading{margin-bottom:18px}.pc-section-heading h2,.pc-equip-card h2{font-size:25px;margin:5px 0}.pc-section-heading p,.pc-equip-card p{color:var(--pc-muted);font-size:12px;margin:4px 0}.pc-product-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.pc-product{overflow:hidden;border:1px solid var(--pc-border);border-radius:15px;background:#13141f}.pc-item-art{position:relative;display:flex;align-items:center;justify-content:center;min-height:170px;background:radial-gradient(circle at center,#2f284d,#1a1929 65%,#11131e)}.pc-preview-avatar{position:relative;width:100px;height:100px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;isolation:isolate;flex-shrink:0}.pc-preview-avatar::before{position:absolute;content:'';inset:-5px;border-radius:50%;z-index:-1;background:conic-gradient(#5b7ffd,#9adfff,#5b7ffd);box-shadow:0 0 18px #4995ef8c}.pc-preview-avatar img{width:100%;height:100%;border-radius:50%;background:#111;object-fit:cover;border:3px solid #171421}.pc-frame-sapphire::before{background:conic-gradient(#557bff,#8adfff,#384acf);box-shadow:0 0 21px #427cfa9b}.pc-frame-rose::before{background:conic-gradient(#ff6abc,#d64eff,#ff9fa3);box-shadow:0 0 22px #ec4eb290}.pc-frame-inferno::before{background:conic-gradient(#ffcc45,#ee3324,#ff7d29,#ffcc45);box-shadow:0 0 22px #ff612380}.pc-frame-gold::before{background:conic-gradient(#fff5af,#bb8021,#f9d76d,#fff5af);box-shadow:0 0 22px #d7a84399}.pc-frame-aurora::before{background:conic-gradient(#2ed6b6,#9372e5,#258dd2,#7bf4a1,#2ed6b6);box-shadow:0 0 23px #44eac68c;animation:pc-ringspin 6s linear infinite}.pc-frame-prism::before{background:conic-gradient(#ff4666,#ffd05b,#65efab,#49baff,#ad5bfa,#ff4666);box-shadow:0 0 24px #a55bf08a;animation:pc-ringspin 4s linear infinite}.pc-motion-float{animation:pc-float 3s ease-in-out infinite}.pc-motion-pulse{animation:pc-heartbeat 2.5s ease-in-out infinite}.pc-motion-wobble{animation:pc-wobble 3s ease-in-out infinite}.pc-rarity{position:absolute;bottom:10px;left:11px;padding:4px 7px;border-radius:6px;background:#2a2937;border:1px solid #4d4961;color:#e6e1f4;font-weight:900;font-size:9px}.pc-rarity-legendary{color:#e2bdff;border-color:#8553b3;background:#392246}.pc-rarity-epic{color:#d0bdff}.pc-rarity-rare{color:#9cc8ff}.pc-product-body{padding:15px}.pc-product-body h3{font-size:15px;margin:0 0 6px}.pc-product-body p{font-size:11px;line-height:1.6;color:#adaabc;min-height:36px;margin:0 0 18px}.pc-product-footer{display:flex;align-items:center;justify-content:space-between;gap:10px}.pc-product-footer b{font-size:13px}.pc-owned{color:#97e2b4;font-size:11px;font-weight:800;text-decoration:none}.pc-notice{padding:13px 16px;margin:15px 0;border-radius:9px;font-weight:700}.pc-good{color:#a4f1c3;border:1px solid #215e3f;background:#143126}.pc-bad{color:#ffd1d1;border:1px solid #7f3232;background:#381c1c}.pc-footer{font-size:11px;line-height:1.8;color:#9190a4;text-align:center;padding:22px 0 45px}.pc-background-sample{width:83%;height:115px;border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;font-weight:900;letter-spacing:1px}.pc-background-sample i{position:absolute;right:20%;top:10%;font-size:28px}.pc-profile_night{background:linear-gradient(120deg,#100e33,#44248b,#0d1028)}.pc-profile_galaxy{background:radial-gradient(circle at 18% 23%,#bce7ff 0 1px,transparent 2px),radial-gradient(circle at 70% 48%,#fff 0 1px,transparent 2px),linear-gradient(125deg,#07122f,#492b7a,#150e36)}.pc-profile_sunset{background:linear-gradient(180deg,#e7358d 3%,#49257e 46%,#160d34 80%);text-shadow:0 2px 6px #141020}.pc-name-sample{font-size:18px;font-weight:1000}.pc-name_electric{color:#70cfff;text-shadow:0 0 14px #378dff}.pc-name_gold{color:#ffdd70;text-shadow:0 0 14px #d9ac23}.pc-name_rainbow{background:linear-gradient(90deg,#fb5a93,#fddd88,#67e7ff,#cb84ff,#fb5a93);background-size:200%;background-clip:text;-webkit-background-clip:text;color:transparent;animation:pc-spectrum 4s linear infinite}.pc-inventory-hero{padding:35px 40px;border:1px solid #39304c;background:radial-gradient(at top right,#342054,#161522 65%);border-radius:20px;margin-bottom:24px}.pc-inventory-hero .pc-action{margin-top:10px}.pc-equip-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.pc-equip-card{padding:25px;border:1px solid var(--pc-border);border-radius:16px;background:#171823}.pc-equip-card strong{color:#fff}.pc-equip-card form{display:flex;flex-direction:column;align-items:flex-start;gap:14px;margin-top:22px}.pc-field{width:100%;color:#bdc0d7;font-size:12px;font-weight:800}.pc-field select{width:100%;display:block;margin-top:6px;padding:12px;border:1px solid #4a405b;background:#11121b;color:#fff;border-radius:9px}.pc-empty{margin-top:14px}.pc-empty a,.pc-catalog-section a{color:#c4adff}.pc-inventory-unlock{padding:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--pc-border);background:#181821;border-radius:11px}.pc-inventory-unlock span{color:#badbaa}.pb-cosmetic-store-link{display:inline-flex!important;margin:8px 9px 7px 0!important;padding:6px 10px!important;border:1px solid #8768b1!important;border-radius:8px!important;background:#29203e!important;color:#e0caff!important;font-size:12px!important;font-weight:800!important;text-decoration:none!important}
+.pc-store-page{margin:0;color:var(--pc-text);background:var(--pc-bg);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}.pc-store-page a{color:inherit}.pc-store-page button,.pc-store-page select{font:inherit}.pc-nav{padding:14px max(4%,calc((100% - 1200px)/2));display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;border-bottom:1px solid var(--pc-border);background:#10111a}.pc-brand{display:flex;align-items:center;gap:11px;font-size:17px;font-weight:900;letter-spacing:1px;text-decoration:none}.pc-brand img{object-fit:contain}.pc-brand b{color:#c2a9ff}.pc-nav-right{display:flex;gap:19px;align-items:center;flex-wrap:wrap}.pc-nav-right a{color:#d6d0e8;text-decoration:none}.pc-nav-right a:hover{color:#fff}.pc-wallet{white-space:nowrap;font-weight:900;padding:8px 13px;border-radius:10px;border:1px solid #6653a3;background:#211b35}.pc-wallet small{font-size:10px;color:#c6b5f5;letter-spacing:1px}.pc-container{max-width:1200px;padding:0 20px;margin:24px auto 0}.pc-hero{display:grid;grid-template-columns:1.3fr .7fr;gap:25px;align-items:center;padding:45px 50px;border-radius:24px;background:radial-gradient(ellipse at 82% 22%,rgba(126,93,255,.38),transparent 41%),linear-gradient(125deg,#171a2b,#120e1e 75%);border:1px solid #35304b;min-height:290px}.pc-eyebrow{font-size:10px;letter-spacing:2px;font-weight:900;color:#b8a3f6}.pc-hero h1,.pc-inventory-hero h1{font-size:clamp(32px,4.5vw,55px);letter-spacing:-2px;line-height:1.1;margin:10px 0}.pc-hero h1 span{color:#e2c6ff}.pc-hero p,.pc-inventory-hero p{max-width:560px;color:#b8b3cd;line-height:1.7;font-size:14px}.pc-hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-top:23px}.pc-action,.pc-buy{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border:0;border-radius:9px;color:#120d20!important;background:#c6a7ff;font-size:12px;font-weight:900;text-decoration:none;cursor:pointer}.pc-action:hover,.pc-buy:hover{background:#dfcbff}.pc-buy:disabled{background:#555265;color:#c0b9d3!important;cursor:not-allowed}.pc-soft{font-weight:800;color:#d2c4ed;text-decoration:none}.pc-hero-preview{justify-self:center;text-align:center}.pc-hero-preview .pc-preview-avatar{width:146px;height:146px;margin:0 auto 18px}.pc-preview-title{font-size:11px;font-weight:900;letter-spacing:1.6px}.pc-preview-sub{font-size:11px;color:#c8adfa}.pc-filter{margin:25px 0;display:flex;flex-wrap:wrap;gap:8px}.pc-filter a{padding:9px 13px;border:1px solid var(--pc-border);border-radius:9px;background:#141520;text-decoration:none;color:#d4cee4;font-size:11px;font-weight:800}.pc-filter a:hover{background:#28243b}.pc-catalog-section{margin:36px 0 50px;scroll-margin-top:15px}.pc-section-heading{margin-bottom:18px}.pc-section-heading h2,.pc-equip-card h2{font-size:25px;margin:5px 0}.pc-section-heading p,.pc-equip-card p{color:var(--pc-muted);font-size:12px;margin:4px 0}.pc-product-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.pc-product{overflow:hidden;border:1px solid var(--pc-border);border-radius:15px;background:#13141f}.pc-item-art{position:relative;display:flex;align-items:center;justify-content:center;min-height:170px;background:radial-gradient(circle at center,#2f284d,#1a1929 65%,#11131e)}.pc-preview-avatar{position:relative;width:100px;height:100px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;isolation:isolate;flex-shrink:0}.pc-preview-avatar::before{position:absolute;content:'';inset:-5px;border-radius:50%;z-index:-1;background:conic-gradient(#5b7ffd,#9adfff,#5b7ffd);box-shadow:0 0 18px #4995ef8c}.pc-preview-avatar img{width:100%;height:100%;border-radius:50%;background:#111;object-fit:cover;border:3px solid #171421}.pc-frame_sapphire::before{background:conic-gradient(#557bff,#8adfff,#384acf);box-shadow:0 0 21px #427cfa9b}.pc-frame_rose::before{background:conic-gradient(#ff6abc,#d64eff,#ff9fa3);box-shadow:0 0 22px #ec4eb290}.pc-frame_inferno::before{background:conic-gradient(#ffcc45,#ee3324,#ff7d29,#ffcc45);box-shadow:0 0 22px #ff612380}.pc-frame_gold::before{background:conic-gradient(#fff5af,#bb8021,#f9d76d,#fff5af);box-shadow:0 0 22px #d7a84399}.pc-frame_aurora::before{background:conic-gradient(#2ed6b6,#9372e5,#258dd2,#7bf4a1,#2ed6b6);box-shadow:0 0 23px #44eac68c;animation:pc-ringspin 6s linear infinite}.pc-frame_prism::before{background:conic-gradient(#ff4666,#ffd05b,#65efab,#49baff,#ad5bfa,#ff4666);box-shadow:0 0 24px #a55bf08a;animation:pc-ringspin 4s linear infinite}.pc-motion_float{animation:pc-float 3s ease-in-out infinite}.pc-motion_pulse{animation:pc-heartbeat 2.5s ease-in-out infinite}.pc-motion_wobble{animation:pc-wobble 3s ease-in-out infinite}.pc-rarity{position:absolute;bottom:10px;left:11px;padding:4px 7px;border-radius:6px;background:#2a2937;border:1px solid #4d4961;color:#e6e1f4;font-weight:900;font-size:9px}.pc-rarity-legendary{color:#e2bdff;border-color:#8553b3;background:#392246}.pc-rarity-epic{color:#d0bdff}.pc-rarity-rare{color:#9cc8ff}.pc-product-body{padding:15px}.pc-product-body h3{font-size:15px;margin:0 0 6px}.pc-product-body p{font-size:11px;line-height:1.6;color:#adaabc;min-height:36px;margin:0 0 18px}.pc-product-footer{display:flex;align-items:center;justify-content:space-between;gap:10px}.pc-product-footer b{font-size:13px}.pc-owned{color:#97e2b4;font-size:11px;font-weight:800;text-decoration:none}.pc-notice{padding:13px 16px;margin:15px 0;border-radius:9px;font-weight:700}.pc-good{color:#a4f1c3;border:1px solid #215e3f;background:#143126}.pc-bad{color:#ffd1d1;border:1px solid #7f3232;background:#381c1c}.pc-footer{font-size:11px;line-height:1.8;color:#9190a4;text-align:center;padding:22px 0 45px}.pc-background-sample{width:83%;height:115px;border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;font-weight:900;letter-spacing:1px}.pc-background-sample i{position:absolute;right:20%;top:10%;font-size:28px}.pc-profile_night{background:linear-gradient(120deg,#100e33,#44248b,#0d1028)}.pc-profile_galaxy{background:radial-gradient(circle at 18% 23%,#bce7ff 0 1px,transparent 2px),radial-gradient(circle at 70% 48%,#fff 0 1px,transparent 2px),linear-gradient(125deg,#07122f,#492b7a,#150e36)}.pc-profile_sunset{background:linear-gradient(180deg,#e7358d 3%,#49257e 46%,#160d34 80%);text-shadow:0 2px 6px #141020}.pc-name-sample{font-size:18px;font-weight:1000}.pc-name_electric{color:#70cfff;text-shadow:0 0 14px #378dff}.pc-name_gold{color:#ffdd70;text-shadow:0 0 14px #d9ac23}.pc-name_rainbow{background:linear-gradient(90deg,#fb5a93,#fddd88,#67e7ff,#cb84ff,#fb5a93);background-size:200%;background-clip:text;-webkit-background-clip:text;color:transparent;animation:pc-spectrum 4s linear infinite}.pc-inventory-hero{padding:35px 40px;border:1px solid #39304c;background:radial-gradient(at top right,#342054,#161522 65%);border-radius:20px;margin-bottom:24px}.pc-inventory-hero .pc-action{margin-top:10px}.pc-equip-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.pc-equip-card{padding:25px;border:1px solid var(--pc-border);border-radius:16px;background:#171823}.pc-equip-card strong{color:#fff}.pc-equip-card form{display:flex;flex-direction:column;align-items:flex-start;gap:14px;margin-top:22px}.pc-field{width:100%;color:#bdc0d7;font-size:12px;font-weight:800}.pc-field select{width:100%;display:block;margin-top:6px;padding:12px;border:1px solid #4a405b;background:#11121b;color:#fff;border-radius:9px}.pc-empty{margin-top:14px}.pc-empty a,.pc-catalog-section a{color:#c4adff}.pc-inventory-unlock{padding:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--pc-border);background:#181821;border-radius:11px}.pc-inventory-unlock span{color:#badbaa}.pb-cosmetic-store-link{display:inline-flex!important;margin:8px 9px 7px 0!important;padding:6px 10px!important;border:1px solid #8768b1!important;border-radius:8px!important;background:#29203e!important;color:#e0caff!important;font-size:12px!important;font-weight:800!important;text-decoration:none!important}
 /* Enhancements on Pressboxd's existing profile page */
-.pb-cosmetic-avatar{position:relative!important;display:inline-block!important;border-radius:50%!important;isolation:isolate!important;overflow:visible!important;vertical-align:middle!important;max-width:100%!important}.pb-cosmetic-avatar::before{content:'';position:absolute;inset:-5px;border-radius:50%;background:transparent;z-index:-1;pointer-events:none}.pb-cosmetic-avatar.pc-frame-sapphire::before{background:conic-gradient(#557bff,#8adfff,#384acf);box-shadow:0 0 21px #427cfa9b}.pb-cosmetic-avatar.pc-frame-rose::before{background:conic-gradient(#ff6abc,#d64eff,#ff9fa3);box-shadow:0 0 22px #ec4eb290}.pb-cosmetic-avatar.pc-frame-inferno::before{background:conic-gradient(#ffcc45,#ee3324,#ff7d29,#ffcc45);box-shadow:0 0 22px #ff612380}.pb-cosmetic-avatar.pc-frame-gold::before{background:conic-gradient(#fff5af,#bb8021,#f9d76d,#fff5af);box-shadow:0 0 22px #d7a84399}.pb-cosmetic-avatar.pc-frame-aurora::before{background:conic-gradient(#2ed6b6,#9372e5,#258dd2,#7bf4a1,#2ed6b6);box-shadow:0 0 23px #44eac68c;animation:pc-ringspin 6s linear infinite}.pb-cosmetic-avatar.pc-frame-prism::before{background:conic-gradient(#ff4666,#ffd05b,#65efab,#49baff,#ad5bfa,#ff4666);box-shadow:0 0 24px #a55bf08a;animation:pc-ringspin 4s linear infinite}.pb-cosmetic-avatar>img{display:block!important;width:100%!important;height:100%!important;border-radius:50%!important;object-fit:cover!important}.pb-profile-cosmetic-surface{height:100px;border-radius:12px;margin:12px 0 18px;position:relative;overflow:hidden;isolation:isolate}.pb-profile-cosmetic-surface.pc-profile_night{background:radial-gradient(ellipse at 80% 30%,#5d36b9,#170f3c 70%,#0b1024)}.pb-profile-cosmetic-surface.pc-profile_galaxy{background:radial-gradient(ellipse at 30% 35%,#6856ab,#0b1030 80%)}.pb-profile-cosmetic-surface.pc-profile_galaxy::after{content:'✦     ·      ✧        ·      ✦       ·     ✧      ✦';color:#d6d5ff;opacity:.7;letter-spacing:20px;position:absolute;inset:20px 0 0 40px;white-space:nowrap}.pb-profile-cosmetic-surface.pc-profile_sunset{background:linear-gradient(180deg,#b532a0,#49257e 65%,#160d34)}.pb-cosmetic-heading.pc-name_electric{color:#76cfff!important;text-shadow:0 0 12px #318eff66}.pb-cosmetic-heading.pc-name_gold{color:#ffdd73!important;text-shadow:0 0 13px #dcab3988}.pb-cosmetic-heading.pc-name_rainbow{background:linear-gradient(90deg,#fa70a0,#ffe28e,#67e7ff,#d09afd,#fa70a0);background-size:200%;background-clip:text;-webkit-background-clip:text;color:transparent!important;animation:pc-spectrum 4s linear infinite}
+.pb-cosmetic-avatar{position:relative!important;display:inline-block!important;border-radius:50%!important;isolation:isolate!important;overflow:visible!important;vertical-align:middle!important;max-width:100%!important}.pb-cosmetic-avatar::before{content:'';position:absolute;inset:-5px;border-radius:50%;background:transparent;z-index:-1;pointer-events:none}.pb-cosmetic-avatar.pc-frame_sapphire::before{background:conic-gradient(#557bff,#8adfff,#384acf);box-shadow:0 0 21px #427cfa9b}.pb-cosmetic-avatar.pc-frame_rose::before{background:conic-gradient(#ff6abc,#d64eff,#ff9fa3);box-shadow:0 0 22px #ec4eb290}.pb-cosmetic-avatar.pc-frame_inferno::before{background:conic-gradient(#ffcc45,#ee3324,#ff7d29,#ffcc45);box-shadow:0 0 22px #ff612380}.pb-cosmetic-avatar.pc-frame_gold::before{background:conic-gradient(#fff5af,#bb8021,#f9d76d,#fff5af);box-shadow:0 0 22px #d7a84399}.pb-cosmetic-avatar.pc-frame_aurora::before{background:conic-gradient(#2ed6b6,#9372e5,#258dd2,#7bf4a1,#2ed6b6);box-shadow:0 0 23px #44eac68c;animation:pc-ringspin 6s linear infinite}.pb-cosmetic-avatar.pc-frame_prism::before{background:conic-gradient(#ff4666,#ffd05b,#65efab,#49baff,#ad5bfa,#ff4666);box-shadow:0 0 24px #a55bf08a;animation:pc-ringspin 4s linear infinite}.pb-cosmetic-avatar>img{display:block!important;width:100%!important;height:100%!important;border-radius:50%!important;object-fit:cover!important}.pb-profile-cosmetic-surface{height:100px;border-radius:12px;margin:12px 0 18px;position:relative;overflow:hidden;isolation:isolate}.pb-profile-cosmetic-surface.pc-profile_night{background:radial-gradient(ellipse at 80% 30%,#5d36b9,#170f3c 70%,#0b1024)}.pb-profile-cosmetic-surface.pc-profile_galaxy{background:radial-gradient(ellipse at 30% 35%,#6856ab,#0b1030 80%)}.pb-profile-cosmetic-surface.pc-profile_galaxy::after{content:'✦     ·      ✧        ·      ✦       ·     ✧      ✦';color:#d6d5ff;opacity:.7;letter-spacing:20px;position:absolute;inset:20px 0 0 40px;white-space:nowrap}.pb-profile-cosmetic-surface.pc-profile_sunset{background:linear-gradient(180deg,#b532a0,#49257e 65%,#160d34)}.pb-cosmetic-heading.pc-name_electric{color:#76cfff!important;text-shadow:0 0 12px #318eff66}.pb-cosmetic-heading.pc-name_gold{color:#ffdd73!important;text-shadow:0 0 13px #dcab3988}.pb-cosmetic-heading.pc-name_rainbow{background:linear-gradient(90deg,#fa70a0,#ffe28e,#67e7ff,#d09afd,#fa70a0);background-size:200%;background-clip:text;-webkit-background-clip:text;color:transparent!important;animation:pc-spectrum 4s linear infinite}
 @keyframes pc-ringspin{to{transform:rotate(360deg)}}@keyframes pc-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}@keyframes pc-heartbeat{0%,100%{transform:scale(1)}50%{transform:scale(1.065)}}@keyframes pc-wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(5deg)}75%{transform:rotate(-5deg)}}@keyframes pc-spectrum{to{background-position:200%}}
 @media(max-width:950px){.pc-product-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.pc-hero{padding:35px 30px}}@media(max-width:650px){.pc-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pc-hero{grid-template-columns:1fr;text-align:center}.pc-hero p{margin-left:auto;margin-right:auto}.pc-hero-actions{justify-content:center}.pc-hero-preview{display:none}.pc-equip-grid{grid-template-columns:1fr}.pc-container{padding:0 12px}.pc-inventory-hero{padding:26px 21px}}@media(max-width:410px){.pc-product-grid{grid-template-columns:1fr}.pc-nav-right{gap:8px}.pc-filter{gap:5px}.pc-filter a{font-size:10px}}
-@media(prefers-reduced-motion:reduce){.pc-motion-float,.pc-motion-pulse,.pc-motion-wobble,.pc-frame-prism::before,.pc-frame-aurora::before,.pc-name_rainbow,.pb-cosmetic-heading.pc-name_rainbow{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.pc-motion_float,.pc-motion_pulse,.pc-motion_wobble,.pc-frame_prism::before,.pc-frame_aurora::before,.pc-name_rainbow,.pb-cosmetic-heading.pc-name_rainbow{animation:none!important}}
 /* ============================================================
    PRESSBOXD GEM STORE · SOFT AMBIENT AVATAR GLOW
    Combines a crisp jewelry-like frame with a wide atmospheric
@@ -21,38 +21,38 @@
   overflow: visible !important;
 }
 
-.pc-preview-avatar.pc-frame-sapphire,
-.pb-cosmetic-avatar.pc-frame-sapphire {
+.pc-preview-avatar.pc-frame_sapphire,
+.pb-cosmetic-avatar.pc-frame_sapphire {
   --pc-halo-gradient: conic-gradient(#557bff, #8adfff, #384acf, #557bff);
   --pc-halo-core: rgba(65,132,255,.75);
   --pc-halo-fade: rgba(72,162,255,.27);
 }
-.pc-preview-avatar.pc-frame-rose,
-.pb-cosmetic-avatar.pc-frame-rose {
+.pc-preview-avatar.pc-frame_rose,
+.pb-cosmetic-avatar.pc-frame_rose {
   --pc-halo-gradient: conic-gradient(#ff6abc, #d64eff, #ff9fa3, #ff6abc);
   --pc-halo-core: rgba(244,75,176,.75);
   --pc-halo-fade: rgba(247,91,188,.28);
 }
-.pc-preview-avatar.pc-frame-inferno,
-.pb-cosmetic-avatar.pc-frame-inferno {
+.pc-preview-avatar.pc-frame_inferno,
+.pb-cosmetic-avatar.pc-frame_inferno {
   --pc-halo-gradient: conic-gradient(#ffcc45, #ee3324, #ff7d29, #ffcc45);
   --pc-halo-core: rgba(255,103,35,.80);
   --pc-halo-fade: rgba(255,112,30,.30);
 }
-.pc-preview-avatar.pc-frame-gold,
-.pb-cosmetic-avatar.pc-frame-gold {
+.pc-preview-avatar.pc-frame_gold,
+.pb-cosmetic-avatar.pc-frame_gold {
   --pc-halo-gradient: conic-gradient(#fff5af, #bb8021, #f9d76d, #fff5af);
   --pc-halo-core: rgba(231,181,62,.80);
   --pc-halo-fade: rgba(230,186,80,.26);
 }
-.pc-preview-avatar.pc-frame-aurora,
-.pb-cosmetic-avatar.pc-frame-aurora {
+.pc-preview-avatar.pc-frame_aurora,
+.pb-cosmetic-avatar.pc-frame_aurora {
   --pc-halo-gradient: conic-gradient(#2ed6b6, #9372e5, #258dd2, #7bf4a1, #2ed6b6);
   --pc-halo-core: rgba(72,232,190,.75);
   --pc-halo-fade: rgba(84,210,224,.29);
 }
-.pc-preview-avatar.pc-frame-prism,
-.pb-cosmetic-avatar.pc-frame-prism {
+.pc-preview-avatar.pc-frame_prism,
+.pb-cosmetic-avatar.pc-frame_prism {
   --pc-halo-gradient: conic-gradient(#ff4666, #ffd05b, #65efab, #49baff, #ad5bfa, #ff4666);
   --pc-halo-core: rgba(195,106,255,.75);
   --pc-halo-fade: rgba(192,115,250,.30);
@@ -62,8 +62,8 @@
    This deliberately does not add a colored disk over the profile picture. */
 .pc-preview-avatar::before,
 .pb-cosmetic-avatar::before,
-.pc-preview-avatar[class*="pc-frame-"]::before,
-.pb-cosmetic-avatar[class*="pc-frame-"]::before {
+.pc-preview-avatar[class*="pc-frame_"]::before,
+.pb-cosmetic-avatar[class*="pc-frame_"]::before {
   content: '';
   position: absolute;
   inset: -19px;
@@ -82,8 +82,8 @@
 /* Defined, luminous rim immediately surrounding the avatar. */
 .pc-preview-avatar::after,
 .pb-cosmetic-avatar::after,
-.pc-preview-avatar[class*="pc-frame-"]::after,
-.pb-cosmetic-avatar[class*="pc-frame-"]::after {
+.pc-preview-avatar[class*="pc-frame_"]::after,
+.pb-cosmetic-avatar[class*="pc-frame_"]::after {
   content: '';
   position: absolute;
   inset: -5px;
@@ -105,18 +105,18 @@
 }
 
 /* Premium gradients have an animated rim with a softly breathing halo. */
-.pc-preview-avatar.pc-frame-aurora::after,
-.pb-cosmetic-avatar.pc-frame-aurora::after {
+.pc-preview-avatar.pc-frame_aurora::after,
+.pb-cosmetic-avatar.pc-frame_aurora::after {
   animation: pc-ringspin 6s linear infinite;
 }
-.pc-preview-avatar.pc-frame-prism::after,
-.pb-cosmetic-avatar.pc-frame-prism::after {
+.pc-preview-avatar.pc-frame_prism::after,
+.pb-cosmetic-avatar.pc-frame_prism::after {
   animation: pc-ringspin 4s linear infinite;
 }
-.pc-preview-avatar.pc-frame-aurora::before,
-.pb-cosmetic-avatar.pc-frame-aurora::before,
-.pc-preview-avatar.pc-frame-prism::before,
-.pb-cosmetic-avatar.pc-frame-prism::before {
+.pc-preview-avatar.pc-frame_aurora::before,
+.pb-cosmetic-avatar.pc-frame_aurora::before,
+.pc-preview-avatar.pc-frame_prism::before,
+.pb-cosmetic-avatar.pc-frame_prism::before {
   animation: pc-ambient-halo 3.7s ease-in-out infinite;
 }
 @keyframes pc-ambient-halo {
@@ -130,14 +130,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pc-preview-avatar.pc-frame-aurora::after,
-  .pb-cosmetic-avatar.pc-frame-aurora::after,
-  .pc-preview-avatar.pc-frame-prism::after,
-  .pb-cosmetic-avatar.pc-frame-prism::after,
-  .pc-preview-avatar.pc-frame-aurora::before,
-  .pb-cosmetic-avatar.pc-frame-aurora::before,
-  .pc-preview-avatar.pc-frame-prism::before,
-  .pb-cosmetic-avatar.pc-frame-prism::before {
+  .pc-preview-avatar.pc-frame_aurora::after,
+  .pb-cosmetic-avatar.pc-frame_aurora::after,
+  .pc-preview-avatar.pc-frame_prism::after,
+  .pb-cosmetic-avatar.pc-frame_prism::after,
+  .pc-preview-avatar.pc-frame_aurora::before,
+  .pb-cosmetic-avatar.pc-frame_aurora::before,
+  .pc-preview-avatar.pc-frame_prism::before,
+  .pb-cosmetic-avatar.pc-frame_prism::before {
     animation: none !important;
   }
 }
@@ -180,13 +180,13 @@
   --pc-halo-core: rgba(73,149,239,.60);
   --pc-halo-fade: rgba(73,149,239,.22);
 }
-.pb-global-avatar-fx.pc-frame-sapphire { --pc-halo-gradient:conic-gradient(#557bff,#8adfff,#384acf,#557bff);--pc-halo-core:rgba(65,132,255,.75);--pc-halo-fade:rgba(72,162,255,.27); }
-.pb-global-avatar-fx.pc-frame-rose { --pc-halo-gradient:conic-gradient(#ff6abc,#d64eff,#ff9fa3,#ff6abc);--pc-halo-core:rgba(244,75,176,.75);--pc-halo-fade:rgba(247,91,188,.28); }
-.pb-global-avatar-fx.pc-frame-inferno { --pc-halo-gradient:conic-gradient(#ffcc45,#ee3324,#ff7d29,#ffcc45);--pc-halo-core:rgba(255,103,35,.80);--pc-halo-fade:rgba(255,112,30,.30); }
-.pb-global-avatar-fx.pc-frame-gold { --pc-halo-gradient:conic-gradient(#fff5af,#bb8021,#f9d76d,#fff5af);--pc-halo-core:rgba(231,181,62,.8);--pc-halo-fade:rgba(230,186,80,.26); }
-.pb-global-avatar-fx.pc-frame-aurora { --pc-halo-gradient:conic-gradient(#2ed6b6,#9372e5,#258dd2,#7bf4a1,#2ed6b6);--pc-halo-core:rgba(72,232,190,.75);--pc-halo-fade:rgba(84,210,224,.29); }
-.pb-global-avatar-fx.pc-frame-prism { --pc-halo-gradient:conic-gradient(#ff4666,#ffd05b,#65efab,#49baff,#ad5bfa,#ff4666);--pc-halo-core:rgba(195,106,255,.75);--pc-halo-fade:rgba(192,115,250,.30); }
-.pb-global-avatar-fx[class*="pc-frame-"]::before {
+.pb-global-avatar-fx.pc-frame_sapphire { --pc-halo-gradient:conic-gradient(#557bff,#8adfff,#384acf,#557bff);--pc-halo-core:rgba(65,132,255,.75);--pc-halo-fade:rgba(72,162,255,.27); }
+.pb-global-avatar-fx.pc-frame_rose { --pc-halo-gradient:conic-gradient(#ff6abc,#d64eff,#ff9fa3,#ff6abc);--pc-halo-core:rgba(244,75,176,.75);--pc-halo-fade:rgba(247,91,188,.28); }
+.pb-global-avatar-fx.pc-frame_inferno { --pc-halo-gradient:conic-gradient(#ffcc45,#ee3324,#ff7d29,#ffcc45);--pc-halo-core:rgba(255,103,35,.80);--pc-halo-fade:rgba(255,112,30,.30); }
+.pb-global-avatar-fx.pc-frame_gold { --pc-halo-gradient:conic-gradient(#fff5af,#bb8021,#f9d76d,#fff5af);--pc-halo-core:rgba(231,181,62,.8);--pc-halo-fade:rgba(230,186,80,.26); }
+.pb-global-avatar-fx.pc-frame_aurora { --pc-halo-gradient:conic-gradient(#2ed6b6,#9372e5,#258dd2,#7bf4a1,#2ed6b6);--pc-halo-core:rgba(72,232,190,.75);--pc-halo-fade:rgba(84,210,224,.29); }
+.pb-global-avatar-fx.pc-frame_prism { --pc-halo-gradient:conic-gradient(#ff4666,#ffd05b,#65efab,#49baff,#ad5bfa,#ff4666);--pc-halo-core:rgba(195,106,255,.75);--pc-halo-fade:rgba(192,115,250,.30); }
+.pb-global-avatar-fx[class*="pc-frame_"]::before {
   content: '';
   position: absolute;
   inset: calc(-1 * var(--pc-mini-spread, 6px));
@@ -197,7 +197,7 @@
   box-shadow: 0 0 var(--pc-mini-softness, 18px) var(--pc-mini-spread, 6px) var(--pc-halo-fade);
   pointer-events: none;
 }
-.pb-global-avatar-fx[class*="pc-frame-"]::after {
+.pb-global-avatar-fx[class*="pc-frame_"]::after {
   content: '';
   position: absolute;
   inset: calc(-1 * var(--pc-mini-rim, 2px));
@@ -218,14 +218,14 @@
 @keyframes pc-global-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.035)} }
 @keyframes pc-global-wobble { 0%,100%{transform:rotate(0)} 25%{transform:rotate(2deg)} 75%{transform:rotate(-2deg)} }
 /* Border accents animate on premium frames without moving the avatar image. */
-.pb-global-avatar-fx.pc-frame-aurora::after { animation:pc-ringspin 6s linear infinite; }
-.pb-global-avatar-fx.pc-frame-prism::after { animation:pc-ringspin 4s linear infinite; }
+.pb-global-avatar-fx.pc-frame_aurora::after { animation:pc-ringspin 6s linear infinite; }
+.pb-global-avatar-fx.pc-frame_prism::after { animation:pc-ringspin 4s linear infinite; }
 @media (prefers-reduced-motion: reduce) {
   .pb-global-avatar-host.pc-global-motion_float,
   .pb-global-avatar-host.pc-global-motion_pulse,
   .pb-global-avatar-host.pc-global-motion_wobble,
-  .pb-global-avatar-fx.pc-frame-aurora::after,
-  .pb-global-avatar-fx.pc-frame-prism::after { animation:none !important; }
+  .pb-global-avatar-fx.pc-frame_aurora::after,
+  .pb-global-avatar-fx.pc-frame_prism::after { animation:none !important; }
 }
 
 /* ============================================================
@@ -338,3 +338,74 @@ body.pc2-page{font:14px/1.5 Inter,system-ui,-apple-system,BlinkMacSystemFont,"Se
 @media(max-width:850px){.pc2-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pc2-content-grid{grid-template-columns:160px minmax(0,1fr);gap:18px}}
 @media(max-width:650px){.pc2-page .pc2-main{padding:17px 12px 35px}.pc2-site-header .pc2-topbar-inner{padding:8px 12px;justify-content:space-between}.pc2-brand-cluster .pc2-wordmark img{height:50px;max-width:148px}.pc2-top-nav{gap:8px 12px}.pc2-top-nav a{font-size:11px}.pc2-page-heading{align-items:flex-start;flex-wrap:wrap;gap:14px}.pc2-heading-aside{align-items:flex-start;text-align:left}.pc2-content-grid{display:block}.pc2-sidebar{position:static;flex-direction:row;flex-wrap:wrap;gap:6px;margin-bottom:18px;padding:0}.pc2-sidebar-heading,.pc2-sidebar-divider{display:none}.pc2-sidebar a{border:1px solid rgba(255,255,255,.13);padding:7px 10px;font-size:11px}.pc2-sidebar a span{display:none}.pc2-intro-strip{padding:16px;min-height:90px}.pc2-product-grid{gap:9px}.pc2-product-art{height:135px}.pc2-product-art .pc-preview-avatar{width:70px;height:70px}.pc2-inventory-grid{grid-template-columns:1fr}.pc2-unlock-row{align-items:flex-start;flex-direction:column}.pc2-unlock-actions{flex-wrap:wrap}.profile_top_actions .pb-cosmetic-profile-actions{margin-left:0;width:100%;border-top:1px solid rgba(255,255,255,.09);padding-top:9px}}
 @media(max-width:405px){.pc2-product-grid{grid-template-columns:1fr}.pc2-product-art{height:155px}.pc2-product-art .pc-preview-avatar{width:86px;height:86px}.pc2-intro-preview{display:none}}
+/* ============================================================
+   PRESSBOXD — SUBTLE OUTER-EDGE AVATAR GLOW (v13)
+   Add to the VERY BOTTOM of static/cosmetics.css.
+   The center stays completely transparent; the photo is untouched.
+   ============================================================ */
+
+/* Full-size profile avatars and previews: light ONLY outside the circle. */
+.pc-preview-avatar[class*="pc-frame_"]::before,
+.pb-cosmetic-avatar[class*="pc-frame_"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  z-index: 0;
+  background: transparent;
+  border: 0;
+  filter: none;
+  opacity: .7;
+  box-shadow:
+    0 0 5px 1px var(--pc-halo-core),
+    0 0 11px 2px var(--pc-halo-fade);
+  animation: none !important;
+  pointer-events: none;
+}
+
+/* The colored rim occupies the 2px OUTSIDE the photo, never its center. */
+.pc-preview-avatar[class*="pc-frame_"]::after,
+.pb-cosmetic-avatar[class*="pc-frame_"]::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  z-index: 3;
+  background: var(--pc-halo-gradient) border-box;
+  box-shadow: none;
+  opacity: 1;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box,
+                linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) padding-box,
+        linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Photo always stays crisp and appears ABOVE the halo layer. */
+.pc-preview-avatar[class*="pc-frame_"] > img,
+.pb-cosmetic-avatar[class*="pc-frame_"] > img {
+  position: relative;
+  z-index: 1;
+  filter: none;
+}
+
+/* Small avatars site-wide: respect their scaled effect measurements. */
+.pb-global-avatar-fx[class*="pc-frame_"]::before {
+  content: '';
+  inset: 0;
+  background: transparent;
+  border: 0;
+  filter: none;
+  opacity: .68;
+  box-shadow:
+    0 0 clamp(3px, var(--pc-mini-rim, 2px), 6px) 0 var(--pc-halo-core),
+    0 0 clamp(6px, var(--pc-mini-blur, 8px), 10px) 1px var(--pc-halo-fade);
+}
+
+.pb-global-avatar-fx[class*="pc-frame_"]::after {
+  box-shadow: none;
+  filter: none;
+}
