@@ -1,0 +1,31 @@
+/* BEGIN PB_INTEGRATED_NAMEPLATES_CSS_V18
+   Uses the same pc-name_* product IDs as the store, inventory and profile.
+   These scoped rules only affect confirmed equipped usernames. */
+.pb-global-nameplate.pc-name_electric {
+  color: #70cfff !important;
+  -webkit-text-fill-color: #70cfff !important;
+  text-shadow: 0 0 5px rgba(55,141,255,.60),0 0 11px rgba(55,141,255,.26) !important;
+}
+.pb-global-nameplate.pc-name_gold {
+  color: #ffdd70 !important;
+  -webkit-text-fill-color: #ffdd70 !important;
+  text-shadow: 0 0 5px rgba(217,172,35,.60),0 0 11px rgba(217,172,35,.26) !important;
+}
+.pb-global-nameplate.pc-name_rainbow {
+  display: inline !important;
+  background: linear-gradient(90deg,#fb5a93,#fddd88,#67e7ff,#cb84ff,#fb5a93) !important;
+  background-size: 200% 100% !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  animation: pb-integrated-spectrum-v18 4s linear infinite !important;
+}
+@keyframes pb-integrated-spectrum-v18 {
+  from { background-position:0% 50%; }
+  to { background-position:200% 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pb-global-nameplate.pc-name_rainbow { animation:none !important; }
+}
+/* END PB_INTEGRATED_NAMEPLATES_CSS_V18 */
