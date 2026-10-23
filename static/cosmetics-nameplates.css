@@ -1,0 +1,27 @@
+/* Pressboxd nameplates v17: username text only; never glows over profile photos. */
+.pb-global-nameplate.pc-name_electric {
+  color: #76cfff !important;
+  -webkit-text-fill-color: #76cfff !important;
+  text-shadow: 0 0 5px rgba(49, 142, 255, .60), 0 0 10px rgba(49, 142, 255, .26) !important;
+}
+.pb-global-nameplate.pc-name_gold {
+  color: #ffdd73 !important;
+  -webkit-text-fill-color: #ffdd73 !important;
+  text-shadow: 0 0 5px rgba(222, 174, 64, .60), 0 0 10px rgba(220, 171, 57, .26) !important;
+}
+.pb-global-nameplate.pc-name_rainbow {
+  background: linear-gradient(90deg, #fa70a0, #ffe28e, #67e7ff, #d09afd, #fa70a0) !important;
+  background-size: 200% 100% !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  animation: pb-global-spectrum 4s linear infinite !important;
+}
+@keyframes pb-global-spectrum {
+  from { background-position: 0% 50%; }
+  to   { background-position: 200% 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pb-global-nameplate.pc-name_rainbow { animation: none !important; }
+}
