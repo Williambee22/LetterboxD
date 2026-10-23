@@ -73,6 +73,7 @@ const CATALOG = Object.freeze([
 ]);
 const ITEMS = new Map(CATALOG.map(item => [item.id, item]));
 const CATEGORIES = Object.freeze(['frame','motion','nameplate']);
+const MAX_PRICE = 1_000_000_000; // Maximum allowed price in virtual Gems.
 
 function initialize(db) {
   gems.initialize(db);
@@ -93,7 +94,110 @@ function initialize(db) {
       FOREIGN KEY (user_id, item_id) REFERENCES pb_cosmetics_inventory(user_id, item_id)
     );
     CREATE INDEX IF NOT EXISTS idx_pb_cosmetics_equipped_item ON pb_cosmetics_equipped(item_id);
+    CREATE TABLE IF NOT EXISTS pb_cosmetics_price_overrides (
+      item_id TEXT PRIMARY KEY,
+      price INTEGER NOT NULL CHECK(price >= 0 AND price <= 1000000000),
+      updated_by INTEGER NOT NULL,
+      updated_ts INTEGER NOT NULL DEFAULT (unixepoch())
+    );
+    CREATE TABLE IF NOT EXISTS pb_cosmetics_price_audit (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      item_id TEXT NOT NULL,
+      old_price INTEGER NOT NULL,
+      new_price INTEGER NOT NULL,
+      operation TEXT NOT NULL CHECK(operation IN ('set', 'reset')),
+      admin_user_id INTEGER NOT NULL,
+      changed_ts INTEGER NOT NULL DEFAULT (unixepoch())
+    );
+    CREATE INDEX IF NOT EXISTS idx_pb_cosmetics_price_audit_recent
+      ON pb_cosmetics_price_audit(changed_ts DESC, id DESC);
   `);
+}
+
+// The code catalog is the default; optional per-item overrides live in SQLite.
+// These functions always read the current connection, so changes work across
+// processes/redeploys and never depend on an in-memory cache.
+function effectivePrice(db, item) {
+  const row = db.prepare('SELECT price FROM pb_cosmetics_price_overrides WHERE item_id=?').get(item.id);
+  return row ? Number(row.price) : item.price;
+}
+
+function getCatalog(db) {
+  initialize(db);
+  const overrides = new Map(
+    db.prepare('SELECT item_id,price FROM pb_cosmetics_price_overrides').all()
+      .map(row => [row.item_id, Number(row.price)])
+  );
+  return CATALOG.map(item => ({
+    ...item,
+    price: overrides.has(item.id) ? overrides.get(item.id) : item.price,
+    defaultPrice: item.price,
+    isOverridden: overrides.has(item.id)
+  }));
+}
+
+function priceHistory(db, limit=25) {
+  initialize(db);
+  const safeLimit=Math.max(1,Math.min(100,Number(limit)||25));
+  return db.prepare(`
+    SELECT h.item_id,h.old_price,h.new_price,h.operation,h.changed_ts,
+           h.admin_user_id,COALESCE(u.username,'Admin #' || h.admin_user_id) AS admin_name
+    FROM pb_cosmetics_price_audit h
+    LEFT JOIN users u ON u.id=h.admin_user_id
+    ORDER BY h.id DESC LIMIT ?
+  `).all(safeLimit);
+}
+
+// Admin permissions are verified against the current database row, not a
+// browser-supplied value or stale session.is_admin flag.
+function isStoreAdmin(db, userId) {
+  const uid=Number(userId);
+  if (!Number.isSafeInteger(uid) || uid<=0) return false;
+  const row=db.prepare('SELECT is_admin FROM users WHERE id=?').get(uid);
+  return Number(row?.is_admin) === 1;
+}
+
+function changePrice(db, adminId, itemId, rawPrice, reset=false) {
+  const uid=Number(adminId);
+  const id=String(itemId || '').trim();
+  const item=ITEMS.get(id);
+  if (!item) throw new Error('Unknown cosmetic item.');
+  initialize(db);
+  if (!isStoreAdmin(db,uid)) throw new Error('Administrator access required.');
+  let price;
+  if (!reset) {
+    const input=String(rawPrice ?? '').trim();
+    if (!/^\d{1,12}$/.test(input)) throw new Error('Enter a whole-number Gem price.');
+    price=Number(input);
+    if (!Number.isSafeInteger(price) || price < 0 || price > MAX_PRICE) {
+      throw new Error('Price must be between 0 and 1,000,000,000 Gems.');
+    }
+  }
+  const tx=db.transaction(() => {
+    const oldPrice=effectivePrice(db,item);
+    const newPrice=reset ? item.price : price;
+    const previousOverride=db.prepare('SELECT price FROM pb_cosmetics_price_overrides WHERE item_id=?').get(id);
+    if (reset) {
+      if (!previousOverride) return {item,oldPrice,newPrice,changed:false};
+      db.prepare('DELETE FROM pb_cosmetics_price_overrides WHERE item_id=?').run(id);
+    } else {
+      if (previousOverride && Number(previousOverride.price) === newPrice) {
+        return {item,oldPrice,newPrice,changed:false};
+      }
+      db.prepare(`
+        INSERT INTO pb_cosmetics_price_overrides(item_id,price,updated_by,updated_ts)
+        VALUES (?,?,?,unixepoch())
+        ON CONFLICT(item_id) DO UPDATE SET
+          price=excluded.price, updated_by=excluded.updated_by, updated_ts=unixepoch()
+      `).run(id,newPrice,uid);
+    }
+    db.prepare(`
+      INSERT INTO pb_cosmetics_price_audit(item_id,old_price,new_price,operation,admin_user_id)
+      VALUES (?,?,?,?,?)
+    `).run(id,oldPrice,newPrice,reset?'reset':'set',uid);
+    return {item,oldPrice,newPrice,changed:true};
+  });
+  return typeof tx.immediate === 'function' ? tx.immediate() : tx();
 }
 
 function owns(db, userId, itemId) {
@@ -135,19 +239,23 @@ function buy(db, userId, itemId) {
   if (!item) throw new Error('Unknown store item.');
   if (!Number.isSafeInteger(uid) || uid <= 0) throw new Error('Sign in to purchase cosmetics.');
   initialize(db);
-  return db.transaction(() => {
+  const tx=db.transaction(() => {
     if (owns(db, uid, item.id)) throw new Error('You already own this item.');
+    // Read the price INSIDE the same write transaction used for the debit.
+    // Admin edits and purchases cannot charge a stale price.
+    const currentPrice=effectivePrice(db,item);
     gems.balance(db, uid); // Creates a wallet only if one does not already exist.
-    const debit = db.prepare('UPDATE pb_betting_wallets SET balance=balance-? WHERE user_id=? AND balance>=?').run(item.price, uid, item.price);
+    const debit = db.prepare('UPDATE pb_betting_wallets SET balance=balance-? WHERE user_id=? AND balance>=?').run(currentPrice, uid, currentPrice);
     if (debit.changes !== 1) throw new Error('Not enough Gems for this item.');
-    db.prepare('INSERT INTO pb_cosmetics_inventory(user_id,item_id,price_paid) VALUES (?,?,?)').run(uid,item.id,item.price);
-    db.prepare('INSERT INTO pb_betting_ledger(user_id,delta,reason) VALUES(?,?,?)').run(uid,-item.price,`cosmetic:${item.id}`);
+    db.prepare('INSERT INTO pb_cosmetics_inventory(user_id,item_id,price_paid) VALUES (?,?,?)').run(uid,item.id,currentPrice);
+    db.prepare('INSERT INTO pb_betting_ledger(user_id,delta,reason) VALUES(?,?,?)').run(uid,-currentPrice,`cosmetic:${item.id}`);
     // The first item in a category is automatically equipped.
     if (CATEGORIES.includes(item.category)) {
       db.prepare('INSERT OR IGNORE INTO pb_cosmetics_equipped(user_id,category,item_id) VALUES (?,?,?)').run(uid,item.category,item.id);
     }
-    return { item, balance: gems.balance(db, uid) };
-  })();
+    return { item: {...item,price:currentPrice}, balance: gems.balance(db, uid) };
+  });
+  return typeof tx.immediate === 'function' ? tx.immediate() : tx();
 }
 
 function equip(db, userId, category, itemId) {
@@ -213,7 +321,7 @@ function mount(app, getConn) {
       res.set('Cache-Control','private, no-store');
       return res.render(view,{
         me:res.locals.me || null,
-        catalog:CATALOG,
+        catalog:getCatalog(db),
         owned_ids:new Set(owned.map(x=>x.item_id)),
         owned,
         equipped,
@@ -224,6 +332,52 @@ function mount(app, getConn) {
       });
     } finally { db.close(); }
   }
+  // Verify admin rights directly in the database on every admin request.
+  function requireStoreAdmin(req,res,next) {
+    if (!req.session?.uid) return res.redirect('/login?next=%2Fstore%2Fadmin');
+    let db;
+    try {
+      db=getConn();
+      if (!isStoreAdmin(db,req.session.uid)) return res.status(403).send('Store admin access required.');
+      return next();
+    } catch(err) { return next(err); }
+    finally { if (db) db.close(); }
+  }
+
+  app.get('/store/admin',requireStoreAdmin,(req,res,next)=>{
+    let db;
+    try {
+      db=getConn();
+      res.set('Cache-Control','private, no-store');
+      return res.render('cosmetics_admin',{
+        me:res.locals.me || null,
+        catalog:getCatalog(db),
+        history:priceHistory(db,25),
+        csrf:csrfToken(req),
+        maxPrice:MAX_PRICE,
+        notice:String(req.query.ok||'').slice(0,180),
+        error:String(req.query.error||'').slice(0,180)
+      });
+    } catch(err) { return next(err); }
+    finally { if(db) db.close(); }
+  });
+
+  app.post('/store/admin/price',requireStoreAdmin,validateWrite,(req,res,next)=>{
+    let db;
+    try {
+      db=getConn();
+      const reset=String(req.body.reset||'')==='1';
+      const result=changePrice(db,req.session.uid,req.body.item_id,req.body.price,reset);
+      const message=result.changed
+        ? result.item.name+' updated to '+result.newPrice.toLocaleString()+' Gems.'
+        : 'No price change needed for '+result.item.name+'.';
+      return res.redirect('/store/admin?ok='+encodeURIComponent(message)+'#item-'+encodeURIComponent(result.item.id));
+    } catch(err) {
+      if (err.code && String(err.code).startsWith('SQLITE_')) return next(err);
+      return res.redirect('/store/admin?error='+encodeURIComponent(err.message||'Unable to change price.'));
+    } finally { if (db) db.close(); }
+  });
+
   app.get('/store',(req,res)=>page(req,res,'cosmetics_store'));
   app.get('/me/cosmetics',(req,res)=>{
     if(!req.session?.uid) return res.redirect('/login?next=%2Fme%2Fcosmetics');
@@ -251,4 +405,4 @@ function mount(app, getConn) {
   });
 }
 
-module.exports={CATALOG,ITEMS,CATEGORIES,initialize,owns,inventory,getEquipped,buy,equip,mount};
+module.exports={CATALOG,ITEMS,CATEGORIES,MAX_PRICE,initialize,owns,inventory,getEquipped,getCatalog,priceHistory,isStoreAdmin,changePrice,buy,equip,mount};
