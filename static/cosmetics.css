@@ -409,3 +409,37 @@ body.pc2-page{font:14px/1.5 Inter,system-ui,-apple-system,BlinkMacSystemFont,"Se
   box-shadow: none;
   filter: none;
 }
+
+/* ============================================================
+   v14 GLOBAL COVERAGE: subtle exterior-only frame effects.
+   Preserves profile photo pixels and correct per-frame palettes.
+   ============================================================ */
+.pb-global-avatar-host { position:relative !important; overflow:visible !important; isolation:isolate !important; }
+.pb-global-avatar-host > img,
+.pb-global-avatar-host > .avatar_fallback { position:relative; z-index:1; }
+.pb-global-avatar-fx { position:absolute; inset:0; border-radius:50%; z-index:2; pointer-events:none; }
+.pb-global-avatar-fx[class*="pc-frame_"]::before {
+  content:""; position:absolute; inset:0; border-radius:50%;
+  background:transparent; border:0; filter:none; opacity:.64;
+  box-shadow:0 0 4px 1px var(--pc-halo-core),
+             0 0 var(--pc-mini-blur,7px) 1px var(--pc-halo-fade);
+  animation:none !important; pointer-events:none;
+}
+.pb-global-avatar-fx[class*="pc-frame_"]::after {
+  content:""; position:absolute;
+  inset:calc(-1 * var(--pc-mini-rim,2px));
+  border:var(--pc-mini-rim,2px) solid transparent;
+  border-radius:50%; background:var(--pc-halo-gradient) border-box;
+  box-shadow:none; filter:none; pointer-events:none;
+  -webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;
+  mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  mask-composite:exclude;
+}
+/* Controls intensity on tiny 20px–35px avatars. */
+.pb-global-avatar-host[data-cosmetic-size="xs"] .pb-global-avatar-fx::before {opacity:.48;box-shadow:0 0 3px 0 var(--pc-halo-core),0 0 5px 0 var(--pc-halo-fade)}
+@media(prefers-reduced-motion:reduce){
+  .pb-global-avatar-host.pc-global-motion_float,
+  .pb-global-avatar-host.pc-global-motion_pulse,
+  .pb-global-avatar-host.pc-global-motion_wobble {animation:none !important}
+}

@@ -1,234 +1,295 @@
-/* Pressboxd global equipped-avatar effects. Handles initial + dynamically added avatars. */
+/* Pressboxd v14. Automatically decorate equipped user avatars anywhere on the site. */
 (() => {
   'use strict';
-  const ownMeta = document.querySelector('meta[name="pb-cosmetics-self"]');
-  let self = '';
-  try { self = decodeURIComponent(ownMeta?.content || ''); } catch { /* guest */ }
-  const USER = /^[a-z0-9_]{3,20}$/i;
-  const FRAME = /^(frame_sapphire|frame_rose|frame_inferno|frame_gold|frame_aurora|frame_prism)$/;
-  const MOTION = /^(motion_float|motion_pulse|motion_wobble)$/;
-  const AVATAR_CONTEXT = /(?:avatar|user[-_]?pic|user[-_]?photo|profile[-_]?pic|profile[-_]?photo|pfp|reviewuser|comment-user|friendRatingUser|forum[-_]?user|post[-_]?user|nav_user|leaderRow|userrow|user-card)/i;
-  const AVATAR_HOLDER = /(?:^|\s)(?:avatar(?:_sm|_lg)?|reviewavatar|comment-avatar|friendRatingAvatar|forum-avatar|user-avatar|post-avatar|profile-avatar|avatar-sm|avatar-lg|leader-avatar|avatarWrap|avatar_fallback|userpic|pfp)(?:\s|$)/i;
-  const anchors = 'a[href]';
+  if (window.__pbGlobalCosmeticsV14) return;
+  window.__pbGlobalCosmeticsV14 = true;
+
+  const USER_RE = /^[a-z0-9_]{3,20}$/i;
+  const FRAMES = new Set(['frame_sapphire','frame_rose','frame_inferno','frame_gold','frame_aurora','frame_prism']);
+  const MOTIONS = new Set(['motion_float','motion_pulse','motion_wobble']);
+  const OWN_NAME = (() => { try { return decodeURIComponent(document.querySelector('meta[name="pb-cosmetics-self"]')?.content || '').toLowerCase(); } catch { return ''; } })();
+  const OWN_ID = Number(document.querySelector('meta[name="pb-cosmetics-self-id"]')?.content || 0);
+
+  const HOLDER = '.avatar_sm,.avatar_lg,.avatar-sm,.avatar-lg,.avatarWrap,.avatar-wrap,.avatar_fallback,' +
+    '.reviewavatar,.review-avatar,.comment-avatar,.commentAvatar,.friendRatingAvatar,.forum-avatar,' +
+    '.forumAvatar,.user-avatar,.userAvatar,.post-avatar,.profile-avatar,.leader-avatar,' +
+    '.userSearchAvatar,.pfp,.userpic,[data-avatar-holder]';
+  const ROW = '.nav_user,.userSearchItem,.reviewhead,.reviewcard,.reviewuser,.review-user,' +
+    '.comment-head,.comment-header,.comment-user,.commentItem,.forum-post,.forumPost,' +
+    '.forum-reply,.post-author,.postAuthor,.friendRatingUser,.friendRatingItem,' +
+    '.leaderRow,.leader-row,.userrow,.user-row,.user-card,.userCard,.userSearchItem,' +
+    '.member-card,.follower,.following,.friend-row,.friendRow,.top-user,.topUser,' +
+    'article,li,tr,[data-user-id],[data-username],[data-user-name]';
+  const AVOID = '.pc-preview-avatar,.pc2-product,.pc-product,.pb-cosmetic-avatar,' +
+    '.pc2-intro-preview,.pc2-product-art,.pb-global-avatar-fx';
+  const avatars = new WeakMap();
   const cache = new Map();
   const pending = new Map();
-  const seen = new WeakSet();
-  let timer = 0;
-  const urlOf = url => { try { return new URL(url, location.href).href; } catch { return ''; } };
-  const normalize = str => String(str || '').trim().toLowerCase();
+  let scheduled = false;
+  let inFlight = false;
 
-  function fromAnchor(anchor) {
-    if (!anchor) return '';
+  const normalize = s => String(s || '').trim().toLowerCase();
+  const getUrl = s => {
+    if (!s || /^data:|^blob:|^javascript:/i.test(s)) return '';
+    try { const u = new URL(s, location.href); return /https?:/.test(u.protocol) ? u.href : ''; }
+    catch { return ''; }
+  };
+  const bareUrl = url => { try { const u = new URL(url); u.search = ''; u.hash = ''; return u.href; } catch { return url; } };
+  function fromProfileLink(anchor) {
+    if (!anchor?.getAttribute) return '';
     try {
-      const url = new URL(anchor.getAttribute('href'), location.origin);
-      if (url.origin !== location.origin) return '';
-      const m = url.pathname.match(/^\/u\/([^/]+)\/?$/i);
-      if (m) {
-        const name = decodeURIComponent(m[1]);
-        return USER.test(name) ? name.toLowerCase() : '';
-      }
-      if (/^\/me\/?$/i.test(url.pathname)) return normalize(self);
-    } catch { /* invalid href */ }
-    return '';
+      const u = new URL(anchor.getAttribute('href'), location.href);
+      if (u.origin !== location.origin) return '';
+      if (u.pathname === '/me' || u.pathname === '/me/') return OWN_NAME;
+      const match = u.pathname.match(/^\/u\/([^/]+)(?:\/(?:ratings|followers|following))?\/?$/i);
+      if (!match) return '';
+      const name = decodeURIComponent(match[1]);
+      return USER_RE.test(name) ? normalize(name) : '';
+    } catch { return ''; }
   }
-
-  function usernameFor(node) {
-    for (let el=node, depth=0; el && depth<4; el=el.parentElement,depth++) {
-      const direct = el.getAttribute?.('data-username') || el.getAttribute?.('data-user-name');
-      if (direct && USER.test(direct)) return normalize(direct);
-      if (el.tagName === 'A') {
-        const linked = fromAnchor(el);
-        if (linked) return linked;
+  function routeUsername() {
+    const m = location.pathname.match(/^\/u\/([^/]+)\/?$/);
+    if (!m) return location.pathname === '/me' ? OWN_NAME : '';
+    try { const s = decodeURIComponent(m[1]); return USER_RE.test(s) ? normalize(s) : ''; }
+    catch { return ''; }
+  }
+  function isProfilePortrait(node) {
+    return Boolean(node.closest('.profile_avatar_column,.profile_hero .avatar_lg,.profile-hero .avatar_lg'));
+  }
+  function nearestIdentity(node) {
+    // Identity supplied on the avatar or its closest containing user row wins.
+    for (let el = node, depth = 0; el && depth < 8; el = el.parentElement, depth++) {
+      const uid = Number(el.getAttribute?.('data-user-id') || el.getAttribute?.('data-author-id') || 0);
+      const username = el.getAttribute?.('data-username') || el.getAttribute?.('data-user-name') || el.getAttribute?.('data-author');
+      if (Number.isSafeInteger(uid) && uid > 0) return { id: uid, name: USER_RE.test(username || '') ? normalize(username) : '' };
+      if (username && USER_RE.test(username)) return { id: 0, name: normalize(username) };
+      if (el.matches?.('a[href]')) {
+        const name = fromProfileLink(el);
+        if (name) return { id: 0, name };
       }
-      // Stop at the nearest small user row; don't take someone else's link from a huge panel.
-      if (depth > 0 && /(?:reviewhead|reviewuser|comment-head|comment-user|friendRatingUser|leaderRow|nav_user|user-card|post-author|forum-post|notifItem|userrow|user-row|member-card|follower)/i.test(el.className || '')) {
-        for (const a of el.querySelectorAll(anchors)) {
-          const linked = fromAnchor(a);
-          if (linked) return linked;
-        }
+      if (el.matches?.('.nav_user') && OWN_NAME) return { id: OWN_ID, name: OWN_NAME };
+      if (el.matches?.(ROW)) {
+        const links = [...el.querySelectorAll('a[href]')]
+          .map(fromProfileLink).filter(Boolean);
+        const names = [...new Set(links)];
+        if (names.length === 1) return { id: 0, name: names[0] };
+        // A review or friend row with several author links is ambiguous;
+        // don't accidentally give another person's avatar the wrong frame.
         break;
       }
+      if (el.tagName === 'MAIN' || el.tagName === 'BODY') break;
     }
-    // A profile's main portrait might not be enclosed by its profile link.
-    const profile = document.getElementById('pb-cosmetics-profile-data');
-    if (profile && location.pathname.match(/^\/(?:me|u\/[^/]+)\/?$/i)) {
-      try {
-        const data=JSON.parse(profile.textContent);
-        const main=document.querySelector('main');
-        if (main?.contains(node) && !node.closest('nav,header,footer') && USER.test(data.username || '')) {
-          const img=node.tagName==='IMG'?node:node.querySelector('img');
-          if (img && (img.currentSrc || img.src) && data.avatar_url &&
-              urlOf(img.currentSrc || img.src).split('?')[0] === urlOf(data.avatar_url).split('?')[0]) {
-            return normalize(data.username);
-          }
-        }
-      } catch { /* profile script handles this */ }
+    if (isProfilePortrait(node)) {
+      const name = routeUsername();
+      return { id: location.pathname === '/me' ? OWN_ID : 0, name };
     }
-    return '';
+    return { id: 0, name: '' };
   }
-
-  function looksLikeAvatar(img) {
-    if (!img || img.closest('.pc-preview-avatar, .pc-product, .pb-cosmetic-avatar, .pb-global-avatar-host')) return false;
-    const cls = [img.className, img.parentElement?.className, img.parentElement?.parentElement?.className].join(' ');
-    const src = img.getAttribute('src') || '';
-    if (img.classList.contains('avatar_fallback')) return true;
-    if (AVATAR_CONTEXT.test(cls) || /(?:\/pfps\/|\/avatars\/|\/uploads\/pfps\/|\/static\/pfps\/)/i.test(src)) return true;
-    if (img.closest('.nav_user,.reviewuser,.comment-user,.friendRatingUser,.user-card,.leaderRow,.forum-post,.post-author,.notifItem')) return true;
-    const a=img.closest('a[href]');
-    if (a && fromAnchor(a)) {
-      const r=img.getBoundingClientRect();
-      return (r.width > 0 && r.width <= 180 && r.height <= 180);
+  function avatarSource(el) {
+    if (el.tagName === 'IMG') return el.currentSrc || el.getAttribute('src') || '';
+    if (el.tagName === 'PICTURE') return el.querySelector('img')?.currentSrc || '';
+    if (el.matches?.('.avatar_fallback')) return '';
+    let css = el.style?.backgroundImage || '';
+    if (!css || css === 'none') {
+      if (/(?:avatar|pfp|userpic)/i.test(el.className || '')) css = getComputedStyle(el).backgroundImage;
     }
-    return false;
+    const match = css.match(/url\(["']?([^"')]+)["']?\)/i);
+    return match ? match[1] : '';
   }
-
-  function findHost(img) {
-    let cur = img.parentElement;
-    for (let depth=0;cur && depth<3;cur=cur.parentElement,depth++) {
-      if (AVATAR_HOLDER.test(String(cur.className||''))) return cur;
-      if (cur.classList?.contains('pb-cosmetic-avatar')) return null;
+  function visualElement(el) {
+    if (el.matches?.(AVOID) || el.closest(AVOID)) return false;
+    if (el.closest('svg,canvas')) return false;
+    if (el.tagName === 'IMG') {
+      const src = el.currentSrc || el.getAttribute('src') || '';
+      const context = [el.getAttribute('class'),el.parentElement?.getAttribute('class'),
+        el.parentElement?.parentElement?.getAttribute('class'),el.getAttribute('alt')].join(' ');
+      if (/(?:avatar|pfp|userpic|profile.pic|reviewuser|reviewavatar|member.photo|author.photo)/i.test(context)) return true;
+      if (/(?:\/pfps\/|\/avatars\/|\/uploads\/pfps\/|\/static\/pfps\/)/i.test(src)) return true;
+      const profileAnchor = el.closest('a[href]');
+      if (fromProfileLink(profileAnchor)) {
+        const r = el.getBoundingClientRect();
+        const squareish = r.width > 11 && r.height > 11 && Math.abs(r.width-r.height) <= Math.max(10,r.width*.32);
+        if (squareish && Math.max(r.width,r.height) <= 160) return true;
+      }
+      return Boolean(el.closest('.nav_user,.userSearchItem,.reviewhead,.comment-user,.friendRatingUser,.forum-post,.post-author,.leaderRow,.user-card') &&
+        /(?:person|avatar|user|profile|member)/i.test(el.getAttribute('alt') || ''));
+    }
+    if (el.matches?.('.avatar_fallback')) return true;
+    return Boolean(/(?:avatar|pfp|userpic)/i.test(el.className || '') && avatarSource(el));
+  }
+  function dimensions(el) {
+    const r = el.getBoundingClientRect();
+    return Math.min(r.width || el.offsetWidth || 0, r.height || el.offsetHeight || 0);
+  }
+  function nearestHost(el) {
+    if (el.tagName !== 'IMG' && el.tagName !== 'PICTURE' && el.matches?.(HOLDER) &&
+        el.tagName !== 'A') return el;
+    for (let p=el.parentElement, i=0; p && i<4; p=p.parentElement, i++) {
+      if (p.matches?.('.pb-cosmetic-avatar,.pb-global-avatar-host')) return p.matches('.pb-global-avatar-host') ? p : null;
+      if (p.matches?.(HOLDER) && !['IMG','PICTURE','A'].includes(p.tagName)) {
+        if (p.querySelectorAll('img').length > 1) continue;
+        return p;
+      }
+      if (p.matches?.(ROW)) break;
     }
     return null;
   }
-
-  function sizeOf(node) {
-    const r=node.getBoundingClientRect();
-    const w=r.width || node.offsetWidth;
-    const h=r.height || node.offsetHeight;
-    return w>0 && h>0 ? Math.min(w,h) : 0;
+  function candidate(el) {
+    if (!el.isConnected || !visualElement(el)) return null;
+    const host = nearestHost(el);
+    const size = dimensions(host || el);
+    if (size < 12 || size > 360) return null;
+    const identity = nearestIdentity(el);
+    const raw = avatarSource(el);
+    const url = getUrl(raw);
+    if (!identity.id && !identity.name && !url) return null;
+    const alternatives = raw && url ? [...new Set([raw,url,bareUrl(url),bareUrl(raw)])].filter(s => /^(?:https?:\/\/|\/)/.test(s)) : [];
+    const key = [identity.id,identity.name,url].join('|');
+    return { el, host, size, id: identity.id, name: identity.name, url, alternatives, key };
   }
-
-  function avatarImageKey(img) {
-    return urlOf(img.currentSrc || img.src || img.getAttribute('src') || '');
+  function keyInfo(c) {
+    if (c.id) return cache.get('id:'+c.id);
+    if (c.name) return cache.get('name:'+c.name);
+    return c.url ? cache.get('url:'+bareUrl(c.url)) : undefined;
   }
-
-  function candidate(img) {
-    if (!looksLikeAvatar(img)) return null;
-    const host=img.matches?.('.reviewavatar,.comment-avatar,.friendRatingAvatar,.avatar_sm,.forum-avatar,.user-avatar') ? img : findHost(img);
-    const size = sizeOf(host || img);
-    if (size < 14 || size > 350) return null;
-    const user=usernameFor(img);
-    const url=img.tagName==='IMG' ? avatarImageKey(img) : ''; 
-    if (!user && !url) return null;
-    return { img, host, size, user, url };
+  function forget(el) {
+    const previous = avatars.get(el);
+    if (!previous) return;
+    previous.fx?.remove();
+    previous.host?.classList.remove('pc-global-motion_float','pc-global-motion_pulse','pc-global-motion_wobble');
+    // Shells remain around a previously styled avatar to preserve layout.
+    avatars.delete(el);
   }
+  function apply(c, record) {
+    if (!c.el.isConnected) return;
+    const frame = FRAMES.has(record?.frame) ? record.frame : '';
+    const motion = MOTIONS.has(record?.motion) ? record.motion : '';
+    const previous = avatars.get(c.el);
+    if (previous?.key === c.key && previous.frame === frame && previous.motion === motion) return;
+    if (previous) forget(c.el);
+    if (!frame && !motion) { avatars.set(c.el, { key:c.key, frame:'', motion:'' }); return; }
 
-  function apply(candidate, info) {
-    if (!candidate.img.isConnected || seen.has(candidate.img)) return;
-    const frame=FRAME.test(info?.frame || '') ? info.frame : '';
-    const motion=MOTION.test(info?.motion || '') ? info.motion : '';
-    if (!frame && !motion) return;
-    let host=candidate.host;
-    if (!host) {
-      // A stand-alone image needs a containing shell; keep existing image styles.
-      host=document.createElement('span');
-      host.className='pb-global-avatar-host pb-global-avatar-shell';
-      host.style.width=candidate.size+'px';
-      host.style.height=candidate.size+'px';
-      candidate.img.parentNode.insertBefore(host,candidate.img);
-      host.append(candidate.img);
+    let host = c.host;
+    if (!host || host.tagName === 'IMG' || host.tagName === 'PICTURE') {
+      host = document.createElement('span');
+      host.className = 'pb-global-avatar-host pb-global-avatar-shell';
+      host.style.width = c.size+'px';
+      host.style.height = c.size+'px';
+      c.el.before(host);
+      host.appendChild(c.el);
     }
     host.classList.add('pb-global-avatar-host');
+    host.classList.remove('pc-global-motion_float','pc-global-motion_pulse','pc-global-motion_wobble');
     if (motion) host.classList.add('pc-global-'+motion);
-    // Dedicated effect node preserves online/presence dots implemented using
-    // ::after on the original avatar holder.
-    const fx=document.createElement('span');
-    fx.className='pb-global-avatar-fx'+(frame?' pc-'+frame:'');
+    const fx = document.createElement('span');
+    fx.className = 'pb-global-avatar-fx' + (frame ? ' pc-'+frame : '');
     fx.setAttribute('aria-hidden','true');
     host.appendChild(fx);
-    const sz=Math.max(14,Math.min(candidate.size,350));
-    const multiplier=Math.min(1,sz/110);
-    host.style.setProperty('--pc-mini-rim', Math.max(1,Math.min(5,sz*.045)).toFixed(1)+'px');
-    host.style.setProperty('--pc-mini-spread', Math.max(2, Math.min(19,sz*.17)).toFixed(1)+'px');
-    host.style.setProperty('--pc-mini-blur', Math.max(2, Math.min(23,sz*.20)).toFixed(1)+'px');
-    host.style.setProperty('--pc-mini-softness', Math.max(3,Math.min(52,sz*.48)).toFixed(1)+'px');
-    host.style.setProperty('--pc-mini-opacity', (0.6 + multiplier*.22).toFixed(2));
-    host.setAttribute('data-cosmetic-size',sz<=32?'xs':sz<=52?'sm':sz<=80?'md':'lg');
-    seen.add(candidate.img);
+    const size = Math.min(360, Math.max(12,c.size));
+    host.style.setProperty('--pc-mini-rim',Math.max(1,Math.min(3,size*.028)).toFixed(1)+'px');
+    host.style.setProperty('--pc-mini-blur',Math.max(3,Math.min(9,size*.10)).toFixed(1)+'px');
+    host.setAttribute('data-cosmetic-size',size <= 30 ? 'xs':size <= 54 ? 'sm':size <= 85 ? 'md':'lg');
+    avatars.set(c.el, {key:c.key,host,fx,frame,motion});
   }
-
-  function getInfo(c) {
-    if (c.user && cache.has('u:'+c.user)) return cache.get('u:'+c.user);
-    if (c.url && cache.has('a:'+c.url)) return cache.get('a:'+c.url);
-    return null;
+  function addCandidate(el) {
+    const c = candidate(el);
+    if (!c) return;
+    const old = avatars.get(el);
+    if (old && old.key === c.key) return;
+    pending.set(el,c);
+    schedule();
   }
-
+  function schedule() {
+    if (scheduled) return;
+    scheduled = true;
+    setTimeout(flush,100);
+  }
   async function flush() {
-    timer=0;
-    const list=[...pending.values()];
+    scheduled = false;
+    if (inFlight) { if (pending.size) schedule(); return; }
+    inFlight = true;
+    const batch = [...pending.values()].filter(c => c.el.isConnected);
     pending.clear();
-    if (!list.length) return;
-    const fresh=list.filter(c=>c.img.isConnected && !seen.has(c.img));
-    const uncached=fresh.filter(c=>!getInfo(c));
-    // If a user doesn't have cosmetics we still cache an empty result so the
-    // same avatar isn't requested repeatedly when more comments are appended.
-    const users=[...new Set(uncached.map(c=>c.user).filter(Boolean))];
-    const urls=[...new Set(uncached.map(c=>c.url).filter(Boolean))];
-    if (users.length || urls.length) {
-      const calls=Math.max(Math.ceil(users.length/100),Math.ceil(urls.length/100));
-      for (let i=0;i<calls;i++) {
-        const batchUsers=users.slice(i*100,(i+1)*100);
-        const batchUrls=urls.slice(i*100,(i+1)*100);
-        try {
-          const response=await fetch('/api/cosmetics/avatar-effects',{
-            method:'POST',credentials:'same-origin',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({usernames:batchUsers,avatar_urls:batchUrls})
-          });
-          if (!response.ok) throw new Error('lookup '+response.status);
-          const data=await response.json();
-          for (const u of batchUsers) cache.set('u:'+u,{});
-          for (const a of batchUrls) cache.set('a:'+a,{});
-          for (const record of data.users || []) {
-            const name=normalize(record.username);
-            if (name) cache.set('u:'+name,record);
-            if (record.avatar_url) cache.set('a:'+urlOf(record.avatar_url),record);
-          }
-        } catch { /* Leave original avatars intact on API/network errors. */ }
+    if (!batch.length) { inFlight=false; return; }
+    const unknown = batch.filter(c => keyInfo(c) === undefined);
+    const ids = [...new Set(unknown.map(c=>c.id).filter(Boolean))];
+    const usernames = [...new Set(unknown.filter(c=>!c.id).map(c=>c.name).filter(Boolean))];
+    const urls = [...new Set(unknown.filter(c=>!c.name&&!c.id).flatMap(c=>c.alternatives))];
+    const calls = Math.max(Math.ceil(ids.length/100),Math.ceil(usernames.length/100),Math.ceil(urls.length/100));
+    let failed = false;
+    for (let i=0;i<calls;i++) {
+      const partIds=ids.slice(i*100,(i+1)*100);
+      const partNames=usernames.slice(i*100,(i+1)*100);
+      const partUrls=urls.slice(i*100,(i+1)*100);
+      try {
+        const response = await fetch('/api/cosmetics/avatar-effects',{
+          method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json'},
+          body:JSON.stringify({user_ids:partIds,usernames:partNames,avatar_urls:partUrls})
+        });
+        if (!response.ok) throw new Error('avatar-effects '+response.status);
+        const result = await response.json();
+        for (const id of partIds) cache.set('id:'+id, {});
+        for (const name of partNames) cache.set('name:'+name, {});
+        for (const url of partUrls) cache.set('url:'+bareUrl(getUrl(url)), {});
+        for (const info of result.users || []) {
+          if (Number.isSafeInteger(info.user_id)) cache.set('id:'+info.user_id, info);
+          if (info.username) cache.set('name:'+normalize(info.username), info);
+          // Server intentionally suppresses avatar_url when it is used by multiple users.
+          if (info.avatar_url) cache.set('url:'+bareUrl(getUrl(info.avatar_url)), info);
+        }
+      } catch (err) {
+        failed = true;
+        console.warn('Pressboxd avatar effects lookup failed:', err);
       }
     }
-    for (const c of fresh) {
-      const info=getInfo(c);
-      if (info) apply(c,info);
+    for (const c of batch) {
+      const info = keyInfo(c);
+      if (info !== undefined) apply(c,info);
     }
+    inFlight = false;
+    if (pending.size) schedule();
+    // Do not alter avatars on failed requests; a subsequent page view retries.
+    if (failed) return;
   }
-
   function scan(root=document) {
-    if (!root || !root.querySelectorAll) return;
-    const selector='img,.avatar_fallback,.reviewavatar,.comment-avatar,.friendRatingAvatar,.avatar_sm,.forum-avatar,.user-avatar';
-    const imgs=root.matches?.(selector) ? [root,...root.querySelectorAll(selector)] : root.querySelectorAll(selector);
-    for (const img of imgs) {
-      if (img.matches?.('.reviewavatar,.comment-avatar,.friendRatingAvatar,.avatar_sm,.forum-avatar,.user-avatar') && img.querySelector('img,.avatar_fallback')) continue;
-      if (seen.has(img)) continue;
-      const c=candidate(img);
-      if (!c) continue;
-      pending.set(img,c);
+    if (!root?.querySelectorAll) return;
+    const selector='img,.avatar_fallback,[class*="avatar"],[class*="Avatar"],[class*="pfp"]';
+    const nodes = root.matches?.(selector)
+      ? [root,...root.querySelectorAll(selector)] : root.querySelectorAll(selector);
+    for (const el of nodes) {
+      // Candidate selection eliminates non-photo containers, product previews,
+      // and duplicate fallback+image pairs; don't decorate a whole user card.
+      if (el.tagName !== 'IMG' && !el.matches('.avatar_fallback') &&
+          el.querySelector('img,.avatar_fallback')) continue;
+      addCandidate(el);
     }
-    if (pending.size && !timer) timer=setTimeout(flush,85);
   }
-
-  // Some avatars live in initially hidden friend-rating dropdowns. Scan again
-  // when the <details> element opens, without requiring the HTML to re-render.
-  document.addEventListener('toggle', event => {
-    if (event.target?.tagName === 'DETAILS' && event.target.open) {
-      requestAnimationFrame(() => scan(event.target));
-    }
-  }, true);
-  // Un-sized lazy-loaded images can gain dimensions after their load event.
-  document.addEventListener('load', event => {
-    if (event.target?.tagName === 'IMG') scan(event.target);
-  }, true);
-
-  // A few EJS components append content after page load. Batch changes into one pass.
   let observerQueued=false;
-  const observer=new MutationObserver(changes=>{
+  function deferredScan() {
     if (observerQueued) return;
-    if (!changes.some(m=>m.type==='childList' && m.addedNodes.length)) return;
     observerQueued=true;
-    requestAnimationFrame(()=>{observerQueued=false;scan();});
+    requestAnimationFrame(() => { observerQueued=false; scan(); });
+  }
+  const observer = new MutationObserver(changes => {
+    if (changes.some(change => {
+      if (change.type === 'childList') {
+        return [...change.addedNodes].some(n => n.nodeType === 1 && !n.matches?.('.pb-global-avatar-fx'));
+      }
+      const el=change.target;
+      if (el.matches?.('.pb-global-avatar-host,.pb-global-avatar-fx')) return false;
+      return true;
+    })) deferredScan();
   });
-  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{
-    scan();observer.observe(document.body,{subtree:true,childList:true});
-  },{once:true});
-  else {scan();observer.observe(document.body,{subtree:true,childList:true});}
+  document.addEventListener('toggle',e=>{ if (e.target?.tagName === 'DETAILS' && e.target.open) deferredScan(); },true);
+  document.addEventListener('load',e=>{ if (e.target?.tagName === 'IMG') addCandidate(e.target); },true);
+  // Covers dropdowns, lazy cards and tabs that reveal already-rendered avatars.
+  document.addEventListener('click',()=>{ setTimeout(deferredScan,30); },true);
+  window.addEventListener('pageshow',deferredScan);
+  function start() {
+    scan();
+    observer.observe(document.body,{subtree:true,childList:true,attributes:true,
+      attributeFilter:['src','srcset','data-user-id','data-username','data-user-name','style','open','hidden']});
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start,{once:true});
+  else start();
 })();
