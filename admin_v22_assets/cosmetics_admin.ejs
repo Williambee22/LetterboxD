@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>Store Catalog Manager — Pressboxd Admin</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="icon" href="/static/favicon.png" type="image/png">
+  <style>
+    /* Self-contained admin page, styled like Pressboxd. No new static CSS. */
+    :root{color-scheme:dark;--adm-bg:#000;--adm-ink:#f5f6fa;--adm-muted:#9496a2;--adm-rule:rgba(255,255,255,.12);--adm-accent:#3252b3}
+    html,body,body.app{background:#000!important;background-image:none!important;color:var(--adm-ink);font:14px/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}button,input,select{font:inherit}
+    a{color:inherit;text-decoration:none}a:hover{text-decoration:underline}
+    .adm-topbar{border-bottom:1px solid var(--adm-rule);background:#000}
+    .adm-topbar-inner{max-width:1440px;margin:auto;padding:7px 22px;min-height:78px;display:flex;justify-content:space-between;align-items:center;gap:25px;flex-wrap:wrap}
+    .adm-brand{display:flex;align-items:center;gap:10px;min-width:0}.adm-brand .adm-brand-mark{width:36px;height:36px;object-fit:contain}.adm-brand .adm-wordmark{height:65px;max-width:210px;width:auto;object-fit:contain}
+    .adm-nav{display:flex;align-items:center;gap:19px;flex-wrap:wrap}.adm-nav a{color:#c5c5cb;font-size:12px;font-weight:650}.adm-nav a:hover{color:#fff}
+    .adm-user{color:var(--adm-muted);font-size:12px;white-space:nowrap}
+    .adm-page{max-width:1440px;margin:auto;padding:22px 22px 50px}
+    .adm-breadcrumb{display:flex;gap:8px;align-items:center;color:#8e8e96;font-size:11px;margin-bottom:14px}.adm-breadcrumb a:hover{color:white}
+    .adm-heading{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--adm-rule);padding-bottom:22px;margin-bottom:20px}
+    .adm-kicker{color:#888893;font-size:10px;letter-spacing:.12em;font-weight:900;text-transform:uppercase;margin-bottom:4px}
+    .adm-heading h1{font-size:32px;line-height:1.14;letter-spacing:-.025em;margin:0 0 7px;font-weight:900}
+    .adm-heading p{color:var(--adm-muted);font-size:12px;margin:0;max-width:680px}
+    .adm-heading-buttons{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .adm-btn{border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-height:36px;gap:5px;font-size:11px;font-weight:800;padding:8px 12px;white-space:nowrap;text-decoration:none!important;transition:background .15s ease}
+    .adm-btn--primary{background:var(--adm-accent);border:1px solid var(--adm-accent);color:#fff}.adm-btn--primary:hover{background:#4067d3}
+    .adm-btn--quiet{background:#101012;border:1px solid rgba(255,255,255,.18);color:#e4e4e8}.adm-btn--quiet:hover{background:#202026}
+    .adm-btn--reset{color:#bdc0c9;background:transparent;border:1px solid rgba(255,255,255,.13)}.adm-btn--reset:hover{border-color:#9a9aa8;color:#fff}
+    .adm-notice{border:1px solid rgba(255,255,255,.14);border-left:3px solid #5cab71;background:#090909;padding:10px 12px;font-size:12px;margin-bottom:15px}.adm-notice--error{border-left-color:#e36666}
+    .adm-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-bottom:20px}
+    .adm-stat{border:1px solid var(--adm-rule);background:#070707;padding:15px 17px}.adm-stat label{display:block;color:#96969d;letter-spacing:.07em;text-transform:uppercase;font-size:10px;font-weight:800;margin-bottom:5px}.adm-stat strong{font-size:24px;line-height:1;font-weight:900}
+    .adm-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:15px}
+    .adm-search{flex:1;min-width:200px;background:#0d0d0f;border:1px solid rgba(255,255,255,.16);color:#fff;outline:none;padding:11px 12px;border-radius:2px}.adm-search:focus{border-color:#6286ec}.adm-search::placeholder{color:#7d7f89}
+    .adm-select{background:#0d0d0f;color:white;border:1px solid rgba(255,255,255,.16);padding:11px 12px;border-radius:2px;min-width:150px}
+    .adm-result-count{font-size:11px;color:var(--adm-muted);white-space:nowrap}
+    .adm-table-scroll{width:100%;overflow-x:auto;border:1px solid var(--adm-rule)}
+    .adm-table{width:100%;border-collapse:collapse;text-align:left;min-width:900px}
+    .adm-table th{background:#101011;border-bottom:1px solid var(--adm-rule);color:#999ba6;font-size:10px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;padding:12px 14px;white-space:nowrap}
+    .adm-table td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.075);vertical-align:middle;font-size:12px}
+    .adm-table tr:last-child td{border-bottom:0}.adm-table tbody tr:hover{background:#0d0d0f}.adm-table tr:target{background:#101a2a}
+    .adm-item-name{font-weight:850;color:#fff;line-height:1.2}.adm-item-id{color:#747783;font-size:10px;white-space:nowrap;margin-top:4px}.adm-category{color:#aeb0b9;text-transform:capitalize}
+    .adm-price{font-weight:850;white-space:nowrap}.adm-default{color:#a1a1aa;font-variant-numeric:tabular-nums}
+    .adm-modified{color:#9ed3a9;font-size:10px;display:block;margin-top:3px}.adm-unchanged{color:#737780;font-size:10px;display:block;margin-top:3px}
+    .adm-form{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}.adm-form input[type=number]{width:110px;background:#0c0c0e;border:1px solid rgba(255,255,255,.21);color:#fff;border-radius:2px;padding:8px 8px;outline:none;font-size:12px;font-variant-numeric:tabular-nums}.adm-form input[type=number]:focus{border-color:#6388ed}
+    .adm-form button{min-height:35px}.adm-reset{display:inline-flex;margin-left:6px}
+    .adm-detail-cell{min-width:300px}.adm-detail-form{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+    .adm-detail-form input[type=text]{width:172px;background:#0c0c0e;border:1px solid rgba(255,255,255,.21);color:#fff;border-radius:2px;padding:8px;outline:none;font-size:12px;max-width:100%}
+    .adm-detail-form select{max-width:124px;padding:8px;background:#0c0c0e;border:1px solid rgba(255,255,255,.21);color:#fff;border-radius:2px;font-size:12px}
+    .adm-detail-form input:focus,.adm-detail-form select:focus{border-color:#6388ed}
+    .adm-catalog-defaults{color:#82848f;font-size:10px;line-height:1.5}.adm-catalog-defaults strong{color:#bcbfc9}
+    .adm-rarity{font-weight:750;color:#dadbe4}
+    .adm-rarity-legendary{color:#e5beff}.adm-rarity-mythic{color:#ffbf8c}.adm-rarity-celestial{color:#ffdf82}.adm-rarity-epic{color:#a9bcff}
+    .adm-history{margin-top:30px}.adm-history h2{font-size:19px;margin:0 0 7px}.adm-history p{color:var(--adm-muted);font-size:12px;margin:0 0 12px}
+    .adm-history .adm-table{min-width:620px}.adm-history .adm-table td{font-size:11px}.adm-history .adm-table th{font-size:10px}
+    .adm-empty{color:#999ca5;text-align:center;padding:30px}
+    .adm-footnote{font-size:11px;color:#8b8d97;margin-top:17px;line-height:1.6}
+    @media(max-width:800px){.adm-page{padding:18px 12px}.adm-topbar-inner{padding:8px 12px;gap:10px}.adm-nav{gap:12px}.adm-brand .adm-wordmark{height:46px}.adm-summary{grid-template-columns:repeat(2,1fr)}.adm-heading h1{font-size:27px}}
+    @media(max-width:480px){.adm-summary{gap:7px}.adm-stat{padding:12px}.adm-stat strong{font-size:21px}}
+  </style>
+</head>
+<body class="app">
+  <header class="adm-topbar">
+    <div class="adm-topbar-inner">
+      <div class="adm-brand">
+        <a href="https://www.generaleffect.media/" target="_blank" rel="noopener" aria-label="General Effect Media"><img src="/static/logo.png" alt="" class="adm-brand-mark"></a>
+        <a href="/shows"><img src="/static/pressboxd-wordmark.png" alt="Pressboxd" class="adm-wordmark"></a>
+      </div>
+      <nav class="adm-nav" aria-label="Site navigation"><a href="/shows">Shows</a><a href="/top">Top Shows</a><a href="/forums">Forums</a><a href="/store">GEM Store</a><a href="/me/cosmetics">My Cosmetics</a></nav>
+      <div class="adm-user">Admin: <strong><%= me ? me.username : 'Administrator' %></strong></div>
+    </div>
+  </header>
+
+  <main class="adm-page">
+    <div class="adm-breadcrumb"><a href="/shows">Pressboxd</a><span>/</span><a href="/store">GEM Store</a><span>/</span><span>Catalog Manager</span></div>
+    <div class="adm-heading">
+      <div><div class="adm-kicker">Store administration</div><h1>Cosmetic Catalog Manager</h1><p>Edit any item's display name, rarity, and Gem price without editing code or redeploying. Permanent item IDs, effects, and existing purchases remain untouched.</p></div>
+      <div class="adm-heading-buttons"><a class="adm-btn adm-btn--quiet" href="/store">View Store ↗</a></div>
+    </div>
+    <% if(notice){ %><div class="adm-notice" role="status"><%= notice %></div><% } %>
+    <% if(error){ %><div class="adm-notice adm-notice--error" role="alert"><%= error %></div><% } %>
+
+    <% const allPrices=catalog.map(item=>item.price); %>
+    <div class="adm-summary">
+      <div class="adm-stat"><label>Available Items</label><strong><%= catalog.length %></strong></div>
+      <div class="adm-stat"><label>Customized Items</label><strong><%= catalog.filter(item=>item.isOverridden || item.metadataOverridden).length %></strong></div>
+      <div class="adm-stat"><label>Lowest Price</label><strong>💎 <%= Math.min(...allPrices).toLocaleString() %></strong></div>
+      <div class="adm-stat"><label>Highest Price</label><strong>💎 <%= Math.max(...allPrices).toLocaleString() %></strong></div>
+    </div>
+
+    <div class="adm-tools">
+      <input id="adm-search" class="adm-search" type="search" placeholder="Search item, rarity, or ID..." autocomplete="off" aria-label="Search cosmetics">
+      <select id="adm-category" class="adm-select" aria-label="Filter category"><option value="">All Categories</option><option value="frame">Avatar Frames</option><option value="motion">Animations</option><option value="nameplate">Nameplates</option><option value="unlock">Unlocks</option></select>
+      <select id="adm-sort" class="adm-select" aria-label="Sort cosmetics"><option value="default">Catalog Order</option><option value="price_asc">Price: Low → High</option><option value="price_desc">Price: High → Low</option><option value="name">Name: A → Z</option></select>
+      <span class="adm-result-count" id="adm-count"><%= catalog.length %> items</span>
+    </div>
+    <div class="adm-table-scroll">
+      <table class="adm-table">
+        <thead><tr><th>Cosmetic</th><th>Category</th><th>Rarity</th><th>Current Price</th><th>Default Price</th><th>Edit Name &amp; Rarity</th><th>Change Price</th></tr></thead>
+        <tbody id="adm-rows">
+          <% for(const [index,item] of catalog.entries()){ %>
+          <tr id="item-<%= item.id %>" data-name="<%= item.name.toLowerCase() %>" data-item-id="<%= item.id.toLowerCase() %>" data-category="<%= item.category %>" data-rarity="<%= item.rarity.toLowerCase() %>" data-price="<%= item.price %>" data-order="<%= index %>">
+            <td><div class="adm-item-name"><%= item.name %></div><div class="adm-item-id"><%= item.id %></div><% if(item.metadataOverridden){ %><span class="adm-modified">Custom details</span><% } %></td>
+            <td><span class="adm-category"><%= item.category==='frame'?'Avatar Frame':item.category==='motion'?'Animation':item.category==='nameplate'?'Nameplate':'Unlock' %></span></td>
+            <td><span class="adm-rarity adm-rarity-<%= item.rarity.toLowerCase() %>"><%= item.rarity %></span></td>
+            <td><span class="adm-price">💎 <%= item.price.toLocaleString() %></span><span class="<%= item.isOverridden?'adm-modified':'adm-unchanged' %>"><%= item.isOverridden?'Custom price':'Catalog price' %></span></td>
+            <td><span class="adm-default">💎 <%= item.defaultPrice.toLocaleString() %></span></td>
+            <td class="adm-detail-cell">
+              <form class="adm-detail-form" method="post" action="/store/admin/metadata">
+                <input type="hidden" name="csrf" value="<%= csrf %>">
+                <input type="hidden" name="item_id" value="<%= item.id %>">
+                <input type="text" name="name" value="<%= item.name %>" maxlength="80" required aria-label="Display name for <%= item.id %>" autocomplete="off">
+                <select name="rarity" required aria-label="Rarity for <%= item.id %>">
+                  <% for(const rarity of rarities){ %><option value="<%= rarity %>" <%= item.rarity===rarity?'selected':'' %>><%= rarity %></option><% } %>
+                </select>
+                <button class="adm-btn adm-btn--primary" type="submit">Save</button>
+              </form>
+              <% if(item.metadataOverridden){ %>
+                <form class="adm-detail-form" method="post" action="/store/admin/metadata" onsubmit="return confirm('Restore the original name and rarity for this cosmetic?')">
+                  <input type="hidden" name="csrf" value="<%= csrf %>">
+                  <input type="hidden" name="item_id" value="<%= item.id %>">
+                  <input type="hidden" name="reset" value="1">
+                  <button class="adm-btn adm-btn--reset" type="submit">Reset details</button>
+                </form>
+              <% } %>
+              <div class="adm-catalog-defaults">Default: <strong><%= item.defaultName %></strong> · <%= item.defaultRarity %></div>
+            </td>
+            <td>
+              <div class="adm-form">
+                <form class="adm-form" method="post" action="/store/admin/price">
+                  <input type="hidden" name="csrf" value="<%= csrf %>">
+                  <input type="hidden" name="item_id" value="<%= item.id %>">
+                  <input type="number" name="price" value="<%= item.price %>" min="0" max="<%= maxPrice %>" step="1" required aria-label="New Gem price for <%= item.name %>">
+                  <button class="adm-btn adm-btn--primary" type="submit">Save</button>
+                </form>
+                <% if(item.isOverridden){ %>
+                <form class="adm-reset" method="post" action="/store/admin/price" onsubmit="return confirm('Restore the original catalog price for this item?')">
+                  <input type="hidden" name="csrf" value="<%= csrf %>">
+                  <input type="hidden" name="item_id" value="<%= item.id %>">
+                  <input type="hidden" name="reset" value="1">
+                  <button class="adm-btn adm-btn--reset" type="submit" title="Return to catalog default">Reset</button>
+                </form>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+      <div class="adm-empty" id="adm-empty" hidden>No matching cosmetics found.</div>
+    </div>
+
+    <section class="adm-history" aria-label="Name and rarity change history">
+      <h2>Recent Name &amp; Rarity Changes</h2>
+      <p>The last 25 display name and rarity changes, with the administrator responsible.</p>
+      <div class="adm-table-scroll"><table class="adm-table"><thead><tr><th>When</th><th>Item ID</th><th>Previous Name</th><th>New Name</th><th>Rarity</th><th>Action</th><th>Admin</th></tr></thead><tbody>
+      <% if(!metadataHistory.length){ %><tr><td colspan="7" class="adm-empty">No name or rarity changes yet.</td></tr><% } %>
+      <% for(const entry of metadataHistory){ %>
+      <tr>
+        <td><time data-unix="<%= entry.changed_ts %>"><%= new Date(Number(entry.changed_ts)*1000).toISOString().slice(0,16).replace('T',' ') %> UTC</time></td>
+        <td><%= entry.item_id %></td>
+        <td><%= entry.old_name %></td>
+        <td><%= entry.new_name %></td>
+        <td><%= entry.old_rarity %> → <%= entry.new_rarity %></td>
+        <td><%= entry.operation==='reset'?'Reset':'Updated' %></td>
+        <td><%= entry.admin_name %></td>
+      </tr>
+      <% } %>
+      </tbody></table></div>
+    </section>
+
+    <section class="adm-history" aria-label="Price change history">
+      <h2>Recent Price Changes</h2>
+      <p>The last 25 price updates, including who made them. Resetting a price is recorded too.</p>
+      <div class="adm-table-scroll"><table class="adm-table"><thead><tr><th>When</th><th>Cosmetic</th><th>Previous</th><th>New Price</th><th>Action</th><th>Admin</th></tr></thead><tbody>
+      <% if(!history.length){ %><tr><td colspan="6" class="adm-empty">No price changes yet.</td></tr><% } %>
+      <% for(const entry of history){ const item=catalog.find(row=>row.id===entry.item_id); %>
+      <tr><td><time data-unix="<%= entry.changed_ts %>"><%= new Date(Number(entry.changed_ts)*1000).toISOString().slice(0,16).replace('T',' ') %> UTC</time></td><td><%= item?item.name:entry.item_id %></td><td>💎 <%= Number(entry.old_price).toLocaleString() %></td><td>💎 <%= Number(entry.new_price).toLocaleString() %></td><td><%= entry.operation==='reset'?'Reset':'Updated' %></td><td><%= entry.admin_name %></td></tr>
+      <% } %>
+      </tbody></table></div>
+    </section>
+    <p class="adm-footnote">Prices can range from 0 to <%= maxPrice.toLocaleString() %> Gems (0 = free). Display names can contain 1–80 characters. Rarity is selected from the catalog's existing tiers. Cosmetic IDs, categories, ownership, equipped effects, previously paid prices, and Gems balances are never changed.</p>
+  </main>
+  <script>
+    (() => {
+      const search=document.getElementById('adm-search');
+      const filter=document.getElementById('adm-category');
+      const sort=document.getElementById('adm-sort');
+      const tbody=document.getElementById('adm-rows');
+      const rows=Array.from(tbody.querySelectorAll('tr'));
+      const count=document.getElementById('adm-count');
+      const empty=document.getElementById('adm-empty');
+      function update(){
+        const q=search.value.trim().toLowerCase();
+        const cat=filter.value;
+        let visible=0;
+        for(const row of rows){
+          const matchCategory=!cat || row.dataset.category===cat;
+          const matchText=!q || [row.dataset.name,row.dataset.itemId,row.dataset.rarity].some(value=>value.includes(q));
+          row.hidden=!(matchCategory&&matchText);
+          if(!row.hidden) visible++;
+        }
+        const field=sort.value;
+        rows.sort((a,b)=> field==='price_asc' ? Number(a.dataset.price)-Number(b.dataset.price)
+            : field==='price_desc' ? Number(b.dataset.price)-Number(a.dataset.price)
+            : field==='name' ? a.dataset.name.localeCompare(b.dataset.name)
+            : Number(a.dataset.order)-Number(b.dataset.order));
+        for(const row of rows) tbody.appendChild(row);
+        count.textContent=visible+' of '+rows.length+' items';
+        empty.hidden=visible>0;
+      }
+      for(const input of [search,filter,sort]) input.addEventListener(input===search?'input':'change',update);
+      for(const time of document.querySelectorAll('time[data-unix]')){
+        const value=Number(time.dataset.unix);
+        if(Number.isFinite(value)) time.textContent=new Date(value*1000).toLocaleString();
+      }
+    })();
+  </script>
+</body>
+</html>
