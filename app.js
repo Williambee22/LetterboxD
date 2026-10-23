@@ -14,6 +14,7 @@ const dbx = require('./db');
 const showHistory = require('./historical_show_data');
 const mountBetting = require('./betting');
 const gems = require('./gems');
+const sheldonResults = require('./sheldon_results');
 
 const cosmetics = require('./cosmetics');
 const globalCosmetics = require('./global_cosmetics');
@@ -3422,6 +3423,7 @@ app.get('/corps/:corps_name', async (req, res, next) => {
   }));
 
     mountBetting(app, getConn);
+    sheldonResults.mount(app, getConn);
 
     
     // GEM STORE
