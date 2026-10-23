@@ -6,22 +6,22 @@ const crypto = require('crypto');
 const gems = require('./gems');
 
 const CATALOG = Object.freeze([
-  { id:'frame_sapphire', category:'frame', name:'Sapphire Glow', price:125, rarity:'Common', description:'A crisp, electric-blue avatar ring.' },
-  { id:'frame_rose', category:'frame', name:'Rose Quartz', price:225, rarity:'Common', description:'A soft neon-pink halo.' },
-  { id:'frame_inferno', category:'frame', name:'Inferno', price:350, rarity:'Rare', description:'A fiery orange-red border.' },
-  { id:'frame_gold', category:'frame', name:'Golden Hour', price:550, rarity:'Epic', description:'A warm, luminous gold frame.' },
-  { id:'frame_aurora', category:'frame', name:'Aurora', price:850, rarity:'Epic', description:'An animated northern-lights ring.' },
-  { id:'frame_prism', category:'frame', name:'Prismatic', price:1400, rarity:'Legendary', description:'A rotating rainbow border.' },
-  { id:'motion_float', category:'motion', name:'Levitate', price:250, rarity:'Rare', description:'Your profile avatar gently floats.' },
-  { id:'motion_pulse', category:'motion', name:'Heartbeat', price:325, rarity:'Rare', description:'Your avatar gently pulses with energy.' },
-  { id:'motion_wobble', category:'motion', name:'Wobble', price:425, rarity:'Epic', description:'A playful, animated avatar tilt.' },
+  { id:'frame_sapphire', category:'frame', name:'Sapphire Glow', price:1000, rarity:'Common', description:'A crisp, electric-blue avatar ring.' },
+  { id:'frame_rose', category:'frame', name:'Rose Quartz', price:1000, rarity:'Common', description:'A soft neon-pink halo.' },
+  { id:'frame_inferno', category:'frame', name:'Inferno', price:2000, rarity:'Rare', description:'A fiery orange-red border.' },
+  { id:'frame_gold', category:'frame', name:'Golden Hour', price:2000, rarity:'Epic', description:'A warm, luminous gold frame.' },
+  { id:'frame_aurora', category:'frame', name:'Aurora', price:5000, rarity:'Epic', description:'An animated northern-lights ring.' },
+  { id:'frame_prism', category:'frame', name:'Prismatic', price:10000, rarity:'Legendary', description:'A rotating rainbow border.' },
+  { id:'motion_float', category:'motion', name:'Levitate', price:2500, rarity:'Rare', description:'Your profile avatar gently floats.' },
+  { id:'motion_pulse', category:'motion', name:'Heartbeat', price:5000, rarity:'Rare', description:'Your avatar gently pulses with energy.' },
+  { id:'motion_wobble', category:'motion', name:'Wobble', price:8000, rarity:'Epic', description:'A playful, animated avatar tilt.' },
   { id:'profile_night', category:'background', name:'Midnight', price:300, rarity:'Rare', description:'Deep violet profile atmosphere.' },
   { id:'profile_galaxy', category:'background', name:'Starlight', price:650, rarity:'Epic', description:'A galaxy-like profile header.' },
   { id:'profile_sunset', category:'background', name:'Synthwave', price:900, rarity:'Legendary', description:'Retro neon sunset profile styling.' },
-  { id:'name_electric', category:'nameplate', name:'Electric Name', price:350, rarity:'Rare', description:'Blue glowing username treatment.' },
-  { id:'name_gold', category:'nameplate', name:'Royal Name', price:650, rarity:'Epic', description:'Gold gradient username treatment.' },
-  { id:'name_rainbow', category:'nameplate', name:'Spectrum Name', price:1200, rarity:'Legendary', description:'Animated gradient username treatment.' },
-  { id:'avatar_gif', category:'unlock', name:'Animated Avatar Upload', price:750, rarity:'Epic', description:'Unlock GIF uploads for your profile picture. Permanent.' }
+  { id:'name_electric', category:'nameplate', name:'Electric Name', price:5000, rarity:'Rare', description:'Blue glowing username treatment.' },
+  { id:'name_gold', category:'nameplate', name:'Royal Name', price:7500, rarity:'Epic', description:'Gold gradient username treatment.' },
+  { id:'name_rainbow', category:'nameplate', name:'Spectrum Name', price:10000, rarity:'Legendary', description:'Animated gradient username treatment.' },
+  { id:'avatar_gif', category:'unlock', name:'Animated Avatar Upload', price:20000, rarity:'Epic', description:'Unlock GIF uploads for your profile picture. Permanent.' }
 ]);
 const ITEMS = new Map(CATALOG.map(item => [item.id, item]));
 const CATEGORIES = Object.freeze(['frame','motion','background','nameplate']);
