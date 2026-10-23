@@ -186,7 +186,7 @@
     fx.setAttribute('aria-hidden','true');
     host.appendChild(fx);
     const size = Math.min(360, Math.max(12,c.size));
-    host.style.setProperty('--pc-mini-rim',Math.max(1,Math.min(3,size*.028)).toFixed(1)+'px');
+    host.style.setProperty('--pc-mini-rim',Math.max(2,Math.min(5,size*.05)).toFixed(1)+'px');
     host.style.setProperty('--pc-mini-blur',Math.max(3,Math.min(9,size*.10)).toFixed(1)+'px');
     host.setAttribute('data-cosmetic-size',size <= 30 ? 'xs':size <= 54 ? 'sm':size <= 85 ? 'md':'lg');
     avatars.set(c.el, {key:c.key,host,fx,frame,motion});
