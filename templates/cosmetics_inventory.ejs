@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#000000">
   <title>My Cosmetics — Pressboxd</title>
   <link rel="stylesheet" href="/static/styles.css">
-  <link rel="stylesheet" href="/static/cosmetics.css?v=12">
+  <link rel="stylesheet" href="/static/cosmetics.css?v=16">
   <link rel="icon" type="image/png" href="/static/favicon.png">
 </head>
 <body class="app pc-store-page pc2-page" style="--accent:<%= (typeof accent_color !== 'undefined' && /^#[0-9a-fA-F]{6}$/.test(String(accent_color))) ? accent_color : '#3252b3' %>">
@@ -30,7 +30,7 @@
     </section>
     <% if(notice){ %><div class="pc2-message pc2-message-success" role="status"><%= notice %></div><% } %>
     <% if(error){ %><div class="pc2-message pc2-message-error" role="alert"><%= error %></div><% } %>
-    <% const groups=[['frame','Avatar Frame'],['motion','Avatar Animation'],['background','Profile Background'],['nameplate','Username Style']]; %>
+    <% const groups=[['frame','Avatar Frame'],['motion','Avatar Animation'],['nameplate','Username Style']]; %>
     <div class="pc2-inventory-grid">
       <% for(const [category,title] of groups){ const mine=catalog.filter(item=>item.category===category && owned_ids.has(item.id));const chosen=catalog.find(i=>i.id===equipped[category]); %>
         <section class="pc2-inventory-card">

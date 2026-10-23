@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#000000">
   <title>GEM Store — Pressboxd</title>
   <link rel="stylesheet" href="/static/styles.css">
-  <link rel="stylesheet" href="/static/cosmetics.css?v=12">
+  <link rel="stylesheet" href="/static/cosmetics.css?v=16">
   <link rel="icon" type="image/png" href="/static/favicon.png">
 </head>
 <body class="app pc-store-page pc2-page" style="--accent:<%= (typeof accent_color !== 'undefined' && /^#[0-9a-fA-F]{6}$/.test(String(accent_color))) ? accent_color : '#3252b3' %>">
@@ -42,7 +42,7 @@
       <div class="pc2-heading-copy">
         <div class="pc2-kicker">PROFILE CUSTOMIZATION</div>
         <h1 id="pc2-store-title">GEM Store</h1>
-        <p>Customize your profile with avatar frames, animations, backgrounds and nameplates. Purchases are permanent.</p>
+        <p>Customize your profile with avatar frames, animations and nameplates. Purchases are permanent.</p>
       </div>
       <div class="pc2-heading-aside">
         <% if(me){ %>
@@ -63,7 +63,6 @@
         <div class="pc2-sidebar-heading">CATEGORIES</div>
         <a href="#frames">Avatar Frames <span>›</span></a>
         <a href="#motion">Avatar Motion <span>›</span></a>
-        <a href="#backgrounds">Backgrounds <span>›</span></a>
         <a href="#nameplates">Nameplates <span>›</span></a>
         <a href="#special">Special Unlocks <span>›</span></a>
         <div class="pc2-sidebar-divider"></div>
@@ -76,9 +75,9 @@
             <strong>Make your profile yours.</strong>
             <span>Preview items below before you buy. Equip owned items whenever you want.</span>
           </div>
-          <div class="pc2-intro-preview"><div class="pc-preview-avatar pc-frame_sapphire"><img src="/static/logo.png" alt=""></div></div>
+          <div class="pc2-intro-preview"><div class="pc-preview-avatar pc-frame-sapphire"><img src="/static/logo.png" alt=""></div></div>
         </div>
-        <% const sections=[['frame','frames','Avatar Frames','Decorative borders and ambient glows for your profile picture.'],['motion','motion','Avatar Motion','Animated effects that give your profile picture movement.'],['background','backgrounds','Profile Backgrounds','Atmospheres to customize your profile header.'],['nameplate','nameplates','Nameplates','Special treatments for your display name.'],['unlock','special','Special Unlocks','Additional profile customization capabilities.']]; %>
+        <% const sections=[['frame','frames','Avatar Frames','Decorative borders and ambient glows for your profile picture.'],['motion','motion','Avatar Motion','Animated effects that give your profile picture movement.'],['nameplate','nameplates','Nameplates','Special treatments for your display name.'],['unlock','special','Special Unlocks','Additional profile customization capabilities.']]; %>
         <% for(const [cat,id,title,description] of sections){ %>
           <section class="pc2-category-section" id="<%= id %>">
             <div class="pc2-section-header">
@@ -90,9 +89,7 @@
                 <article class="pc2-product">
                   <div class="pc2-product-art pc-item-<%= item.id %>">
                     <% if(cat==='frame' || cat==='motion' || cat==='unlock'){ %>
-                      <div class="pc-preview-avatar <%= cat==='frame'?'pc-'+item.id:cat==='motion'?'pc-'+item.id:'pc-frame_prism' %>"><img src="/static/logo.png" alt=""></div>
-                    <% } else if(cat==='background'){ %>
-                      <div class="pc-background-sample pc-<%= item.id %>"><span>PRESSBOXD</span><i>✧</i></div>
+                      <div class="pc-preview-avatar <%= cat==='frame'?'pc-'+item.id:cat==='motion'?'pc-'+item.id:'pc-frame-prism' %>"><img src="/static/logo.png" alt=""></div>
                     <% } else if(cat==='nameplate'){ %>
                       <div class="pc-name-sample pc-<%= item.id %>">USERNAME</div>
                     <% } %>
