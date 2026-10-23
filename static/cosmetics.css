@@ -227,3 +227,114 @@
   .pb-global-avatar-fx.pc-frame-aurora::after,
   .pb-global-avatar-fx.pc-frame-prism::after { animation:none !important; }
 }
+
+/* ============================================================
+   PRESSBOXD SITE-MATCHED STORE AND PROFILE CONTROLS
+   This block changes presentation only; wallet and ownership APIs
+   are untouched. Uses the same black / fine-rule language as shows.ejs.
+   ============================================================ */
+body.pc2-page,html:has(body.pc2-page){background:#000!important;background-image:none!important}
+body.pc2-page{font:14px/1.5 Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;color:#f4f4f6!important}
+.pc2-page *, .pc2-page *::before, .pc2-page *::after{box-sizing:border-box}
+.pc2-page a{color:inherit}
+.pc2-page h1,.pc2-page h2,.pc2-page h3{letter-spacing:-.025em}
+.pc2-site-header{background:#000!important;border-bottom:1px solid rgba(255,255,255,.1)!important;box-shadow:none!important}
+.pc2-site-header .pc2-topbar-inner{max-width:1440px;margin:auto;padding:8px 18px;display:flex;align-items:center;justify-content:space-between;gap:22px;min-height:78px}
+.pc2-brand-cluster{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.pc2-brand-cluster .pc2-logo{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.pc2-brand-cluster .pc2-logo img{width:36px;height:36px;object-fit:contain}
+.pc2-brand-cluster .pc2-wordmark{display:inline-flex;align-items:center}
+.pc2-brand-cluster .pc2-wordmark img{height:70px;max-width:200px;width:auto;object-fit:contain}
+.pc2-top-nav{display:flex;align-items:center;justify-content:center;gap:17px;flex-wrap:wrap}
+.pc2-top-nav a,.pc2-account-nav a{font-size:12px;font-weight:650;text-decoration:none;color:rgba(255,255,255,.78);transition:color .14s ease}
+.pc2-top-nav a:hover,.pc2-account-nav a:hover{color:#fff}
+.pc2-account-nav{display:flex;align-items:center;gap:14px;flex-shrink:0}
+.pc2-user-link{display:flex;gap:7px;align-items:center}
+.pc2-user-link img{border-radius:50%;width:27px;height:27px;object-fit:cover}
+.pc2-account-nav .pc2-register{background:var(--accent,#3252b3);padding:8px 12px;color:#fff;border:1px solid transparent}
+.pc2-page .pc2-main{max-width:1440px;margin:0 auto;padding:24px 18px 50px}
+.pc2-breadcrumb{display:flex;align-items:center;gap:9px;color:rgba(255,255,255,.45);font-size:11px;margin-bottom:19px}
+.pc2-breadcrumb a{color:rgba(255,255,255,.7);text-decoration:none}
+.pc2-breadcrumb a:hover{color:#fff}
+.pc2-page-heading{display:flex;justify-content:space-between;align-items:center;gap:22px;border-bottom:1px solid rgba(255,255,255,.11);padding:4px 0 28px;margin-bottom:24px}
+.pc2-heading-copy{max-width:660px}
+.pc2-kicker{font-size:10px;letter-spacing:.095em;color:rgba(255,255,255,.5);font-weight:800;margin:0 0 6px}
+.pc2-heading-copy h1{margin:0 0 8px!important;color:#fff!important;font-size:clamp(27px,3.5vw,38px)!important;font-weight:900;line-height:1.13}
+.pc2-heading-copy p{color:rgba(255,255,255,.59);margin:0;font-size:12px;line-height:1.7}
+.pc2-heading-aside{text-align:right;min-width:170px;display:flex;flex-direction:column;align-items:flex-end;gap:9px}
+.pc2-wallet-label{font-size:10px;color:rgba(255,255,255,.53);font-weight:800;letter-spacing:.1em}
+.pc2-wallet-amount{font-size:22px;font-weight:900;white-space:nowrap;line-height:1}
+.pc2-wallet-amount span{font-size:10px;letter-spacing:.07em;color:rgba(255,255,255,.65)}
+.pc2-signin-prompt{color:#aaa;max-width:200px;font-size:12px;margin:0}
+.pc2-page .pc2-button{appearance:none!important;display:inline-flex!important;align-items:center;justify-content:center!important;gap:7px;text-decoration:none!important;white-space:nowrap;cursor:pointer;font:750 11px/1.2 Inter,system-ui,sans-serif!important;letter-spacing:0!important;padding:10px 15px!important;border-radius:3px!important;transition:background .15s ease,border-color .15s ease!important;box-shadow:none!important}
+.pc2-page .pc2-button-primary{color:#fff!important;background:var(--accent,#3252b3)!important;border:1px solid var(--accent,#3252b3)!important}
+.pc2-page .pc2-button-primary:hover{filter:brightness(1.15)}
+.pc2-page .pc2-button-secondary{color:rgba(255,255,255,.9)!important;background:rgba(255,255,255,.045)!important;border:1px solid rgba(255,255,255,.19)!important}
+.pc2-page .pc2-button-secondary:hover{background:rgba(255,255,255,.1)!important;border-color:rgba(255,255,255,.32)!important}
+.pc2-page .pc2-button-small{padding:8px 12px!important}
+.pc2-page .pc2-button:disabled{opacity:.36;cursor:not-allowed}
+.pc2-message{border:1px solid rgba(255,255,255,.16);background:#0b0b0b;padding:10px 13px;margin-bottom:17px;color:#eee;font-size:12px}
+.pc2-message-success{border-left:3px solid #41865c}.pc2-message-error{border-left:3px solid #bd5555}
+.pc2-content-grid{display:grid;grid-template-columns:188px minmax(0,1fr);gap:34px;align-items:start}
+.pc2-sidebar{position:sticky;top:16px;display:flex;flex-direction:column;gap:0;padding-top:8px}
+.pc2-sidebar-heading{color:rgba(255,255,255,.42);font-size:10px;font-weight:900;letter-spacing:.08em;margin-bottom:9px;padding:0 10px}
+.pc2-sidebar a{display:flex;justify-content:space-between;align-items:center;text-decoration:none;padding:11px 10px;border-bottom:1px solid rgba(255,255,255,.055);font-size:12px;color:#b9b9bf}
+.pc2-sidebar a:hover{background:rgba(255,255,255,.04);color:#fff}
+.pc2-sidebar a span{font-size:13px;opacity:.6}
+.pc2-sidebar-divider{border-top:1px solid rgba(255,255,255,.13);margin:18px 0 6px}
+.pc2-intro-strip{border:1px solid rgba(255,255,255,.11);background:#070707;min-height:112px;display:flex;justify-content:space-between;gap:25px;align-items:center;padding:23px 30px 23px 22px;margin-bottom:29px}
+.pc2-intro-strip strong{font-size:17px;font-weight:900;display:block;line-height:1.3;margin-bottom:4px}
+.pc2-intro-strip span{font-size:12px;color:#9c9ca3}
+.pc2-intro-preview{width:96px;height:66px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pc2-intro-preview .pc-preview-avatar{width:60px;height:60px}
+.pc2-category-section{scroll-margin-top:18px;margin:0 0 36px}
+.pc2-section-header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:13px;padding-bottom:11px;border-bottom:1px solid rgba(255,255,255,.13)}
+.pc2-section-header h2{font-size:18px;font-weight:850;margin:0 0 2px;color:#f9f9fa;line-height:1.2}
+.pc2-section-header p{font-size:11px;color:rgba(255,255,255,.53);margin:0}
+.pc2-item-count{font-size:10px;letter-spacing:.07em;color:rgba(255,255,255,.44);font-weight:800;white-space:nowrap}
+.pc2-product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.pc2-product{min-width:0;border:1px solid rgba(255,255,255,.095);background:#060606;transition:border-color .15s ease;display:flex;flex-direction:column}
+.pc2-product:hover{border-color:rgba(255,255,255,.23)}
+.pc2-product-art{height:158px;display:flex;align-items:center;justify-content:center;background:#090909;position:relative;padding:14px;isolation:isolate}
+.pc2-product-art .pc-preview-avatar{width:82px;height:82px}
+.pc2-product-art .pc-background-sample{height:96px;width:92%;border:1px solid rgba(255,255,255,.08);border-radius:3px}
+.pc2-product-art .pc-name-sample{font-size:18px}
+.pc2-rarity{position:absolute;top:9px;left:10px;text-transform:uppercase;letter-spacing:.075em;font-size:9px;color:rgba(255,255,255,.7);font-weight:800;background:#111;border:1px solid rgba(255,255,255,.13);padding:3px 6px}
+.pc2-product-info{border-top:1px solid rgba(255,255,255,.07);padding:13px 13px 14px;display:flex;flex-direction:column;flex:1}
+.pc2-product-info h3{margin:0 0 3px;font-weight:800;font-size:13px;color:#fff}
+.pc2-product-info p{font-size:11px;color:rgba(255,255,255,.53);line-height:1.55;margin:0 0 16px;flex:1;min-height:32px}
+.pc2-product-buy-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pc2-product-buy-row form{margin:0}
+.pc2-price{font-size:12px;font-weight:900;white-space:nowrap}
+.pc2-owned{font-size:11px;color:#9ec6ad;font-weight:800;text-decoration:none}
+.pc2-owned:hover{text-decoration:underline}
+.pc2-inventory-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pc2-inventory-card{border:1px solid rgba(255,255,255,.105);background:#060606;padding:22px;min-width:0}
+.pc2-inventory-card-heading{display:flex;justify-content:space-between;gap:10px;align-items:start;margin-bottom:11px}
+.pc2-inventory-card h2{font-size:18px;margin:0;color:#f9f9fa;line-height:1.3}
+.pc2-equipped-status{color:rgba(255,255,255,.53);font-size:12px;margin:0 0 20px}.pc2-equipped-status strong{color:#f2f2f2}
+.pc2-equip-form{display:flex;flex-direction:column;gap:9px;align-items:stretch}
+.pc2-equip-form label{font-size:10px;font-weight:800;letter-spacing:.09em;color:#8d8d93}
+.pc2-equip-form select{background:#101013;border:1px solid rgba(255,255,255,.17);color:#f6f6f6;padding:10px 12px;width:100%;font:12px Inter,system-ui,sans-serif;border-radius:3px}
+.pc2-equip-form .pc2-button{align-self:flex-start;margin-top:6px}
+.pc2-no-items{font-size:11px;color:#999;margin-top:10px}.pc2-no-items a{color:#aac8ff}
+.pc2-unlock-section{margin:30px 0 0}
+.pc2-unlock-row{border:1px solid rgba(255,255,255,.1);background:#080808;padding:18px;display:flex;justify-content:space-between;gap:15px;align-items:center}
+.pc2-unlock-row strong{font-size:13px}.pc2-unlock-row p{font-size:11px;color:#909099;margin:4px 0 0}
+.pc2-unlock-actions{display:flex;align-items:center;gap:16px;flex-shrink:0}
+.pc2-unlocked{font-size:11px;font-weight:800;color:#9ec6ad}.pc2-locked{font-size:11px;color:#999}
+.pc2-footer{max-width:1440px;padding:10px 18px 40px;color:rgba(255,255,255,.42);font-size:11px;border-top:1px solid rgba(255,255,255,.08)}
+/* Move profile cosmetics controls to the far side of Followers / Following.
+   Flat dark buttons match the original profile's Follow/Friends controls. */
+.profile_top_actions .pb-cosmetic-profile-actions{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pb-cosmetic-profile-actions .pb-cosmetic-store-link,
+.pb-cosmetic-store-link{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;padding:7px 11px!important;margin:0!important;border-radius:4px!important;background:rgba(255,255,255,.045)!important;border:1px solid rgba(255,255,255,.19)!important;color:rgba(255,255,255,.88)!important;font-size:11px!important;font-weight:700!important;text-decoration:none!important;box-shadow:none!important;text-shadow:none!important;letter-spacing:0!important;line-height:1.35!important;transition:background .15s ease,border-color .15s ease!important}
+.pb-cosmetic-store-link:hover{background:rgba(255,255,255,.095)!important;border-color:rgba(255,255,255,.32)!important;color:white!important}
+/* Integrate background skins with the existing banner instead of inserting an alien-looking decorative strip. */
+.profile_hero.pb-profile-themed-hero.pc-profile_night .profile_hero_overlay{background:radial-gradient(circle at 85% 20%,rgba(75,45,175,.45),transparent 55%),linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.68))}
+.profile_hero.pb-profile-themed-hero.pc-profile_galaxy .profile_hero_overlay{background:radial-gradient(circle at 35% 15%,rgba(76,99,200,.40),transparent 50%),radial-gradient(circle at 85% 85%,rgba(136,64,160,.25),transparent 55%),linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.72))}
+.profile_hero.pb-profile-themed-hero.pc-profile_sunset .profile_hero_overlay{background:linear-gradient(120deg,rgba(172,31,92,.33),rgba(49,32,120,.32)),linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.7))}
+@media(max-width:1200px){.pc2-site-header .pc2-topbar-inner{flex-wrap:wrap;justify-content:center;gap:7px 18px}.pc2-top-nav{order:3;width:100%;padding:2px 0 9px}.pc2-content-grid{gap:20px}}
+@media(max-width:850px){.pc2-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pc2-content-grid{grid-template-columns:160px minmax(0,1fr);gap:18px}}
+@media(max-width:650px){.pc2-page .pc2-main{padding:17px 12px 35px}.pc2-site-header .pc2-topbar-inner{padding:8px 12px;justify-content:space-between}.pc2-brand-cluster .pc2-wordmark img{height:50px;max-width:148px}.pc2-top-nav{gap:8px 12px}.pc2-top-nav a{font-size:11px}.pc2-page-heading{align-items:flex-start;flex-wrap:wrap;gap:14px}.pc2-heading-aside{align-items:flex-start;text-align:left}.pc2-content-grid{display:block}.pc2-sidebar{position:static;flex-direction:row;flex-wrap:wrap;gap:6px;margin-bottom:18px;padding:0}.pc2-sidebar-heading,.pc2-sidebar-divider{display:none}.pc2-sidebar a{border:1px solid rgba(255,255,255,.13);padding:7px 10px;font-size:11px}.pc2-sidebar a span{display:none}.pc2-intro-strip{padding:16px;min-height:90px}.pc2-product-grid{gap:9px}.pc2-product-art{height:135px}.pc2-product-art .pc-preview-avatar{width:70px;height:70px}.pc2-inventory-grid{grid-template-columns:1fr}.pc2-unlock-row{align-items:flex-start;flex-direction:column}.pc2-unlock-actions{flex-wrap:wrap}.profile_top_actions .pb-cosmetic-profile-actions{margin-left:0;width:100%;border-top:1px solid rgba(255,255,255,.09);padding-top:9px}}
+@media(max-width:405px){.pc2-product-grid{grid-template-columns:1fr}.pc2-product-art{height:155px}.pc2-product-art .pc-preview-avatar{width:86px;height:86px}.pc2-intro-preview{display:none}}

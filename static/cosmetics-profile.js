@@ -20,30 +20,36 @@
   }
   const username = String(data.username || '').trim();
   const heading = Array.from(main.querySelectorAll('h1')).find(h => h.textContent.trim().toLowerCase().includes(username.toLowerCase())) || main.querySelector('h1');
-  if (heading) {
-    if (equipped.nameplate) heading.classList.add('pb-cosmetic-heading','pc-'+equipped.nameplate);
-    const store = document.createElement('a');
-    store.className = 'pb-cosmetic-store-link';
-    store.href = '/store';
-    store.textContent = '💎 GEM Store';
-    const links = [store];
-    if (data.isMe) {
-      const collection = document.createElement('a');
-      collection.href = '/me/cosmetics';
-      collection.className = 'pb-cosmetic-store-link';
-      collection.textContent = '✦ My Cosmetics';
-      links.push(collection);
-    }
-    const wrap = document.createElement('div');
-    for (const link of links) wrap.appendChild(link);
-    heading.insertAdjacentElement('afterend',wrap);
+  if (heading && equipped.nameplate) {
+    heading.classList.add('pb-cosmetic-heading', 'pc-' + equipped.nameplate);
   }
+
+  // Put the cosmetics controls beside Followers / Following, not below the
+  // profile name. Using the native profile action row keeps the layout familiar.
+  const actions = main.querySelector('.profile_top_actions.profile_counts') ||
+    main.querySelector('.profile_top_actions');
+  const links = document.createElement('div');
+  links.className = 'pb-cosmetic-profile-actions';
+  const store = document.createElement('a');
+  store.className = 'pb-cosmetic-store-link';
+  store.href = '/store';
+  store.textContent = 'GEM Store';
+  links.appendChild(store);
+  if (data.isMe) {
+    const collection = document.createElement('a');
+    collection.href = '/me/cosmetics';
+    collection.className = 'pb-cosmetic-store-link';
+    collection.textContent = 'My Cosmetics';
+    links.appendChild(collection);
+  }
+  // An older or customized profile template may omit .profile_top_actions.
+  // Fall back to a single inline row rather than creating floating panels.
+  if (actions) actions.appendChild(links);
+  else if (heading) heading.insertAdjacentElement('afterend', links);
+
   if (equipped.background) {
-    // Keep the existing user-uploaded banner: add a compact separate atmosphere strip.
-    const surface = document.createElement('div');
-    surface.className = 'pb-profile-cosmetic-surface pc-'+equipped.background;
-    surface.setAttribute('aria-hidden','true');
-    main.insertBefore(surface,main.firstChild);
+    const hero = main.querySelector('.profile_hero');
+    if (hero) hero.classList.add('pb-profile-themed-hero','pc-' + equipped.background);
   }
   if (!equipped.frame && !equipped.motion) return;
   const images = [...main.querySelectorAll('img')].filter(img => !img.closest('nav,footer'));
