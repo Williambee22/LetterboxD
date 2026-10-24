@@ -426,5 +426,80 @@
       <% } %>
     </div>
   </main>
+  
+  <script>
+  (() => {
+    async function secretPost(path, data = null) {
+      const options = {
+        method: 'POST',
+        credentials: 'same-origin'
+      };
+  
+      if (data !== null) {
+        options.headers = {
+          'Content-Type': 'application/json'
+        };
+        options.body = JSON.stringify(data);
+      }
+  
+      try {
+        const response = await fetch(path, options);
+  
+        if (!response.ok) {
+          console.error('Sheldon secret failed:', path, response.status);
+          return false;
+        }
+  
+        return true;
+      } catch (error) {
+        console.error('Sheldon secret error:', error);
+        return false;
+      }
+    }
+  
+    // STEP 2: Click Lowest Critic Shows
+    const criticLink = document.querySelector(
+      'a[href="/top?mode=critic_bottom"]'
+    );
+  
+    if (criticLink) {
+      criticLink.addEventListener('click', async (event) => {
+        event.preventDefault();
+  
+        await secretPost('/__sheldon/step2');
+  
+        window.location.href = criticLink.href;
+      });
+    }
+  
+    // STEP 3: Click displayed #3 or #4
+    const currentMode = new URLSearchParams(location.search).get('mode');
+  
+    if (currentMode === 'critic_bottom') {
+      document.querySelectorAll('.ts_card .ts_rank').forEach(rankElement => {
+        rankElement.addEventListener('click', async (event) => {
+          const match = rankElement.textContent.trim().match(/^#\s*(\d+)/);
+          if (!match) return;
+  
+          const rank = Number(match[1]);
+  
+          if (rank !== 3 && rank !== 4) return;
+  
+          event.preventDefault();
+          event.stopPropagation();
+  
+          const success = await secretPost('/__sheldon/finish', {
+            rank
+          });
+  
+          if (success) {
+            window.location.href = '/sheldon-results';
+          }
+        });
+      });
+    }
+  })();
+  </script>
+
 </body>
 </html>
