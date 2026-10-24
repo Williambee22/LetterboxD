@@ -1,20 +1,34 @@
-<!-- SHELDON_SECURE_TOP_V2 -->
+<!-- SHELDON_SECURE_TOP_V3 -->
 <script>
-(()=>{'use strict';const mode=new URLSearchParams(location.search).get('mode')||'top';
- document.addEventListener('click',async ev=>{
-  const a=ev.target.closest('a[href]');
-  if(mode!=='critic_bottom'){
-    if(!a)return;let u;try{u=new URL(a.href,location.href)}catch{return}
-    if(u.origin!==location.origin||u.pathname!=='/top'||u.searchParams.get('mode')!=='critic_bottom')return;
-    ev.preventDefault();try{await fetch('/__sheldon/step2',{method:'POST',credentials:'same-origin'});}catch(e){}location.assign(u.href);return;
-  }
-  const rank=ev.target.closest('.ts_card .ts_rank');if(!rank)return;
-  const cards=Array.from(document.querySelectorAll('.ts_card'));const pos=cards.indexOf(rank.closest('.ts_card'))+1;
-  if(pos!==3&&pos!==4)return;
-  ev.preventDefault();ev.stopPropagation();
-  try{const r=await fetch('/__sheldon/finish',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({rank:pos})});if(r.ok){location.assign('/sheldon-results');return}}catch(e){}
-  // Invalid sequence: fall back to the card's ordinary navigation.
-  const target=rank.closest('a[href]')||rank.closest('.ts_card')?.querySelector('a[href]');if(target)location.assign(target.href);
- },true);
+(()=>{'use strict';
+  const mode=new URLSearchParams(location.search).get('mode')||'top';
+  document.addEventListener('click',async event=>{
+    if(mode!=='critic_bottom'){
+      const link=event.target.closest('a[href]');if(!link)return;
+      let url;try{url=new URL(link.href,location.href)}catch{return}
+      if(url.origin!==location.origin||url.pathname.replace(/\/$/,'')!=='/top'||url.searchParams.get('mode')!=='critic_bottom')return;
+      event.preventDefault();event.stopPropagation();
+      try{
+        const response=await fetch('/__sheldon/step2',{method:'POST',credentials:'same-origin',cache:'no-store'});
+        if(!response.ok){console.warn('Sheldon step 2 rejected:',response.status);location.assign(url.href);return}
+        location.assign(url.href);
+      }catch(error){console.warn('Sheldon step 2 request failed',error);location.assign(url.href)}
+      return;
+    }
+    const card=event.target.closest('.ts_card');if(!card)return;
+    // Use the displayed rank, not the physical row index (ties change rankings).
+    const rankNode=card.querySelector('.ts_rank');if(!rankNode)return;
+    const displayed=rankNode.textContent.match(/#\s*(\d+)/);
+    const rank=displayed?Number(displayed[1]):NaN;
+    if(rank!==3&&rank!==4)return;
+    // Any click on the rank number triggers the secret. Other card links remain normal.
+    if(!event.target.closest('.ts_rank'))return;
+    event.preventDefault();event.stopPropagation();
+    try{
+      const response=await fetch('/__sheldon/finish',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({rank})});
+      if(response.ok){location.assign('/sheldon-results');return}
+      console.warn('Sheldon finish rejected:',response.status);
+    }catch(error){console.warn('Sheldon finish request failed',error)}
+  },true);
 })();
 </script>

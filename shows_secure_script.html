@@ -1,8 +1,18 @@
-<!-- SHELDON_SECURE_SHOWS_V2 -->
+<!-- SHELDON_SECURE_SHOWS_V3 -->
 <script>
-(()=>{'use strict';const input=document.getElementById('yearFilterInput')||document.querySelector('#showsFilterForm input[name="year"]');if(!input)return;
- document.addEventListener('click',async ev=>{const a=ev.target.closest('a[href]');if(!a)return;let url;try{url=new URL(a.href,location.href)}catch{return}if(url.origin!==location.origin||url.pathname!=='/top'||input.value.trim()!=='3or4')return;
- ev.preventDefault();try{const r=await fetch('/__sheldon/step1',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({phrase:'3or4'})});}catch(e){}location.assign(url.href);
- },true);
+(()=>{'use strict';
+  const input=document.getElementById('yearFilterInput')||document.querySelector('input[name="year"]');
+  if(!input)return;
+  document.addEventListener('click',async event=>{
+    const link=event.target.closest('a[href]');if(!link)return;
+    let url;try{url=new URL(link.href,location.href)}catch{return}
+    if(url.origin!==location.origin||url.pathname.replace(/\/$/,'')!=='/top'||input.value.trim().toLowerCase()!=='3or4')return;
+    event.preventDefault();event.stopPropagation();
+    try{
+      const response=await fetch('/__sheldon/step1',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({phrase:'3or4'}),cache:'no-store'});
+      if(!response.ok){console.warn('Sheldon step 1 rejected:',response.status);return}
+      location.assign(url.href);
+    }catch(error){console.warn('Sheldon step 1 request failed',error)}
+  },true);
 })();
 </script>
