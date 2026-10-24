@@ -1674,6 +1674,45 @@
       });
     })();
   </script>
+  
+  <script>
+  (() => {
+    const yearInput = document.getElementById('yearFilterInput');
+  
+    const topShowsLink = [...document.querySelectorAll('a[href="/top"]')]
+      .find(a => a.textContent.trim() === 'Top Shows');
+  
+    if (!yearInput || !topShowsLink) return;
+  
+    topShowsLink.addEventListener('click', async (event) => {
+      const year = yearInput.value.trim().toLowerCase();
+  
+      if (year !== '3or4') return;
+  
+      event.preventDefault();
+  
+      try {
+        const response = await fetch('/__sheldon/step1', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ year })
+        });
+  
+        if (!response.ok) {
+          console.error('Sheldon Step 1 failed:', response.status);
+        }
+      } catch (error) {
+        console.error('Sheldon Step 1 error:', error);
+      }
+  
+      window.location.href = topShowsLink.href;
+    });
+  })();
+  </script>
+
 </body>
 </html>
 
