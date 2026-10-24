@@ -1,0 +1,8 @@
+<!-- SHELDON_SECURE_SHOWS_V2 -->
+<script>
+(()=>{'use strict';const input=document.getElementById('yearFilterInput')||document.querySelector('#showsFilterForm input[name="year"]');if(!input)return;
+ document.addEventListener('click',async ev=>{const a=ev.target.closest('a[href]');if(!a)return;let url;try{url=new URL(a.href,location.href)}catch{return}if(url.origin!==location.origin||url.pathname!=='/top'||input.value.trim()!=='3or4')return;
+ ev.preventDefault();try{const r=await fetch('/__sheldon/step1',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({phrase:'3or4'})});}catch(e){}location.assign(url.href);
+ },true);
+})();
+</script>

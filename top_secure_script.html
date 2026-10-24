@@ -1,0 +1,20 @@
+<!-- SHELDON_SECURE_TOP_V2 -->
+<script>
+(()=>{'use strict';const mode=new URLSearchParams(location.search).get('mode')||'top';
+ document.addEventListener('click',async ev=>{
+  const a=ev.target.closest('a[href]');
+  if(mode!=='critic_bottom'){
+    if(!a)return;let u;try{u=new URL(a.href,location.href)}catch{return}
+    if(u.origin!==location.origin||u.pathname!=='/top'||u.searchParams.get('mode')!=='critic_bottom')return;
+    ev.preventDefault();try{await fetch('/__sheldon/step2',{method:'POST',credentials:'same-origin'});}catch(e){}location.assign(u.href);return;
+  }
+  const rank=ev.target.closest('.ts_card .ts_rank');if(!rank)return;
+  const cards=Array.from(document.querySelectorAll('.ts_card'));const pos=cards.indexOf(rank.closest('.ts_card'))+1;
+  if(pos!==3&&pos!==4)return;
+  ev.preventDefault();ev.stopPropagation();
+  try{const r=await fetch('/__sheldon/finish',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({rank:pos})});if(r.ok){location.assign('/sheldon-results');return}}catch(e){}
+  // Invalid sequence: fall back to the card's ordinary navigation.
+  const target=rank.closest('a[href]')||rank.closest('.ts_card')?.querySelector('a[href]');if(target)location.assign(target.href);
+ },true);
+})();
+</script>

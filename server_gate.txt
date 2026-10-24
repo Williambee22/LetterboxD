@@ -1,0 +1,46 @@
+ // SHELDON_SECURE_V2: server-only puzzle state. Do not trust sessionStorage or client redirects.
+ const secretTtlMs=15*60*1000;
+ const safeStage=(req,n)=>Number(req.session?.sheldonSecret?.stage)===n && Date.now()<Number(req.session.sheldonSecret.expires||0);
+ const sameSite=req=>{const origin=req.get('origin');if(!origin)return true;try{return new URL(origin).host===req.get('host')}catch{return false}};
+ function saveSession(req,res,next,fn){req.session.save(e=>e?next(e):fn())}
+ app.post('/__sheldon/step1',express.json({limit:'1kb'}),(req,res,next)=>{
+   if(!sameSite(req))return res.sendStatus(403);
+   if(String(req.body?.phrase||'')!=='3or4')return res.sendStatus(403);
+   req.session.sheldonSecret={stage:1,expires:Date.now()+secretTtlMs};
+   saveSession(req,res,next,()=>res.json({ok:true}));
+ });
+ app.post('/__sheldon/step2',(req,res,next)=>{
+   if(!sameSite(req)||!safeStage(req,1))return res.sendStatus(403);
+   req.session.sheldonSecret.stage=2;
+   saveSession(req,res,next,()=>res.json({ok:true}));
+ });
+ app.post('/__sheldon/finish',express.json({limit:'1kb'}),(req,res,next)=>{
+   if(!sameSite(req)||!safeStage(req,2)||![3,4].includes(Number(req.body?.rank)))return res.sendStatus(403);
+   req.session.sheldonSecret={stage:3,expires:Date.now()+secretTtlMs};
+   saveSession(req,res,next,()=>res.json({ok:true}));
+ });
+ app.post('/__sheldon/exit',(req,res,next)=>{
+   if(!sameSite(req))return res.sendStatus(403);
+   delete req.session.sheldonSecret;
+   saveSession(req,res,next,()=>res.sendStatus(204));
+ });
+ // Public results are inaccessible by typing or bookmarking a URL before puzzle completion.
+ // Entering the archive consumes the stage-3 ticket. Browse pages within the
+ // archive until you leave it (exit beacon) or the short ticket expires.
+ app.use('/sheldon-results',(req,res,next)=>{
+   if(req.method!=='GET')return next();
+   if(/^\/admin(?:\/|$)/.test(req.path)||/^\/\d+\/edit(?:\/|$)/.test(req.path))return next();
+   let db;
+   try{
+     if(req.session?.uid){db=getConn();const row=db.prepare('SELECT is_admin FROM users WHERE id=?').get(req.session.uid);if(Number(row?.is_admin)===1)return next()}
+   }catch(e){return next(e)}finally{db?.close()}
+   const s=req.session?.sheldonSecret;
+   if(!s||![3,4].includes(s.stage)||Date.now()>=Number(s.expires||0))return res.redirect('/shows');
+   if(s.stage===3){
+     // First entrance is always the main archive, never a deep link.
+     if(req.path!=='/'&&req.path!=='')return res.redirect('/shows');
+     s.stage=4;
+     return saveSession(req,res,next,next);
+   }
+   return next();
+ });

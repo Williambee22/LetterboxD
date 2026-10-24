@@ -1,0 +1,9 @@
+<!-- SHELDON_RESULTS_EXIT_V2 -->
+<script>
+(()=>{'use strict';let internal=false;
+ document.addEventListener('click',e=>{const a=e.target.closest('a[href]');if(!a)return;try{const u=new URL(a.href,location.href);internal=u.origin===location.origin&&u.pathname.startsWith('/sheldon-results')&&!u.pathname.startsWith('/sheldon-results/admin')&&!u.pathname.endsWith('/edit')}catch{internal=false}},true);
+ // Closing the tab, navigating elsewhere, or leaving the archive resets access.
+ // Ordinary archive index-to-sheet navigation does not consume another puzzle.
+ window.addEventListener('pagehide',()=>{if(!internal)navigator.sendBeacon('/__sheldon/exit',new Blob([''],{type:'text/plain'}));});
+})();
+</script>
