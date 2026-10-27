@@ -277,5 +277,40 @@
   <footer class="wrap footer">
     <div class="small">Rate drum corps shows.</div>
   </footer>
+
+  
+  <script>
+  (() => {
+    if (location.pathname !== '/show/1112/critics') return;
+  
+    const profileLink = document.querySelector('a.nav_user[href="/me"]');
+  
+    if (!profileLink) return;
+  
+    profileLink.addEventListener('click', async event => {
+      // Only clicking the avatar itself counts, not the username.
+      const avatar = event.target.closest('.avatar_sm');
+      if (!avatar) return;
+  
+      event.preventDefault();
+  
+      try {
+        const response = await fetch('/__oatmeal/profile', {
+          method: 'POST',
+          credentials: 'same-origin'
+        });
+  
+        if (!response.ok) {
+          console.error('Oatmeal Profile step failed:', response.status);
+        }
+      } catch (error) {
+        console.error('Oatmeal Profile step:', error);
+      }
+  
+      location.href = profileLink.href;
+    });
+  })();
+  </script>
+
 </body>
 </html>
