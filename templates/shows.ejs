@@ -1712,6 +1712,37 @@
     });
   })();
   </script>
+  
+  <script>
+  (() => {
+    document.addEventListener('click', async event => {
+      const link = event.target.closest('a[href]');
+      if (!link) return;
+  
+      const url = new URL(link.href, location.origin);
+  
+      if (url.pathname !== '/show/1112') return;
+  
+      event.preventDefault();
+  
+      try {
+        const response = await fetch('/__oatmeal/crown', {
+          method: 'POST',
+          credentials: 'same-origin'
+        });
+  
+        if (!response.ok) {
+          console.error('Oatmeal Crown step failed:', response.status);
+        }
+      } catch (error) {
+        console.error('Oatmeal Crown step:', error);
+      }
+  
+      location.href = link.href;
+    });
+  })();
+  </script>
+
 
 </body>
 </html>
