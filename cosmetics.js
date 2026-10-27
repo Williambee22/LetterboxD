@@ -146,6 +146,140 @@ function initialize(db) {
 // The code catalog is the default; optional per-item overrides live in SQLite.
 // These functions always read the current connection, so changes work across
 // processes/redeploys and never depend on an in-memory cache.
+
+
+
+
+  // ========== OATMEAL SECRET UNLOCK ==========
+  const OATMEAL_TTL = 10 * 60 * 1000;
+
+  function oatmealState(req) {
+    if (!req.session) return null;
+
+    let state = req.session.oatmealSecret;
+
+    if (!state || Date.now() - state.started > OATMEAL_TTL) {
+      state = { stage: 0, clicks: 0, started: Date.now() };
+      req.session.oatmealSecret = state;
+    }
+
+    return state;
+  }
+
+  function oatmealOrigin(req, pathname) {
+    const origin = req.get('origin');
+    const referer = req.get('referer');
+
+    if (!origin || !referer) return false;
+
+    try {
+      const source = new URL(referer);
+      const from = new URL(origin);
+
+      return (
+        source.host === req.get('host') &&
+        from.host === req.get('host') &&
+        source.pathname === pathname &&
+        ['http:', 'https:'].includes(source.protocol)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function oatmealSave(req, res, next, payload) {
+    req.session.save(err => {
+      if (err) return next(err);
+      res.json(payload);
+    });
+  }
+
+  app.post('/__oatmeal/crown', (req, res, next) => {
+    if (!req.session?.uid) return res.sendStatus(401);
+    if (!oatmealOrigin(req, '/shows')) return res.sendStatus(403);
+
+    req.session.oatmealSecret = {
+      stage: 1,
+      clicks: 0,
+      started: Date.now()
+    };
+
+    oatmealSave(req, res, next, { ok: true });
+  });
+
+  app.post('/__oatmeal/critics', (req, res, next) => {
+    if (!req.session?.uid) return res.sendStatus(401);
+    if (!oatmealOrigin(req, '/show/1112')) return res.sendStatus(403);
+
+    const state = oatmealState(req);
+    if (state.stage !== 1) return res.sendStatus(403);
+
+    state.stage = 2;
+    oatmealSave(req, res, next, { ok: true });
+  });
+
+  app.post('/__oatmeal/profile', (req, res, next) => {
+    if (!req.session?.uid) return res.sendStatus(401);
+    if (!oatmealOrigin(req, '/show/1112/critics')) {
+      return res.sendStatus(403);
+    }
+
+    const state = oatmealState(req);
+    if (state.stage !== 2) return res.sendStatus(403);
+
+    state.stage = 3;
+    state.clicks = 0;
+
+    oatmealSave(req, res, next, { ok: true });
+  });
+
+  app.post('/__oatmeal/footer', (req, res, next) => {
+    if (!req.session?.uid) return res.sendStatus(401);
+    if (!oatmealOrigin(req, '/me')) return res.sendStatus(403);
+
+    const state = oatmealState(req);
+    if (state.stage !== 3) return res.sendStatus(403);
+
+    state.clicks += 1;
+
+    if (state.clicks < 4) {
+      return oatmealSave(req, res, next, {
+        ok: true,
+        unlocked: false
+      });
+    }
+
+    let db;
+
+    try {
+      db = getConn();
+      initialize(db);
+
+      db.prepare(`
+        INSERT OR IGNORE INTO pb_cosmetics_inventory
+          (user_id, item_id, price_paid)
+        VALUES (?, 'frame_oatmeal', 0)
+      `).run(Number(req.session.uid));
+
+      req.session.oatmealSecret = {
+        stage: 0,
+        clicks: 0,
+        started: Date.now()
+      };
+
+      oatmealSave(req, res, next, {
+        ok: true,
+        unlocked: true
+      });
+    } catch (err) {
+      next(err);
+    } finally {
+      if (db) db.close();
+    }
+  });
+  // ========== END OATMEAL SECRET ==========
+
+
 function effectivePrice(db, item) {
   const row = db.prepare('SELECT price FROM pb_cosmetics_price_overrides WHERE item_id=?').get(item.id);
   return row ? Number(row.price) : item.price;
