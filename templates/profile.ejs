@@ -1881,5 +1881,47 @@
       });
     })();
   </script>
+  
+  <script>
+  (() => {
+    if (location.pathname !== '/me') return;
+  
+    const footerText = [...document.querySelectorAll('footer .small')]
+      .find(el => el.textContent.trim() === 'Rate drum corps shows.');
+  
+    if (!footerText) return;
+  
+    let sending = false;
+  
+    footerText.addEventListener('click', async () => {
+      if (sending) return;
+      sending = true;
+  
+      try {
+        const response = await fetch('/__oatmeal/footer', {
+          method: 'POST',
+          credentials: 'same-origin'
+        });
+  
+        if (!response.ok) {
+          console.error('Oatmeal Footer step failed:', response.status);
+          return;
+        }
+  
+        const result = await response.json();
+  
+        if (result.unlocked) {
+          alert('Secret Unlocked: Oatmeal Avatar Frame!');
+          window.location.href = '/me/cosmetics';
+        }
+      } catch (error) {
+        console.error('Oatmeal Footer step:', error);
+      } finally {
+        sending = false;
+      }
+    });
+  })();
+  </script>
+
 </body>
 </html>
