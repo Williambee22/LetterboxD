@@ -69,7 +69,7 @@ const CATALOG = Object.freeze([
   {"id":"name_void","category":"nameplate","name":"Voidwalker","price":50000,"rarity":"Mythic","description":"Violet twilight against cold cosmic white."},
   {"id":"name_holographic","category":"nameplate","name":"Holographic Elite","price":60000,"rarity":"Mythic","description":"An animated cyan, purple and rose holographic finish."},
   {"id":"name_royalty","category":"nameplate","name":"Imperial","price":75000,"rarity":"Celestial","description":"Animated champagne-gold and platinum prestige."},
-  {"id":"name_omnichrome","category":"nameplate","name":"Omnichrome","price":100000,"rarity":"Celestial","description":"A constantly flowing full-spectrum name treatment."}
+  {"id":"name_omnichrome","category":"nameplate","name":"Omnichrome","price":100000,"rarity":"Celestial","description":"A constantly flowing full-spectrum name treatment."},
   {
     id: 'frame_oatmeal',
     category: 'frame',
@@ -77,7 +77,7 @@ const CATALOG = Object.freeze([
     price: 0,
     rarity: 'Secret',
     description: 'Unlocked after finding a secret.'
-  },
+  }
 ]);
 const ITEMS = new Map(CATALOG.map(item => [item.id, item]));
 const CATEGORIES = Object.freeze(['frame','motion','nameplate']);
