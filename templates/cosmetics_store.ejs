@@ -88,21 +88,35 @@
               <span class="pc2-item-count"><%= catalog.filter(it=>it.category===cat).length %> ITEMS</span>
             </div>
             <div class="pc2-product-grid">
-              <% for(const item of catalog.filter(it=>it.category===cat)){ const isOwned=owned_ids.has(item.id); const isEquipped=equipped[cat]===item.id; %>
+              <% for(const item of catalog.filter(it=>it.category===cat)){
+                const isOwned = owned_ids.has(item.id);
+                const isEquipped = equipped[cat] === item.id;
+                const isSecret = item.id === 'frame_oatmeal' && !isOwned;
+              %>
                 <article class="pc2-product">
                   <div class="pc2-product-art pc-item-<%= item.id %>">
+                    <% if(isSecret){ %>
+                      <div style="width:90px;height:90px;border:3px solid #777;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:auto;background:#191919;color:#fff;font-size:48px;font-weight:800;">
+                        ?
+                      </div>
+                    <% } else { %>
                     <% if(cat==='frame' || cat==='motion' || cat==='unlock'){ %>
                       <div class="pc-preview-avatar <%= cat==='frame'?'pc-'+item.id:cat==='motion'?'pc-'+item.id:'pc-frame-prism' %>"><img src="/static/logo.png" alt=""></div>
                     <% } else if(cat==='nameplate'){ %>
                       <div class="pc-name-sample pc-<%= item.id %>">USERNAME</div>
                     <% } %>
+                    <% } %>
                     <span class="pc2-rarity"><%= item.rarity %></span>
                   </div>
                   <div class="pc2-product-info">
-                    <h3><%= item.name %></h3>
-                    <p><%= item.description %></p>
+                    <h3><%= isSecret ? 'Secret Avatar Frame' : item.name %></h3>
+                    <p><%= isSecret ? 'Unlocked after finding a secret.' : item.description %></p>
                     <div class="pc2-product-buy-row">
-                      <span class="pc2-price">💎 <%= item.price.toLocaleString() %></span>
+                      <% if(isSecret){ %>
+                        <span class="pc2-price">???</span>
+                        <span class="pc2-owned">Locked</span>
+                      <% } else { %>
+                        <span class="pc2-price">💎 <%= item.price.toLocaleString() %></span>
                       <% if(isEquipped){ %>
                         <span class="pc2-owned">Equipped</span>
                       <% } else if(isOwned){ %>
@@ -115,6 +129,7 @@
                           <input type="hidden" name="item_id" value="<%= item.id %>">
                           <button type="submit" class="pc2-button pc2-button-secondary pc2-button-small" <%= balance < item.price ? 'disabled title="Not enough Gems"' : '' %>>Buy</button>
                         </form>
+                      <% } %>
                       <% } %>
                     </div>
                   </div>
