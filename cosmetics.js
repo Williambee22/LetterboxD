@@ -70,6 +70,14 @@ const CATALOG = Object.freeze([
   {"id":"name_holographic","category":"nameplate","name":"Holographic Elite","price":60000,"rarity":"Mythic","description":"An animated cyan, purple and rose holographic finish."},
   {"id":"name_royalty","category":"nameplate","name":"Imperial","price":75000,"rarity":"Celestial","description":"Animated champagne-gold and platinum prestige."},
   {"id":"name_omnichrome","category":"nameplate","name":"Omnichrome","price":100000,"rarity":"Celestial","description":"A constantly flowing full-spectrum name treatment."}
+  {
+    id: 'frame_oatmeal',
+    category: 'frame',
+    name: 'Oatmeal',
+    price: 0,
+    rarity: 'Secret',
+    description: 'Unlocked after finding a secret.'
+  },
 ]);
 const ITEMS = new Map(CATALOG.map(item => [item.id, item]));
 const CATEGORIES = Object.freeze(['frame','motion','nameplate']);
@@ -338,6 +346,9 @@ function getEquipped(db, userId) {
 
 function buy(db, userId, itemId) {
   const item = ITEMS.get(String(itemId));
+    if (item?.id === 'frame_oatmeal') {
+      throw new Error('This frame can only be unlocked by finding a secret.');
+    }
   const uid = Number(userId);
   if (!item) throw new Error('Unknown store item.');
   if (!Number.isSafeInteger(uid) || uid <= 0) throw new Error('Sign in to purchase cosmetics.');
