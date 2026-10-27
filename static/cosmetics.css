@@ -392,6 +392,7 @@ body.pc2-page{font:14px/1.5 Inter,system-ui,-apple-system,BlinkMacSystemFont,"Se
   filter: none;
 }
 
+
 /* Small avatars site-wide: respect their scaled effect measurements. */
 .pb-global-avatar-fx[class*="pc-frame_"]::before {
   content: '';
@@ -587,6 +588,18 @@ body.pc2-page{font:14px/1.5 Inter,system-ui,-apple-system,BlinkMacSystemFont,"Se
 @keyframes pc-lux-vortex{0%,100%{transform:rotate(-4deg) scale(.98)}50%{transform:rotate(4deg) scale(1.04)}}
 @keyframes pc-lux-astral{0%,100%{transform:translateY(0) rotate(0deg) scale(1)}30%{transform:translateY(-5px) rotate(-3deg) scale(1.02)}65%{transform:translateY(-2px) rotate(3deg) scale(1.035)}}
 /* New global, main-profile AND store-preview nameplates share one style. */
+
+.pc-preview-avatar.pc-frame_oatmeal::before {
+  background: conic-gradient(
+    #e8d7ae,
+    #b98954,
+    #fff0c9,
+    #8c5b37,
+    #e8d7ae
+  );
+  box-shadow: 0 0 18px rgba(205, 161, 107, .7);
+}
+
 .pc-name-sample.pc-name_ember,.pb-cosmetic-heading.pc-name_ember,.pb-global-nameplate.pc-name_ember{display:inline-block!important;background:linear-gradient(100deg,#ffd1a0,#fa713c,#e6332d,#ffd1a0)!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #ed662e55);}
 .pc-name-sample.pc-name_glacier,.pb-cosmetic-heading.pc-name_glacier,.pb-global-nameplate.pc-name_glacier{display:inline-block!important;background:linear-gradient(100deg,#f3ffff,#87e9ff,#4ea0ff,#f3ffff)!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #48c4ff55);}
 .pc-name-sample.pc-name_jade,.pb-cosmetic-heading.pc-name_jade,.pb-global-nameplate.pc-name_jade{display:inline-block!important;background:linear-gradient(100deg,#d5ffb9,#55eab8,#16874f,#d5ffb9)!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #37e1a155);}
