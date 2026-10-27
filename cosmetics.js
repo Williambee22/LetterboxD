@@ -1,3 +1,4 @@
+
 'use strict';
 
 // Profile cosmetics: permanent ownership, one equipped item per category,
@@ -79,9 +80,10 @@ const CATALOG = Object.freeze([
     description: 'Unlocked after finding a secret.'
   }
 ]);
+
 const ITEMS = new Map(CATALOG.map(item => [item.id, item]));
 const CATEGORIES = Object.freeze(['frame','motion','nameplate']);
-const MAX_PRICE = 1_000_000_000; // Maximum allowed price in virtual Gems.
+const MAX_PRICE = 1_000_000_000;
 const RARITIES = Object.freeze([...new Set(CATALOG.map(item => item.rarity))]);
 
 function initialize(db) {
@@ -147,139 +149,6 @@ function initialize(db) {
 // These functions always read the current connection, so changes work across
 // processes/redeploys and never depend on an in-memory cache.
 
-
-
-
-  // ========== OATMEAL SECRET UNLOCK ==========
-  const OATMEAL_TTL = 10 * 60 * 1000;
-
-  function oatmealState(req) {
-    if (!req.session) return null;
-
-    let state = req.session.oatmealSecret;
-
-    if (!state || Date.now() - state.started > OATMEAL_TTL) {
-      state = { stage: 0, clicks: 0, started: Date.now() };
-      req.session.oatmealSecret = state;
-    }
-
-    return state;
-  }
-
-  function oatmealOrigin(req, pathname) {
-    const origin = req.get('origin');
-    const referer = req.get('referer');
-
-    if (!origin || !referer) return false;
-
-    try {
-      const source = new URL(referer);
-      const from = new URL(origin);
-
-      return (
-        source.host === req.get('host') &&
-        from.host === req.get('host') &&
-        source.pathname === pathname &&
-        ['http:', 'https:'].includes(source.protocol)
-      );
-    } catch {
-      return false;
-    }
-  }
-
-  function oatmealSave(req, res, next, payload) {
-    req.session.save(err => {
-      if (err) return next(err);
-      res.json(payload);
-    });
-  }
-
-  app.post('/__oatmeal/crown', (req, res, next) => {
-    if (!req.session?.uid) return res.sendStatus(401);
-    if (!oatmealOrigin(req, '/shows')) return res.sendStatus(403);
-
-    req.session.oatmealSecret = {
-      stage: 1,
-      clicks: 0,
-      started: Date.now()
-    };
-
-    oatmealSave(req, res, next, { ok: true });
-  });
-
-  app.post('/__oatmeal/critics', (req, res, next) => {
-    if (!req.session?.uid) return res.sendStatus(401);
-    if (!oatmealOrigin(req, '/show/1112')) return res.sendStatus(403);
-
-    const state = oatmealState(req);
-    if (state.stage !== 1) return res.sendStatus(403);
-
-    state.stage = 2;
-    oatmealSave(req, res, next, { ok: true });
-  });
-
-  app.post('/__oatmeal/profile', (req, res, next) => {
-    if (!req.session?.uid) return res.sendStatus(401);
-    if (!oatmealOrigin(req, '/show/1112/critics')) {
-      return res.sendStatus(403);
-    }
-
-    const state = oatmealState(req);
-    if (state.stage !== 2) return res.sendStatus(403);
-
-    state.stage = 3;
-    state.clicks = 0;
-
-    oatmealSave(req, res, next, { ok: true });
-  });
-
-  app.post('/__oatmeal/footer', (req, res, next) => {
-    if (!req.session?.uid) return res.sendStatus(401);
-    if (!oatmealOrigin(req, '/me')) return res.sendStatus(403);
-
-    const state = oatmealState(req);
-    if (state.stage !== 3) return res.sendStatus(403);
-
-    state.clicks += 1;
-
-    if (state.clicks < 4) {
-      return oatmealSave(req, res, next, {
-        ok: true,
-        unlocked: false
-      });
-    }
-
-    let db;
-
-    try {
-      db = getConn();
-      initialize(db);
-
-      db.prepare(`
-        INSERT OR IGNORE INTO pb_cosmetics_inventory
-          (user_id, item_id, price_paid)
-        VALUES (?, 'frame_oatmeal', 0)
-      `).run(Number(req.session.uid));
-
-      req.session.oatmealSecret = {
-        stage: 0,
-        clicks: 0,
-        started: Date.now()
-      };
-
-      oatmealSave(req, res, next, {
-        ok: true,
-        unlocked: true
-      });
-    } catch (err) {
-      next(err);
-    } finally {
-      if (db) db.close();
-    }
-  });
-  // ========== END OATMEAL SECRET ==========
-
-
 function effectivePrice(db, item) {
   const row = db.prepare('SELECT price FROM pb_cosmetics_price_overrides WHERE item_id=?').get(item.id);
   return row ? Number(row.price) : item.price;
@@ -339,8 +208,6 @@ function metadataHistory(db, limit=25) {
   `).all(safeLimit);
 }
 
-// Admin permissions are verified against the current database row, not a
-// browser-supplied value or stale session.is_admin flag.
 function isStoreAdmin(db, userId) {
   const uid=Number(userId);
   if (!Number.isSafeInteger(uid) || uid<=0) return false;
@@ -391,8 +258,6 @@ function changePrice(db, adminId, itemId, rawPrice, reset=false) {
   return typeof tx.immediate === 'function' ? tx.immediate() : tx();
 }
 
-// Change human-readable item properties only. Item IDs and categories NEVER change;
-// existing ownership, equipped effects, and ledger entries remain valid.
 function changeMetadata(db, adminId, itemId, rawName, rawRarity, reset=false) {
   const uid=Number(adminId);
   const id=String(itemId || '').trim();
@@ -464,7 +329,7 @@ function getEquipped(db, userId) {
   const uid = Number(userId);
   const out = { frame: null, motion: null, nameplate: null };
   if (!Number.isSafeInteger(uid) || uid <= 0) return out;
-  const rows = db.prepare(`
+  const rows=db.prepare(`
     SELECT e.category, e.item_id
     FROM pb_cosmetics_equipped e
     JOIN pb_cosmetics_inventory i ON i.user_id=e.user_id AND i.item_id=e.item_id
@@ -480,37 +345,47 @@ function getEquipped(db, userId) {
 
 function buy(db, userId, itemId) {
   const item = ITEMS.get(String(itemId));
-    if (item?.id === 'frame_oatmeal') {
-      throw new Error('This frame can only be unlocked by finding a secret.');
-    }
-  const uid = Number(userId);
+
+  if (item?.id === 'frame_oatmeal') {
+    throw new Error('This frame can only be unlocked by finding a secret.');
+  }
+
+  const uid=Number(userId);
   if (!item) throw new Error('Unknown store item.');
   if (!Number.isSafeInteger(uid) || uid <= 0) throw new Error('Sign in to purchase cosmetics.');
   initialize(db);
   const tx=db.transaction(() => {
-    if (owns(db, uid, item.id)) throw new Error('You already own this item.');
-    // Read the price INSIDE the same write transaction used for the debit.
-    // Admin edits and purchases cannot charge a stale price.
+    if (owns(db,uid,item.id)) throw new Error('You already own this item.');
     const currentPrice=effectivePrice(db,item);
-    gems.balance(db, uid); // Creates a wallet only if one does not already exist.
-    const debit = db.prepare('UPDATE pb_betting_wallets SET balance=balance-? WHERE user_id=? AND balance>=?').run(currentPrice, uid, currentPrice);
+    gems.balance(db,uid);
+    const debit=db.prepare(
+      'UPDATE pb_betting_wallets SET balance=balance-? WHERE user_id=? AND balance>=?'
+    ).run(currentPrice,uid,currentPrice);
     if (debit.changes !== 1) throw new Error('Not enough Gems for this item.');
-    db.prepare('INSERT INTO pb_cosmetics_inventory(user_id,item_id,price_paid) VALUES (?,?,?)').run(uid,item.id,currentPrice);
-    db.prepare('INSERT INTO pb_betting_ledger(user_id,delta,reason) VALUES(?,?,?)').run(uid,-currentPrice,`cosmetic:${item.id}`);
-    // The first item in a category is automatically equipped.
+    db.prepare('INSERT INTO pb_cosmetics_inventory(user_id,item_id,price_paid) VALUES (?,?,?)')
+      .run(uid,item.id,currentPrice);
+    db.prepare('INSERT INTO pb_betting_ledger(user_id,delta,reason) VALUES(?,?,?)')
+      .run(uid,-currentPrice,`cosmetic:${item.id}`);
     if (CATEGORIES.includes(item.category)) {
-      db.prepare('INSERT OR IGNORE INTO pb_cosmetics_equipped(user_id,category,item_id) VALUES (?,?,?)').run(uid,item.category,item.id);
+      db.prepare(
+        'INSERT OR IGNORE INTO pb_cosmetics_equipped(user_id,category,item_id) VALUES (?,?,?)'
+      ).run(uid,item.category,item.id);
     }
-    const metadata=db.prepare('SELECT name,rarity FROM pb_cosmetics_metadata_overrides WHERE item_id=?').get(item.id);
-    return { item: {...item,...(metadata || {}),price:currentPrice}, balance: gems.balance(db, uid) };
+    const metadata=db.prepare(
+      'SELECT name,rarity FROM pb_cosmetics_metadata_overrides WHERE item_id=?'
+    ).get(item.id);
+    return {
+      item:{...item,...(metadata || {}),price:currentPrice},
+      balance:gems.balance(db,uid)
+    };
   });
   return typeof tx.immediate === 'function' ? tx.immediate() : tx();
 }
 
 function equip(db, userId, category, itemId) {
-  const uid = Number(userId);
-  const type = String(category || '');
-  const id = String(itemId || '');
+  const uid=Number(userId);
+  const type=String(category || '');
+  const id=String(itemId || '');
   if (!Number.isSafeInteger(uid) || uid <= 0) throw new Error('Sign in first.');
   if (!CATEGORIES.includes(type)) throw new Error('Unknown cosmetic category.');
   initialize(db);
@@ -519,13 +394,14 @@ function equip(db, userId, category, itemId) {
       db.prepare('DELETE FROM pb_cosmetics_equipped WHERE user_id=? AND category=?').run(uid,type);
       return getEquipped(db,uid);
     }
-    const item = ITEMS.get(id);
+    const item=ITEMS.get(id);
     if (!item || item.category !== type) throw new Error('That item cannot be equipped here.');
     if (!owns(db,uid,id)) throw new Error('You must own an item before equipping it.');
     db.prepare(`
       INSERT INTO pb_cosmetics_equipped(user_id,category,item_id)
       VALUES (?,?,?)
-      ON CONFLICT(user_id,category) DO UPDATE SET item_id=excluded.item_id, equipped_ts=unixepoch()
+      ON CONFLICT(user_id,category)
+      DO UPDATE SET item_id=excluded.item_id, equipped_ts=unixepoch()
     `).run(uid,type,id);
     return getEquipped(db,uid);
   })();
@@ -533,32 +409,161 @@ function equip(db, userId, category, itemId) {
 
 function sameOrigin(req) {
   for (const h of ['origin','referer']) {
-    const raw = req.get(h);
+    const raw=req.get(h);
     if (!raw) continue;
     try {
-      const url = new URL(raw);
+      const url=new URL(raw);
       if (url.host !== req.get('host') || !['http:','https:'].includes(url.protocol)) return false;
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   }
   return true;
 }
+
 function csrfToken(req) {
-  if (!req.session.cosmeticsCsrf) req.session.cosmeticsCsrf = crypto.randomBytes(32).toString('hex');
+  if (!req.session.cosmeticsCsrf) {
+    req.session.cosmeticsCsrf=crypto.randomBytes(32).toString('hex');
+  }
   return req.session.cosmeticsCsrf;
 }
+
 function validateWrite(req,res,next) {
   if (!req.session?.uid) return res.redirect('/login?next=%2Fstore');
   if (!sameOrigin(req)) return res.status(403).send('Invalid request origin.');
-  const expected = String(req.session.cosmeticsCsrf || '');
-  const provided = String(req.body.csrf || '');
-  if (!/^[a-f0-9]{64}$/.test(expected) || !/^[a-f0-9]{64}$/.test(provided) ||
-      !crypto.timingSafeEqual(Buffer.from(expected, 'hex'),Buffer.from(provided, 'hex'))) {
+  const expected=String(req.session.cosmeticsCsrf || '');
+  const provided=String(req.body.csrf || '');
+  if (
+    !/^[a-f0-9]{64}$/.test(expected) ||
+    !/^[a-f0-9]{64}$/.test(provided) ||
+    !crypto.timingSafeEqual(Buffer.from(expected,'hex'),Buffer.from(provided,'hex'))
+  ) {
     return res.status(403).send('Invalid form token. Refresh the store and try again.');
   }
   next();
 }
 
-function mount(app, getConn) {
+function mount(app,getConn) {
+  // ========== OATMEAL SECRET UNLOCK ==========
+  const OATMEAL_TTL=10*60*1000;
+
+  function oatmealState(req) {
+    if (!req.session) return null;
+    let state=req.session.oatmealSecret;
+    if (!state || Date.now()-state.started > OATMEAL_TTL) {
+      state={stage:0,clicks:0,started:Date.now()};
+      req.session.oatmealSecret=state;
+    }
+    return state;
+  }
+
+  function oatmealOrigin(req,pathname) {
+    const origin=req.get('origin');
+    const referer=req.get('referer');
+    if (!origin || !referer) return false;
+
+    try {
+      const source=new URL(referer);
+      const from=new URL(origin);
+      return (
+        source.host === req.get('host') &&
+        from.host === req.get('host') &&
+        source.pathname === pathname &&
+        ['http:','https:'].includes(source.protocol)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function oatmealSave(req,res,next,payload) {
+    req.session.save(err => {
+      if (err) return next(err);
+      res.json(payload);
+    });
+  }
+
+  app.post('/__oatmeal/crown',(req,res,next) => {
+    if (!req.session?.uid) return res.sendStatus(401);
+    if (!oatmealOrigin(req,'/shows')) return res.sendStatus(403);
+
+    req.session.oatmealSecret={
+      stage:1,
+      clicks:0,
+      started:Date.now()
+    };
+    oatmealSave(req,res,next,{ok:true});
+  });
+
+  app.post('/__oatmeal/critics',(req,res,next) => {
+    if (!req.session?.uid) return res.sendStatus(401);
+    if (!oatmealOrigin(req,'/show/1112')) return res.sendStatus(403);
+
+    const state=oatmealState(req);
+    if (state.stage !== 1) return res.sendStatus(403);
+
+    state.stage=2;
+    oatmealSave(req,res,next,{ok:true});
+  });
+
+  app.post('/__oatmeal/profile',(req,res,next) => {
+    if (!req.session?.uid) return res.sendStatus(401);
+    if (!oatmealOrigin(req,'/show/1112/critics')) return res.sendStatus(403);
+
+    const state=oatmealState(req);
+    if (state.stage !== 2) return res.sendStatus(403);
+
+    state.stage=3;
+    state.clicks=0;
+    oatmealSave(req,res,next,{ok:true});
+  });
+
+  app.post('/__oatmeal/footer',(req,res,next) => {
+    if (!req.session?.uid) return res.sendStatus(401);
+    if (!oatmealOrigin(req,'/me')) return res.sendStatus(403);
+
+    const state=oatmealState(req);
+    if (state.stage !== 3) return res.sendStatus(403);
+
+    state.clicks+=1;
+
+    if (state.clicks < 4) {
+      return oatmealSave(req,res,next,{
+        ok:true,
+        unlocked:false
+      });
+    }
+
+    let db;
+    try {
+      db=getConn();
+      initialize(db);
+
+      db.prepare(`
+        INSERT OR IGNORE INTO pb_cosmetics_inventory
+          (user_id,item_id,price_paid)
+        VALUES (?,'frame_oatmeal',0)
+      `).run(Number(req.session.uid));
+
+      req.session.oatmealSecret={
+        stage:0,
+        clicks:0,
+        started:Date.now()
+      };
+
+      oatmealSave(req,res,next,{
+        ok:true,
+        unlocked:true
+      });
+    } catch (err) {
+      next(err);
+    } finally {
+      if (db) db.close();
+    }
+  });
+
+  // ========== END OATMEAL SECRET ==========
+
   function page(req,res,view) {
     const db=getConn();
     try {
@@ -567,7 +572,9 @@ function mount(app, getConn) {
       const owned=uid?inventory(db,uid):[];
       const equipped=uid?getEquipped(db,uid):getEquipped(db,0);
       const balance=uid?gems.balance(db,uid):null;
+
       res.set('Cache-Control','private, no-store');
+
       return res.render(view,{
         me:res.locals.me || null,
         catalog:getCatalog(db),
@@ -576,24 +583,33 @@ function mount(app, getConn) {
         equipped,
         balance,
         csrf:uid?csrfToken(req):'',
-        notice:String(req.query.ok||'').slice(0,100),
-        error:String(req.query.error||'').slice(0,150)
+        notice:String(req.query.ok || '').slice(0,100),
+        error:String(req.query.error || '').slice(0,150)
       });
-    } finally { db.close(); }
+    } finally {
+      db.close();
+    }
   }
-  // Verify admin rights directly in the database on every admin request.
+
   function requireStoreAdmin(req,res,next) {
-    if (!req.session?.uid) return res.redirect('/login?next=%2Fstore%2Fadmin');
+    if (!req.session?.uid) {
+      return res.redirect('/login?next=%2Fstore%2Fadmin');
+    }
     let db;
     try {
       db=getConn();
-      if (!isStoreAdmin(db,req.session.uid)) return res.status(403).send('Store admin access required.');
+      if (!isStoreAdmin(db,req.session.uid)) {
+        return res.status(403).send('Store admin access required.');
+      }
       return next();
-    } catch(err) { return next(err); }
-    finally { if (db) db.close(); }
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (db) db.close();
+    }
   }
 
-  app.get('/store/admin',requireStoreAdmin,(req,res,next)=>{
+  app.get('/store/admin',requireStoreAdmin,(req,res,next) => {
     let db;
     try {
       db=getConn();
@@ -606,69 +622,131 @@ function mount(app, getConn) {
         rarities:RARITIES,
         csrf:csrfToken(req),
         maxPrice:MAX_PRICE,
-        notice:String(req.query.ok||'').slice(0,180),
-        error:String(req.query.error||'').slice(0,180)
+        notice:String(req.query.ok || '').slice(0,180),
+        error:String(req.query.error || '').slice(0,180)
       });
-    } catch(err) { return next(err); }
-    finally { if(db) db.close(); }
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (db) db.close();
+    }
   });
 
-  app.post('/store/admin/price',requireStoreAdmin,validateWrite,(req,res,next)=>{
+  app.post('/store/admin/price',requireStoreAdmin,validateWrite,(req,res,next) => {
     let db;
     try {
       db=getConn();
-      const reset=String(req.body.reset||'')==='1';
-      const result=changePrice(db,req.session.uid,req.body.item_id,req.body.price,reset);
+      const reset=String(req.body.reset || '') === '1';
+      const result=changePrice(
+        db,req.session.uid,req.body.item_id,req.body.price,reset
+      );
+
       const message=result.changed
         ? result.item.name+' updated to '+result.newPrice.toLocaleString()+' Gems.'
         : 'No price change needed for '+result.item.name+'.';
-      return res.redirect('/store/admin?ok='+encodeURIComponent(message)+'#item-'+encodeURIComponent(result.item.id));
-    } catch(err) {
+
+      return res.redirect(
+        '/store/admin?ok='+encodeURIComponent(message)+
+        '#item-'+encodeURIComponent(result.item.id)
+      );
+    } catch (err) {
       if (err.code && String(err.code).startsWith('SQLITE_')) return next(err);
-      return res.redirect('/store/admin?error='+encodeURIComponent(err.message||'Unable to change price.'));
-    } finally { if (db) db.close(); }
+      return res.redirect(
+        '/store/admin?error='+encodeURIComponent(err.message || 'Unable to change price.')
+      );
+    } finally {
+      if (db) db.close();
+    }
   });
 
-  app.post('/store/admin/metadata',requireStoreAdmin,validateWrite,(req,res,next)=>{
+  app.post('/store/admin/metadata',requireStoreAdmin,validateWrite,(req,res,next) => {
     let db;
     try {
       db=getConn();
-      const reset=String(req.body.reset||'')==='1';
-      const result=changeMetadata(db,req.session.uid,req.body.item_id,req.body.name,req.body.rarity,reset);
+      const reset=String(req.body.reset || '') === '1';
+      const result=changeMetadata(
+        db,req.session.uid,req.body.item_id,req.body.name,req.body.rarity,reset
+      );
+
       const message=result.changed
-        ? 'Updated '+result.newName+' ('+result.newRarity+').' : 'No name or rarity change needed.';
-      return res.redirect('/store/admin?ok='+encodeURIComponent(message)+'#item-'+encodeURIComponent(result.item.id));
-    } catch(err) {
+        ? 'Updated '+result.newName+' ('+result.newRarity+').'
+        : 'No name or rarity change needed.';
+
+      return res.redirect(
+        '/store/admin?ok='+encodeURIComponent(message)+
+        '#item-'+encodeURIComponent(result.item.id)
+      );
+    } catch (err) {
       if (err.code && String(err.code).startsWith('SQLITE_')) return next(err);
-      return res.redirect('/store/admin?error='+encodeURIComponent(err.message||'Unable to change item details.'));
-    } finally { if(db) db.close(); }
+      return res.redirect(
+        '/store/admin?error='+encodeURIComponent(err.message || 'Unable to change item details.')
+      );
+    } finally {
+      if (db) db.close();
+    }
   });
 
-  app.get('/store',(req,res)=>page(req,res,'cosmetics_store'));
-  app.get('/me/cosmetics',(req,res)=>{
-    if(!req.session?.uid) return res.redirect('/login?next=%2Fme%2Fcosmetics');
+  app.get('/store',(req,res) => page(req,res,'cosmetics_store'));
+
+  app.get('/me/cosmetics',(req,res) => {
+    if (!req.session?.uid) {
+      return res.redirect('/login?next=%2Fme%2Fcosmetics');
+    }
     return page(req,res,'cosmetics_inventory');
   });
-  app.post('/store/buy',validateWrite,(req,res,next)=>{
+
+  app.post('/store/buy',validateWrite,(req,res,next) => {
     const db=getConn();
     try {
       const result=buy(db,req.session.uid,req.body.item_id);
-      res.redirect('/store?ok='+encodeURIComponent(result.item.name+' purchased!'));
-    } catch(err) {
+      res.redirect(
+        '/store?ok='+encodeURIComponent(result.item.name+' purchased!')
+      );
+    } catch (err) {
       if (err.message?.includes('SQLITE')) return next(err);
-      res.redirect('/store?error='+encodeURIComponent(err.message || 'Purchase failed.'));
-    } finally { db.close(); }
+      res.redirect(
+        '/store?error='+encodeURIComponent(err.message || 'Purchase failed.')
+      );
+    } finally {
+      db.close();
+    }
   });
-  app.post('/store/equip',validateWrite,(req,res,next)=>{
+
+  app.post('/store/equip',validateWrite,(req,res,next) => {
     const db=getConn();
     try {
       equip(db,req.session.uid,req.body.category,req.body.item_id);
-      res.redirect('/me/cosmetics?ok='+encodeURIComponent('Cosmetic updated!'));
-    } catch(err) {
+      res.redirect(
+        '/me/cosmetics?ok='+encodeURIComponent('Cosmetic updated!')
+      );
+    } catch (err) {
       if (err.message?.includes('SQLITE')) return next(err);
-      res.redirect('/me/cosmetics?error='+encodeURIComponent(err.message || 'Could not equip item.'));
-    } finally { db.close(); }
+      res.redirect(
+        '/me/cosmetics?error='+encodeURIComponent(err.message || 'Could not equip item.')
+      );
+    } finally {
+      db.close();
+    }
   });
 }
 
-module.exports={CATALOG,ITEMS,CATEGORIES,MAX_PRICE,RARITIES,initialize,owns,inventory,getEquipped,getCatalog,priceHistory,metadataHistory,isStoreAdmin,changePrice,changeMetadata,buy,equip,mount};
+module.exports={
+  CATALOG,
+  ITEMS,
+  CATEGORIES,
+  MAX_PRICE,
+  RARITIES,
+  initialize,
+  owns,
+  inventory,
+  getEquipped,
+  getCatalog,
+  priceHistory,
+  metadataHistory,
+  isStoreAdmin,
+  changePrice,
+  changeMetadata,
+  buy,
+  equip,
+  mount
+};
