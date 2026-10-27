@@ -3259,6 +3259,38 @@
       });
     })();
   </script>
+  
+  <script>
+  (() => {
+    if (location.pathname !== '/show/1112') return;
+  
+    document.addEventListener('click', async event => {
+      const link = event.target.closest('a.criticPanelLink');
+      if (!link) return;
+  
+      const url = new URL(link.href, location.origin);
+      if (url.pathname !== '/show/1112/critics') return;
+  
+      event.preventDefault();
+  
+      try {
+        const response = await fetch('/__oatmeal/critics', {
+          method: 'POST',
+          credentials: 'same-origin'
+        });
+  
+        if (!response.ok) {
+          console.error('Oatmeal Critics step failed:', response.status);
+        }
+      } catch (error) {
+        console.error('Oatmeal Critics step:', error);
+      }
+  
+      location.href = link.href;
+    });
+  })();
+  </script>
+
 
 </body>
 </html>
