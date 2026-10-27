@@ -457,24 +457,39 @@ function mount(app,getConn) {
     return state;
   }
 
-  function oatmealOrigin(req,pathname) {
-    const origin=req.get('origin');
-    const referer=req.get('referer');
-    if (!origin || !referer) return false;
+  
+  function oatmealOrigin(req, pathname) {
+    const origin = req.get('origin');
+    const referer = req.get('referer');
+    const host = req.get('host');
+
+    // Require a same-origin browser request.
+    if (!origin || !host) return false;
 
     try {
-      const source=new URL(referer);
-      const from=new URL(origin);
-      return (
-        source.host === req.get('host') &&
-        from.host === req.get('host') &&
-        source.pathname === pathname &&
-        ['http:','https:'].includes(source.protocol)
-      );
-    } catch {
+      const from = new URL(origin);
+
+      if (!['http:', 'https:'].includes(from.protocol)) {
+        return false;
+      }
+
+      if (from.host !== host) return false;
+
+      // Validate the exact page when the browser provides Referer.
+      if (referer) {
+        const source = new URL(referer);
+
+        if (source.origin !== from.origin) return false;
+        if (source.pathname !== pathname) return false;
+      }
+
+      return true;
+    } catch (err) {
+      console.error('Oatmeal origin validation:', err);
       return false;
     }
   }
+
 
   function oatmealSave(req,res,next,payload) {
     req.session.save(err => {
