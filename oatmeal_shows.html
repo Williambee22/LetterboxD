@@ -1,0 +1,14 @@
+<script data-oatmeal-crown="shows">
+(() => {
+  document.addEventListener('click', async ev => {
+    const a=ev.target.closest('a[href]');
+    if (!a) return;
+    const to=new URL(a.href,location.href);
+    if (to.origin !== location.origin || to.pathname !== '/show/1112') return;
+    ev.preventDefault();
+    try {
+      await fetch('/__oatmeal/crown-start',{method:'POST',credentials:'same-origin'});
+    } finally { location.href=a.href; }
+  },true);
+})();
+</script>

@@ -1,0 +1,21 @@
+<script data-oatmeal-crown="profile">
+(() => {
+  if (location.pathname !== '/me') return;
+  let inflight=false;
+  document.addEventListener('click',async ev => {
+    if (inflight) return;
+    const element=ev.target.closest('a,span,div,p,small');
+    if (!element) return;
+    const candidates=[element,...Array.from(element.children)];
+    if (!candidates.some(node => node.textContent?.trim() === 'Rate drum corps shows.')) return;
+    inflight=true;
+    try {
+      const res=await fetch('/__oatmeal/footer',{method:'POST',credentials:'same-origin'});
+      if (res.ok) {
+        const data=await res.json();
+        if (data.unlocked) alert('Secret unlocked: Oatmeal Avatar Frame! Find it in My Cosmetics.');
+      }
+    } finally { inflight=false; }
+  },true);
+})();
+</script>

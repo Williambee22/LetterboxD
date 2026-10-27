@@ -1,0 +1,49 @@
+  /* OATMEAL_CROWN_SECRET_ROUTES_START */
+  const oatmealStage = req => {
+    if (!req.session) return null;
+    const s = req.session.oatmealCrown;
+    if (!s || Date.now() - s.started > 10 * 60 * 1000) {
+      req.session.oatmealCrown = { step: 0, started: Date.now(), clicks: 0 };
+    }
+    return req.session.oatmealCrown;
+  };
+  const oatmealFrom = (req, paths) => {
+    const origin = req.get('origin'), referer = req.get('referer');
+    if (!origin || !referer) return false;
+    try {
+      const o = new URL(origin), r = new URL(referer);
+      return o.host === req.get('host') && r.host === req.get('host') && paths.includes(r.pathname);
+    } catch { return false; }
+  };
+  const oatmealCommit = (req, res, next, extra={}) => req.session.save(err => err ? next(err) : res.json({ ok:true, ...extra }));
+  app.post('/__oatmeal/crown-start', (req,res,next) => {
+    if (!req.session?.uid || !oatmealFrom(req, ['/shows'])) return res.sendStatus(403);
+    req.session.oatmealCrown = { step:1, started:Date.now(), clicks:0 };
+    oatmealCommit(req,res,next);
+  });
+  app.post('/__oatmeal/critic', (req,res,next) => {
+    const s=oatmealStage(req);
+    if (!req.session?.uid || !oatmealFrom(req, ['/show/1112']) || s.step !== 1) return res.sendStatus(403);
+    s.step = 2;
+    oatmealCommit(req,res,next);
+  });
+  app.post('/__oatmeal/avatar', (req,res,next) => {
+    const s=oatmealStage(req);
+    if (!req.session?.uid || !oatmealFrom(req, ['/show/1112','/show/1112/critics']) || s.step !== 2) return res.sendStatus(403);
+    s.step = 3;
+    oatmealCommit(req,res,next);
+  });
+  app.post('/__oatmeal/footer', (req,res,next) => {
+    const s=oatmealStage(req);
+    if (!req.session?.uid || !oatmealFrom(req, ['/me']) || s.step !== 3) return res.sendStatus(403);
+    s.clicks++;
+    if (s.clicks < 4) return oatmealCommit(req,res,next,{ clicks:s.clicks, unlocked:false });
+    let db;
+    try {
+      db=getConn(); initialize(db);
+      db.prepare('INSERT OR IGNORE INTO pb_cosmetics_inventory(user_id,item_id,price_paid) VALUES (?,?,0)').run(Number(req.session.uid),'frame_oatmeal');
+      req.session.oatmealCrown = { step:0, started:0, clicks:0 };
+      oatmealCommit(req,res,next,{ clicks:4, unlocked:true });
+    } catch(e){next(e)} finally{db?.close()}
+  });
+  /* OATMEAL_CROWN_SECRET_ROUTES_END */

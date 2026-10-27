@@ -1,0 +1,25 @@
+<script data-oatmeal-crown="detail">
+(() => {
+  if (location.pathname !== '/show/1112') return;
+  document.addEventListener('click', async ev => {
+    const target=ev.target.closest('a,button');
+    if (!target) return;
+    const label=(target.textContent||'').trim().toLowerCase();
+    const href=target.matches('a[href]') ? new URL(target.href,location.href) : null;
+    const critic=label.includes('view critic rating') || label.includes('view critic ratings') || (href && href.pathname==='/show/1112/critics');
+    if (!critic) return;
+    if (href && href.origin === location.origin) ev.preventDefault();
+    await fetch('/__oatmeal/critic',{method:'POST',credentials:'same-origin'}).catch(()=>{});
+    if (href && href.origin === location.origin) location.href=href.href;
+  },true);
+  document.addEventListener('click', async ev => {
+    const anchor=ev.target.closest('a[href]');
+    if (!anchor || !anchor.querySelector('img') && ev.target.tagName !== 'IMG') return;
+    const to=new URL(anchor.href,location.href);
+    if (to.origin!==location.origin || to.pathname!=='/me') return;
+    ev.preventDefault();
+    await fetch('/__oatmeal/avatar',{method:'POST',credentials:'same-origin'}).catch(()=>{});
+    location.href=anchor.href;
+  },true);
+})();
+</script>

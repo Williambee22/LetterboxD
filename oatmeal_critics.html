@@ -1,0 +1,14 @@
+<script data-oatmeal-crown="critics">
+(() => {
+  if (location.pathname !== '/show/1112/critics') return;
+  document.addEventListener('click', async ev => {
+    const anchor=ev.target.closest('a[href]');
+    if (!anchor || !(anchor.querySelector('img') || ev.target.tagName==='IMG')) return;
+    const to=new URL(anchor.href,location.href);
+    if (to.origin!==location.origin || to.pathname!=='/me') return;
+    ev.preventDefault();
+    await fetch('/__oatmeal/avatar',{method:'POST',credentials:'same-origin'}).catch(()=>{});
+    location.href=anchor.href;
+  },true);
+})();
+</script>
