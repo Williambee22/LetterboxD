@@ -666,7 +666,7 @@
       </div>
       <div class="bt-cal-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
       <div id="calendarMonthGrid" class="bt-cal-days" role="grid" aria-label="Competition dates"></div>
-      <p class="bt-calendar-note">Select a competition to view its betting board. Select multiple corps to show events featuring any selected corps. World/Open Class filters show events with participants in the selected classes. Events without a published lineup appear under All Events.</p>
+      <p class="bt-calendar-note">Select a competition to view its betting board. Select multiple corps to show events with confirmed appearances by any selected corps. World/Open Class filters use confirmed imported lineups. The corps picker also shows historical DCI corps; appearing in the picker does not imply a 2027 booking. Events without a published lineup appear under All Events.</p>
     </div>
   </dialog>
 
@@ -681,6 +681,9 @@
   <script src="/static/betting.js"></script>
 
   <script>
+    // A historical corps catalog supplies visible checkboxes even when all imported
+    // 2027 event lineups are TBA. Selection never fabricates participation.
+    const CORPS_CATALOG = <%- JSON.stringify(corpsCatalog || []).replace(/</g, '\\u003c') %>;
     const CALENDAR_EVENTS = <%- JSON.stringify(events.map(e => ({
       id:e.id, name:e.name, local_date:e.local_date||null,
       start_ts:e.start_ts, open_ts:e.open_ts,
@@ -714,8 +717,10 @@
       };
       const dated=CALENDAR_EVENTS.map(e=>({...e,day:eventDate(e)}))
         .filter(e=>e.day).sort((a,b)=>a.day.localeCompare(b.day)||a.name.localeCompare(b.name));
-      const allCorps=[...new Map(dated.flatMap(e=>e.lineup).filter(p=>p.corps).map(p=>[corpsKey(p.corps),p.corps])).entries()]
-        .sort((a,b)=>a[1].localeCompare(b[1]));
+      const allCorps=[...new Map([
+        ...CORPS_CATALOG.filter(p=>p.corps).map(p=>[corpsKey(p.corps),p.corps]),
+        ...dated.flatMap(e=>e.lineup).filter(p=>p.corps).map(p=>[corpsKey(p.corps),p.corps])
+      ]).entries()].sort((a,b)=>a[1].localeCompare(b[1]));
       const selectedCorps=new Set(), selectedClasses=new Set();
       const months=[...new Set(dated.map(e=>e.day.slice(0,7)))];
       const currentMonth=new Date().toISOString().slice(0,7);
@@ -737,7 +742,7 @@
       function renderCorpsOptions(){
         const q=corpsSearch.value.trim().toLowerCase();
         const options=allCorps.filter(([key,name])=>name.toLowerCase().includes(q));
-        corpsOptions.innerHTML=options.map(([key,name])=>`<label class="bt-cal-corps-option"><input type="checkbox" value="${esc(key)}" ${selectedCorps.has(key)?'checked':''}><span>${esc(name)}</span></label>`).join('') || '<p class="bt-calendar-note">No corps listed for these events yet. After deploying, run the 2027 event sync to load published DCI lineups.</p>';
+        corpsOptions.innerHTML=options.map(([key,name])=>`<label class="bt-cal-corps-option"><input type="checkbox" value="${esc(key)}" ${selectedCorps.has(key)?'checked':''}><span>${esc(name)}</span></label>`).join('') || '<p class="bt-calendar-note">No corps match that search. Clear your search to see all corps.</p>';
         corpsSummary.textContent=selectedCorps.size?`Filter Corps · ${selectedCorps.size} selected`:`Filter Corps · ${allCorps.length} available`;
       }
       function updateFilterButtons(){
@@ -763,7 +768,10 @@
         next.disabled=month>=lastMonth;
         const visible=dated.filter(e=>matchesFilters(e));
         const monthEvents=visible.filter(e=>e.day.startsWith(month));
-        matchCount.textContent=`${monthEvents.length} matching competition${monthEvents.length===1?'':'s'} this month · ${visible.length} across the schedule`;
+        const withoutLineup=dated.filter(e=>!e.lineup.length).length;
+        matchCount.textContent=`${monthEvents.length} matching competition${monthEvents.length===1?'':'s'} this month · ${visible.length} across the schedule` +
+          ((selectedCorps.size || selectedClasses.size) && withoutLineup ?
+            ` · ${withoutLineup} event${withoutLineup===1?' has':'s have'} no confirmed corps lineup and cannot be matched` : '');
         const [year,mon]=month.split('-').map(Number);
         const firstDay=new Date(Date.UTC(year,mon-1,1)).getUTCDay();
         const dayCount=new Date(Date.UTC(year,mon,0)).getUTCDate();
