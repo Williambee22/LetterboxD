@@ -21,6 +21,19 @@
       align-self: center;
     }
     .pb-back-nav a { white-space: nowrap; }
+    /* Result not published within the 16-hour cutoff. */
+    .bt-not-scored {position:relative!important;overflow:hidden!important;isolation:isolate;}
+    .bt-not-scored::after {
+      content:"NOT SCORED";
+      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-22deg);
+      z-index:8;pointer-events:none;white-space:nowrap;
+      color:#ff243c;font-size:clamp(18px,3vw,36px);font-weight:1000;
+      letter-spacing:.045em;text-shadow:0 1px 2px #210000,0 0 12px #000;
+      border-top:4px solid #ff243c;border-bottom:4px solid #ff243c;
+      padding:5px 8px;line-height:1.1;
+    }
+    .bt-history-item.bt-not-scored::after {font-size:clamp(22px,4vw,38px);}
+    .bt-not-scored > * {opacity:.60;}
     @media (max-width: 760px) {
       .pb-back-nav {
         position: static;
@@ -143,7 +156,7 @@
 
           <% events.forEach(e => { %>
             <button data-id="<%= e.id %>"
-              class="<%= e.start_ts != null && now >= e.open_ts && now < e.start_ts ? '' : 'locked' %>">
+              class="<%= e.not_scored ? 'locked bt-not-scored' : (e.start_ts != null && now >= e.open_ts && now < e.start_ts ? '' : 'locked') %>">
               <b><%= e.name %></b>
               <small>
                 <% if (e.start_ts == null) { %>
@@ -155,7 +168,9 @@
                   }) %> CT
                 <% } %>
               </small>
-              <% if (e.start_ts == null) { %>
+              <% if (e.not_scored) { %>
+                <small>All pending bets refunded</small>
+              <% } else if (e.start_ts == null) { %>
                 <small>Betting unavailable until start time is announced</small>
               <% } else if (now < e.open_ts) { %>
                 <small>Opens <%= e.start_ts - e.open_ts === 172800 ? '48h' : e.start_ts - e.open_ts > 172800 ? 'early' : '24h' %> before</small>
@@ -323,7 +338,7 @@
 
           <% bets.forEach(b => { %>
 
-            <div class="bt-history-item">
+            <div class="bt-history-item <%= b.not_scored ? 'bt-not-scored' : '' %>">
 
               <div>
 
@@ -349,7 +364,7 @@
                 </b>
 
                 <small>
-                  <%= b.result %>
+                  <%= b.not_scored ? 'NOT SCORED · REFUNDED' : b.result %>
 
                   <% if (b.payout) { %>
                     · +💎 <%= b.payout %> Gems

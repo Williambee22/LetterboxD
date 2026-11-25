@@ -47,7 +47,7 @@ small{color:#a7b5c8}
 <% if(!logs.length){%><tr><td colspan="4">No sync attempts logged</td></tr><%}%>
 </tbody></table></div></div>
 <div class="card"><h2>Imported DCI events</h2><div class="table-scroll"><table><thead><tr><th>Name</th><th>Start time (local browser timezone)</th><th>Status</th></tr></thead><tbody>
-<% events.forEach(function(e){ %><tr><td><%=e.name%></td><td><%= e.start_ts == null ? 'Time TBA' : new Date(e.start_ts*1000).toLocaleString() %></td><td><%=e.status%></td></tr><% });%>
+<% events.forEach(function(e){ %><tr><td><%=e.name%></td><td><%= e.start_ts == null ? 'Time TBA' : new Date(e.start_ts*1000).toLocaleString() %></td><td><% if(e.not_scored){ %><strong style="color:#ff304b;font-weight:900;font-size:18px;display:inline-block;transform:rotate(-12deg)">NOT SCORED</strong><% }else{ %><%=e.status%><% } %></td></tr><% });%>
 <% if(!events.length){%><tr><td colspan="3">No official events imported</td></tr><%}%></tbody></table></div></div>
 <div class="card"><h2>Historical replay — isolated test Gems</h2><p>This mode does not contact DCI and never changes production wallets.</p>
 <form method="POST" action="/betsadmin/sync/action"><input type="hidden" name="csrf" value="<%=csrf%>">
