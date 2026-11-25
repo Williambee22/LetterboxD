@@ -16,6 +16,14 @@ select{max-width:min(100%,850px)}.stats{display:flex;flex-wrap:wrap;gap:12px}.st
 </style></head><body>
 <header><a href="/betting">Betting</a> · <a href="/betsadmin/sync">DCI Sync</a> · <a href="/betsadmin">Gems Admin</a></header>
 <main>
+<% // Gracefully handle a mismatch between deployed server and template revisions. %>
+<% const monitorPreview = (typeof preview !== 'undefined' && preview && Array.isArray(preview.lines))
+  ? preview
+  : {date: selected?.local_date || (selected?.start_ts != null ? new Date(selected.start_ts * 1000).toISOString().slice(0,10) : null), lines: [], reason: 'Model preview unavailable: deploy the matching betting.js and betting_admin_controls.js files'}; %>
+<% const monitorProjections = (typeof projections !== 'undefined' && projections instanceof Map) ? projections : new Map(); %>
+<% const monitorRows = (typeof viewRows !== 'undefined' && Array.isArray(viewRows))
+  ? viewRows
+  : (Array.isArray(markets) ? markets.map(m => ({...m, posted: true, projection: monitorProjections.get(m.id) || null})) : []); %>
 <h1>Betting Line Monitor</h1>
 <p>Admin-only. <strong>Current projection</strong> is the model's read-only calculation from the available score history, official event date and imported corps lineup. <strong>Posted line</strong> is what bettors actually wager against. Previews are never automatically made available to wager on.</p>
 <% if(notice){%><div class="card notice"><%=notice%></div><%}%>
@@ -33,11 +41,11 @@ select{max-width:min(100%,850px)}.stats{display:flex;flex-wrap:wrap;gap:12px}.st
 <div class="card">
 <h2><%=selected.name%></h2>
 <div class="stats">
-<div><small>Official competition date</small><br><strong><%=preview.date||'Unavailable'%></strong></div>
+<div><small>Official competition date</small><br><strong><%=monitorPreview.date||'Unavailable'%></strong></div>
 <div><small>Official start time</small><br><strong><%=selected.start_ts==null?'TBA':new Date(selected.start_ts*1000).toLocaleString()%></strong></div>
 <div><small>Betting status</small><br><strong><%=selected.start_ts==null?'WAITING FOR START TIME':now>=opening && now<selected.start_ts?'OPEN':now>=selected.start_ts?'CLOSED':'NOT OPEN'%></strong></div>
 <div><small>Market lines posted</small><br><strong><%=markets.length%></strong></div>
-<div><small>Calculated model rows</small><br><strong><%=preview.lines.length%></strong></div>
+<div><small>Calculated model rows</small><br><strong><%=monitorPreview.lines.length%></strong></div>
 </div>
 <% if(selected.start_ts==null){%><p>Official start time not yet announced. These are <strong>preseason / current model estimates only</strong>. Wagers and market publishing remain disabled until an official start time is imported.</p>
 <%}else{%><p>Current betting window opens: <%=new Date(opening*1000).toLocaleString()%>.</p><%}%>
@@ -67,22 +75,22 @@ select{max-width:min(100%,850px)}.stats{display:flex;flex-wrap:wrap;gap:12px}.st
 </tbody></table></div><small>0.000 removes the modifier. Changes are stored by season and corps, not by competition.</small>
 <%}else{%><p>Official lineup unavailable. Sync the competition's corps from DCI before adjusting staff effects.</p><%}%>
 </div>
-<div class="card"><h2>Projected scores and betting lines (<%=viewRows.length%>)</h2>
-<% if(preview.reason){%><p><%=preview.reason%>.</p><%}%>
+<div class="card"><h2>Projected scores and betting lines (<%=monitorRows.length%>)</h2>
+<% if(monitorPreview.reason){%><p><%=monitorPreview.reason%>.</p><%}%>
 <p><span class="tag preview">MODEL PREVIEW</span> means the projection is not published and cannot be wagered on. <span class="tag published">POSTED LINE</span> means the saved betting line; it remains frozen after bets are placed or the window opens.</p>
 <div class="table"><table><thead><tr><th>Corps</th><th>Caption</th><th>Type</th><th>Availability</th><th>Saved posted line</th><th>Current model projection</th><th>Difference</th></tr></thead><tbody>
-<% viewRows.forEach(m=>{ const p=m.projection; %><tr>
+<% monitorRows.forEach(m=>{ const p=m.projection; %><tr>
 <td><%=m.corps%></td><td><%=m.caption%></td><td><%=m.kind%></td>
 <td><span class="tag <%=m.posted?'published':'preview'%>"><%=m.posted?(m.status==='active'?'POSTED LINE':m.status.toUpperCase()):'MODEL PREVIEW'%></span></td>
 <td class="num"><%=m.posted?Number(m.line).toFixed(3):'Not posted'%></td>
 <td class="num"><%=p?Number(p.value).toFixed(3):'Unavailable'%></td>
 <td class="num"><%=p&&p.delta!=null?(p.delta>0?'+':'')+Number(p.delta).toFixed(3):'—'%></td>
 </tr><% }); %>
-<% if(!viewRows.length){%><tr><td colspan="7">No model projection available yet for this event. Check the imported lineup, corps class and historical scores.</td></tr><%}%>
+<% if(!monitorRows.length){%><tr><td colspan="7">No model projection available yet for this event. Check the imported lineup, corps class and historical scores.</td></tr><%}%>
 </tbody></table></div></div>
 <div class="card"><h2>Placed bets on this event (<%=bets.length%>)</h2><p>Original wagering lines and placement snapshots are preserved independently of updated model projections.</p>
 <div class="table"><table><thead><tr><th>Bet #</th><th>User</th><th>Placed</th><th>Corps</th><th>Caption</th><th>Pick</th><th>Stake</th><th>Locked line</th><th>At placement</th><th>Current projection</th><th>Result</th></tr></thead><tbody>
-<% bets.forEach(b=>{const p=projections.get(b.market_id);%><tr><td><%=b.id%></td><td><%=b.username||'User #'+b.user_id%></td><td><%=new Date(b.placed_ts*1000).toLocaleString()%></td><td><%=b.corps%></td><td><%=b.caption%> / <%=b.kind%></td><td><%=b.choice%></td><td class="num"><%=b.stake%></td><td class="num"><%=Number(b.line).toFixed(3)%></td><td class="num"><%=b.projection_at_bet==null?'Not recorded':Number(b.projection_at_bet).toFixed(3)%></td><td class="num"><%=p?Number(p.value).toFixed(3):'Unavailable'%></td><td><%=b.result%></td></tr><% });%>
+<% bets.forEach(b=>{const p=monitorProjections.get(b.market_id);%><tr><td><%=b.id%></td><td><%=b.username||'User #'+b.user_id%></td><td><%=new Date(b.placed_ts*1000).toLocaleString()%></td><td><%=b.corps%></td><td><%=b.caption%> / <%=b.kind%></td><td><%=b.choice%></td><td class="num"><%=b.stake%></td><td class="num"><%=Number(b.line).toFixed(3)%></td><td class="num"><%=b.projection_at_bet==null?'Not recorded':Number(b.projection_at_bet).toFixed(3)%></td><td class="num"><%=p?Number(p.value).toFixed(3):'Unavailable'%></td><td><%=b.result%></td></tr><% });%>
 <% if(!bets.length){%><tr><td colspan="11">No bets placed on this competition.</td></tr><%}%>
 </tbody></table></div></div>
 <small>Read-only projections use the existing Pressboxd historical model and verified SQLite scores. They are estimates, not guaranteed results. No stake, Gems balance, or wager line is modified when loading this page.</small>
