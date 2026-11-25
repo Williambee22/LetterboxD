@@ -298,7 +298,7 @@ module.exports = function mountBetting(app, getConn) {
       const manualOpen=selected?db.prepare('SELECT opened_ts,opened_by FROM pb_betting_manual_open WHERE event_id=?').get(selected.id):null;
       res.setHeader('Cache-Control','private, no-store');
       res.render('betsadmin_lines',{events,selected,markets,viewRows,bets,projections,preview,manualOpen,
-        participants,staffChanges,staffRanks,
+        lineup,participants,staffChanges,staffRanks,
         isOpener:selected?bettingAdmin.seasonOpener(db,selected):false,
         opening:selected?.start_ts!=null?openingForEvent(db,selected):null,
         now,csrf:csrfToken(req),
