@@ -20,47 +20,46 @@ function value(db, season, corps) {
   const row=db.prepare('SELECT adjustment FROM pb_betting_staff_changes WHERE season=? AND corps_key=?').get(Number(season),keyFor(corps));
   return row?Number(row.adjustment):0;
 }
-function scheduledEarlier(db, {eventId,startTs,season,corps}) {
-  const found=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='pb_dci_event_sources'").get();
-  if(!found) return null;
+function scheduledEarlier(db, {eventId,startTs,season,corps,eventDate}) {
+  if(!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='pb_dci_event_sources'").get()) return null;
+  const day=eventDate || (startTs!=null ? new Date(Number(startTs)*1000).toISOString().slice(0,10) : null);
+  if(!day)return [];
+  // Date-only imported events count as earlier performances too.
   const rows=db.prepare(`SELECT e.id,s.lineup_json FROM pb_betting_events e
     JOIN pb_dci_event_sources s ON s.event_id=e.id
-    WHERE e.season=? AND e.start_ts<? AND e.id<>? AND e.status<>'canceled'
-    ORDER BY e.start_ts,e.id`).all(season,startTs,eventId);
+    LEFT JOIN pb_dci_event_dates d ON d.event_id=e.id
+    WHERE e.season=? AND e.id<>? AND e.status<>'canceled'
+      AND COALESCE(d.local_date,date(e.start_ts,'unixepoch'))<?
+    ORDER BY COALESCE(d.local_date,date(e.start_ts,'unixepoch')),e.id`).all(season,eventId,day);
   const own=keyFor(corps);
-  const ids=[];
-  for(const row of rows) {
+  return rows.filter(row=>{
     let lineup=[];
-    try {lineup=JSON.parse(row.lineup_json);} catch {}
-    if(Array.isArray(lineup) && lineup.some(x=>keyFor(typeof x==='string'?x:x?.corps)===own))ids.push(row.id);
-  }
-  return ids;
+    try{lineup=JSON.parse(row.lineup_json)}catch{}
+    return Array.isArray(lineup)&&lineup.some(x=>keyFor(typeof x==='string'?x:x?.corps)===own);
+  }).map(row=>row.id);
 }
 function competitionNumber(db,{eventId,startTs,season,corps,eventDate}) {
-  // Count actual prior competitions when verified, alongside imported scheduled events.
-  // Only the first two official competitions receive the preseason modifier.
-  const ids=scheduledEarlier(db,{eventId,startTs,season,corps})||[];
+  const ids=scheduledEarlier(db,{eventId,startTs,season,corps,eventDate})||[];
   const names=new Set(ids);
+  const day=eventDate || (startTs!=null?new Date(Number(startTs)*1000).toISOString().slice(0,10):null);
   let verifiedCount=0;
-  if(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='pb_dci_verified_scores'").get()) {
-    const rows=db.prepare('SELECT DISTINCT event_slug,date,corps FROM pb_dci_verified_scores WHERE season=? AND date<?').all(season,eventDate);
-    const dates=new Set(rows.filter(r=>keyFor(r.corps)===keyFor(corps)).map(r=>r.date));
-    // Include verified dates not already represented by an imported competition date.
+  if(day&&db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='pb_dci_verified_scores'").get()) {
+    const rows=db.prepare('SELECT DISTINCT event_slug,date,corps FROM pb_dci_verified_scores WHERE season=? AND date<?').all(season,day);
+    const datedScores=new Set(rows.filter(r=>keyFor(r.corps)===keyFor(corps)).map(r=>r.date));
     let knownDates=new Set();
-    if(names.size && db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='pb_dci_event_dates'").get()) {
-      const details=db.prepare('SELECT event_id,local_date FROM pb_dci_event_dates WHERE local_date<?').all(eventDate);
+    if(names.size&&db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='pb_dci_event_dates'").get()) {
+      const details=db.prepare('SELECT event_id,local_date FROM pb_dci_event_dates WHERE local_date<?').all(day);
       knownDates=new Set(details.filter(x=>names.has(x.event_id)).map(x=>x.local_date));
     }
-    verifiedCount=[...dates].filter(d=>!knownDates.has(d)).length;
+    verifiedCount=[...datedScores].filter(d=>!knownDates.has(d)).length;
   }
   return ids.length+verifiedCount+1;
 }
 function staffEffect(db,{season,corps,eventId,startTs,eventDate,metric,max}) {
-  if (!db || typeof db.prepare!=='function') return 0;
+  if(!db||typeof db.prepare!=='function')return 0;
   const adjustment=value(db,season,corps);
   if(!adjustment)return 0;
   if(competitionNumber(db,{eventId,startTs,season,corps,eventDate})>2)return 0;
-  // Use overall-point equivalent; e.g. +2 overall => +0.8 on a /40 caption.
   return adjustment*(max/100);
 }
 function update(db,{season,corps,adjustment,adminId}) {

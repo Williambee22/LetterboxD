@@ -258,17 +258,32 @@ module.exports = function mountBetting(app, getConn) {
     try {withDb(db=>{
       bettingAdmin.init(db);
       const now=Math.floor(Date.now()/1000);
-      const events=db.prepare(`SELECT * FROM pb_betting_events
-        WHERE start_ts>? AND status='scheduled' AND source_url LIKE 'https://www.dci.org/%'
-        ORDER BY start_ts,id LIMIT 200`).all(now);
+      // Do not exclude date-only events; the official local date is stored separately.
+      const events=db.prepare(`SELECT e.*,d.local_date,
+        CASE WHEN n.event_id IS NOT NULL THEN 1 ELSE 0 END AS not_scored
+        FROM pb_betting_events e
+        LEFT JOIN pb_dci_event_dates d ON d.event_id=e.id
+        LEFT JOIN pb_betting_no_score_events n ON n.event_id=e.id
+        WHERE e.status='scheduled' AND e.source_url LIKE 'https://www.dci.org/%'
+          AND (d.local_date>=date('now') OR e.start_ts>?)
+        ORDER BY COALESCE(d.local_date,date(e.start_ts,'unixepoch')) ASC,
+          CASE WHEN e.start_ts IS NULL THEN 1 ELSE 0 END,e.start_ts,e.id
+        LIMIT 500`).all(now);
       const selected=events.find(e=>e.id===String(req.query.event_id||''))||events[0]||null;
       const markets=selected?db.prepare('SELECT * FROM pb_betting_markets WHERE event_id=? ORDER BY corps,caption,kind').all(selected.id):[];
-      const bets=selected?db.prepare(`SELECT b.*,m.corps,m.caption,m.kind,u.username,s.projection AS projection_at_bet
+      const bets=selected?db.prepare(`SELECT b.*,m.corps,m.caption,m.kind,m.id AS market_id,u.username,s.projection AS projection_at_bet
         FROM pb_betting_bets b JOIN pb_betting_markets m ON m.id=b.market_id
         LEFT JOIN users u ON u.id=b.user_id
         LEFT JOIN pb_betting_bet_projection_snapshots s ON s.bet_id=b.id
         WHERE m.event_id=? ORDER BY b.id DESC`).all(selected.id):[];
+      const preview=selected?bettingAdmin.preview(db,selected):{lines:[],date:null,reason:'No event selected'};
       const projections=selected?bettingAdmin.projections(db,selected,markets):new Map();
+      // Include calculated, unpublished projections in the monitor without
+      // inserting any rows in pb_betting_markets or changing posted lines.
+      const existingMarketIds=new Set(markets.map(m=>m.id));
+      const viewRows=[...markets.map(m=>({...m,posted:true,projection:projections.get(m.id)||null})),
+        ...preview.lines.filter(p=>!existingMarketIds.has(p.id)).map(p=>({...p,status:'preview',posted:false,projection:{value:p.line,delta:null}}))]
+        .sort((a,b)=>a.corps.localeCompare(b.corps)||a.caption.localeCompare(b.caption)||a.kind.localeCompare(b.kind));
       const lineupRow=selected?db.prepare('SELECT lineup_json FROM pb_dci_event_sources WHERE event_id=?').get(selected.id):null;
       let lineup=[];
       try{lineup=JSON.parse(lineupRow?.lineup_json||'[]');}catch{}
@@ -277,15 +292,16 @@ module.exports = function mountBetting(app, getConn) {
         return [bettingStaff.keyFor(name),name];
       }).filter(x=>x[0])).values()];
       const staffChanges=selected?new Map(participants.map(name=>[name,bettingStaff.value(db,selected.season,name)])):new Map();
-      const staffRanks=selected?new Map(participants.map(name=>[name,bettingStaff.competitionNumber(db,{
-        season:selected.season,corps:name,eventId:selected.id,startTs:selected.start_ts,
-        eventDate:db.prepare('SELECT local_date FROM pb_dci_event_dates WHERE event_id=?').get(selected.id)?.local_date||new Date(selected.start_ts*1000).toISOString().slice(0,10)
+      const staffRanks=selected&&preview.date?new Map(participants.map(name=>[name,bettingStaff.competitionNumber(db,{
+        season:selected.season,corps:name,eventId:selected.id,startTs:selected.start_ts,eventDate:preview.date
       })])):new Map();
       const manualOpen=selected?db.prepare('SELECT opened_ts,opened_by FROM pb_betting_manual_open WHERE event_id=?').get(selected.id):null;
       res.setHeader('Cache-Control','private, no-store');
-      res.render('betsadmin_lines',{events,selected,markets,bets,projections,manualOpen,participants,staffChanges,staffRanks,
+      res.render('betsadmin_lines',{events,selected,markets,viewRows,bets,projections,preview,manualOpen,
+        participants,staffChanges,staffRanks,
         isOpener:selected?bettingAdmin.seasonOpener(db,selected):false,
-        opening:selected?openingForEvent(db,selected):0,now,csrf:csrfToken(req),
+        opening:selected?.start_ts!=null?openingForEvent(db,selected):null,
+        now,csrf:csrfToken(req),
         notice:String(req.query.ok||'').slice(0,180),error:String(req.query.error||'').slice(0,180)});
     });}catch(e){next(e);}
   });
