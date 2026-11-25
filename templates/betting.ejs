@@ -118,6 +118,28 @@
       .bt-calendar-month-row strong {font-size:16px}
       .bt-cal-filters {gap:7px;padding:8px}
     }
+
+    /* Prize-pick-like multiple virtual entries (no real-money wagering). */
+    .pb-entry-help,.pb-play-explanation{color:#aaa4b7;font-size:11px;line-height:1.5;margin:14px 0}
+    .pb-entry-picks{display:grid;gap:8px;margin:14px 0}
+    .pb-selected-leg{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border:1px solid #494258;border-radius:6px;background:#272330}
+    .pb-selected-leg strong{font-size:12px}.pb-selected-leg small{display:block;color:#afa9bd;font-size:10px;margin-top:5px}
+    .pb-selected-leg button,.pb-queue-entry button{border:0;background:#41334b;color:#fff;border-radius:5px;padding:6px 9px}
+    .pb-slip-placeholder{padding:22px 12px;border:1px dashed #544b61;color:#ada6b8;border-radius:8px;text-align:center}
+    .pb-play-types{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:17px}
+    .pb-play-types button{padding:9px 3px;background:#2b2836;border:1px solid #484153;color:#d0cbd7;border-radius:6px;font-size:11px;font-weight:800}
+    .pb-play-types button.on{border-color:#a96bff;color:#fff;background:#43285b}
+    .pb-play-types button:disabled{opacity:.35;cursor:not-allowed}
+    .pb-flex-payouts{font-size:11px;color:#c6bbd2;line-height:1.9;margin-bottom:14px}
+    .pb-entry-queue{border-top:1px solid #423b4a;margin-top:20px;padding-top:13px}
+    .pb-queue-heading{display:flex;justify-content:space-between;gap:6px;font-size:12px}
+    .pb-queue-heading span{color:#a9a1b2}
+    .pb-queue-entry{background:#23212e;padding:10px;margin:9px 0;border:1px solid #484151;border-radius:6px;font-size:11px}
+    .pb-queue-entry span{display:block;color:#aaa4b7;margin:5px 0}
+    .pb-queue-entry button{font-size:10px}
+    .pb-submit-queue{margin-top:12px;background:#a9f146}
+    .pb-submit-queue:disabled{opacity:.35;cursor:not-allowed}
+    .bt-history-item small{line-height:1.5}
   </style>
 </head>
 
@@ -408,6 +430,21 @@
            BET HISTORY
            ========================================== -->
 
+      <section id="entryHistory" class="bt-history">
+        <div class="pb-list-heading"><h2>My Power / Flex Entries</h2></div>
+        <div id="entryHistoryList" class="bt-history-list">
+          <% if (typeof multiEntries !== 'undefined' && Array.isArray(multiEntries)) { %>
+            <% multiEntries.forEach(entry => { %>
+              <div class="bt-history-item">
+                <div><b>#<%= entry.id %> · <%= entry.play_type.toUpperCase() %> · <%= entry.legs.length %> picks</b>
+                  <% entry.legs.forEach(leg => { %><small><%= leg.corps %> / <%= leg.caption %> · <%= leg.choice.toUpperCase() %> <%= Number(leg.line).toFixed(3) %> · <%= leg.result.toUpperCase() %></small><% }) %>
+                </div><div><b>💎 <%= entry.stake %></b><small><%= entry.status.toUpperCase() %><%= entry.payout ? ' · +'+entry.payout+' Gems' : '' %></small></div>
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+      </section>
+
       <section id="history" class="bt-history">
 
         <div class="pb-list-heading">
@@ -484,140 +521,36 @@
 
         <h2>My Entry</h2>
 
-        <span>1 PICK MAX</span>
+        <span>1–6 PICKS / ENTRY</span>
 
       </div>
 
 
-      <!-- Empty Pick Slip -->
-
-      <div id="slipEmpty" class="bt-slip-empty">
-
-        <div class="pb-slip-symbol">
-
-          <svg
-            width="46"
-            height="46"
-            viewBox="0 0 46 46"
-            fill="none"
-          >
-
-            <rect
-              x="6"
-              y="12"
-              width="34"
-              height="24"
-              rx="3"
-              stroke="currentColor"
-              stroke-width="1.5"
-            ></rect>
-
-            <path
-              d="M12 21h22M12 27h14M29 27h5"
-              stroke="currentColor"
-              stroke-width="1.5"
-            ></path>
-
-          </svg>
-
+      <!-- Multi-pick virtual Gems entry builder -->
+      <div class="pb-multi-slip" id="multiSlip">
+        <p class="pb-entry-help">Choose MORE or LESS on up to six predictions. Add separate entries to your queue, then submit them together.</p>
+        <div id="entryPicks" class="pb-entry-picks" aria-live="polite"></div>
+        <div class="pb-play-types" id="playTypes" aria-label="Entry type">
+          <button type="button" data-play="single">Single</button>
+          <button type="button" data-play="power" class="on">Power Play</button>
+          <button type="button" data-play="flex">Flex Play</button>
         </div>
-
-        <strong>
-          Your entry is empty
-        </strong>
-
-        <span>
-          Tap MORE or LESS on any projection
-          to start your entry.
-        </span>
-
-      </div>
-
-
-      <!-- Selected Pick Slip -->
-
-      <div id="slipFilled" hidden>
-
-        <div class="bt-picked">
-
-          <small id="slipEvent"></small>
-
-          <b id="slipCorps"></b>
-
-          <span id="slipDetail"></span>
-
-          <button
-            id="removePick"
-            aria-label="Remove selection"
-          >
-            ×
-          </button>
-
-        </div>
-
-
-        <div class="pb-slip-divider"></div>
-
-
-        <!-- Stake -->
-
-        <label for="stake">
-          Entry Amount
-          <span>GEMS</span>
-        </label>
-
-        <div class="pb-stake-wrap">
-
-          <input
-            type="number"
-            id="stake"
-            value="100"
-            min="1"
-            max="10000"
-            step="1"
-          >
-
-          <span>💎</span>
-
-        </div>
-
-
-        <!-- Quick Stake Buttons -->
-
-        <div class="bt-quick">
-
-          <button data-amount="25">25</button>
-
-          <button data-amount="100">100</button>
-
-          <button data-amount="250">250</button>
-
-          <button data-amount="500">500</button>
-
-        </div>
-
-
-        <!-- Payout -->
-
+        <p id="playExplanation" class="pb-play-explanation"></p>
+        <label for="stake">Entry Amount <span>GEMS</span></label>
+        <div class="pb-stake-wrap"><input type="number" id="stake" value="100" min="1" max="10000" step="1"><span>💎</span></div>
+        <div class="bt-quick"><button type="button" data-amount="25">25</button><button type="button" data-amount="100">100</button><button type="button" data-amount="250">250</button><button type="button" data-amount="500">500</button></div>
         <div class="bt-slip-math">
-
-          <span>Payout multiplier</span>
-          <b id="slipOdds"></b>
-
-          <span>To Win (incl. stake)</span>
-          <b id="slipPayout"></b>
-
+          <span>Max payout multiplier</span><b id="slipOdds">—</b>
+          <span>Potential return (incl. stake)</span><b id="slipPayout">—</b>
         </div>
-
-
-        <!-- Submit -->
-
-        <button id="placeBet" class="bt-submit">
-          SUBMIT ENTRY
-        </button>
-
+        <div id="flexPayouts" class="pb-flex-payouts"></div>
+        <button type="button" id="addEntry" class="bt-submit">ADD ENTRY TO QUEUE</button>
+        <div class="pb-entry-queue">
+          <div class="pb-queue-heading"><strong>Entry Queue</strong><span id="queueCount">0 entries</span></div>
+          <div id="queuedEntries"></div>
+          <button type="button" id="placeBet" class="bt-submit pb-submit-queue">SUBMIT QUEUED ENTRIES</button>
+        </div>
       </div>
-
 
       <!-- Status Message -->
 
@@ -675,7 +608,7 @@
       </div>
       <div class="bt-cal-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
       <div id="calendarMonthGrid" class="bt-cal-days" role="grid" aria-label="Competition dates"></div>
-      <p class="bt-calendar-note">Select a competition to view its betting board.</p>
+      <p class="bt-calendar-note">Select a competition to view its betting board. Select multiple corps to show events featuring any selected corps, or tick Require ALL selected corps to show only competitions featuring every selected corps together. World/Open Class filters use confirmed imported lineups. The corps picker also shows historical DCI corps; appearing in the picker does not imply a 2027 booking. Events without a published lineup appear under All Events.</p>
     </div>
   </dialog>
 
