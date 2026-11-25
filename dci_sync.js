@@ -3,6 +3,7 @@
 const crypto = require('crypto');
 const cheerio = require('cheerio');
 const lines = require('./betting_lines');
+const {openingForEvent} = require('./betting_window');
 const HISTORY = require('./pressboxd_history_2022.json').records;
 const ROOT = 'https://www.dci.org';
 const NOW = () => Math.floor(Date.now()/1000);
@@ -307,7 +308,7 @@ async function discover(db,{dryRun=false,year=new Date().getUTCFullYear(),limit=
       if(dryRun){imported++;continue;}
       const old=db.prepare('SELECT start_ts,status FROM pb_betting_events WHERE id=?').get(id);
       const hasBets=db.prepare('SELECT 1 FROM pb_betting_bets b JOIN pb_betting_markets m ON m.id=b.market_id WHERE m.event_id=? LIMIT 1').get(id);
-      if(old && old.start_ts!==ev.start_ts && (hasBets||old.start_ts-86400<=NOW())){
+      if(old && old.start_ts!==ev.start_ts && (hasBets||openingForEvent(db,{id,start_ts:old.start_ts,season:ev.season})<=NOW())){
         errors.push(`${ev.slug}: event time changed after markets opened/bets; admin review`);continue;
       }
       if(old?.status==='completed'||old?.status==='canceled')continue;
@@ -322,8 +323,11 @@ async function discover(db,{dryRun=false,year=new Date().getUTCFullYear(),limit=
       })();
       imported++;
       if(!ev.lineup.length)missingLineups++;
-      // Produce markets before the 24-hour opening window; never move published lines.
-      if(ev.lineup.length && ev.start_ts-86400>NOW()){
+      // Initialize newly discovered competition markets even if the opening window has begun.
+      // Existing published lines are never updated by saveMarkets (ON CONFLICT DO NOTHING).
+      const haveMarkets=!!db.prepare('SELECT 1 FROM pb_betting_markets WHERE event_id=? LIMIT 1').get(id);
+      if(ev.lineup.length && ev.start_ts>NOW() &&
+         (!haveMarkets || openingForEvent(db,{id,start_ts:ev.start_ts,season:ev.season})>NOW())){
         const mk=lines.makeMarkets({eventId:id,startTs:ev.start_ts,season:ev.season,lineup:ev.lineup,db,eventDate:ev.date});
         marketCount+=lines.saveMarkets(db,{id},mk).inserted;
       }

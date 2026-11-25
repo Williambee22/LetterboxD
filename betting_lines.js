@@ -4,6 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const staff = require('./betting_staff');
 const HISTORY_PATH = path.join(__dirname, 'pressboxd_history_2022.json');
 let cache;
 function history(db) {
@@ -94,8 +95,9 @@ function makeMarkets({eventId,startTs,season,lineup,asOfDate,db,eventDate}){
   if(!Number.isInteger(Number(season))||Number(season)<2022)throw Error('Invalid season');
   if(!Array.isArray(lineup)||!lineup.length||lineup.length>100)throw Error('Provide 1–100 corps with optional class.');
   // Event start is the cutoff; the last known score must precede the event date.
-  const day=asOfDate||eventDate||new Date(Number(startTs)*1000).toISOString().slice(0,10);
-  const data=history(db).filter(r=>r.date<day);
+  const day=eventDate||asOfDate||new Date(Number(startTs)*1000).toISOString().slice(0,10);
+  const availableThrough=asOfDate && asOfDate<day ? asOfDate : day;
+  const data=history(db).filter(r=>r.date<availableThrough);
   const out=[];
   const used=new Set();
   for(const item of lineup){
@@ -115,7 +117,9 @@ function makeMarkets({eventId,startTs,season,lineup,asOfDate,db,eventDate}){
       const p=previous?trend(data,Number(season),cls,corps,metric,day,previous):firstShowEstimate(data,Number(season),cls,corps,metric,day);
       if(!p||!Number.isFinite(p.value)||p.sample<3)continue;
       const max=metric==='Overall'?100:metric==='General Effect'?40:['Visual','Music'].includes(metric)?30:20;
-      const line=Math.round(clamp(p.value,0,max)*1000)/1000;
+      const preseasonEffect=staff.staffEffect(db,{season:Number(season),corps,eventId,
+        startTs:Number(startTs),eventDate:day,metric,max});
+      const line=Math.round(clamp(p.value+preseasonEffect,0,max)*1000)/1000;
       out.push({id:idFor([eventId,cls,corps,metric,'absolute']),corps,caption:metric,kind:'absolute',line,odds:1.90});
       if(previous){
         const prior=metricValue(previous,metric);

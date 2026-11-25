@@ -2,6 +2,9 @@
 const gems = require('./gems');
 const historicalLines = require('./betting_lines');
 const dciSync = require('./dci_sync');
+const bettingAdmin = require('./betting_admin_controls');
+const bettingStaff = require('./betting_staff');
+const {openingForEvent} = require('./betting_window');
 // Mount AFTER express-session, body parsing, and res.locals middleware.
 module.exports = function mountBetting(app, getConn) {
   function withDb(fn) { const db=getConn(); try {return fn(db);} finally {db.close();} }
@@ -38,6 +41,8 @@ module.exports = function mountBetting(app, getConn) {
     `);
   }
   withDb(initialize);
+  withDb(bettingAdmin.init);
+  withDb(bettingStaff.init);
   withDb(dciSync.init);
   function wallet(db, uid) { db.prepare('INSERT OR IGNORE INTO pb_betting_wallets(user_id,balance) VALUES (?,200)').run(uid); return db.prepare('SELECT balance FROM pb_betting_wallets WHERE user_id=?').get(uid).balance; }
   // Existing wallets are intentionally retained; only NEW wallets begin with 200 Gems.
@@ -177,11 +182,83 @@ module.exports = function mountBetting(app, getConn) {
       return res.redirect(303,'/betsadmin?ok=1');
     }catch(e){return res.redirect(303,'/betsadmin?error='+encodeURIComponent(String(e.message||'Adjustment failed').slice(0,120)));}
   });
+  // Admin-only first-competition opening and read-only current projection monitor.
+  app.get('/betsadmin/lines',adminLogin,admin,(req,res,next)=>{
+    try {withDb(db=>{
+      bettingAdmin.init(db);
+      const now=Math.floor(Date.now()/1000);
+      const events=db.prepare(`SELECT * FROM pb_betting_events
+        WHERE start_ts>? AND status='scheduled' AND source_url LIKE 'https://www.dci.org/%'
+        ORDER BY start_ts,id LIMIT 200`).all(now);
+      const selected=events.find(e=>e.id===String(req.query.event_id||''))||events[0]||null;
+      const markets=selected?db.prepare('SELECT * FROM pb_betting_markets WHERE event_id=? ORDER BY corps,caption,kind').all(selected.id):[];
+      const bets=selected?db.prepare(`SELECT b.*,m.corps,m.caption,m.kind,u.username,s.projection AS projection_at_bet
+        FROM pb_betting_bets b JOIN pb_betting_markets m ON m.id=b.market_id
+        LEFT JOIN users u ON u.id=b.user_id
+        LEFT JOIN pb_betting_bet_projection_snapshots s ON s.bet_id=b.id
+        WHERE m.event_id=? ORDER BY b.id DESC`).all(selected.id):[];
+      const projections=selected?bettingAdmin.projections(db,selected,markets):new Map();
+      const lineupRow=selected?db.prepare('SELECT lineup_json FROM pb_dci_event_sources WHERE event_id=?').get(selected.id):null;
+      let lineup=[];
+      try{lineup=JSON.parse(lineupRow?.lineup_json||'[]');}catch{}
+      const participants=[...new Map((Array.isArray(lineup)?lineup:[]).map(x=>{
+        const name=String(typeof x==='string'?x:x?.corps||'').trim();
+        return [bettingStaff.keyFor(name),name];
+      }).filter(x=>x[0])).values()];
+      const staffChanges=selected?new Map(participants.map(name=>[name,bettingStaff.value(db,selected.season,name)])):new Map();
+      const staffRanks=selected?new Map(participants.map(name=>[name,bettingStaff.competitionNumber(db,{
+        season:selected.season,corps:name,eventId:selected.id,startTs:selected.start_ts,
+        eventDate:db.prepare('SELECT local_date FROM pb_dci_event_dates WHERE event_id=?').get(selected.id)?.local_date||new Date(selected.start_ts*1000).toISOString().slice(0,10)
+      })])):new Map();
+      const manualOpen=selected?db.prepare('SELECT opened_ts,opened_by FROM pb_betting_manual_open WHERE event_id=?').get(selected.id):null;
+      res.setHeader('Cache-Control','private, no-store');
+      res.render('betsadmin_lines',{events,selected,markets,bets,projections,manualOpen,participants,staffChanges,staffRanks,
+        isOpener:selected?bettingAdmin.seasonOpener(db,selected):false,
+        opening:selected?openingForEvent(db,selected):0,now,csrf:csrfToken(req),
+        notice:String(req.query.ok||'').slice(0,180),error:String(req.query.error||'').slice(0,180)});
+    });}catch(e){next(e);}
+  });
+  // Admin-only preseason staffing estimates; not visible to regular visitors.
+  app.post('/betsadmin/lines/staff',adminLogin,admin,write,(req,res,next)=>{
+    const expected=String(req.session?.betsadmin_csrf||'');
+    if(!expected||expected!==String(req.body?.csrf||''))return res.sendStatus(403);
+    const eventId=String(req.body?.event_id||'');
+    try {
+      const result=withDb(db=>db.transaction(()=>{
+        const event=db.prepare('SELECT * FROM pb_betting_events WHERE id=?').get(eventId);
+        if(!event || event.status!=='scheduled')throw Error('Select an upcoming competition.');
+        const source=db.prepare('SELECT lineup_json FROM pb_dci_event_sources WHERE event_id=?').get(eventId);
+        if(!source)throw Error('Official lineup is missing.');
+        const lineup=JSON.parse(source.lineup_json);
+        const corps=String(req.body?.corps||'').trim();
+        if(!Array.isArray(lineup)||!lineup.some(x=>bettingStaff.keyFor(typeof x==='string'?x:x?.corps)===bettingStaff.keyFor(corps)))throw Error('Select a corps from the official event lineup.');
+        const adjustment=bettingStaff.update(db,{season:event.season,corps,
+          adjustment:req.body?.adjustment,adminId:req.session.uid});
+        const updated=bettingAdmin.refreshUnopenedSeason(db,event.season);
+        return {adjustment,updated};
+      })());
+      return res.redirect(303,'/betsadmin/lines?event_id='+encodeURIComponent(eventId)+'&ok='+encodeURIComponent(
+        'Staff change saved ('+result.adjustment.toFixed(3)+' overall pts). '+result.updated+' unopened lines refreshed.'));
+    }catch(e){return res.redirect(303,'/betsadmin/lines?event_id='+encodeURIComponent(eventId)+'&error='+encodeURIComponent(String(e.message||e).slice(0,180)));}
+  });
+  app.post('/betsadmin/lines/open',adminLogin,admin,write,(req,res,next)=>{
+    const expected=String(req.session?.betsadmin_csrf||'');
+    const provided=String(req.body?.csrf||'');
+    if(!expected||expected!==provided)return res.sendStatus(403);
+    const eventId=String(req.body?.event_id||'');
+    if(!/^[a-zA-Z0-9_-]{1,120}$/.test(eventId))return res.sendStatus(400);
+    try {
+      const result=withDb(db=>db.transaction(()=>bettingAdmin.openFirstCompetition(db,eventId,req.session.uid))());
+      return res.redirect(303,'/betsadmin/lines?event_id='+encodeURIComponent(eventId)+'&ok='+encodeURIComponent(result.already_open?'Event was already manually opened.':'Betting opened for the season opener.'));
+    } catch(e) {
+      return res.redirect(303,'/betsadmin/lines?event_id='+encodeURIComponent(eventId)+'&error='+encodeURIComponent(String(e.message||e).slice(0,180)));
+    }
+  });
   app.get('/betting', loggedIn, (req,res,next)=>{ try {withDb(db=>{
     gems.creditHistoricalPredictionScores(db);
     const now=Math.floor(Date.now()/1000),uid=Number(req.session.uid);
-    const events=db.prepare('SELECT *, (start_ts-86400) AS open_ts FROM pb_betting_events WHERE start_ts>? AND status=? ORDER BY start_ts LIMIT 100').all(now-86400,'scheduled');
-    const markets=db.prepare(`SELECT m.*, e.name event_name,e.start_ts,e.season FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE e.status='scheduled' AND m.status='active' AND e.start_ts>? AND e.start_ts-86400<=? ORDER BY e.start_ts,m.corps,m.caption,m.kind`).all(now,now);
+    const events=db.prepare('SELECT * FROM pb_betting_events WHERE start_ts>? AND status=? ORDER BY start_ts LIMIT 100').all(now,'scheduled').map(e=>({...e,open_ts:openingForEvent(db,e)}));
+    const markets=db.prepare(`SELECT m.*, e.name event_name,e.start_ts,e.season FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE e.status='scheduled' AND m.status='active' AND e.start_ts>? ORDER BY e.start_ts,m.corps,m.caption,m.kind`).all(now).filter(m=>now>=openingForEvent(db,{id:m.event_id,start_ts:m.start_ts,season:m.season}));
     const bets=db.prepare(`SELECT b.*, m.caption,m.corps,e.name event_name FROM pb_betting_bets b JOIN pb_betting_markets m ON m.id=b.market_id JOIN pb_betting_events e ON e.id=m.event_id WHERE b.user_id=? ORDER BY b.id DESC LIMIT 30`).all(uid);
     res.setHeader('Cache-Control','private, no-store');
     const claim=db.prepare('SELECT last_claim_ts FROM pb_gems_daily_claims WHERE user_id=?').get(uid);
@@ -201,13 +278,22 @@ module.exports = function mountBetting(app, getConn) {
     const uid=Number(req.session.uid), marketId=String(req.body.market_id||''),choice=String(req.body.choice||''),stake=Number(req.body.stake);
     if(!['over','under'].includes(choice)||!Number.isSafeInteger(stake)||stake<1||stake>10000)throw Error('Invalid selection or stake (1–10,000 Gems).');
     return db.transaction(()=>{
-      const m=db.prepare(`SELECT m.*,e.start_ts,e.status event_status FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE m.id=?`).get(marketId);
+      const m=db.prepare(`SELECT m.*,e.start_ts,e.season,e.status event_status FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE m.id=?`).get(marketId);
       const now=Math.floor(Date.now()/1000);
-      if(!m||m.status!=='active'||m.event_status!=='scheduled'||now<m.start_ts-86400||now>=m.start_ts)throw Error('This market is not open.');
+      if(!m||m.status!=='active'||m.event_status!=='scheduled'||now<openingForEvent(db,{id:m.event_id,start_ts:m.start_ts,season:m.season})||now>=m.start_ts)throw Error('This market is not open.');
       wallet(db,uid);
       const paid=db.prepare('UPDATE pb_betting_wallets SET balance=balance-? WHERE user_id=? AND balance>=?').run(stake,uid,stake);
       if(paid.changes!==1)throw Error('Not enough Gems.');
       const b=db.prepare('INSERT INTO pb_betting_bets(user_id,market_id,choice,stake,line,odds) VALUES(?,?,?,?,?,?)').run(uid,marketId,choice,stake,m.line,m.odds);
+      // Capture the model estimate at placement; do not change the posted/locked line.
+      let model=null;
+      try {
+        const projectionEvent=db.prepare('SELECT * FROM pb_betting_events WHERE id=?').get(m.event_id);
+        model=bettingAdmin.projections(db,projectionEvent,[m]).get(m.id);
+      } catch(error) {
+        console.error('[BETTING] Projection snapshot unavailable:',error.message);
+      }
+      db.prepare('INSERT INTO pb_betting_bet_projection_snapshots(bet_id,projection) VALUES(?,?)').run(b.lastInsertRowid,model?.value??null);
       db.prepare('INSERT INTO pb_betting_ledger(user_id,bet_id,delta,reason) VALUES(?,?,?,?)').run(uid,b.lastInsertRowid,-stake,'stake');
       return {bet_id:Number(b.lastInsertRowid),balance:wallet(db,uid)};
     })();
@@ -238,7 +324,7 @@ module.exports = function mountBetting(app, getConn) {
         if(!event)throw Error('Event not found. Import the official event first.');
         if(event.status!=='scheduled')throw Error('Only scheduled events can receive new lines.');
         if(event.start_ts<=Math.floor(Date.now()/1000))throw Error('Cannot generate lines for an event that has already started.');
-        if(event.start_ts-86400<=Math.floor(Date.now()/1000))throw Error('Generate and review lines BEFORE the 24-hour betting window opens.');
+        if(openingForEvent(db,event)<=Math.floor(Date.now()/1000))throw Error('Generate and review lines BEFORE the betting window opens.');
         const markets=historicalLines.makeMarkets({eventId:event.id,startTs:event.start_ts,season:event.season,lineup:req.body.lineup,db,eventDate:db.prepare('SELECT local_date FROM pb_dci_event_dates WHERE event_id=?').get(event.id)?.local_date});
         if(!markets.length)throw Error('No qualifying historical scores for this event lineup; check corps names and classes.');
         return {event_id:event.id,...historicalLines.saveMarkets(db,event,markets)};
