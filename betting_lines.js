@@ -155,6 +155,68 @@ function firstShowEstimate(rows,season,cls,corps,metric,targetDate){
   const value=(1-peerWeight)*ownEstimate+peerWeight*(peerBaseline??ownEstimate);
   return {value,sample:Math.max(3,anchors.length+similar.length),model:'calendar_aligned',dailyGrowth:slope};
 }
+// Compare a corps' FIRST THREE scheduled performances with its own prior-season
+// performances, taking BOTH show sequence and calendar timing into account.
+// This is a read-only prior-year anchor; it never replaces an actual current-year
+// score or creates a market independently of the existing model.
+function priorSeasonEarlyComparison(rows,{season,cls,corps,metric,targetDate,showNumber}){
+  if(showNumber<1||showNumber>3)return null;
+  const targetDay=calendarDay(targetDate);
+  if(targetDay==null)return null;
+  const prior=rows.filter(r=>r.year===season-1 && r.cls===cls &&
+    canonicalCorps(r.corps)===canonicalCorps(corps) &&
+    Number.isFinite(metricValue(r,metric)) && calendarDay(r.date)!=null)
+    .sort((a,b)=>a.date.localeCompare(b.date));
+  // Multiple event records on the same date count as one performance day.
+  const byDate=new Map();
+  for(const r of prior)if(!byDate.has(r.date))byDate.set(r.date,r);
+  const ordered=[...byDate.values()];
+  if(!ordered.length)return null;
+
+  // Match to a similar calendar date AND a similar position in the season.
+  // Show number is a preference rather than a mandate: if last year's tour
+  // began weeks later, its first recorded show should not be blindly copied.
+  let best=null;
+  for(let i=0;i<ordered.length;i++){
+    const r=ordered[i],gap=calendarDay(r.date)-targetDay;
+    const rankGap=Math.abs((i+1)-showNumber);
+    const cost=Math.abs(gap)+9*rankGap;
+    if(!best||cost<best.cost)best={r,gap,rankGap,cost};
+  }
+  if(!best||Math.abs(best.gap)>45)return null;
+
+  const slope=historicDailyGrowth(rows.filter(r=>r.year<season),cls,corps,metric);
+  if(Math.abs(best.gap)>10&&slope==null)return null;
+  const adjusted=metricValue(best.r,metric)-(slope??0)*best.gap;
+  if(!Number.isFinite(adjusted))return null;
+  // Very distant/ordinal-mismatched records have less influence; the existing
+  // date-aware opener or current-season trend remains the dominant baseline.
+  const confidence=(1/(1+Math.abs(best.gap)/20))*(1/(1+best.rankGap));
+  return {value:adjusted,confidence,lastDate:best.r.date,lastScore:metricValue(best.r,metric),
+    lastShowNumber:ordered.indexOf(best.r)+1,dayGap:best.gap};
+}
+
+function scheduledShowNumber(db,{eventId,startTs,season,corps,eventDate,rows}){
+  if(db&&typeof db.prepare==='function'){
+    try{
+      const n=staff.competitionNumber(db,{eventId,startTs,season,corps,eventDate});
+      if(Number.isInteger(n)&&n>=1)return n;
+    }catch(error){ /* No schedule tables in standalone model tests. */ }
+  }
+  // Fallback is conservative: only observed performances, never fabricated shows.
+  const completed=new Set(rows.filter(r=>r.year===season && r.date<eventDate &&
+    canonicalCorps(r.corps)===canonicalCorps(corps)).map(r=>r.date));
+  return completed.size+1;
+}
+
+function applyEarlySeasonComparison(base,reference,showNumber){
+  if(!base||!reference)return base;
+  const strengths=[0,.55,.42,.30];
+  const weight=strengths[showNumber]*reference.confidence;
+  return {...base,value:(1-weight)*base.value+weight*reference.value,
+    earlyComparison:{...reference,showNumber,weight}};
+}
+
 function makeMarkets({eventId,startTs,season,lineup,asOfDate,db,eventDate}){
   if(!/^[a-zA-Z0-9_-]{1,120}$/.test(String(eventId)))throw Error('Invalid event ID');
   if(!Number.isSafeInteger(Number(startTs)))throw Error('Invalid start timestamp');
@@ -172,13 +234,17 @@ function makeMarkets({eventId,startTs,season,lineup,asOfDate,db,eventDate}){
     used.add(key);
     const seasonRows=data.filter(r=>r.year===Number(season)&&r.cls===cls&&canonicalCorps(r.corps)===canonicalCorps(corps)).sort((a,b)=>b.date.localeCompare(a.date));
     const previous=seasonRows[0]||null;
+    const showNumber=scheduledShowNumber(db,{eventId,startTs,season:Number(season),corps,eventDate:day,rows:data});
     const metrics=new Set(['Overall']);
     const basis=previous||data.filter(r=>r.year<Number(season)&&r.cls===cls&&canonicalCorps(r.corps)===canonicalCorps(corps)).sort((a,b)=>b.year-a.year||a.date.localeCompare(b.date))[0];
     if(basis){for(const k of Object.keys(basis.groups||{}))metrics.add(k);for(const k of Object.keys(basis.captions||{}))metrics.add(k);}
     for(const metric of metrics){
       if(previous&&!Number.isFinite(metricValue(previous,metric)))continue;
-      const p=previous?trend(data,Number(season),cls,corps,metric,day,previous):firstShowEstimate(data,Number(season),cls,corps,metric,day);
-      if(!p||!Number.isFinite(p.value)||p.sample<3)continue;
+      const base=previous?trend(data,Number(season),cls,corps,metric,day,previous):firstShowEstimate(data,Number(season),cls,corps,metric,day);
+      if(!base||!Number.isFinite(base.value)||base.sample<3)continue;
+      const reference=showNumber<=3?priorSeasonEarlyComparison(data,{
+        season:Number(season),cls,corps,metric,targetDate:day,showNumber}):null;
+      const p=applyEarlySeasonComparison(base,reference,showNumber);
       const max=metric==='Overall'?100:metric==='General Effect'?40:['Visual','Music'].includes(metric)?30:20;
       const preseasonEffect=staff.staffEffect(db,{season:Number(season),corps,eventId,
         startTs:Number(startTs),eventDate:day,metric,max});
