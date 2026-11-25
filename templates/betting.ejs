@@ -145,7 +145,7 @@
 
             <button
               data-id="<%= e.id %>"
-              class="<%= now >= e.start_ts - 86400 && now < e.start_ts ? '' : 'locked' %>"
+              class="<%= now >= e.open_ts && now < e.start_ts ? '' : 'locked' %>"
             >
 
               <b><%= e.name %></b>
@@ -163,10 +163,10 @@
                 ) %> CT
               </small>
 
-              <% if (now < e.start_ts - 86400) { %>
+              <% if (now < e.open_ts) { %>
 
                 <small>
-                  Opens 24h before
+                  Opens <%= e.start_ts - e.open_ts === 172800 ? '48h' : e.start_ts - e.open_ts > 172800 ? 'early' : '24h' %> before
                 </small>
 
               <% } %>
@@ -304,7 +304,7 @@
         <h3>No projections available</h3>
 
         <p>
-          Markets go live 24 hours before the competition.
+          Markets go live 24 hours before the competition, or 48 hours early when all participating corps have two days without performances.
           Check the event schedule above.
         </p>
 
