@@ -82,6 +82,11 @@
     .bt-cal-corps-option {display:flex;align-items:center;gap:9px;font-size:13px;padding:7px;border-radius:6px;cursor:pointer}
     .bt-cal-corps-option:hover {background:#2c3d59}
     .bt-cal-corps-option input {accent-color:#8eb5ff}
+    .bt-cal-match-all {display:flex;gap:10px;align-items:flex-start;padding:11px 9px;margin:9px 0 3px;
+      background:#25334c;border:1px solid #536581;border-radius:8px;color:#edf4ff;cursor:pointer;font-size:13px}
+    .bt-cal-match-all input {margin-top:3px;accent-color:#8eb5ff;flex-shrink:0}
+    .bt-cal-match-all strong {display:block;font-size:13px}
+    .bt-cal-match-all small {display:block;color:#b4c9e9;font-size:11px;margin-top:3px;line-height:1.4}
     .bt-cal-corps-actions {display:flex;justify-content:space-between;gap:10px;margin-top:9px}
     .bt-cal-corps-actions button {color:#d7e9ff;background:#2d3e5c;border:1px solid #536b90;border-radius:6px;padding:7px 12px;cursor:pointer}
     .bt-cal-count {font-size:12px;color:#b0c4e3;margin:10px 0}
@@ -649,6 +654,10 @@
         <details id="calCorpsPicker" class="bt-cal-corps-panel">
           <summary id="calCorpsSummary">Filter Corps · All Corps</summary>
           <div class="bt-cal-corps-contents">
+            <label class="bt-cal-match-all">
+              <input type="checkbox" id="calRequireAllCorps">
+              <span><strong>Require ALL selected corps</strong><small>Only show competitions featuring every checked corps together (AND instead of OR).</small></span>
+            </label>
             <input id="calCorpsSearch" class="bt-cal-corps-search" type="search" placeholder="Search corps..." aria-label="Search corps">
             <div id="calCorpsOptions" class="bt-cal-corps-options" role="group" aria-label="Select one or multiple corps"></div>
             <div class="bt-cal-corps-actions">
@@ -666,7 +675,7 @@
       </div>
       <div class="bt-cal-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
       <div id="calendarMonthGrid" class="bt-cal-days" role="grid" aria-label="Competition dates"></div>
-      <p class="bt-calendar-note">Select a competition to view its betting board. Select multiple corps to show events with confirmed appearances by any selected corps. World/Open Class filters use confirmed imported lineups. The corps picker also shows historical DCI corps; appearing in the picker does not imply a 2027 booking. Events without a published lineup appear under All Events.</p>
+      <p class="bt-calendar-note">Select a competition to view its betting board. Select multiple corps to show events featuring any selected corps, or tick Require ALL selected corps to show only competitions featuring every selected corps together. World/Open Class filters use confirmed imported lineups. The corps picker also shows historical DCI corps; appearing in the picker does not imply a 2027 booking. Events without a published lineup appear under All Events.</p>
     </div>
   </dialog>
 
@@ -700,7 +709,7 @@
       const title=$('calendarMonthTitle'), grid=$('calendarMonthGrid');
       const allButton=$('calAllEvents'), worldButton=$('calWorldClass'), openClassButton=$('calOpenClass');
       const corpsPicker=$('calCorpsPicker'), corpsSummary=$('calCorpsSummary');
-      const corpsSearch=$('calCorpsSearch'), corpsOptions=$('calCorpsOptions');
+      const corpsSearch=$('calCorpsSearch'), corpsOptions=$('calCorpsOptions'), requireAllCorps=$('calRequireAllCorps');
       const matchCount=$('calMatchCount');
       const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
       const corpsKey=s=>String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
@@ -734,16 +743,23 @@
       const firstMonth=months[0]||currentMonth, lastMonth=months[months.length-1]||currentMonth;
       function matchesFilters(event) {
         if(!selectedCorps.size && !selectedClasses.size) return true;
-        // Multiple selected corps: inclusive OR. Different filter types: AND.
-        // Corps and class must match the SAME participant.
-        return event.lineup.some(p=>(!selectedCorps.size || selectedCorps.has(corpsKey(p.corps))) &&
-          (!selectedClasses.size || selectedClasses.has(classKey(p.cls))));
+        // Each selected corps is checked against the confirmed lineup.
+        // With "Require ALL" enabled, ALL selected corps must be present.
+        // Otherwise, ANY selected corps may be present (the original behavior).
+        // Class filters are applied to the matching corps, preserving the
+        // existing "selected corps AND class" behavior.
+        const eligible=event.lineup.filter(p=>!selectedClasses.size || selectedClasses.has(classKey(p.cls)));
+        if(!selectedCorps.size) return eligible.length>0;
+        const present=new Set(eligible.map(p=>corpsKey(p.corps)));
+        return requireAllCorps.checked
+          ? [...selectedCorps].every(key=>present.has(key))
+          : [...selectedCorps].some(key=>present.has(key));
       }
       function renderCorpsOptions(){
         const q=corpsSearch.value.trim().toLowerCase();
         const options=allCorps.filter(([key,name])=>name.toLowerCase().includes(q));
         corpsOptions.innerHTML=options.map(([key,name])=>`<label class="bt-cal-corps-option"><input type="checkbox" value="${esc(key)}" ${selectedCorps.has(key)?'checked':''}><span>${esc(name)}</span></label>`).join('') || '<p class="bt-calendar-note">No corps match that search. Clear your search to see all corps.</p>';
-        corpsSummary.textContent=selectedCorps.size?`Filter Corps · ${selectedCorps.size} selected`:`Filter Corps · ${allCorps.length} available`;
+        corpsSummary.textContent=selectedCorps.size?`Filter Corps · ${selectedCorps.size} selected${requireAllCorps.checked?' · ALL required':''}`:`Filter Corps · ${allCorps.length} available`;
       }
       function updateFilterButtons(){
         const all=!selectedCorps.size&&!selectedClasses.size;
@@ -795,7 +811,8 @@
         grid.innerHTML=out.join('');
       }
       const update=()=>{updateFilterButtons();renderMonth();};
-      allButton.addEventListener('click',()=>{selectedCorps.clear();selectedClasses.clear();corpsSearch.value='';update();});
+      allButton.addEventListener('click',()=>{selectedCorps.clear();selectedClasses.clear();requireAllCorps.checked=false;corpsSearch.value='';update();});
+      requireAllCorps.addEventListener('change',update);
       for(const [button,key] of [[worldButton,'world'],[openClassButton,'open']]){
         button.addEventListener('click',()=>{if(selectedClasses.has(key))selectedClasses.delete(key);else selectedClasses.add(key);update();});
       }
