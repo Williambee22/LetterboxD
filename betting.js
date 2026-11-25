@@ -307,9 +307,10 @@ module.exports = function mountBetting(app, getConn) {
   app.get('/betting', loggedIn, (req,res,next)=>{ try {withDb(db=>{
     gems.creditHistoricalPredictionScores(db);
     const now=Math.floor(Date.now()/1000),uid=Number(req.session.uid);
-    const events=db.prepare(`SELECT e.*,
+    const events=db.prepare(`SELECT e.*, d.local_date,
       CASE WHEN n.event_id IS NOT NULL THEN 1 ELSE 0 END AS not_scored
       FROM pb_betting_events e
+      LEFT JOIN pb_dci_event_dates d ON d.event_id=e.id
       LEFT JOIN pb_betting_no_score_events n ON n.event_id=e.id
       WHERE (e.status='scheduled' AND (e.start_ts IS NULL OR e.start_ts>?))
         OR (n.event_id IS NOT NULL AND e.start_ts>?)
