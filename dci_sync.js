@@ -120,35 +120,57 @@ function getEventDateAndTime(txt,season){
   const date=`${y}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
   return {date,timezone,start_ts:localTimestamp(y,month,day,hour,minute,timezone),zone:zoneMatch[1].toUpperCase()};
 }
+// Some announced tour lineups have no performance times until shortly before the event.
+// Read those corps from the official event page without inventing a competition start time.
 function inferredClass(corps,season){
   const c=lines.canonicalCorps(corps);
+  // DCI approved both corps for World Class for the 2027 season.
+  if(season>=2027 && ['Gold','The Battalion','Battalion'].some(n=>lines.canonicalCorps(n)===c))return 'World Class';
   const hits=HISTORY.filter(x=>x.year<=season && lines.canonicalCorps(x.corps)===c);
-  if(!hits.length)return null; // unknown performers must not silently become World Class
+  if(!hits.length)return null;
   hits.sort((a,b)=>b.year-a.year);
   const latest=hits[0].year;
   const values=[...new Set(hits.filter(x=>x.year===latest).map(x=>x.cls))];
   return values.length===1?values[0]:null;
+}
+function parseLineup(html,season){
+  const txt=textFromHtml(html);
+  const section=txt.split(/Lineup\s*&\s*Times/i)[1]?.split(/View full lineup|Get directions|Venue Information|Tickets|Upcoming Events/i)[0]||'';
+  const lineup=[];const seen=new Set();const unknown=[];
+  const ignore=/^(Gates Open|Welcome|Anthem|Intermission|Scores|LIVE|Awards|Encore|Exhibition|Break|Event Concludes|National Anthem|All times|Time TBA|TBA$)/i;
+  // A schedule row is typically "7:30 PM | Bluecoats - Canton, OH";
+  // preseason pages use "| Bluecoats - Canton, OH" instead.
+  // Match ONLY named lineup rows, not article text, sponsors, or nearby event listings.
+  for(const row of section.split('\n')){
+    const m=row.match(/^\s*(?:(?:\d{1,2}:\d{2}\s*(?:AM|PM)|TBA|TBD|--|—|-|)\s*)?\|\s*(.+?)\s*$/i);
+    if(!m)continue;
+    let name=simplify(m[1]).replace(/\s+-\s+[^\n]*,\s*[A-Z]{2}(?:\s+\d{5})?\s*$/i,'')
+      .replace(/\s+-\s+[^\n]*,\s*(?:QC|ON|BC|AB|SK|MB)\s*$/i,'');
+    name=simplify(name);
+    if(!name||ignore.test(name)||/\b(?:exhibition|alumni|concludes|ceremony)\b/i.test(name))continue;
+    const cls=inferredClass(name,season);
+    const key=lines.canonicalCorps(name);
+    if(!key||seen.has(key))continue;
+    seen.add(key);
+    // Unknown class is intentionally retained for the corps picker, but never
+    // assigned a fabricated World/Open class or used to generate betting markets.
+    if(!cls)unknown.push(name);
+    lineup.push({corps:name,cls:cls||''});
+  }
+  return {lineup,unknown};
 }
 function parseEventPage(html,url){
   const slug=eventSlug(url),match=slug.match(/^(20\d\d)-/);if(!match)return null;
   const season=Number(match[1]),$=cheerio.load(html),txt=textFromHtml(html);
   const eventName=simplify($('h1').first().text()||slug.slice(5).replace(/-/g,' '));
   const date=getEventDateAndTime(txt,season);
-  const raw=txt.split(/Lineup\s*&\s*Times/i)[1]?.split(/View full lineup|Get directions|Venue Information|Tickets/i)[0]||'';
-  const lineup=[];const seen=new Set();const rejected=[];
-  for(const m of raw.matchAll(/(?:^|\n)\s*(\d{1,2}:\d\d\s*(?:AM|PM))\s*\|\s*([^\n]+)/gi)){
-    const name=simplify(m[2].replace(/\s+-\s+[^\n]*,\s*[A-Z]{2}(?:\s+\d{5})?$/,'').replace(/\s+-\s+[^\n]*,\s*[A-Z]{2}\b.*$/,''));
-    if(!name || /^(Gates Open|Welcome|Anthem|Intermission|Scores|LIVE|Awards|Encore|Exhibition|Break|Event Concludes|National Anthem)/i.test(name)||/\b(?:exhibition|alumni|concludes|ceremony)\b/i.test(name))continue;
-    const cls=inferredClass(name,season);
-    if(!cls){rejected.push(name);continue;}
-    const key=lines.canonicalCorps(name)+'|'+cls;if(seen.has(key))continue;seen.add(key);
-    lineup.push({corps:name,cls});
-  }
-  const warning=!date?.start_ts ? (date?.warning||'Official date not published or unreadable'):
-    lineup.length? (rejected.length?`Unmatched performers (not bettable): ${rejected.join(', ').slice(0,170)}`:''):
-    'Lineup unpublished or no recognized competitive corps; event saved, markets not generated';
+  const {lineup,unknown}=parseLineup(html,season);
+  const warnings=[];
+  if(!date?.start_ts)warnings.push(date?.warning||'Official start time not published');
+  if(!lineup.length)warnings.push('Official lineup not published or unreadable');
+  if(unknown.length)warnings.push(`Unclassified corps (not bettable): ${unknown.slice(0,5).join(', ')}`);
   return {slug,season,name:eventName,source_url:url,start_ts:date?.start_ts,date:date?.date,
-    lineup,timezone:date?.timezone||null,warning};
+    lineup,timezone:date?.timezone||null,warning:warnings.join('; ')};
 }
 function scoreEntries(html){
   // Important: official pages feature a LEADERBOARD TEASER before the actual event table.
@@ -358,7 +380,7 @@ async function discover(db,{dryRun=false,year=new Date().getUTCFullYear(),limit=
         const haveMarkets=!!db.prepare('SELECT 1 FROM pb_betting_markets WHERE event_id=? LIMIT 1').get(id);
         if(!haveMarkets || openingForEvent(db,{id,start_ts:effectiveStart,season:ev.season})>NOW()){
           const mk=lines.makeMarkets({eventId:id,startTs:effectiveStart,season:ev.season,
-            lineup,db,eventDate:ev.date});
+            lineup:lineup.filter(x=>x.cls),db,eventDate:ev.date});
           marketCount+=lines.saveMarkets(db,{id},mk).inserted;
         }
       }
