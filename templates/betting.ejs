@@ -142,37 +142,25 @@
           <!-- Individual Events -->
 
           <% events.forEach(e => { %>
-
-            <button
-              data-id="<%= e.id %>"
-              class="<%= now >= e.open_ts && now < e.start_ts ? '' : 'locked' %>"
-            >
-
+            <button data-id="<%= e.id %>"
+              class="<%= e.start_ts != null && now >= e.open_ts && now < e.start_ts ? '' : 'locked' %>">
               <b><%= e.name %></b>
-
               <small>
-                <%= new Date(e.start_ts * 1000).toLocaleString(
-                  'en-US',
-                  {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
+                <% if (e.start_ts == null) { %>
+                  Time TBA
+                <% } else { %>
+                  <%= new Date(e.start_ts * 1000).toLocaleString('en-US', {
+                    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
                     timeZone: 'America/Chicago'
-                  }
-                ) %> CT
+                  }) %> CT
+                <% } %>
               </small>
-
-              <% if (now < e.open_ts) { %>
-
-                <small>
-                  Opens <%= e.start_ts - e.open_ts === 172800 ? '48h' : e.start_ts - e.open_ts > 172800 ? 'early' : '24h' %> before
-                </small>
-
+              <% if (e.start_ts == null) { %>
+                <small>Betting unavailable until start time is announced</small>
+              <% } else if (now < e.open_ts) { %>
+                <small>Opens <%= e.start_ts - e.open_ts === 172800 ? '48h' : e.start_ts - e.open_ts > 172800 ? 'early' : '24h' %> before</small>
               <% } %>
-
             </button>
-
           <% }) %>
 
         </div>
