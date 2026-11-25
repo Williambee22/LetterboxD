@@ -2,6 +2,7 @@
 // Refunding absent competition scores is independent of the optional
 // DCI_AUTO_SETTLE_ENABLED flag. This is run after the normal score poll.
 const dciSync = require('./dci_sync');
+const parlays = require('./betting_parlays');
 const CUTOFF_SECONDS = 16 * 60 * 60;
 const LOOKBACK_SECONDS = 45 * 86400;
 const ROOT = 'https://www.dci.org';
@@ -84,7 +85,8 @@ function refundEvent(db, eventId, now = Math.floor(Date.now() / 1000)) {
         VALUES(?,?,?,'not_scored_refund')`).run(bet.user_id,bet.id,bet.stake);
       refunded++;gems += bet.stake;
     }
-    return {refunded,gems,changed:true};
+    const multi=parlays.settlePending(db);
+    return {refunded,gems,changed:true,multi};
   })();
 }
 

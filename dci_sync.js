@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const cheerio = require('cheerio');
 const lines = require('./betting_lines');
 const {openingForEvent} = require('./betting_window');
+const parlays = require('./betting_parlays');
 const HISTORY = require('./pressboxd_history_2022.json').records;
 const ROOT = 'https://www.dci.org';
 const NOW = () => Math.floor(Date.now()/1000);
@@ -508,6 +509,8 @@ async function checkScores(db,{dryRun=false}={}){
         storeVerified(db,ev,agreed);
         const results=settlementEnabled?settleVerifiedMarkets(db,ev,agreed):{settled:0,betsPaid:0,payoutGems:0};
         const remaining=db.prepare("SELECT count(*) AS n FROM pb_betting_markets WHERE event_id=? AND status='active'").get(ev.id).n;
+        // Grading multi-pick entries is independent of legacy single bet settlement.
+        if(settlementEnabled)parlays.settlePending(db);
         if(!remaining)db.prepare("UPDATE pb_betting_events SET status='completed' WHERE id=?").run(ev.id);
         return results;
       })();

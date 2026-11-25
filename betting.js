@@ -3,6 +3,7 @@ const gems = require('./gems');
 const historicalLines = require('./betting_lines');
 const dciSync = require('./dci_sync');
 const noScore = require('./betting_no_score');
+const parlays = require('./betting_parlays');
 const bettingAdmin = require('./betting_admin_controls');
 const bettingStaff = require('./betting_staff');
 const DCI_HISTORY_RECORDS = require('./pressboxd_history_2022.json').records;
@@ -104,6 +105,7 @@ module.exports = function mountBetting(app, getConn) {
   withDb(bettingStaff.init);
   withDb(dciSync.init);
   withDb(noScore.init);
+  withDb(parlays.init);
   function wallet(db, uid) { db.prepare('INSERT OR IGNORE INTO pb_betting_wallets(user_id,balance) VALUES (?,200)').run(uid); return db.prepare('SELECT balance FROM pb_betting_wallets WHERE user_id=?').get(uid).balance; }
   // Existing wallets are intentionally retained; only NEW wallets begin with 200 Gems.
   const loggedIn=(req,res,next)=>req.session?.uid?next():res.redirect('/login?next=%2Fbetting');
@@ -216,6 +218,8 @@ module.exports = function mountBetting(app, getConn) {
             // Always check the 16-hour refund cutoff after attempting score sync.
             // Uses its own official DCI score-page check and is safe to repeat.
             const refunds=await noScore.processExpired(db);
+            // Leg results may become available through score sync or NOT SCORED voids.
+            parlays.settlePending(db);
             if(refunds.marked || refunds.errors.length){
               dciSync.log(db,'no_score',refunds.errors.length?'warning':'ok',
                 JSON.stringify(refunds));
@@ -376,7 +380,8 @@ module.exports = function mountBetting(app, getConn) {
       WHERE b.user_id=? ORDER BY b.id DESC LIMIT 30`).all(uid);
     res.setHeader('Cache-Control','private, no-store');
     const claim=db.prepare('SELECT last_claim_ts FROM pb_gems_daily_claims WHERE user_id=?').get(uid);
-    res.render('betting',{ me:res.locals.me,accent_color:res.locals.accent_color,events,corpsCatalog,markets,bets,balance:wallet(db,uid),now,next_claim_ts:claim?claim.last_claim_ts+86400:0 });
+    const multiEntries=parlays.recent(db,uid,20);
+    res.render('betting',{ me:res.locals.me,accent_color:res.locals.accent_color,events,corpsCatalog,markets,bets,multiEntries,balance:wallet(db,uid),now,next_claim_ts:claim?claim.last_claim_ts+86400:0 });
   }); } catch(e){next(e);} });
   app.post('/api/gems/daily',loggedIn,write,(req,res)=>{try{const result=withDb(db=>db.transaction(()=>{
     const uid=Number(req.session.uid), now=Math.floor(Date.now()/1000);
@@ -388,6 +393,13 @@ module.exports = function mountBetting(app, getConn) {
     db.prepare('INSERT INTO pb_betting_ledger(user_id,delta,reason) VALUES(?,?,?)').run(uid,10,'daily_gems');
     return {ok:true,awarded:10,balance:wallet(db,uid),next_claim_ts:now+86400};
   })());res.status(result.ok?200:429).json(result);}catch(e){res.status(500).json({error:'Could not claim daily Gems'});} });
+  // Multi-entry checkout: each entry is an independent Power/Flex/Single play.
+  app.post('/api/betting/entries',loggedIn,write,(req,res)=>{
+    try{
+      const result=withDb(db=>parlays.placeEntries(db,Number(req.session.uid),req.body?.entries));
+      res.json({ok:true,...result});
+    }catch(e){res.status(400).json({error:String(e.message||e)});}
+  });
   app.post('/api/betting/bets',loggedIn,write,(req,res)=>{ try {const result=withDb(db=>{
     const uid=Number(req.session.uid), marketId=String(req.body.market_id||''),choice=String(req.body.choice||''),stake=Number(req.body.stake);
     if(!['over','under'].includes(choice)||!Number.isSafeInteger(stake)||stake<1||stake>10000)throw Error('Invalid selection or stake (1–10,000 Gems).');
@@ -460,5 +472,7 @@ module.exports = function mountBetting(app, getConn) {
       db.prepare('UPDATE pb_betting_bets SET result=?,payout=? WHERE id=?').run(result,payout,b.id);
       if(payout){db.prepare('UPDATE pb_betting_wallets SET balance=balance+? WHERE user_id=?').run(payout,b.user_id);db.prepare('INSERT INTO pb_betting_ledger(user_id,bet_id,delta,reason) VALUES(?,?,?,?)').run(b.user_id,b.id,payout,result);}
     }return bets.length;
-  })());res.json({ok:true,settled:result});}catch(e){res.status(400).json({error:e.message});}});
+  })());
+    const multi=withDb(db=>parlays.settlePending(db));
+    res.json({ok:true,settled:result,multi});}catch(e){res.status(400).json({error:e.message});}});
 };
