@@ -295,47 +295,78 @@ function acquireLock(db,key,lease=1800){const token=crypto.randomBytes(16).toStr
 function releaseLock(db,key,token){db.prepare('DELETE FROM pb_dci_sync_locks WHERE key=? AND token=?').run(key,token);}
 async function discover(db,{dryRun=false,year=new Date().getUTCFullYear(),limit=150}={}){
   const schedule=await scheduleLinks({year,limit});
-  const links=schedule.links;let imported=0,marketCount=0,missingLineups=0;const errors=[];
+  const links=schedule.links;
+  let imported=0,marketCount=0,missingLineups=0,pendingTimes=0;
+  const errors=[];
   for(const url of links){
     try {
+      const id='dci_'+eventSlug(url);
       if(!dryRun){
-        const prev=db.prepare('SELECT start_ts,status FROM pb_betting_events WHERE id=?').get('dci_'+eventSlug(url));
-        if(prev && (['completed','canceled'].includes(prev.status)||prev.start_ts<NOW()-2*86400))continue;
+        const prev=db.prepare('SELECT start_ts,status FROM pb_betting_events WHERE id=?').get(id);
+        if(prev && (['completed','canceled'].includes(prev.status) ||
+          (prev.start_ts!=null && prev.start_ts<NOW()-2*86400)))continue;
       }
       const ev=parseEventPage(await fetchOfficial(url),url);
-      if(!ev?.start_ts||!ev.date){errors.push(`${eventSlug(url)}: ${ev?.warning||'invalid event date'}`);continue;}
-      const id='dci_'+ev.slug;
+      // A confirmed event date is enough to import an event. Never invent a time.
+      if(!ev?.date){errors.push(`${eventSlug(url)}: ${ev?.warning||'official date unavailable'}`);continue;}
+      const announcedStart=Number.isSafeInteger(ev.start_ts)&&ev.start_ts>0?ev.start_ts:null;
+      if(announcedStart==null)pendingTimes++;
       if(dryRun){imported++;continue;}
       const old=db.prepare('SELECT start_ts,status FROM pb_betting_events WHERE id=?').get(id);
-      const hasBets=db.prepare('SELECT 1 FROM pb_betting_bets b JOIN pb_betting_markets m ON m.id=b.market_id WHERE m.event_id=? LIMIT 1').get(id);
-      if(old && old.start_ts!==ev.start_ts && (hasBets||openingForEvent(db,{id,start_ts:old.start_ts,season:ev.season})<=NOW())){
-        errors.push(`${ev.slug}: event time changed after markets opened/bets; admin review`);continue;
-      }
       if(old?.status==='completed'||old?.status==='canceled')continue;
+      const hasBets=db.prepare(`SELECT 1 FROM pb_betting_bets b
+        JOIN pb_betting_markets m ON m.id=b.market_id
+        WHERE m.event_id=? LIMIT 1`).get(id);
+      // Null -> announced time is safe. Never drop an existing official time.
+      if(old && old.start_ts!=null && announcedStart!=null &&
+        old.start_ts!==announcedStart &&
+        (hasBets || openingForEvent(db,{id,start_ts:old.start_ts,season:ev.season})<=NOW())){
+        errors.push(`${ev.slug}: official time changed after market opening; admin review required`);continue;
+      }
       db.transaction(()=>{
         db.prepare(`INSERT INTO pb_betting_events(id,name,start_ts,season,status,source_url)
-          VALUES(?,?,?,?,'scheduled',?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,start_ts=excluded.start_ts,source_url=excluded.source_url,updated_ts=unixepoch()`)
-          .run(id,ev.name,ev.start_ts,ev.season,url);
+          VALUES(?,?,?,?,'scheduled',?) ON CONFLICT(id) DO UPDATE SET
+          name=excluded.name,
+          start_ts=COALESCE(excluded.start_ts,pb_betting_events.start_ts),
+          source_url=excluded.source_url,updated_ts=unixepoch()`)
+          .run(id,ev.name,announcedStart,ev.season,url);
         db.prepare(`INSERT INTO pb_dci_event_sources(event_id,source_url,lineup_json,timezone)
-          VALUES(?,?,?,?) ON CONFLICT(event_id) DO UPDATE SET lineup_json=CASE WHEN excluded.lineup_json='[]' THEN pb_dci_event_sources.lineup_json ELSE excluded.lineup_json END,source_url=excluded.source_url,timezone=excluded.timezone,updated_ts=unixepoch()`)
-          .run(id,url,JSON.stringify(ev.lineup),ev.timezone);
-        db.prepare(`INSERT INTO pb_dci_event_dates(event_id,local_date,timezone) VALUES(?,?,?) ON CONFLICT(event_id) DO UPDATE SET local_date=excluded.local_date,timezone=excluded.timezone`).run(id,ev.date,ev.timezone);
+          VALUES(?,?,?,?) ON CONFLICT(event_id) DO UPDATE SET
+          lineup_json=CASE WHEN excluded.lineup_json='[]' THEN pb_dci_event_sources.lineup_json ELSE excluded.lineup_json END,
+          source_url=excluded.source_url,
+          timezone=COALESCE(excluded.timezone,pb_dci_event_sources.timezone),
+          updated_ts=unixepoch()`)
+          .run(id,url,JSON.stringify(ev.lineup||[]),ev.timezone||null);
+        // The existing timezone column in this table is NOT NULL.
+        // Empty string represents an official date whose timezone is not yet known.
+        db.prepare(`INSERT INTO pb_dci_event_dates(event_id,local_date,timezone)
+          VALUES(?,?,?) ON CONFLICT(event_id) DO UPDATE SET
+          local_date=excluded.local_date,
+          timezone=CASE WHEN excluded.timezone='' THEN pb_dci_event_dates.timezone ELSE excluded.timezone END`)
+          .run(id,ev.date,ev.timezone||'');
       })();
       imported++;
-      if(!ev.lineup.length)missingLineups++;
-      // Initialize newly discovered competition markets even if the opening window has begun.
-      // Existing published lines are never updated by saveMarkets (ON CONFLICT DO NOTHING).
-      const haveMarkets=!!db.prepare('SELECT 1 FROM pb_betting_markets WHERE event_id=? LIMIT 1').get(id);
-      if(ev.lineup.length && ev.start_ts>NOW() &&
-         (!haveMarkets || openingForEvent(db,{id,start_ts:ev.start_ts,season:ev.season})>NOW())){
-        const mk=lines.makeMarkets({eventId:id,startTs:ev.start_ts,season:ev.season,lineup:ev.lineup,db,eventDate:ev.date});
-        marketCount+=lines.saveMarkets(db,{id},mk).inserted;
+      const stored=db.prepare('SELECT start_ts FROM pb_betting_events WHERE id=?').get(id);
+      const effectiveStart=stored?.start_ts??null;
+      const storedSource=db.prepare('SELECT lineup_json FROM pb_dci_event_sources WHERE event_id=?').get(id);
+      let lineup=[];
+      try {const value=JSON.parse(storedSource?.lineup_json||'[]');if(Array.isArray(value))lineup=value;}
+      catch {errors.push(`${ev.slug}: stored lineup JSON is invalid`);}
+      if(!lineup.length)missingLineups++;
+      // Generate real betting lines only when DCI provides a start time and lineup.
+      if(effectiveStart!=null && effectiveStart>NOW() && lineup.length){
+        const haveMarkets=!!db.prepare('SELECT 1 FROM pb_betting_markets WHERE event_id=? LIMIT 1').get(id);
+        if(!haveMarkets || openingForEvent(db,{id,start_ts:effectiveStart,season:ev.season})>NOW()){
+          const mk=lines.makeMarkets({eventId:id,startTs:effectiveStart,season:ev.season,
+            lineup,db,eventDate:ev.date});
+          marketCount+=lines.saveMarkets(db,{id},mk).inserted;
+        }
       }
-      if(ev.warning && ev.lineup.length)errors.push(`${ev.slug}: ${ev.warning}`);
+      if(ev.warning)errors.push(`${ev.slug}: ${ev.warning}`);
     }catch(e){errors.push(`${eventSlug(url)}: ${e.message}`);}
   }
   const warning=schedule.warning||undefined;
-  const summary={year,found:links.length,imported,markets:marketCount,missingLineups,source:schedule.source,warning,errors};
+  const summary={year,found:links.length,imported,markets:marketCount,missingLineups,pendingTimes,source:schedule.source,warning,errors};
   log(db,'events',!links.length||errors.length||warning?'warning':'ok',JSON.stringify({...summary,errors:errors.slice(0,8)}));
   if(!dryRun)stamp(db,`events:${year}`);
   return summary;

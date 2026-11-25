@@ -12,7 +12,7 @@ module.exports = function mountBetting(app, getConn) {
     db.exec(`
       CREATE TABLE IF NOT EXISTS pb_betting_wallets (user_id INTEGER PRIMARY KEY, balance INTEGER NOT NULL DEFAULT 200 CHECK(balance>=0));
       CREATE TABLE IF NOT EXISTS pb_betting_events (
-        id TEXT PRIMARY KEY, name TEXT NOT NULL, start_ts INTEGER NOT NULL, season INTEGER NOT NULL,
+        id TEXT PRIMARY KEY, name TEXT NOT NULL, start_ts INTEGER, season INTEGER NOT NULL,
         status TEXT NOT NULL DEFAULT 'scheduled' CHECK(status IN ('scheduled','canceled','completed')),
         source_url TEXT, updated_ts INTEGER NOT NULL DEFAULT (unixepoch())
       );
@@ -40,7 +40,44 @@ module.exports = function mountBetting(app, getConn) {
       );
     `);
   }
-  withDb(initialize);
+  // Migrate existing production databases without changing event IDs or bet data.
+  // Foreign keys must be disabled BEFORE the migration transaction begins.
+  function migrateEventTimeNullable(db) {
+    const col = db.prepare("PRAGMA table_info(pb_betting_events)").all().find(x => x.name === 'start_ts');
+    if (!col) throw Error('pb_betting_events.start_ts does not exist');
+    if (!col.notnull) return;
+
+    const foreignKeys = db.pragma('foreign_keys', {simple:true});
+    if (foreignKeys) db.pragma('foreign_keys = OFF');
+    try {
+      db.transaction(() => {
+        db.exec(`
+          CREATE TABLE pb_betting_events__new (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            start_ts INTEGER,
+            season INTEGER NOT NULL,
+            status TEXT NOT NULL DEFAULT 'scheduled'
+              CHECK(status IN ('scheduled','canceled','completed')),
+            source_url TEXT,
+            updated_ts INTEGER NOT NULL DEFAULT (unixepoch())
+          );
+          INSERT INTO pb_betting_events__new
+            (id,name,start_ts,season,status,source_url,updated_ts)
+          SELECT id,name,start_ts,season,status,source_url,updated_ts
+          FROM pb_betting_events;
+          DROP TABLE pb_betting_events;
+          ALTER TABLE pb_betting_events__new RENAME TO pb_betting_events;
+        `);
+        const errors = db.pragma('foreign_key_check');
+        if (errors.length) throw Error('Event migration failed foreign-key validation');
+      })();
+    } finally {
+      if (foreignKeys) db.pragma('foreign_keys = ON');
+    }
+  }
+
+  withDb(db => { initialize(db); migrateEventTimeNullable(db); });
   withDb(bettingAdmin.init);
   withDb(bettingStaff.init);
   withDb(dciSync.init);
@@ -257,7 +294,10 @@ module.exports = function mountBetting(app, getConn) {
   app.get('/betting', loggedIn, (req,res,next)=>{ try {withDb(db=>{
     gems.creditHistoricalPredictionScores(db);
     const now=Math.floor(Date.now()/1000),uid=Number(req.session.uid);
-    const events=db.prepare('SELECT * FROM pb_betting_events WHERE start_ts>? AND status=? ORDER BY start_ts LIMIT 100').all(now,'scheduled').map(e=>({...e,open_ts:openingForEvent(db,e)}));
+    const events=db.prepare(`SELECT * FROM pb_betting_events
+      WHERE status='scheduled' AND (start_ts IS NULL OR start_ts>?)
+      ORDER BY CASE WHEN start_ts IS NULL THEN 1 ELSE 0 END, start_ts, name LIMIT 200`
+    ).all(now).map(e=>({...e,open_ts:e.start_ts == null ? null : openingForEvent(db,e)}));
     const markets=db.prepare(`SELECT m.*, e.name event_name,e.start_ts,e.season FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE e.status='scheduled' AND m.status='active' AND e.start_ts>? ORDER BY e.start_ts,m.corps,m.caption,m.kind`).all(now).filter(m=>now>=openingForEvent(db,{id:m.event_id,start_ts:m.start_ts,season:m.season}));
     const bets=db.prepare(`SELECT b.*, m.caption,m.corps,e.name event_name FROM pb_betting_bets b JOIN pb_betting_markets m ON m.id=b.market_id JOIN pb_betting_events e ON e.id=m.event_id WHERE b.user_id=? ORDER BY b.id DESC LIMIT 30`).all(uid);
     res.setHeader('Cache-Control','private, no-store');
@@ -280,7 +320,7 @@ module.exports = function mountBetting(app, getConn) {
     return db.transaction(()=>{
       const m=db.prepare(`SELECT m.*,e.start_ts,e.season,e.status event_status FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE m.id=?`).get(marketId);
       const now=Math.floor(Date.now()/1000);
-      if(!m||m.status!=='active'||m.event_status!=='scheduled'||now<openingForEvent(db,{id:m.event_id,start_ts:m.start_ts,season:m.season})||now>=m.start_ts)throw Error('This market is not open.');
+      if(!m||m.start_ts==null||m.status!=='active'||m.event_status!=='scheduled'||now<openingForEvent(db,{id:m.event_id,start_ts:m.start_ts,season:m.season})||now>=m.start_ts)throw Error('This market is not open.');
       wallet(db,uid);
       const paid=db.prepare('UPDATE pb_betting_wallets SET balance=balance-? WHERE user_id=? AND balance>=?').run(stake,uid,stake);
       if(paid.changes!==1)throw Error('Not enough Gems.');
@@ -323,6 +363,7 @@ module.exports = function mountBetting(app, getConn) {
         const event=db.prepare('SELECT id,name,start_ts,season,status FROM pb_betting_events WHERE id=?').get(eventId);
         if(!event)throw Error('Event not found. Import the official event first.');
         if(event.status!=='scheduled')throw Error('Only scheduled events can receive new lines.');
+        if(event.start_ts==null)throw Error('Official start time is TBA; lines cannot be generated yet.');
         if(event.start_ts<=Math.floor(Date.now()/1000))throw Error('Cannot generate lines for an event that has already started.');
         if(openingForEvent(db,event)<=Math.floor(Date.now()/1000))throw Error('Generate and review lines BEFORE the betting window opens.');
         const markets=historicalLines.makeMarkets({eventId:event.id,startTs:event.start_ts,season:event.season,lineup:req.body.lineup,db,eventDate:db.prepare('SELECT local_date FROM pb_dci_event_dates WHERE event_id=?').get(event.id)?.local_date});
@@ -337,7 +378,7 @@ module.exports = function mountBetting(app, getConn) {
     const id=String(req.body.market_id||''),voidMarket=req.body.void===true,actual=Number(req.body.actual);
     const m=db.prepare('SELECT m.*,e.start_ts FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE m.id=?').get(id);
     if(!m||m.status!=='active')throw Error('Market not active.');
-    if(!voidMarket&&(!Number.isFinite(actual)||Date.now()<m.start_ts*1000))throw Error('A completed event and valid official result are required.');
+    if(!voidMarket&&(m.start_ts==null||!Number.isFinite(actual)||Date.now()<m.start_ts*1000))throw Error('A completed event and valid official result are required.');
     db.prepare('UPDATE pb_betting_markets SET status=?,actual=? WHERE id=?').run(voidMarket?'void':'settled',voidMarket?null:actual,id);
     const bets=db.prepare("SELECT * FROM pb_betting_bets WHERE market_id=? AND result='pending'").all(id);
     for(const b of bets){const result=voidMarket?'void':Math.abs(actual-b.line)<0.0000001?'push':(actual>b.line?'over':'under')===b.choice?'won':'lost';const payout=result==='won'?Math.round(b.stake*b.odds):['void','push'].includes(result)?b.stake:0;
