@@ -5,10 +5,31 @@ const dciSync = require('./dci_sync');
 const noScore = require('./betting_no_score');
 const bettingAdmin = require('./betting_admin_controls');
 const bettingStaff = require('./betting_staff');
+const DCI_HISTORY_RECORDS = require('./pressboxd_history_2022.json').records;
 const {openingForEvent} = require('./betting_window');
 // Mount AFTER express-session, body parsing, and res.locals middleware.
 module.exports = function mountBetting(app, getConn) {
   function withDb(fn) { const db=getConn(); try {return fn(db);} finally {db.close();} }
+  // Corps picker should not disappear merely because DCI has not published 2027 lineups.
+  // The catalog is based on actual historical records; it does NOT assert participation
+  // in any future event. Actual event matching still uses official imported lineups.
+  const corpsCatalog = (() => {
+    const byName = new Map();
+    for (const row of DCI_HISTORY_RECORDS) {
+      const name = String(row.corps || '').trim();
+      if (!name) continue;
+      const key = name.toLowerCase().replace(/\s+/g, ' ');
+      const previous = byName.get(key);
+      if (!previous || Number(row.year) > previous.year) {
+        byName.set(key, {corps: name, cls: String(row.cls || ''), year: Number(row.year)});
+      }
+    }
+    for (const [key, entry] of byName) {
+      if (['gold', 'the battalion', 'battalion'].includes(key)) entry.cls = 'World Class';
+    }
+    return [...byName.values()].sort((a,b) => a.corps.localeCompare(b.corps));
+  })();
+
   function initialize(db) {
     db.exec(`
       CREATE TABLE IF NOT EXISTS pb_betting_wallets (user_id INTEGER PRIMARY KEY, balance INTEGER NOT NULL DEFAULT 200 CHECK(balance>=0));
@@ -339,7 +360,7 @@ module.exports = function mountBetting(app, getConn) {
       WHERE b.user_id=? ORDER BY b.id DESC LIMIT 30`).all(uid);
     res.setHeader('Cache-Control','private, no-store');
     const claim=db.prepare('SELECT last_claim_ts FROM pb_gems_daily_claims WHERE user_id=?').get(uid);
-    res.render('betting',{ me:res.locals.me,accent_color:res.locals.accent_color,events,markets,bets,balance:wallet(db,uid),now,next_claim_ts:claim?claim.last_claim_ts+86400:0 });
+    res.render('betting',{ me:res.locals.me,accent_color:res.locals.accent_color,events,corpsCatalog,markets,bets,balance:wallet(db,uid),now,next_claim_ts:claim?claim.last_claim_ts+86400:0 });
   }); } catch(e){next(e);} });
   app.post('/api/gems/daily',loggedIn,write,(req,res)=>{try{const result=withDb(db=>db.transaction(()=>{
     const uid=Number(req.session.uid), now=Math.floor(Date.now()/1000);
