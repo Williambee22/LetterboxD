@@ -44,6 +44,38 @@
         justify-content: center;
       }
     }
+
+    /* Month-by-month competition picker; inherits existing dark-theme colors. */
+    .pb-shelf-label.pb-calendar-heading {display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .bt-calendar-open {display:inline-flex;align-items:center;gap:7px;background:transparent;color:inherit;
+      border:1px solid rgba(170,184,212,.35);border-radius:8px;padding:6px 11px;cursor:pointer;font:inherit;
+      font-size:12px;font-weight:700;letter-spacing:.03em}
+    .bt-calendar-open:hover,.bt-calendar-open:focus-visible {border-color:#82a9ff;background:rgba(117,152,219,.12)}
+    .bt-calendar-dialog {box-sizing:border-box;border:1px solid #3d4862;border-radius:14px;
+      padding:0;width:min(550px,calc(100vw - 24px));max-height:min(85vh,750px);color:#f3f5fc;
+      background:#161e30;box-shadow:0 20px 80px rgba(0,0,0,.7)}
+    .bt-calendar-dialog::backdrop {background:rgba(0,0,0,.68)}
+    .bt-calendar-panel {padding:18px}
+    .bt-calendar-top,.bt-calendar-month-row {display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .bt-calendar-top h2 {font-size:20px;margin:0}
+    .bt-calendar-month-row {margin:17px 0 14px}
+    .bt-calendar-month-row strong {font-size:17px;text-align:center}
+    .bt-calendar-icon-button {display:grid;place-items:center;min-width:36px;height:36px;border-radius:8px;
+      background:#242e45;color:#f3f5fc;border:1px solid #45506a;cursor:pointer;font-size:19px}
+    .bt-calendar-icon-button:hover:not(:disabled) {background:#354463}
+    .bt-calendar-icon-button:disabled {opacity:.35;cursor:default}
+    .bt-calendar-events {display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow:auto;padding:2px}
+    .bt-calendar-event {display:flex;gap:12px;text-align:left;width:100%;align-items:center;
+      color:#f3f5fc;background:#202a3f;border:1px solid #36445d;border-radius:10px;padding:12px;cursor:pointer}
+    .bt-calendar-event:hover,.bt-calendar-event:focus-visible {border-color:#8aaefa;background:#2b3952}
+    .bt-calendar-date {display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;
+      min-width:48px;font-size:24px;font-weight:800;line-height:1.05}
+    .bt-calendar-date small {font-size:11px;font-weight:700;color:#a6b9dd;letter-spacing:.08em}
+    .bt-calendar-event-main {display:flex;flex-direction:column;gap:4px;min-width:0}
+    .bt-calendar-event-main b {font-size:14px}
+    .bt-calendar-event-main small {color:#abbad2;font-size:12px}
+    .bt-calendar-empty {color:#afbdd6;text-align:center;padding:26px 10px}
+    .bt-calendar-note {color:#afbdd6;font-size:12px;line-height:1.5;margin:12px 0 0}
   </style>
 </head>
 
@@ -138,9 +170,13 @@
 
       <section class="pb-event-section">
 
-        <div class="pb-shelf-label">
+        <div class="pb-shelf-label pb-calendar-heading">
           COMPETITIONS
           <span class="pb-muted">SELECT AN EVENT</span>
+          <button class="bt-calendar-open" id="openEventCalendar" type="button" aria-haspopup="dialog" aria-controls="eventCalendar" title="Browse competitions by month">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+            Calendar
+          </button>
         </div>
 
         <div class="bt-events" id="eventTabs">
@@ -560,6 +596,23 @@
   </div>
 
 
+  <!-- Calendar keeps the existing event tabs as the single source of betting selection. -->
+  <dialog id="eventCalendar" class="bt-calendar-dialog" aria-labelledby="eventCalendarTitle">
+    <div class="bt-calendar-panel">
+      <div class="bt-calendar-top">
+        <h2 id="eventCalendarTitle">Competition Calendar</h2>
+        <button type="button" class="bt-calendar-icon-button" id="closeEventCalendar" aria-label="Close calendar">×</button>
+      </div>
+      <div class="bt-calendar-month-row">
+        <button type="button" class="bt-calendar-icon-button" id="calendarPrevMonth" aria-label="Previous month">‹</button>
+        <strong id="calendarMonthTitle"></strong>
+        <button type="button" class="bt-calendar-icon-button" id="calendarNextMonth" aria-label="Next month">›</button>
+      </div>
+      <div id="calendarEventList" class="bt-calendar-events" aria-live="polite"></div>
+      <p class="bt-calendar-note">Choose a competition to filter the betting board. Events marked TBA remain viewable but cannot be bet on yet.</p>
+    </div>
+  </dialog>
+
   <!-- ==========================================
        MARKET DATA
        ========================================== -->
@@ -569,6 +622,97 @@
   </script>
 
   <script src="/static/betting.js"></script>
+
+  <script>
+    // Date-only records are parsed in UTC to avoid shifting the competition date.
+    const CALENDAR_EVENTS = <%- JSON.stringify(events.map(e => ({
+      id: e.id, name: e.name, local_date: e.local_date || null,
+      start_ts: e.start_ts, open_ts: e.open_ts,
+      not_scored: Boolean(e.not_scored)
+    }))).replace(/</g, '\\u003c') %>;
+    (() => {
+      const dialog = document.getElementById('eventCalendar');
+      const openButton = document.getElementById('openEventCalendar');
+      const closeButton = document.getElementById('closeEventCalendar');
+      const prev = document.getElementById('calendarPrevMonth');
+      const next = document.getElementById('calendarNextMonth');
+      const title = document.getElementById('calendarMonthTitle');
+      const list = document.getElementById('calendarEventList');
+      const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+      const eventDate = event => {
+        if (event.local_date && /^\d{4}-\d{2}-\d{2}$/.test(event.local_date)) return event.local_date;
+        if (event.start_ts == null) return null;
+        return new Date(event.start_ts * 1000).toISOString().slice(0, 10);
+      };
+      const dated = CALENDAR_EVENTS.map(e => ({...e, day: eventDate(e)}))
+        .filter(e => e.day).sort((a,b) => a.day.localeCompare(b.day) || a.name.localeCompare(b.name));
+      const months = [...new Set(dated.map(e => e.day.slice(0,7)))];
+      const currentMonth = new Date().toISOString().slice(0,7);
+      let monthIndex = Math.max(0, months.findIndex(m => m >= currentMonth));
+      if (months.length && monthIndex < 0) monthIndex = months.length - 1;
+      function renderMonth() {
+        if (!months.length) {
+          title.textContent = 'No scheduled dates';
+          list.innerHTML = '<p class="bt-calendar-empty">No competitions with announced dates are available yet.</p>';
+          prev.disabled = next.disabled = true;
+          return;
+        }
+        const month = months[monthIndex];
+        title.textContent = new Date(month + '-01T12:00:00Z').toLocaleDateString('en-US', {
+          month: 'long', year: 'numeric', timeZone: 'UTC'
+        });
+        prev.disabled = monthIndex === 0;
+        next.disabled = monthIndex === months.length - 1;
+        list.innerHTML = dated.filter(e => e.day.startsWith(month)).map(e => {
+          const day = Number(e.day.slice(8,10));
+          const monthShort = new Date(e.day + 'T12:00:00Z').toLocaleDateString('en-US', {
+            month: 'short', timeZone: 'UTC'
+          }).toUpperCase();
+          const now = Date.now() / 1000;
+          const open = !e.not_scored && e.start_ts != null && now >= e.open_ts && now < e.start_ts;
+          const status = e.not_scored ? 'NOT SCORED · Refunded' :
+            e.start_ts == null ? 'Start time TBA' : open ? 'Betting open' :
+            now >= e.start_ts ? 'Betting closed' : 'Betting not yet open';
+          return `<button type="button" class="bt-calendar-event" data-event-id="${escapeHTML(e.id)}">
+            <span class="bt-calendar-date"><small>${monthShort}</small>${day}</span>
+            <span class="bt-calendar-event-main"><b>${escapeHTML(e.name)}</b><small>${escapeHTML(status)}</small></span>
+          </button>`;
+        }).join('') || '<p class="bt-calendar-empty">No competitions this month.</p>';
+      }
+      openButton.addEventListener('click', () => {
+        renderMonth();
+        if (typeof dialog.showModal === 'function') dialog.showModal();
+        else dialog.setAttribute('open', '');
+      });
+      closeButton.addEventListener('click', () => dialog.close());
+      dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
+      prev.addEventListener('click', () => { if (monthIndex > 0) { monthIndex--; renderMonth(); } });
+      next.addEventListener('click', () => { if (monthIndex < months.length - 1) { monthIndex++; renderMonth(); } });
+      list.addEventListener('click', e => {
+        const target = e.target.closest('button[data-event-id]');
+        if (!target) return;
+        const eventId = target.dataset.eventId;
+        const tab = [...document.querySelectorAll('#eventTabs button[data-id]')]
+          .find(button => button.dataset.id === eventId);
+        if (!tab) return;
+        // Trigger the existing static/betting.js filter rather than replacing it.
+        tab.click();
+        dialog.close();
+        const chosen = CALENDAR_EVENTS.find(item => item.id === eventId);
+        if (chosen && (chosen.start_ts == null || chosen.not_scored || Date.now()/1000 < chosen.open_ts)) {
+          const info = document.getElementById('btMessage');
+          if (info) info.textContent = chosen.not_scored ? 'NOT SCORED — pending bets refunded.' :
+            chosen.start_ts == null ? 'Start time TBA. Betting is not available yet.' :
+            'This competition is scheduled, but its betting window has not opened.';
+        }
+        document.getElementById('eventTabs').scrollIntoView({behavior:'smooth',block:'start'});
+        tab.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+      });
+    })();
+  </script>
+
 
 </body>
 </html>
