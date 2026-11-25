@@ -36,6 +36,57 @@ function getPreviousScore(db,{season,cls,corps,date}){
 function median(xs){if(!xs.length)return null;const a=[...xs].sort((x,y)=>x-y),n=a.length;return n%2?a[(n-1)/2]:(a[n/2-1]+a[n/2])/2;}
 function clamp(x,lo,hi){return Math.max(lo,Math.min(hi,x));}
 function idFor(parts){return 'hist_'+crypto.createHash('sha256').update(parts.join('|')).digest('hex').slice(0,24);}
+
+// Judging increment realism. Raw individual caption scores generally use .100,
+// while .050 is possible throughout the season and observed more frequently late.
+// Group totals and Overall are weighted/computed aggregates, NOT judge entries:
+// their precision must not be quantized to .100/.050.
+function judgeHalfTenthRate(rows,{season,cls,metric,targetDate}) {
+  const target=calendarDay(targetDate);
+  if(target==null)return 0;
+  let nearby=0,half=0,global=0,globalHalf=0;
+  for(const r of rows){
+    if(r.year>=season||r.cls!==cls||!r.captions||
+       !Object.prototype.hasOwnProperty.call(r.captions,metric))continue;
+    const value=r.captions[metric],day=calendarDay(r.date);
+    if(!Number.isFinite(value)||day==null)continue;
+    // Only authentic .050 scores are evidence. Ignore parsing anomalies.
+    const isHalf=Math.abs(value*20-Math.round(value*20))<1e-5 &&
+      Math.abs(value*10-Math.round(value*10))>1e-5;
+    const recency=Math.pow(.85,Math.max(0,season-r.year-1));
+    global+=recency;
+    if(isHalf)globalHalf+=recency;
+    const gap=Math.abs(day-target);
+    if(gap<=21){
+      const w=recency/(1+gap/10);
+      nearby+=w;
+      if(isHalf)half+=w;
+    }
+  }
+  // Smooth sparse early-season samples toward the observed class/metric rate.
+  // Keep a small nonzero possibility even when no historical early .050 is in
+  // the dataset; the date-local data dominates as coverage grows.
+  const globalRate=global>0?globalHalf/global:0.03;
+  const priorRate=Math.max(.005,Math.min(.25,globalRate));
+  const rate=(half+20*priorRate)/(nearby+20);
+  return clamp(rate,.005,.35);
+}
+function projectedJudgeCaption(value,{eventId,season,cls,corps,metric,targetDate,rows}) {
+  if(!Number.isFinite(value))return value;
+  const tenth=Math.round(value*10)/10;
+  const half=Math.round(value*20)/20;
+  // No half-tenth is available closer than the ordinary .100 projection.
+  if(Math.abs(half-tenth)<1e-8)return Math.round(tenth*1000)/1000;
+  const rate=judgeHalfTenthRate(rows,{season,cls,metric,targetDate});
+  // Deterministic draw: refreshed previews don't flicker and market IDs/lines
+  // remain stable. No new random number is generated on page views.
+  const token=[eventId,season,cls,canonicalCorps(corps),metric,'judge-step-v1'].join('|');
+  const draw=parseInt(crypto.createHash('sha256').update(token).digest('hex').slice(0,8),16)/0x100000000;
+  // A half-tenth is preferable only when the underlying model is meaningfully
+  // nearer to it, and its historically-calibrated draw succeeds.
+  const improvement=Math.abs(value-tenth)-Math.abs(value-half);
+  return Math.round((improvement>0.004 && draw<rate ? half : tenth)*1000)/1000;
+}
 function metricValue(r,metric){return metric==='Overall'?r.total:(r.groups&&r.groups[metric]!=null?r.groups[metric]:r.captions&&r.captions[metric]);}
 function calendarDay(date){ // Normalized non-leap-year calendar day; all target-season dates use the same axis.
   const m=String(date||'').match(/^\d{4}-(\d{2})-(\d{2})$/);
@@ -248,7 +299,13 @@ function makeMarkets({eventId,startTs,season,lineup,asOfDate,db,eventDate}){
       const max=metric==='Overall'?100:metric==='General Effect'?40:['Visual','Music'].includes(metric)?30:20;
       const preseasonEffect=staff.staffEffect(db,{season:Number(season),corps,eventId,
         startTs:Number(startTs),eventDate:day,metric,max});
-      const line=Math.round(clamp(p.value+preseasonEffect,0,max)*1000)/1000;
+      const raw=clamp(p.value+preseasonEffect,0,max);
+      // Only original individual judge captions follow the .100/.050 scale.
+      // Overall and GE/Visual/Music group totals remain full-precision models.
+      const line=metric!=='Overall' &&
+        Object.prototype.hasOwnProperty.call(basis?.captions||{},metric)
+        ? projectedJudgeCaption(raw,{eventId,season:Number(season),cls,corps,metric,targetDate:day,rows:data})
+        : Math.round(raw*1000)/1000;
       out.push({id:idFor([eventId,cls,corps,metric,'absolute']),corps,caption:metric,kind:'absolute',line,odds:1.90});
       if(previous){
         const prior=metricValue(previous,metric);
