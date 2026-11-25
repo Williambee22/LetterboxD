@@ -87,6 +87,12 @@ function projectedJudgeCaption(value,{eventId,season,cls,corps,metric,targetDate
   const improvement=Math.abs(value-tenth)-Math.abs(value-half);
   return Math.round((improvement>0.004 && draw<rate ? half : tenth)*1000)/1000;
 }
+// Full category totals use a 0.025-point grid, always rounded upward.
+// Convert to integer thousandths first to avoid floating-point boundary errors.
+function ceilCategoryTotal(value,max) {
+  const thousandths=Math.round(value*1000000)/1000;
+  return Math.min(max,Math.ceil((thousandths-1e-8)/25)*25/1000);
+}
 function metricValue(r,metric){return metric==='Overall'?r.total:(r.groups&&r.groups[metric]!=null?r.groups[metric]:r.captions&&r.captions[metric]);}
 function calendarDay(date){ // Normalized non-leap-year calendar day; all target-season dates use the same axis.
   const m=String(date||'').match(/^\d{4}-(\d{2})-(\d{2})$/);
@@ -300,12 +306,14 @@ function makeMarkets({eventId,startTs,season,lineup,asOfDate,db,eventDate}){
       const preseasonEffect=staff.staffEffect(db,{season:Number(season),corps,eventId,
         startTs:Number(startTs),eventDate:day,metric,max});
       const raw=clamp(p.value+preseasonEffect,0,max);
-      // Only original individual judge captions follow the .100/.050 scale.
-      // Overall and GE/Visual/Music group totals remain full-precision models.
-      const line=metric!=='Overall' &&
-        Object.prototype.hasOwnProperty.call(basis?.captions||{},metric)
-        ? projectedJudgeCaption(raw,{eventId,season:Number(season),cls,corps,metric,targetDate:day,rows:data})
-        : Math.round(raw*1000)/1000;
+      // Judge-entered subcaptions retain their historical .100/.050 behavior.
+      // Calculated GE, Music and Visual totals round UP to the next .025,
+      // never down. Overall remains an independently estimated metric.
+      const line=['General Effect','Music','Visual'].includes(metric)
+        ? ceilCategoryTotal(raw,max)
+        : metric!=='Overall' && Object.prototype.hasOwnProperty.call(basis?.captions||{},metric)
+          ? projectedJudgeCaption(raw,{eventId,season:Number(season),cls,corps,metric,targetDate:day,rows:data})
+          : Math.round(raw*1000)/1000;
       out.push({id:idFor([eventId,cls,corps,metric,'absolute']),corps,caption:metric,kind:'absolute',line,odds:1.90});
       if(previous){
         const prior=metricValue(previous,metric);
