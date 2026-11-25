@@ -307,10 +307,11 @@ module.exports = function mountBetting(app, getConn) {
   app.get('/betting', loggedIn, (req,res,next)=>{ try {withDb(db=>{
     gems.creditHistoricalPredictionScores(db);
     const now=Math.floor(Date.now()/1000),uid=Number(req.session.uid);
-    const events=db.prepare(`SELECT e.*, d.local_date,
+    const events=db.prepare(`SELECT e.*, d.local_date, src.lineup_json,
       CASE WHEN n.event_id IS NOT NULL THEN 1 ELSE 0 END AS not_scored
       FROM pb_betting_events e
       LEFT JOIN pb_dci_event_dates d ON d.event_id=e.id
+      LEFT JOIN pb_dci_event_sources src ON src.event_id=e.id
       LEFT JOIN pb_betting_no_score_events n ON n.event_id=e.id
       WHERE (e.status='scheduled' AND (e.start_ts IS NULL OR e.start_ts>?))
         OR (n.event_id IS NOT NULL AND e.start_ts>?)
@@ -321,7 +322,14 @@ module.exports = function mountBetting(app, getConn) {
         e.start_ts ASC,
         e.name ASC
       LIMIT 500`).all(now,now-60*86400)
-      .map(e=>({...e,open_ts:e.start_ts == null ? null : openingForEvent(db,e)}));
+      .map(e=>{
+        let lineup=[];
+        try {
+          const parsed=JSON.parse(e.lineup_json||'[]');
+          if(Array.isArray(parsed)) lineup=parsed;
+        }catch{}
+        return {...e,lineup,open_ts:e.start_ts == null ? null : openingForEvent(db,e)};
+      });
     const markets=db.prepare(`SELECT m.*, e.name event_name,e.start_ts,e.season FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE e.status='scheduled' AND m.status='active' AND e.start_ts>? ORDER BY e.start_ts,m.corps,m.caption,m.kind`).all(now).filter(m=>now>=openingForEvent(db,{id:m.event_id,start_ts:m.start_ts,season:m.season}));
     const bets=db.prepare(`SELECT b.*, m.caption,m.corps,e.name event_name,
       CASE WHEN n.event_id IS NOT NULL THEN 1 ELSE 0 END AS not_scored
