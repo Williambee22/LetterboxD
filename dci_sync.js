@@ -135,27 +135,58 @@ function inferredClass(corps,season){
 }
 function parseLineup(html,season){
   const txt=textFromHtml(html);
-  const section=txt.split(/Lineup\s*&\s*Times/i)[1]?.split(/View full lineup|Get directions|Venue Information|Tickets|Upcoming Events/i)[0]||'';
-  const lineup=[];const seen=new Set();const unknown=[];
-  const ignore=/^(Gates Open|Welcome|Anthem|Intermission|Scores|LIVE|Awards|Encore|Exhibition|Break|Event Concludes|National Anthem|All times|Time TBA|TBA$)/i;
-  // A schedule row is typically "7:30 PM | Bluecoats - Canton, OH";
-  // preseason pages use "| Bluecoats - Canton, OH" instead.
-  // Match ONLY named lineup rows, not article text, sponsors, or nearby event listings.
-  for(const row of section.split('\n')){
-    const m=row.match(/^\s*(?:(?:\d{1,2}:\d{2}\s*(?:AM|PM)|TBA|TBD|--|—|-|)\s*)?\|\s*(.+?)\s*$/i);
-    if(!m)continue;
-    let name=simplify(m[1]).replace(/\s+-\s+[^\n]*,\s*[A-Z]{2}(?:\s+\d{5})?\s*$/i,'')
-      .replace(/\s+-\s+[^\n]*,\s*(?:QC|ON|BC|AB|SK|MB)\s*$/i,'');
-    name=simplify(name);
-    if(!name||ignore.test(name)||/\b(?:exhibition|alumni|concludes|ceremony)\b/i.test(name))continue;
-    const cls=inferredClass(name,season);
+  // DCI's preseason pages have untimed rows such as:
+  // " | Blue Devils - Concord, CA". Some page versions put several rows
+  // on one text line, so line-by-line parsing alone is insufficient.
+  const title=/Lineup\s*(?:&|and)\s*Times/i;
+  const start=title.exec(txt);
+  const section=start ? txt.slice(start.index+start[0].length)
+    .split(/View full lineup|Get directions|Venue Information|Upcoming Events|Our Partners/i)[0] : '';
+  const lineup=[];const unknown=[];const seen=new Set();
+  const known=[...new Set(HISTORY.map(r=>String(r.corps||'').trim()).filter(Boolean))]
+    .sort((a,b)=>b.length-a.length);
+  // DCI publishes additional groups before their first scores appear.
+  const publishedExtras=['Arsenal','Eclipse','Gems','Zephyrus','Sky Ryders','Guardians',
+    'Blue Devils B','Blue Devils C','The Battalion'];
+  const allKnown=[...new Set([...known,...publishedExtras])].sort((a,b)=>b.length-a.length);
+  const canonicalInput=s=>String(s||'').replace(/[“”\"]/g,'').replace(/\s+/g,' ').trim();
+  const matchesKnown=s=>{
+    const v=canonicalInput(s).toLowerCase();
+    return allKnown.find(c=>{
+      const name=canonicalInput(c).toLowerCase();
+      return v===name || v.startsWith(name+' - ') || v.startsWith(name+' | ') || v.startsWith(name+',');
+    })||null;
+  };
+  const pushCandidate=raw=>{
+    let value=simplify(raw).replace(/^\s*(?:\d{1,2}:\d\d\s*(?:AM|PM)|TBA|TBD|--|—)\s*/i,'').replace(/^\s*\|\s*/,'');
+    if(!value || /^(Gates Open|Welcome|Anthem|Intermission|Scores|LIVE|Awards|Encore|Exhibition|Break|Event Concludes|National Anthem|All times|Time TBA|TBA$)/i.test(value))return;
+    // Match the known, specific corps name before its city/state. This avoids
+    // treating Blue Devils B as Blue Devils, or inventing corps from sponsors.
+    const knownName=matchesKnown(value);
+    const name=knownName||simplify(value.split(/\s+-\s+(?=[^\n]*,\s*[A-Z]{2}\b)/)[0]);
     const key=lines.canonicalCorps(name);
-    if(!key||seen.has(key))continue;
+    if(!name||!key||seen.has(key)||/\b(?:exhibition|alumni|concludes|ceremony)\b/i.test(name))return;
     seen.add(key);
-    // Unknown class is intentionally retained for the corps picker, but never
-    // assigned a fabricated World/Open class or used to generate betting markets.
+    const cls=inferredClass(name,season);
     if(!cls)unknown.push(name);
     lineup.push({corps:name,cls:cls||''});
+  };
+  // Primary pass: rows with pipes, regardless of whether a performance time
+  // exists. Split before every pipe to handle compressed HTML text as well.
+  const normalized=section.replace(/\s*\|\s*/g,'\n| ');
+  for(const row of normalized.split('\n')){
+    const match=row.match(/^\s*(?:\d{1,2}:\d\d\s*(?:AM|PM)\s*)?\|\s*(.+?)\s*$/i);
+    if(match)pushCandidate(match[1]);
+  }
+  // Second pass: actual named schedule rows may lack a pipe entirely.
+  for(const row of section.split('\n')){
+    const candidate=matchesKnown(row.trim());
+    if(candidate)pushCandidate(candidate);
+  }
+  // Third pass: event-page HTML sometimes flattens all rows into a single
+  // line. Extract "| Corps - City, ST" entries independent of line breaks.
+  for(const match of section.matchAll(/\|\s*([^|\n]{1,130}?)\s+-\s+[^|\n]{1,90}?,\s*(?:[A-Z]{2}|QC|ON|BC|AB|SK|MB)\b/g)){
+    pushCandidate(match[1]);
   }
   return {lineup,unknown};
 }
