@@ -45,37 +45,74 @@
       }
     }
 
-    /* Month-by-month competition picker; inherits existing dark-theme colors. */
+    /* True month grid and participant filters. */
     .pb-shelf-label.pb-calendar-heading {display:flex;align-items:center;gap:12px;flex-wrap:wrap}
     .bt-calendar-open {display:inline-flex;align-items:center;gap:7px;background:transparent;color:inherit;
       border:1px solid rgba(170,184,212,.35);border-radius:8px;padding:6px 11px;cursor:pointer;font:inherit;
       font-size:12px;font-weight:700;letter-spacing:.03em}
     .bt-calendar-open:hover,.bt-calendar-open:focus-visible {border-color:#82a9ff;background:rgba(117,152,219,.12)}
     .bt-calendar-dialog {box-sizing:border-box;border:1px solid #3d4862;border-radius:14px;
-      padding:0;width:min(550px,calc(100vw - 24px));max-height:min(85vh,750px);color:#f3f5fc;
+      padding:0;width:min(1060px,calc(100vw - 20px));max-height:92vh;color:#f3f5fc;
       background:#161e30;box-shadow:0 20px 80px rgba(0,0,0,.7)}
     .bt-calendar-dialog::backdrop {background:rgba(0,0,0,.68)}
-    .bt-calendar-panel {padding:18px}
+    .bt-calendar-panel {padding:clamp(10px,2vw,20px);max-height:90vh;overflow:auto}
     .bt-calendar-top,.bt-calendar-month-row {display:flex;justify-content:space-between;align-items:center;gap:12px}
     .bt-calendar-top h2 {font-size:20px;margin:0}
-    .bt-calendar-month-row {margin:17px 0 14px}
-    .bt-calendar-month-row strong {font-size:17px;text-align:center}
+    .bt-calendar-month-row {margin:14px 0}
+    .bt-calendar-month-row strong {font-size:19px;text-align:center}
     .bt-calendar-icon-button {display:grid;place-items:center;min-width:36px;height:36px;border-radius:8px;
       background:#242e45;color:#f3f5fc;border:1px solid #45506a;cursor:pointer;font-size:19px}
     .bt-calendar-icon-button:hover:not(:disabled) {background:#354463}
     .bt-calendar-icon-button:disabled {opacity:.35;cursor:default}
-    .bt-calendar-events {display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow:auto;padding:2px}
-    .bt-calendar-event {display:flex;gap:12px;text-align:left;width:100%;align-items:center;
-      color:#f3f5fc;background:#202a3f;border:1px solid #36445d;border-radius:10px;padding:12px;cursor:pointer}
-    .bt-calendar-event:hover,.bt-calendar-event:focus-visible {border-color:#8aaefa;background:#2b3952}
-    .bt-calendar-date {display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;
-      min-width:48px;font-size:24px;font-weight:800;line-height:1.05}
-    .bt-calendar-date small {font-size:11px;font-weight:700;color:#a6b9dd;letter-spacing:.08em}
-    .bt-calendar-event-main {display:flex;flex-direction:column;gap:4px;min-width:0}
-    .bt-calendar-event-main b {font-size:14px}
-    .bt-calendar-event-main small {color:#abbad2;font-size:12px}
-    .bt-calendar-empty {color:#afbdd6;text-align:center;padding:26px 10px}
+    .bt-cal-filters {display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:16px;
+      padding:12px;background:#1c263b;border:1px solid #33415c;border-radius:10px}
+    .bt-cal-chip {color:#d5e2fc;background:#26334c;border:1px solid #50617d;border-radius:7px;
+      padding:8px 12px;font-size:12px;font-weight:750;cursor:pointer}
+    .bt-cal-chip.is-active {color:#101a2b;background:#bdd5ff;border-color:#bdd5ff}
+    .bt-cal-class-filters {display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+    .bt-cal-corps-panel {min-width:min(300px,100%);flex:1;position:relative}
+    .bt-cal-corps-panel summary {list-style:none;cursor:pointer;color:#e2ecff;background:#26334c;
+      border:1px solid #50617d;border-radius:7px;padding:9px 12px;font-weight:700;font-size:12px}
+    .bt-cal-corps-panel summary::-webkit-details-marker {display:none}
+    .bt-cal-corps-contents {position:absolute;z-index:30;top:calc(100% + 5px);left:0;width:min(390px,100%);
+      background:#172138;border:1px solid #647797;box-shadow:0 16px 35px #0009;border-radius:10px;padding:10px}
+    .bt-cal-corps-search {width:100%;box-sizing:border-box;padding:10px;border-radius:7px;
+      border:1px solid #596a86;background:#0f182a;color:#fff}
+    .bt-cal-corps-options {max-height:240px;overflow:auto;display:grid;gap:2px;margin-top:8px}
+    .bt-cal-corps-option {display:flex;align-items:center;gap:9px;font-size:13px;padding:7px;border-radius:6px;cursor:pointer}
+    .bt-cal-corps-option:hover {background:#2c3d59}
+    .bt-cal-corps-option input {accent-color:#8eb5ff}
+    .bt-cal-corps-actions {display:flex;justify-content:space-between;gap:10px;margin-top:9px}
+    .bt-cal-corps-actions button {color:#d7e9ff;background:#2d3e5c;border:1px solid #536b90;border-radius:6px;padding:7px 12px;cursor:pointer}
+    .bt-cal-count {font-size:12px;color:#b0c4e3;margin:10px 0}
+    .bt-cal-weekdays,.bt-cal-days {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+    .bt-cal-weekdays span {text-align:center;color:#b5c7e8;font-size:11px;font-weight:800;padding:8px 0}
+    .bt-cal-day {min-height:108px;min-width:0;background:#202b40;border:1px solid #384761;
+      border-radius:7px;padding:6px;box-sizing:border-box;display:flex;flex-direction:column;gap:5px}
+    .bt-cal-day.is-outside {opacity:.4;background:#172032}
+    .bt-cal-day.has-events {border-color:#647da8}
+    .bt-cal-number {font-size:12px;font-weight:800;color:#d7e5fd}
+    .bt-cal-day.is-today .bt-cal-number {background:#8fb8ff;color:#10203c;border-radius:100%;padding:3px 6px;align-self:flex-start}
+    .bt-cal-event {display:block;text-align:left;width:100%;background:#324766;color:#f1f6ff;border:1px solid #536d95;
+      border-radius:5px;font-size:11px;line-height:1.3;padding:5px 6px;overflow-wrap:anywhere;cursor:pointer}
+    .bt-cal-event:hover,.bt-cal-event:focus-visible {background:#4e6c9d;border-color:#aecfff;outline-offset:1px}
+    .bt-cal-event.is-tba {border-left:3px solid #ddb969}
+    .bt-cal-event.is-open {border-left:3px solid #55d5a5}
+    .bt-cal-event.is-not-scored {border-left:3px solid #ff5269}
+    .bt-cal-event small {display:block;font-size:10px;color:#d3e2fc;margin-top:2px}
+    .bt-cal-empty-day {color:#8ca3c4;font-size:11px}
     .bt-calendar-note {color:#afbdd6;font-size:12px;line-height:1.5;margin:12px 0 0}
+    @media(max-width:650px) {
+      .bt-calendar-panel {padding:10px}
+      .bt-cal-day {min-height:82px;padding:3px;gap:3px}
+      .bt-cal-event {font-size:9px;padding:4px 3px}
+      .bt-cal-event small {font-size:8px}
+      .bt-cal-number {font-size:11px}
+      .bt-cal-weekdays span {font-size:10px}
+      .bt-cal-weekdays,.bt-cal-days {gap:2px}
+      .bt-calendar-month-row strong {font-size:16px}
+      .bt-cal-filters {gap:7px;padding:8px}
+    }
   </style>
 </head>
 
@@ -596,20 +633,40 @@
   </div>
 
 
-  <!-- Calendar keeps the existing event tabs as the single source of betting selection. -->
+  <!-- Month-grid calendar; event selections reuse the normal betting event tabs. -->
   <dialog id="eventCalendar" class="bt-calendar-dialog" aria-labelledby="eventCalendarTitle">
     <div class="bt-calendar-panel">
       <div class="bt-calendar-top">
         <h2 id="eventCalendarTitle">Competition Calendar</h2>
         <button type="button" class="bt-calendar-icon-button" id="closeEventCalendar" aria-label="Close calendar">×</button>
       </div>
+      <div class="bt-cal-filters" aria-label="Filter competitions">
+        <button type="button" id="calAllEvents" class="bt-cal-chip is-active">ALL EVENTS</button>
+        <div class="bt-cal-class-filters" role="group" aria-label="Competition class">
+          <button type="button" id="calWorldClass" class="bt-cal-chip" aria-pressed="false">World Class</button>
+          <button type="button" id="calOpenClass" class="bt-cal-chip" aria-pressed="false">Open Class</button>
+        </div>
+        <details id="calCorpsPicker" class="bt-cal-corps-panel">
+          <summary id="calCorpsSummary">Filter Corps · All Corps</summary>
+          <div class="bt-cal-corps-contents">
+            <input id="calCorpsSearch" class="bt-cal-corps-search" type="search" placeholder="Search corps..." aria-label="Search corps">
+            <div id="calCorpsOptions" class="bt-cal-corps-options" role="group" aria-label="Select one or multiple corps"></div>
+            <div class="bt-cal-corps-actions">
+              <button type="button" id="calClearCorps">Clear corps</button>
+              <button type="button" id="calDoneCorps">Done</button>
+            </div>
+          </div>
+        </details>
+      </div>
+      <p id="calMatchCount" class="bt-cal-count" aria-live="polite"></p>
       <div class="bt-calendar-month-row">
         <button type="button" class="bt-calendar-icon-button" id="calendarPrevMonth" aria-label="Previous month">‹</button>
         <strong id="calendarMonthTitle"></strong>
         <button type="button" class="bt-calendar-icon-button" id="calendarNextMonth" aria-label="Next month">›</button>
       </div>
-      <div id="calendarEventList" class="bt-calendar-events" aria-live="polite"></div>
-      <p class="bt-calendar-note">Choose a competition to filter the betting board. Events marked TBA remain viewable but cannot be bet on yet.</p>
+      <div class="bt-cal-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+      <div id="calendarMonthGrid" class="bt-cal-days" role="grid" aria-label="Competition dates"></div>
+      <p class="bt-calendar-note">Select a competition to view its betting board. Select multiple corps to show events featuring any selected corps. World/Open Class filters show events with participants in the selected classes. Events without a published lineup appear under All Events.</p>
     </div>
   </dialog>
 
@@ -624,92 +681,144 @@
   <script src="/static/betting.js"></script>
 
   <script>
-    // Date-only records are parsed in UTC to avoid shifting the competition date.
     const CALENDAR_EVENTS = <%- JSON.stringify(events.map(e => ({
-      id: e.id, name: e.name, local_date: e.local_date || null,
-      start_ts: e.start_ts, open_ts: e.open_ts,
-      not_scored: Boolean(e.not_scored)
+      id:e.id, name:e.name, local_date:e.local_date||null,
+      start_ts:e.start_ts, open_ts:e.open_ts,
+      not_scored:Boolean(e.not_scored),
+      lineup:(e.lineup||[]).map(x => ({
+        corps:String(typeof x==='string' ? x : (x?.corps||'')),
+        cls:String(typeof x==='string' ? '' : (x?.cls||''))
+      }))
     }))).replace(/</g, '\\u003c') %>;
     (() => {
-      const dialog = document.getElementById('eventCalendar');
-      const openButton = document.getElementById('openEventCalendar');
-      const closeButton = document.getElementById('closeEventCalendar');
-      const prev = document.getElementById('calendarPrevMonth');
-      const next = document.getElementById('calendarNextMonth');
-      const title = document.getElementById('calendarMonthTitle');
-      const list = document.getElementById('calendarEventList');
-      const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-      }[c]));
-      const eventDate = event => {
-        if (event.local_date && /^\d{4}-\d{2}-\d{2}$/.test(event.local_date)) return event.local_date;
-        if (event.start_ts == null) return null;
-        return new Date(event.start_ts * 1000).toISOString().slice(0, 10);
+      const $ = id => document.getElementById(id);
+      const dialog=$('eventCalendar'), openButton=$('openEventCalendar'), closeButton=$('closeEventCalendar');
+      const previous=$('calendarPrevMonth'), next=$('calendarNextMonth');
+      const title=$('calendarMonthTitle'), grid=$('calendarMonthGrid');
+      const allButton=$('calAllEvents'), worldButton=$('calWorldClass'), openClassButton=$('calOpenClass');
+      const corpsPicker=$('calCorpsPicker'), corpsSummary=$('calCorpsSummary');
+      const corpsSearch=$('calCorpsSearch'), corpsOptions=$('calCorpsOptions');
+      const matchCount=$('calMatchCount');
+      const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const corpsKey=s=>String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
+      const classKey=s=>{
+        const value=String(s||'').trim().toLowerCase().replace(/[_-]/g,' ');
+        if (/^(world|wc|world class)$/.test(value)) return 'world';
+        if (/^(open|oc|open class)$/.test(value)) return 'open';
+        return '';
       };
-      const dated = CALENDAR_EVENTS.map(e => ({...e, day: eventDate(e)}))
-        .filter(e => e.day).sort((a,b) => a.day.localeCompare(b.day) || a.name.localeCompare(b.name));
-      const months = [...new Set(dated.map(e => e.day.slice(0,7)))];
-      const currentMonth = new Date().toISOString().slice(0,7);
-      let monthIndex = Math.max(0, months.findIndex(m => m >= currentMonth));
-      if (months.length && monthIndex < 0) monthIndex = months.length - 1;
-      function renderMonth() {
-        if (!months.length) {
-          title.textContent = 'No scheduled dates';
-          list.innerHTML = '<p class="bt-calendar-empty">No competitions with announced dates are available yet.</p>';
-          prev.disabled = next.disabled = true;
-          return;
-        }
-        const month = months[monthIndex];
-        title.textContent = new Date(month + '-01T12:00:00Z').toLocaleDateString('en-US', {
-          month: 'long', year: 'numeric', timeZone: 'UTC'
-        });
-        prev.disabled = monthIndex === 0;
-        next.disabled = monthIndex === months.length - 1;
-        list.innerHTML = dated.filter(e => e.day.startsWith(month)).map(e => {
-          const day = Number(e.day.slice(8,10));
-          const monthShort = new Date(e.day + 'T12:00:00Z').toLocaleDateString('en-US', {
-            month: 'short', timeZone: 'UTC'
-          }).toUpperCase();
-          const now = Date.now() / 1000;
-          const open = !e.not_scored && e.start_ts != null && now >= e.open_ts && now < e.start_ts;
-          const status = e.not_scored ? 'NOT SCORED · Refunded' :
-            e.start_ts == null ? 'Start time TBA' : open ? 'Betting open' :
-            now >= e.start_ts ? 'Betting closed' : 'Betting not yet open';
-          return `<button type="button" class="bt-calendar-event" data-event-id="${escapeHTML(e.id)}">
-            <span class="bt-calendar-date"><small>${monthShort}</small>${day}</span>
-            <span class="bt-calendar-event-main"><b>${escapeHTML(e.name)}</b><small>${escapeHTML(status)}</small></span>
-          </button>`;
-        }).join('') || '<p class="bt-calendar-empty">No competitions this month.</p>';
+      const eventDate=e=>{
+        if(/^\d{4}-\d{2}-\d{2}$/.test(e.local_date||'')) return e.local_date;
+        if(e.start_ts==null) return null;
+        return new Date(e.start_ts*1000).toISOString().slice(0,10);
+      };
+      const dated=CALENDAR_EVENTS.map(e=>({...e,day:eventDate(e)}))
+        .filter(e=>e.day).sort((a,b)=>a.day.localeCompare(b.day)||a.name.localeCompare(b.name));
+      const allCorps=[...new Map(dated.flatMap(e=>e.lineup).filter(p=>p.corps).map(p=>[corpsKey(p.corps),p.corps])).entries()]
+        .sort((a,b)=>a[1].localeCompare(b[1]));
+      const selectedCorps=new Set(), selectedClasses=new Set();
+      const months=[...new Set(dated.map(e=>e.day.slice(0,7)))];
+      const currentMonth=new Date().toISOString().slice(0,7);
+      let month=months.find(m=>m>=currentMonth) || months[months.length-1] || currentMonth;
+      if (months.length && currentMonth<months[0]) month=months[0];
+      const shiftMonth=(ym,shift)=>{
+        const [year,mon]=ym.split('-').map(Number);
+        const next=new Date(Date.UTC(year,mon-1+shift,1));
+        return next.toISOString().slice(0,7);
+      };
+      const firstMonth=months[0]||currentMonth, lastMonth=months[months.length-1]||currentMonth;
+      function matchesFilters(event) {
+        if(!selectedCorps.size && !selectedClasses.size) return true;
+        // Multiple selected corps: inclusive OR. Different filter types: AND.
+        const hasCorps=!selectedCorps.size || event.lineup.some(p=>selectedCorps.has(corpsKey(p.corps)));
+        const hasClass=!selectedClasses.size || event.lineup.some(p=>selectedClasses.has(classKey(p.cls)));
+        return hasCorps && hasClass;
       }
-      openButton.addEventListener('click', () => {
-        renderMonth();
-        if (typeof dialog.showModal === 'function') dialog.showModal();
-        else dialog.setAttribute('open', '');
-      });
-      closeButton.addEventListener('click', () => dialog.close());
-      dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
-      prev.addEventListener('click', () => { if (monthIndex > 0) { monthIndex--; renderMonth(); } });
-      next.addEventListener('click', () => { if (monthIndex < months.length - 1) { monthIndex++; renderMonth(); } });
-      list.addEventListener('click', e => {
-        const target = e.target.closest('button[data-event-id]');
-        if (!target) return;
-        const eventId = target.dataset.eventId;
-        const tab = [...document.querySelectorAll('#eventTabs button[data-id]')]
-          .find(button => button.dataset.id === eventId);
-        if (!tab) return;
-        // Trigger the existing static/betting.js filter rather than replacing it.
-        tab.click();
-        dialog.close();
-        const chosen = CALENDAR_EVENTS.find(item => item.id === eventId);
-        if (chosen && (chosen.start_ts == null || chosen.not_scored || Date.now()/1000 < chosen.open_ts)) {
-          const info = document.getElementById('btMessage');
-          if (info) info.textContent = chosen.not_scored ? 'NOT SCORED — pending bets refunded.' :
-            chosen.start_ts == null ? 'Start time TBA. Betting is not available yet.' :
-            'This competition is scheduled, but its betting window has not opened.';
+      function renderCorpsOptions(){
+        const q=corpsSearch.value.trim().toLowerCase();
+        const options=allCorps.filter(([key,name])=>name.toLowerCase().includes(q));
+        corpsOptions.innerHTML=options.map(([key,name])=>`<label class="bt-cal-corps-option"><input type="checkbox" value="${esc(key)}" ${selectedCorps.has(key)?'checked':''}><span>${esc(name)}</span></label>`).join('') || '<p class="bt-calendar-note">No matching corps.</p>';
+        corpsSummary.textContent=selectedCorps.size?`Filter Corps · ${selectedCorps.size} selected`:'Filter Corps · All Corps';
+      }
+      function updateFilterButtons(){
+        const all=!selectedCorps.size&&!selectedClasses.size;
+        allButton.classList.toggle('is-active',all);
+        worldButton.classList.toggle('is-active',selectedClasses.has('world'));
+        openClassButton.classList.toggle('is-active',selectedClasses.has('open'));
+        worldButton.setAttribute('aria-pressed',String(selectedClasses.has('world')));
+        openClassButton.setAttribute('aria-pressed',String(selectedClasses.has('open')));
+        renderCorpsOptions();
+      }
+      function eventStatus(e){
+        const now=Date.now()/1000;
+        if(e.not_scored) return 'NOT SCORED · Refunded';
+        if(e.start_ts==null) return 'Start time TBA';
+        if(now>=e.start_ts) return 'Betting closed';
+        if(now>=e.open_ts) return 'Betting open';
+        return 'Betting not yet open';
+      }
+      function renderMonth(){
+        title.textContent=new Date(month+'-01T12:00:00Z').toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
+        previous.disabled=month<=firstMonth;
+        next.disabled=month>=lastMonth;
+        const visible=dated.filter(e=>matchesFilters(e));
+        const monthEvents=visible.filter(e=>e.day.startsWith(month));
+        matchCount.textContent=`${monthEvents.length} matching competition${monthEvents.length===1?'':'s'} this month · ${visible.length} across the schedule`;
+        const [year,mon]=month.split('-').map(Number);
+        const firstDay=new Date(Date.UTC(year,mon-1,1)).getUTCDay();
+        const dayCount=new Date(Date.UTC(year,mon,0)).getUTCDate();
+        const slots=Math.ceil((firstDay+dayCount)/7)*7;
+        const today=new Date().toISOString().slice(0,10);
+        const byDay=new Map();
+        for(const event of monthEvents){if(!byDay.has(event.day))byDay.set(event.day,[]);byDay.get(event.day).push(event);}
+        const out=[];
+        for(let i=0;i<slots;i++){
+          const day=i-firstDay+1;
+          if(day<1||day>dayCount){out.push('<div class="bt-cal-day is-outside" aria-hidden="true"></div>');continue;}
+          const iso=month+'-'+String(day).padStart(2,'0');
+          const matches=byDay.get(iso)||[];
+          out.push(`<div class="bt-cal-day ${matches.length?'has-events':''} ${iso===today?'is-today':''}" role="gridcell" aria-label="${esc(iso)}">
+            <span class="bt-cal-number">${day}</span>
+            ${matches.map(e=>{
+              const status=eventStatus(e),klass=e.not_scored?'is-not-scored':e.start_ts==null?'is-tba':status==='Betting open'?'is-open':'';
+              return `<button type="button" class="bt-cal-event ${klass}" data-event-id="${esc(e.id)}" title="${esc(e.name+' · '+status)}"><b>${esc(e.name)}</b><small>${esc(status)}</small></button>`;
+            }).join('')}</div>`);
         }
-        document.getElementById('eventTabs').scrollIntoView({behavior:'smooth',block:'start'});
+        grid.innerHTML=out.join('');
+      }
+      const update=()=>{updateFilterButtons();renderMonth();};
+      allButton.addEventListener('click',()=>{selectedCorps.clear();selectedClasses.clear();corpsSearch.value='';update();});
+      for(const [button,key] of [[worldButton,'world'],[openClassButton,'open']]){
+        button.addEventListener('click',()=>{if(selectedClasses.has(key))selectedClasses.delete(key);else selectedClasses.add(key);update();});
+      }
+      corpsSearch.addEventListener('input',renderCorpsOptions);
+      corpsOptions.addEventListener('change',event=>{
+        const input=event.target.closest('input[type=checkbox]');if(!input)return;
+        if(input.checked)selectedCorps.add(input.value);else selectedCorps.delete(input.value);
+        update();
+      });
+      $('calClearCorps').addEventListener('click',()=>{selectedCorps.clear();update();});
+      $('calDoneCorps').addEventListener('click',()=>{corpsPicker.open=false;});
+      openButton.addEventListener('click',()=>{update();if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');});
+      closeButton.addEventListener('click',()=>dialog.close());
+      dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
+      previous.addEventListener('click',()=>{if(month>firstMonth){month=shiftMonth(month,-1);renderMonth();}});
+      next.addEventListener('click',()=>{if(month<lastMonth){month=shiftMonth(month,1);renderMonth();}});
+      grid.addEventListener('click',event=>{
+        const button=event.target.closest('button[data-event-id]');if(!button)return;
+        const id=button.dataset.eventId;
+        const tab=[...document.querySelectorAll('#eventTabs button[data-id]')].find(el=>el.dataset.id===id);
+        if(!tab)return;
+        tab.click();dialog.close();
+        const chosen=CALENDAR_EVENTS.find(e=>e.id===id);
+        if(chosen && (chosen.start_ts==null || chosen.not_scored || Date.now()/1000<chosen.open_ts)){
+          const info=$('btMessage');
+          if(info)info.textContent=chosen.not_scored?'NOT SCORED — pending bets refunded.':chosen.start_ts==null?'Start time TBA. Betting is not available yet.':'Betting has not opened for this competition yet.';
+        }
+        $('eventTabs').scrollIntoView({behavior:'smooth',block:'start'});
         tab.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
       });
+      update();
     })();
   </script>
 
