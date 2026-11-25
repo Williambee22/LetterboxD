@@ -108,9 +108,6 @@ function legResult(leg){
   if(Math.abs(leg.actual-leg.line)<1e-8)return 'push';
   return (leg.actual>leg.line?'over':'under')===leg.choice?'won':'lost';
 }
-// Repeat-safe: all leg results must exist before determining final payout.
-// A void/push removes a leg; remaining legs regrade using the corresponding
-// Power/Flex table. If a play becomes too small, the original stake is refunded.
 function settlePending(db) {
   init(db);
   return db.transaction(()=>{
@@ -131,15 +128,20 @@ function settlePending(db) {
       if(legs.length===0||legs.some(l=>legResult(l)==='pending'))continue;
       const outcomes=legs.map(legResult), live=outcomes.filter(x=>x!=='push'&&x!=='void');
       const won=live.filter(x=>x==='won').length;
-      const min=entry.play_type==='single'?1:entry.play_type==='power'?2:3;
       let outcome,paid;
-      if(live.length<min){outcome='void';paid=entry.stake;}
-      else {
+      if(live.length===0){
+        outcome='push';paid=entry.stake;
+      } else {
         let mult=0;
-        if(entry.play_type==='single'){
+        if(live.length===1){
           const one=legs[outcomes.findIndex(x=>x!=='push'&&x!=='void')];
           mult=won===1?one.odds:0;
-        } else mult=payoutMultiplier(entry.play_type,live.length,won);
+        } else if(entry.play_type==='flex'&&live.length===2){
+          // Regrade a pushed 3+ selection Flex as a two-pick Power Play.
+          mult=payoutMultiplier('power',2,won);
+        } else {
+          mult=payoutMultiplier(entry.play_type,live.length,won);
+        }
         paid=Math.round(entry.stake*mult);
         outcome=paid>0?'won':'lost';
       }
