@@ -74,7 +74,7 @@
     .bt-cal-corps-panel summary {list-style:none;cursor:pointer;color:#e2ecff;background:#26334c;
       border:1px solid #50617d;border-radius:7px;padding:9px 12px;font-weight:700;font-size:12px}
     .bt-cal-corps-panel summary::-webkit-details-marker {display:none}
-    .bt-cal-corps-contents {position:absolute;z-index:30;top:calc(100% + 5px);left:0;width:min(390px,100%);
+    .bt-cal-corps-contents {position:relative;z-index:30;margin-top:6px;width:100%;box-sizing:border-box;
       background:#172138;border:1px solid #647797;box-shadow:0 16px 35px #0009;border-radius:10px;padding:10px}
     .bt-cal-corps-search {width:100%;box-sizing:border-box;padding:10px;border-radius:7px;
       border:1px solid #596a86;background:#0f182a;color:#fff}
@@ -702,7 +702,7 @@
       const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
       const corpsKey=s=>String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
       const classKey=s=>{
-        const value=String(s||'').trim().toLowerCase().replace(/[_-]/g,' ');
+        const value=String(s||'').trim().toLowerCase().replace(/[_-]/g,' ').replace(/\s+/g,' ');
         if (/^(world|wc|world class)$/.test(value)) return 'world';
         if (/^(open|oc|open class)$/.test(value)) return 'open';
         return '';
@@ -730,15 +730,15 @@
       function matchesFilters(event) {
         if(!selectedCorps.size && !selectedClasses.size) return true;
         // Multiple selected corps: inclusive OR. Different filter types: AND.
-        const hasCorps=!selectedCorps.size || event.lineup.some(p=>selectedCorps.has(corpsKey(p.corps)));
-        const hasClass=!selectedClasses.size || event.lineup.some(p=>selectedClasses.has(classKey(p.cls)));
-        return hasCorps && hasClass;
+        // Corps and class must match the SAME participant.
+        return event.lineup.some(p=>(!selectedCorps.size || selectedCorps.has(corpsKey(p.corps))) &&
+          (!selectedClasses.size || selectedClasses.has(classKey(p.cls))));
       }
       function renderCorpsOptions(){
         const q=corpsSearch.value.trim().toLowerCase();
         const options=allCorps.filter(([key,name])=>name.toLowerCase().includes(q));
-        corpsOptions.innerHTML=options.map(([key,name])=>`<label class="bt-cal-corps-option"><input type="checkbox" value="${esc(key)}" ${selectedCorps.has(key)?'checked':''}><span>${esc(name)}</span></label>`).join('') || '<p class="bt-calendar-note">No matching corps.</p>';
-        corpsSummary.textContent=selectedCorps.size?`Filter Corps · ${selectedCorps.size} selected`:'Filter Corps · All Corps';
+        corpsOptions.innerHTML=options.map(([key,name])=>`<label class="bt-cal-corps-option"><input type="checkbox" value="${esc(key)}" ${selectedCorps.has(key)?'checked':''}><span>${esc(name)}</span></label>`).join('') || '<p class="bt-calendar-note">No corps listed for these events yet. After deploying, run the 2027 event sync to load published DCI lineups.</p>';
+        corpsSummary.textContent=selectedCorps.size?`Filter Corps · ${selectedCorps.size} selected`:`Filter Corps · ${allCorps.length} available`;
       }
       function updateFilterButtons(){
         const all=!selectedCorps.size&&!selectedClasses.size;
