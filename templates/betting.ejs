@@ -159,12 +159,24 @@
               class="<%= e.not_scored ? 'locked bt-not-scored' : (e.start_ts != null && now >= e.open_ts && now < e.start_ts ? '' : 'locked') %>">
               <b><%= e.name %></b>
               <small>
-                <% if (e.start_ts == null) { %>
-                  Time TBA
+                <% if (e.local_date) { %>
+                  <%= new Date(e.local_date + 'T12:00:00Z').toLocaleDateString('en-US', {
+                    month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC'
+                  }) %>
+                <% } else if (e.start_ts != null) { %>
+                  <%= new Date(e.start_ts * 1000).toLocaleDateString('en-US', {
+                    month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Chicago'
+                  }) %>
                 <% } else { %>
-                  <%= new Date(e.start_ts * 1000).toLocaleString('en-US', {
-                    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-                    timeZone: 'America/Chicago'
+                  Date TBA
+                <% } %>
+              </small>
+              <small>
+                <% if (e.start_ts == null) { %>
+                  Start Time TBA
+                <% } else { %>
+                  <%= new Date(e.start_ts * 1000).toLocaleTimeString('en-US', {
+                    hour: 'numeric', minute: '2-digit', timeZone: 'America/Chicago'
                   }) %> CT
                 <% } %>
               </small>
