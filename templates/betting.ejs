@@ -683,7 +683,7 @@
   <script>
     // A historical corps catalog supplies visible checkboxes even when all imported
     // 2027 event lineups are TBA. Selection never fabricates participation.
-    const CORPS_CATALOG = <%- JSON.stringify(corpsCatalog || []).replace(/</g, '\\u003c') %>;
+    const CORPS_CATALOG = <%- JSON.stringify(typeof corpsCatalog !== 'undefined' && Array.isArray(corpsCatalog) ? corpsCatalog : []).replace(/</g, '\\u003c') %>;
     const CALENDAR_EVENTS = <%- JSON.stringify(events.map(e => ({
       id:e.id, name:e.name, local_date:e.local_date||null,
       start_ts:e.start_ts, open_ts:e.open_ts,
