@@ -13,6 +13,43 @@ table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:10px 8px;
 .tag.preview{background:#2a3346;color:#f4c77b}.tag.published{background:#194b45;color:#91e3ce}
 .notice{padding:12px;background:#1e3b50}.error{background:#54252a}form{display:inline-block;margin-right:10px}.muted{color:#a9b8cc}
 select{max-width:min(100%,850px)}.stats{display:flex;flex-wrap:wrap;gap:12px}.stats>div{background:#202d41;border-radius:8px;padding:11px 15px}
+
+/* DCI-inspired recap: one row per corps, grouped score captions. */
+.recap-card{padding:18px 12px 22px}
+.recap-intro{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;padding:0 6px}
+.recap-guide{display:flex;gap:10px;flex-wrap:wrap;margin:10px 6px 15px;font-size:12px}
+.recap-guide span{display:inline-block;padding:5px 9px;border:1px solid #3f4c61;border-radius:5px;background:#202d40}
+.recap-guide .model{border-color:#5269a9;color:#bcd2ff}
+.recap-guide .posted{border-color:#367c6b;color:#a4ead5}
+.recap-scroll{overflow-x:auto;border:1px solid #41506a;border-radius:8px;margin-top:12px}
+.recap-table{min-width:950px;width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;font-size:12px}
+.recap-table th,.recap-table td{padding:8px 6px;text-align:center;border-right:1px solid #344156;border-bottom:1px solid #344156;vertical-align:middle}
+.recap-table th:last-child,.recap-table td:last-child{border-right:0}
+.recap-table thead th{position:sticky;top:0;z-index:2;background:#25344d;font-size:12px;white-space:normal}
+.recap-table thead .recap-section{font-size:14px;text-transform:uppercase;letter-spacing:.075em;padding:11px 9px;background:#243856;border-bottom:2px solid #6a87b3}
+.recap-table thead .recap-ge{background:#263b5d}
+.recap-table thead .recap-visual{background:#274451}
+.recap-table thead .recap-music{background:#493c56}
+.recap-table thead .recap-total-head{background:#245347}
+.recap-table thead .recap-subheader{font-size:11px;color:#e0e8f9;min-width:75px}
+.recap-table thead .recap-subtotal{background:#344a63}
+.recap-table .recap-place{min-width:38px;font-weight:700;color:#cad8ed}
+.recap-table .recap-corps{min-width:190px;max-width:230px;text-align:left;font-size:13px;font-weight:700;position:sticky;left:0;z-index:1;background:#172333;box-shadow:2px 0 0 #44556b}
+.recap-table thead .recap-corps{z-index:4;background:#273a53}
+.recap-table tbody tr:nth-child(even) .recap-corps{background:#1c2b3d}
+.recap-table tbody tr:nth-child(even){background:#1b2939}
+.recap-table tbody tr:hover,.recap-table tbody tr:hover .recap-corps{background:#2b3b53}
+.recap-table .recap-score{font-size:13px;font-weight:650;white-space:nowrap}
+.recap-table .recap-grand{font-size:15px;font-weight:800;background:#1d443b;color:#ddfff1;min-width:87px}
+.recap-table .recap-muted{color:#869bb5;font-weight:400}
+.recap-table .recap-posted-line{display:block;margin-top:4px;font-size:10px;color:#91e3ce;font-weight:450;white-space:nowrap}
+.recap-table .recap-unknown{color:#8798ad;font-size:14px}
+.recap-class-title{font-size:16px;margin:24px 7px 8px;color:#f4f7ff}
+.recap-class-title:first-of-type{margin-top:6px}
+.recap-details summary{cursor:pointer;color:#c4d7ff;padding:12px 4px;font-weight:600}
+.recap-details[open] summary{margin-bottom:8px}
+.recap-notice{font-size:12px;color:#b4c4db;line-height:1.5;margin:12px 7px}
+@media(max-width:680px){.recap-table .recap-corps{min-width:145px;max-width:160px;font-size:12px}.recap-card{padding:12px 7px}}
 </style></head><body>
 <header><a href="/betting">Betting</a> · <a href="/betsadmin/sync">DCI Sync</a> · <a href="/betsadmin">Gems Admin</a></header>
 <main>
@@ -75,10 +112,120 @@ select{max-width:min(100%,850px)}.stats{display:flex;flex-wrap:wrap;gap:12px}.st
 </tbody></table></div><small>0.000 removes the modifier. Changes are stored by season and corps, not by competition.</small>
 <%}else{%><p>Official lineup unavailable. Sync the competition's corps from DCI before adjusting staff effects.</p><%}%>
 </div>
-<div class="card"><h2>Projected scores and betting lines (<%=monitorRows.length%>)</h2>
-<% if(monitorPreview.reason){%><p><%=monitorPreview.reason%>.</p><%}%>
-<p><span class="tag preview">MODEL PREVIEW</span> means the projection is not published and cannot be wagered on. <span class="tag published">POSTED LINE</span> means the saved betting line; it remains frozen after bets are placed or the window opens.</p>
-<div class="table"><table><thead><tr><th>Corps</th><th>Caption</th><th>Type</th><th>Availability</th><th>Saved posted line</th><th>Current model projection</th><th>Difference</th></tr></thead><tbody>
+<%
+// Reorganize the existing absolute-score rows. This does NOT calculate new scores.
+// Only published metric values and read-only model projections are displayed.
+const recapGroups = [
+  {key:'ge', name:'GENERAL EFFECT', head:'recap-ge'},
+  {key:'visual', name:'VISUAL', head:'recap-visual'},
+  {key:'music', name:'MUSIC', head:'recap-music'}
+];
+const recapCategory = name => {
+  const m=String(name||'').trim().toLowerCase();
+  if (m==='overall' || m==='total score') return 'overall';
+  if (m==='general effect'||m.startsWith('ge1')||m.startsWith('ge2')||m.startsWith('ge ')||m.startsWith('general effect'))return 'ge';
+  if (m==='visual'||m.startsWith('visual ')||m==='color guard')return 'visual';
+  if (m==='music'||m.startsWith('music ')||m==='brass'||m==='percussion')return 'music';
+  return 'other';
+};
+const recapMetricOrder = name => {
+  const s=String(name||'').toLowerCase();
+  const order=['ge1 a','ge1 b','ge1','ge2 a','ge2 b','ge2','visual proficiency','visual analysis','color guard','music brass','music analysis a','music analysis b','music analysis','music percussion'];
+  const n=order.indexOf(s);return n<0?50:n;
+};
+const recapIsGroupTotal = name => ['general effect','visual','music'].includes(String(name||'').toLowerCase());
+const recapAbsRows = monitorRows.filter(r=>r.kind==='absolute');
+const recapCorpsLookup = new Map();
+const recapLineup = (typeof lineup!=='undefined' && Array.isArray(lineup))?lineup:[];
+for (const entry of recapLineup) {
+  const name=String(typeof entry==='string'?entry:entry?.corps||'').trim();
+  if(name)recapCorpsLookup.set(name.toLowerCase(),String(typeof entry==='string'?'':entry.cls||'').trim()||'Class not specified');
+}
+const recapByCorps=new Map();
+for(const r of recapAbsRows){
+  const name=String(r.corps||'').trim();
+  if(!name)continue;
+  const key=name.toLowerCase();
+  if(!recapByCorps.has(key))recapByCorps.set(key,{name,cls:recapCorpsLookup.get(key)||'Class not specified',captions:new Map()});
+  recapByCorps.get(key).captions.set(String(r.caption).toLowerCase(),r);
+}
+const recapAllCaptions=[...new Set(recapAbsRows.map(r=>String(r.caption||'').trim()).filter(Boolean))];
+const recapSections=recapGroups.map(g=>{
+  const items=recapAllCaptions.filter(name=>recapCategory(name)===g.key)
+    .sort((a,b)=>Number(recapIsGroupTotal(a))-Number(recapIsGroupTotal(b))||recapMetricOrder(a)-recapMetricOrder(b)||a.localeCompare(b));
+  return {...g,items};
+}).filter(g=>g.items.length);
+const recapOther=recapAllCaptions.filter(name=>recapCategory(name)==='other').sort();
+if(recapOther.length)recapSections.push({key:'other',name:'OTHER CAPTIONS',head:'',items:recapOther});
+const recapColumns=recapSections.reduce((n,g)=>n+g.items.length,0)+1;
+const recapValue=r=>r && r.projection && Number.isFinite(Number(r.projection.value)) ? Number(r.projection.value):null;
+const recapOverall=row=>recapValue(row.captions.get('overall')||row.captions.get('total score'));
+const recapClasses=new Map();
+for(const row of recapByCorps.values()){
+  if(!recapClasses.has(row.cls))recapClasses.set(row.cls,[]);
+  recapClasses.get(row.cls).push(row);
+}
+for(const rows of recapClasses.values())rows.sort((a,b)=>(recapOverall(b)??-1)-(recapOverall(a)??-1)||a.name.localeCompare(b.name));
+const recapClassRank = ['World Class','Open Class','All Age Class','All-Age - World Class','All-Age - Open Class','International Class','Class not specified'];
+const recapSortedClasses=[...recapClasses.entries()].sort((a,b)=>{
+  const ai=recapClassRank.indexOf(a[0]),bi=recapClassRank.indexOf(b[0]);
+  return (ai<0?100:ai)-(bi<0?100:bi)||a[0].localeCompare(b[0]);
+});
+%>
+<div class="card recap-card">
+<div class="recap-intro">
+  <div><h2 style="margin:0 0 5px">Projected Score Recap</h2><small>Corps ranked by projected overall score; grouped by caption, like a DCI recap.</small></div>
+  <small><%=recapByCorps.size%> corps · <%=recapAbsRows.length%> score estimates</small>
+</div>
+<% if(monitorPreview.reason){%><p class="recap-notice"><%=monitorPreview.reason%>.</p><%}%>
+<div class="recap-guide">
+  <span class="model">Large number = current model projection</span>
+  <span class="posted">Small green number = saved betting line (if posted)</span>
+  <span>— = no estimate for that caption</span>
+</div>
+<% if(!recapSortedClasses.length){%>
+<p class="recap-notice">No projected caption scores are available yet. Confirm that the event has an imported corps lineup and matching historical score records.</p>
+<% } %>
+<% recapSortedClasses.forEach(([cls, corpsRows])=>{ %>
+<h3 class="recap-class-title"><%=cls%></h3>
+<div class="recap-scroll"><table class="recap-table"><thead>
+<tr>
+  <th rowspan="2" class="recap-place">#</th>
+  <th rowspan="2" class="recap-corps">Corps</th>
+  <% recapSections.forEach(group=>{ %><th colspan="<%=group.items.length%>" class="recap-section <%=group.head%>"><%=group.name%></th><% }) %>
+  <th rowspan="2" class="recap-section recap-total-head">TOTAL</th>
+</tr>
+<tr>
+<% recapSections.forEach(group=>{group.items.forEach(metric=>{ %>
+  <th class="recap-subheader <%=recapIsGroupTotal(metric)?'recap-subtotal':''%>" title="<%=metric%>"><%=metric%></th>
+<% });}); %>
+</tr>
+</thead><tbody>
+<% corpsRows.forEach((row,index)=>{const total=recapOverall(row);%>
+<tr>
+<td class="recap-place"><%=total==null?'—':index+1%></td>
+<td class="recap-corps"><%=row.name%></td>
+<% recapSections.forEach(group=>{group.items.forEach(metric=>{
+   const r=row.captions.get(metric.toLowerCase());const value=recapValue(r);
+%>
+  <td class="<%=recapIsGroupTotal(metric)?'recap-score':''%>">
+  <% if(value!=null){%><span class="recap-score"><%=value.toFixed(3)%></span><%}else{%><span class="recap-unknown">—</span><%}%>
+  <% if(r?.posted){%><span class="recap-posted-line">Line: <%=Number(r.line).toFixed(3)%></span><%}%>
+  </td>
+<% });}); %>
+<td class="recap-grand">
+  <% if(total!=null){%><%=total.toFixed(3)%><%}else{%><span class="recap-unknown">—</span><%}%>
+  <% const totalRow=row.captions.get('overall')||row.captions.get('total score'); if(totalRow?.posted){%><span class="recap-posted-line">Line: <%=Number(totalRow.line).toFixed(3)%></span><%}%>
+</td>
+</tr>
+<% });%>
+</tbody></table></div>
+<% }); %>
+<p class="recap-notice">Caption totals are shown only when the model provides them; unavailable captions are not replaced with invented values. All numbers are estimates, not official DCI results. Scroll sideways to view the full recap on smaller screens.</p>
+<details class="recap-details">
+<summary>View detailed posted lines and score-change markets (<%=monitorRows.length%> market rows)</summary>
+<p class="recap-notice">This section retains every market and its original posted line, including change bets, settlement status and differences.</p>
+<div class="table"><table><thead><tr><th>Corps</th><th>Caption</th><th>Market type</th><th>Status</th><th>Saved posted line</th><th>Current projection</th><th>Difference</th></tr></thead><tbody>
 <% monitorRows.forEach(m=>{ const p=m.projection; %><tr>
 <td><%=m.corps%></td><td><%=m.caption%></td><td><%=m.kind%></td>
 <td><span class="tag <%=m.posted?'published':'preview'%>"><%=m.posted?(m.status==='active'?'POSTED LINE':m.status.toUpperCase()):'MODEL PREVIEW'%></span></td>
@@ -86,8 +233,10 @@ select{max-width:min(100%,850px)}.stats{display:flex;flex-wrap:wrap;gap:12px}.st
 <td class="num"><%=p?Number(p.value).toFixed(3):'Unavailable'%></td>
 <td class="num"><%=p&&p.delta!=null?(p.delta>0?'+':'')+Number(p.delta).toFixed(3):'—'%></td>
 </tr><% }); %>
-<% if(!monitorRows.length){%><tr><td colspan="7">No model projection available yet for this event. Check the imported lineup, corps class and historical scores.</td></tr><%}%>
-</tbody></table></div></div>
+<% if(!monitorRows.length){%><tr><td colspan="7">No model projection available yet.</td></tr><%}%>
+</tbody></table></div>
+</details>
+</div>
 <div class="card"><h2>Placed bets on this event (<%=bets.length%>)</h2><p>Original wagering lines and placement snapshots are preserved independently of updated model projections.</p>
 <div class="table"><table><thead><tr><th>Bet #</th><th>User</th><th>Placed</th><th>Corps</th><th>Caption</th><th>Pick</th><th>Stake</th><th>Locked line</th><th>At placement</th><th>Current projection</th><th>Result</th></tr></thead><tbody>
 <% bets.forEach(b=>{const p=monitorProjections.get(b.market_id);%><tr><td><%=b.id%></td><td><%=b.username||'User #'+b.user_id%></td><td><%=new Date(b.placed_ts*1000).toLocaleString()%></td><td><%=b.corps%></td><td><%=b.caption%> / <%=b.kind%></td><td><%=b.choice%></td><td class="num"><%=b.stake%></td><td class="num"><%=Number(b.line).toFixed(3)%></td><td class="num"><%=b.projection_at_bet==null?'Not recorded':Number(b.projection_at_bet).toFixed(3)%></td><td class="num"><%=p?Number(p.value).toFixed(3):'Unavailable'%></td><td><%=b.result%></td></tr><% });%>
