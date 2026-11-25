@@ -314,9 +314,13 @@ module.exports = function mountBetting(app, getConn) {
       LEFT JOIN pb_betting_no_score_events n ON n.event_id=e.id
       WHERE (e.status='scheduled' AND (e.start_ts IS NULL OR e.start_ts>?))
         OR (n.event_id IS NOT NULL AND e.start_ts>?)
-      ORDER BY CASE WHEN n.event_id IS NOT NULL THEN 2
-                    WHEN e.start_ts IS NULL THEN 1 ELSE 0 END,
-               e.start_ts,name LIMIT 200`).all(now,now-60*86400)
+      ORDER BY
+        CASE WHEN COALESCE(d.local_date, date(e.start_ts, 'unixepoch')) IS NULL THEN 1 ELSE 0 END,
+        COALESCE(d.local_date, date(e.start_ts, 'unixepoch')) ASC,
+        CASE WHEN e.start_ts IS NULL THEN 1 ELSE 0 END,
+        e.start_ts ASC,
+        e.name ASC
+      LIMIT 500`).all(now,now-60*86400)
       .map(e=>({...e,open_ts:e.start_ts == null ? null : openingForEvent(db,e)}));
     const markets=db.prepare(`SELECT m.*, e.name event_name,e.start_ts,e.season FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE e.status='scheduled' AND m.status='active' AND e.start_ts>? ORDER BY e.start_ts,m.corps,m.caption,m.kind`).all(now).filter(m=>now>=openingForEvent(db,{id:m.event_id,start_ts:m.start_ts,season:m.season}));
     const bets=db.prepare(`SELECT b.*, m.caption,m.corps,e.name event_name,
