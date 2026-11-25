@@ -2,6 +2,7 @@
 const gems = require('./gems');
 const historicalLines = require('./betting_lines');
 const dciSync = require('./dci_sync');
+const noScore = require('./betting_no_score');
 const bettingAdmin = require('./betting_admin_controls');
 const bettingStaff = require('./betting_staff');
 const {openingForEvent} = require('./betting_window');
@@ -81,6 +82,7 @@ module.exports = function mountBetting(app, getConn) {
   withDb(bettingAdmin.init);
   withDb(bettingStaff.init);
   withDb(dciSync.init);
+  withDb(noScore.init);
   function wallet(db, uid) { db.prepare('INSERT OR IGNORE INTO pb_betting_wallets(user_id,balance) VALUES (?,200)').run(uid); return db.prepare('SELECT balance FROM pb_betting_wallets WHERE user_id=?').get(uid).balance; }
   // Existing wallets are intentionally retained; only NEW wallets begin with 200 Gems.
   const loggedIn=(req,res,next)=>req.session?.uid?next():res.redirect('/login?next=%2Fbetting');
@@ -119,7 +121,11 @@ module.exports = function mountBetting(app, getConn) {
       const sandbox=db.prepare('SELECT id,name,original_date,markets_json FROM pb_dci_sandbox_events ORDER BY created_ts DESC LIMIT 10').all().map(x=>{const markets=JSON.parse(x.markets_json);return {id:x.id,name:x.name,original_date:x.original_date,market_count:markets.length,markets:markets.slice(0,250)};});
       const current=Number(req.session.uid),testBalance=dciSync.sandboxWallet(db,current);
       const recent=db.prepare('SELECT * FROM pb_dci_sandbox_bets WHERE user_id=? ORDER BY id DESC LIMIT 20').all(current);
-      const events=db.prepare("SELECT id,name,start_ts,season,status FROM pb_betting_events WHERE source_url LIKE 'https://www.dci.org/%' ORDER BY start_ts DESC LIMIT 35").all();
+      const events=db.prepare(`SELECT e.id,e.name,e.start_ts,e.season,e.status,
+        CASE WHEN n.event_id IS NOT NULL THEN 1 ELSE 0 END AS not_scored
+        FROM pb_betting_events e LEFT JOIN pb_betting_no_score_events n ON n.event_id=e.id
+        WHERE e.source_url LIKE 'https://www.dci.org/%'
+        ORDER BY e.start_ts DESC LIMIT 35`).all();
       const states=db.prepare('SELECT key,last_ts FROM pb_dci_sync_state ORDER BY key').all();
       const verifiedCount=db.prepare('SELECT count(*) AS n FROM pb_dci_verified_scores').get().n;
       const pendingMarkets=db.prepare(`SELECT count(*) AS n FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE m.status='active' AND e.start_ts<unixepoch()`).get().n;
@@ -185,6 +191,13 @@ module.exports = function mountBetting(app, getConn) {
             if(dciSync.allowRefresh(db,'scores',15*60)){
               try{await dciSync.checkScores(db);}
               catch(e){dciSync.log(db,'scores','error',e.message);}
+            }
+            // Always check the 16-hour refund cutoff after attempting score sync.
+            // Uses its own official DCI score-page check and is safe to repeat.
+            const refunds=await noScore.processExpired(db);
+            if(refunds.marked || refunds.errors.length){
+              dciSync.log(db,'no_score',refunds.errors.length?'warning':'ok',
+                JSON.stringify(refunds));
             }
           }finally{dciSync.releaseLock(db,'poller',token);}
         });
@@ -294,12 +307,23 @@ module.exports = function mountBetting(app, getConn) {
   app.get('/betting', loggedIn, (req,res,next)=>{ try {withDb(db=>{
     gems.creditHistoricalPredictionScores(db);
     const now=Math.floor(Date.now()/1000),uid=Number(req.session.uid);
-    const events=db.prepare(`SELECT * FROM pb_betting_events
-      WHERE status='scheduled' AND (start_ts IS NULL OR start_ts>?)
-      ORDER BY CASE WHEN start_ts IS NULL THEN 1 ELSE 0 END, start_ts, name LIMIT 200`
-    ).all(now).map(e=>({...e,open_ts:e.start_ts == null ? null : openingForEvent(db,e)}));
+    const events=db.prepare(`SELECT e.*,
+      CASE WHEN n.event_id IS NOT NULL THEN 1 ELSE 0 END AS not_scored
+      FROM pb_betting_events e
+      LEFT JOIN pb_betting_no_score_events n ON n.event_id=e.id
+      WHERE (e.status='scheduled' AND (e.start_ts IS NULL OR e.start_ts>?))
+        OR (n.event_id IS NOT NULL AND e.start_ts>?)
+      ORDER BY CASE WHEN n.event_id IS NOT NULL THEN 2
+                    WHEN e.start_ts IS NULL THEN 1 ELSE 0 END,
+               e.start_ts,name LIMIT 200`).all(now,now-60*86400)
+      .map(e=>({...e,open_ts:e.start_ts == null ? null : openingForEvent(db,e)}));
     const markets=db.prepare(`SELECT m.*, e.name event_name,e.start_ts,e.season FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE e.status='scheduled' AND m.status='active' AND e.start_ts>? ORDER BY e.start_ts,m.corps,m.caption,m.kind`).all(now).filter(m=>now>=openingForEvent(db,{id:m.event_id,start_ts:m.start_ts,season:m.season}));
-    const bets=db.prepare(`SELECT b.*, m.caption,m.corps,e.name event_name FROM pb_betting_bets b JOIN pb_betting_markets m ON m.id=b.market_id JOIN pb_betting_events e ON e.id=m.event_id WHERE b.user_id=? ORDER BY b.id DESC LIMIT 30`).all(uid);
+    const bets=db.prepare(`SELECT b.*, m.caption,m.corps,e.name event_name,
+      CASE WHEN n.event_id IS NOT NULL THEN 1 ELSE 0 END AS not_scored
+      FROM pb_betting_bets b JOIN pb_betting_markets m ON m.id=b.market_id
+      JOIN pb_betting_events e ON e.id=m.event_id
+      LEFT JOIN pb_betting_no_score_events n ON n.event_id=e.id
+      WHERE b.user_id=? ORDER BY b.id DESC LIMIT 30`).all(uid);
     res.setHeader('Cache-Control','private, no-store');
     const claim=db.prepare('SELECT last_claim_ts FROM pb_gems_daily_claims WHERE user_id=?').get(uid);
     res.render('betting',{ me:res.locals.me,accent_color:res.locals.accent_color,events,markets,bets,balance:wallet(db,uid),now,next_claim_ts:claim?claim.last_claim_ts+86400:0 });
@@ -378,6 +402,7 @@ module.exports = function mountBetting(app, getConn) {
     const id=String(req.body.market_id||''),voidMarket=req.body.void===true,actual=Number(req.body.actual);
     const m=db.prepare('SELECT m.*,e.start_ts FROM pb_betting_markets m JOIN pb_betting_events e ON e.id=m.event_id WHERE m.id=?').get(id);
     if(!m||m.status!=='active')throw Error('Market not active.');
+    if(db.prepare('SELECT 1 FROM pb_betting_no_score_events WHERE event_id=?').get(m.event_id))throw Error('Event was marked NOT SCORED and refunded.');
     if(!voidMarket&&(m.start_ts==null||!Number.isFinite(actual)||Date.now()<m.start_ts*1000))throw Error('A completed event and valid official result are required.');
     db.prepare('UPDATE pb_betting_markets SET status=?,actual=? WHERE id=?').run(voidMarket?'void':'settled',voidMarket?null:actual,id);
     const bets=db.prepare("SELECT * FROM pb_betting_bets WHERE market_id=? AND result='pending'").all(id);

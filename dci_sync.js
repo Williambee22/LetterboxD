@@ -430,7 +430,10 @@ function settleVerifiedMarkets(db,ev,results){
 }
 async function checkScores(db,{dryRun=false}={}){
   const now=NOW();
-  const events=db.prepare(`SELECT * FROM pb_betting_events WHERE status='scheduled' AND start_ts<=? AND start_ts>? AND source_url LIKE 'https://www.dci.org/%' ORDER BY start_ts LIMIT 60`).all(now,now-45*86400);
+  const events=db.prepare(`SELECT * FROM pb_betting_events e WHERE status='scheduled'
+    AND start_ts<=? AND start_ts>? AND source_url LIKE 'https://www.dci.org/%'
+    AND NOT EXISTS (SELECT 1 FROM pb_betting_no_score_events n WHERE n.event_id=e.id)
+    ORDER BY start_ts LIMIT 60`).all(now,now-45*86400);
   const settlementEnabled=process.env.DCI_AUTO_SETTLE_ENABLED==='true';
   let checked=0,matched=0,verified=0,settled=0,betsPaid=0,payoutGems=0;const errors=[];
   for(const ev of events){
