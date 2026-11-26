@@ -4,8 +4,8 @@
   "description": "Pressboxd - A social platform for tracking and reviewing Drum Corps shows.",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "node app.js",
+    "start": "node --require ./review_gems.js app.js",
+    "dev": "node --require ./review_gems.js app.js",
     "test": "node --test tests/*.test.js"
   },
   "dependencies": {
