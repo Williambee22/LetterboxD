@@ -63,6 +63,12 @@ function gemLeaderboard(db, rows) {
  return enriched;
 }
 module.exports={initialize,balance,syncPredictionRewards,creditHistoricalPredictionScores,gemLeaderboard};
-// app.js always imports gems.js, even when Railway bypasses npm start.
-// Install the review integration here rather than relying on package scripts.
+// app.js imports gems.js at startup, independent of Railway's start command.
 require('./review_gems').install();
+// Matchup generator is optional until the matchup files have been uploaded.
+const fs = require('fs');
+const path = require('path');
+if (fs.existsSync(path.join(__dirname,'betting_matchups.js'))) {
+  require('./betting_matchups').install();
+}
+require('./betting_matchups_admin').install();
