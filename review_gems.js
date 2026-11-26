@@ -86,4 +86,30 @@ function award(db,userId,showId,text) {
   }
   return {credited:delta,totalForReview:Math.max(already,possible),length,eligible:true,reason:''};
 }
-module.exports={award,init,rewardForLength,characters,quality};
+
+// One-time, restart-safe migration of qualifying reviews already in the database.
+// Uses the same per-user/show reward record as ordinary review submissions.
+// Each qualifying award and wallet/ledger update commits in the SAME transaction.
+function backfillExistingReviews(db) {
+  init(db);
+  const cols = db.prepare('PRAGMA table_info(reviews)').all().map(x=>x.name);
+  const textCol = cols.includes('review_text') ? 'review_text' :
+    cols.includes('text') ? 'text' : null;
+  if(!textCol)throw Error('Cannot backfill review Gems: unknown reviews text column');
+  const rows = db.prepare(`SELECT show_id,user_id,${textCol} AS review_text FROM reviews`).all();
+  let checked=0,eligible=0,credited=0,gems=0,skipped=0;
+  const transaction = db.transaction(()=>{
+    for(const row of rows){
+      checked++;
+      const content=String(row.review_text||'').trim();
+      if(!content || characters(content)>MAX_REVIEW_LENGTH){skipped++;continue;}
+      const result=award(db,row.user_id,row.show_id,content);
+      if(!result.eligible){skipped++;continue;}
+      eligible++;
+      if(result.credited>0){credited++;gems+=result.credited;}
+    }
+  });
+  transaction();
+  return {checked,eligible,credited,gems,skipped};
+}
+module.exports={award,init,rewardForLength,characters,quality,backfillExistingReviews};

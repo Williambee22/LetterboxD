@@ -46,6 +46,27 @@ if(before.includes('reviewGems.award(conn')){
           : 'Saved your review. No additional Gems for this edit.');`);
 }
 newApp=app.slice(0,start)+updated+app.slice(end);
+
+// Backfill all existing reviews on startup, after betting Gems tables are ready.
+// Calling this repeatedly is safe: award() tracks amounts per user and show.
+const startupMarker='mountBetting(app, getConn);';
+const backfillMarker='// PRESSBOXD_REVIEW_GEMS_BACKFILL_V1';
+if(!newApp.includes(backfillMarker)){
+  if(newApp.split(startupMarker).length!==2)throw Error('Unique betting module startup point not found; files unchanged.');
+  newApp=newApp.replace(startupMarker, startupMarker+`
+    ${backfillMarker}
+    {
+      const reviewGemsBackfill = require('./review_gems');
+      const backfillDb = getConn();
+      try {
+        const summary=reviewGemsBackfill.backfillExistingReviews(backfillDb);
+        console.log('[Review Gems] historical review backfill:', summary);
+      } finally {
+        dbx.close(backfillDb);
+      }
+    }`);
+}
+
 // Add position:relative wrapper around only the review textarea, preserving drafts.
 if(!template.includes('data-review-gems-counter')){
   const opening=/([ \t]*)<textarea\s*\r?\n\s*name="review_text"/;
@@ -106,5 +127,6 @@ try{
   for(const [filepath] of changes){const backup=filepath+'.before-review-gems-'+stamp+'.bak';fs.copyFileSync(filepath,backup,fs.constants.COPYFILE_EXCL);backups.push([filepath,backup]);}
   for(const [filepath,content] of changes)fs.writeFileSync(filepath,content,'utf8');
 }catch(e){for(const [filepath,backup] of backups)fs.copyFileSync(backup,filepath);throw e;}
+console.log('Automatic existing-review Gems backfill enabled. All qualifying reviews are checked on startup; prior awards are not repeated.');
 console.log('Review Gems anti-spam protection and counter installed. Updated: '+(changes.map(x=>path.relative(root,x[0])).join(', ')||'already installed'));
 console.log('The counter shows possible TOTAL rewards, not guaranteed new Gems after previous payouts.');
