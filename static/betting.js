@@ -1,5 +1,84 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
+
+// Bind daily claim FIRST. A missing betting-board element or a rendering error
+// later in this file must never prevent a user's daily reward from working.
+const daily=$('dailyGemClaim');
+let claimInFlight=false;
+function dailyMessage(text){
+  const target=$('btMessage');
+  if(target)target.textContent=text;
+  if(daily){
+    daily.title=text;
+    let note=document.getElementById('dailyGemStatus');
+    if(!note){
+      note=document.createElement('span');
+      note.id='dailyGemStatus';
+      note.setAttribute('role','status');
+      note.style.cssText='display:inline-block;font-size:12px;margin-left:8px;max-width:260px;vertical-align:middle;color:#cad4e7;';
+      daily.insertAdjacentElement('afterend',note);
+    }
+    note.textContent=text;
+  }
+}
+function refreshClaim(){
+  if(!daily)return;
+  if(claimInFlight){daily.disabled=true;daily.textContent='💎 Claiming…';return;}
+  const ts=Number(daily.dataset.next)||0;
+  const seconds=Math.max(0,Math.ceil(ts-Date.now()/1000));
+  if(seconds){
+    const h=Math.floor(seconds/3600),m=Math.ceil((seconds%3600)/60);
+    daily.disabled=true;
+    daily.textContent=`💎 Next in ${h}h ${m}m`;
+  }else{
+    daily.disabled=false;
+    daily.textContent='💎 Claim 10';
+  }
+}
+async function claimDaily(){
+  if(claimInFlight)return;
+  claimInFlight=true;
+  refreshClaim();
+  try{
+    const response=await fetch('/api/gems/daily',{
+      method:'POST',
+      credentials:'same-origin',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:'{}',
+      cache:'no-store'
+    });
+    const type=response.headers.get('content-type')||'';
+    if(!type.includes('application/json')){
+      if(response.redirected || response.status===401){
+        throw Error('Please sign in again before claiming Gems.');
+      }
+      throw Error(`Daily Gems request failed (HTTP ${response.status}).`);
+    }
+    const data=await response.json();
+    if(data.next_claim_ts!=null)daily.dataset.next=String(data.next_claim_ts);
+    if(data.balance!=null && $('balance'))$('balance').textContent=Number(data.balance).toLocaleString();
+    if(response.status===429){
+      dailyMessage('Daily Gems have already been claimed. Your next claim time is displayed above.');
+      return;
+    }
+    if(!response.ok||!data.ok)throw Error(data.error||`Claim failed (HTTP ${response.status}).`);
+    dailyMessage('Claimed 10 Gems! 💎');
+  }catch(error){
+    dailyMessage(error?.message||'Could not claim daily Gems.');
+    // Make failed claims visibly actionable even if the status-message element is hidden.
+    if(daily)daily.title=error?.message||'Could not claim daily Gems.';
+    console.error('[Pressboxd daily Gems]',error);
+  }finally{
+    claimInFlight=false;
+    refreshClaim();
+  }
+}
+if(daily){
+  daily.addEventListener('click',claimDaily);
+  refreshClaim();
+  setInterval(refreshClaim,60000);
+}
+
 const state={event:'all',kind:'all',cat:'all',q:'',picks:[],type:'power',queue:[]};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cat=x=>/general effect|^ge\b|^ge\d/i.test(x)?'ge':/music|brass|percussion/i.test(x)?'music':/visual|guard/i.test(x)?'visual':/total score|overall/i.test(x)?'total':'other';
@@ -18,7 +97,7 @@ function render(){
     return `<article class="bt-card"><div class="bt-card-head"><span>${esc(m.event_name)}</span><strong>${m.kind==='change'?'CHANGE':'FINAL'}</strong></div><div class="bt-card-feature"><div class="bt-corp-symbol">${portrait(m.corps)}</div></div><div class="bt-corps" title="${esc(m.corps)}">${esc(m.corps)}</div><div class="bt-caption">${esc(m.caption)}</div><div class="bt-line"><strong>${m.kind==='change'?fmt(m.line):Number(m.line).toFixed(3)}</strong><small>${m.kind==='change'?'Change':'Score'}</small></div><div class="bt-choices"><button class="more ${selected?.choice==='over'?'selected':''}" data-id="${esc(m.id)}" data-choice="over">↑ MORE</button><button class="less ${selected?.choice==='under'?'selected':''}" data-id="${esc(m.id)}" data-choice="under">↓ LESS</button></div></article>`;
   }).join('');
 }
-function message(s){$('btMessage').textContent=s;}
+function message(s){dailyMessage(s);}
 function selectionError(m){
   return state.picks.some(p=>{const other=MARKETS.find(x=>x.id===p.market_id);return other?.event_id===m.event_id && String(other.corps).toLowerCase()===String(m.corps).toLowerCase() && other.id!==m.id;});
 }
@@ -89,8 +168,5 @@ $('placeBet').addEventListener('click',async()=>{
     state.queue=[];showQueue();
   }catch(err){message(err.message||'Could not submit entries.');}finally{button.disabled=state.queue.length===0;}
 });
-const daily=$('dailyGemClaim');
-function refreshClaim(){if(!daily)return;const ts=Number(daily.dataset.next)||0,seconds=Math.ceil(ts-Date.now()/1000);if(seconds>0){const h=Math.floor(seconds/3600),m=Math.ceil((seconds%3600)/60);daily.disabled=true;daily.textContent=`💎 Next in ${h}h ${m}m`;}else{daily.disabled=false;daily.textContent='💎 Claim 10';}}
-if(daily){daily.addEventListener('click',async()=>{daily.disabled=true;try{const r=await fetch('/api/gems/daily',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const j=await r.json();if(j.next_claim_ts)daily.dataset.next=String(j.next_claim_ts);if(j.balance!=null)$('balance').textContent=Number(j.balance).toLocaleString();if(!r.ok&&r.status!==429)throw Error(j.error||'Claim failed');message(j.ok?'Claimed 10 Gems! 💎':'Daily Gems already claimed.');}catch(e){message(e.message);}finally{refreshClaim();}});refreshClaim();setInterval(refreshClaim,60000);}
 render();updatePicks();showQueue();
 })();
