@@ -24,8 +24,6 @@ function syncPredictionRewards(db, season) {
    const prior=old.get(uid)||0, scored=desired.get(uid)||0, wanted=Math.max(prior,scored), delta=wanted-prior;
    if(delta){
     balance(db,uid);
-    // Don't make balances negative if an admin reduces an already spent reward.
-    // In that rare case, reject the revision so rewards do not become inconsistent.
     const changed=db.prepare('UPDATE pb_betting_wallets SET balance=balance+? WHERE user_id=? AND balance+?>=0').run(delta,uid,delta);
     if(changed.changes!==1)throw Error('Cannot reduce already-spent prediction Gems for user '+uid);
     db.prepare('INSERT INTO pb_betting_ledger(user_id,delta,reason) VALUES(?,?,?)').run(uid,delta,'prediction:'+label);
@@ -36,7 +34,6 @@ function syncPredictionRewards(db, season) {
   return {users:rows.length};
  })();
 }
-
 function creditHistoricalPredictionScores(db) {
  initialize(db);
  if(!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='season_prediction_scores'").get())return 0;
@@ -59,7 +56,6 @@ function creditHistoricalPredictionScores(db) {
   return credits;
  })();
 }
-
 function gemLeaderboard(db, rows) {
  const enriched=rows.map(row=>({ ...row, prediction_points:row.total_points, total_points:balance(db,Number(row.user_id)) }));
  enriched.sort((a,b)=>Number(b.total_points)-Number(a.total_points)||String(a.username).localeCompare(String(b.username)));
@@ -67,3 +63,6 @@ function gemLeaderboard(db, rows) {
  return enriched;
 }
 module.exports={initialize,balance,syncPredictionRewards,creditHistoricalPredictionScores,gemLeaderboard};
+// app.js always imports gems.js, even when Railway bypasses npm start.
+// Install the review integration here rather than relying on package scripts.
+require('./review_gems').install();

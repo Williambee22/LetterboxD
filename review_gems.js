@@ -113,83 +113,82 @@ function backfillExistingReviews(db) {
   return {checked,eligible,credited,gems,skipped};
 }
 
-// Automatic integration with current GitHub repository, with no installer or source edits.
-// package.json preloads this module before app.js starts.
-const dbx = require('./db');
-const originalUpsert = dbx.upsertReview;
-dbx.upsertReview = function(conn, showId, userId, text) {
-  // The review and wallet/ledger updates either commit together or not at all.
-  return conn.transaction(() => {
-    const result = originalUpsert(conn, showId, userId, text);
-    award(conn, userId, showId, text);
-    return result;
-  })();
-};
-
-// Once betting tables exist, process all historical reviews, exactly once per tier.
-const bettingPath = require.resolve('./betting');
-const originalMountBetting = require(bettingPath);
-require.cache[bettingPath].exports = function(app, getConn) {
-  const output = originalMountBetting(app, getConn);
-  const conn = getConn();
-  try {
-    const summary = backfillExistingReviews(conn);
-    console.log('[Review Gems] Historical review rewards:', summary);
-  } catch (e) {
-    console.error('[Review Gems] Historical backfill failed, no unconfirmed payout:', e);
-  } finally { dbx.close(conn); }
-  return output;
-};
-
-// Insert the small counter in the existing rendered EJS review form. This leaves
-// the original show_detail.ejs and its autosave/draft behavior untouched.
-const ejs = require('ejs');
-const originalRenderFile = ejs.renderFile;
-const liveCounterScript = String.raw`<script>
-(()=>{
-  const form=document.querySelector('form[data-review-draft-form]');
-  const field=form?.querySelector('textarea[name="review_text"]');
-  const counter=form?.querySelector('[data-review-gems-counter]');
-  if(!field||!counter)return;
-  function valid(s){
-    s=s.trim();if(!s||Array.from(s).length>6000)return false;
-    const words=s.toLowerCase().match(/[a-z]+(?:'[a-z]+)?/g)||[];
-    if((s.match(/[a-z]/gi)||[]).length<8||words.length<2)return false;
-    const compact=s.toLowerCase().replace(/[^a-z]/g,'');
-    if(/(.)\1{5,}/.test(compact)||/(.{3,16})\1{3,}/.test(compact))return false;
-    const uniq=new Set(words);
-    if(words.length>=5&&uniq.size/words.length<.35)return false;
-    if(words.length>=5&&words.filter(w=>w.length===1).length/words.length>.6)return false;
-    const long=words.filter(w=>w.length>=13);
-    if(long.some(w=>w.length>32||((w.match(/[aeiouy]/g)||[]).length/w.length)<.2||/[^aeiouy]{7,}/.test(w)))return false;
-    if(words.length>=25&&uniq.size<Math.max(7,Math.floor(words.length*.18)))return false;
-    return true;
-  }
-  const update=()=>{
-    const text=field.value.trim(),n=Array.from(text).length;
-    const amount=valid(text)?10+(n>400?5:0)+(n>800?10:0)+(n>1600?15:0)+(n>3000?25:0):0;
-    counter.textContent='('+amount+'💎)';
+// Explicit integration: called by gems.js, which app.js imports on every startup.
+let installed=false;
+function install() {
+  if(installed)return;
+  installed=true;
+  const dbx=require('./db');
+  const original=dbx.upsertReview;
+  if(typeof original!=='function')throw Error('Review Gems: upsertReview not found');
+  dbx.upsertReview=function(conn,showId,userId,text){
+    return conn.transaction(()=>{
+      const response=original(conn,showId,userId,text);
+      const result=award(conn,userId,showId,text);
+      console.log('[Review Gems] Review saved',{showId,userId,credited:result.credited,eligible:result.eligible});
+      return response;
+    })();
   };
-  field.addEventListener('input',update);
-  update();
+  // Run after the app has finished its initial synchronous setup.
+  setImmediate(()=>{
+    const path=require('path');
+    const dbPath=process.env.DB_PATH||'/data/site.db';
+    let db;
+    try {
+      db=dbx.connect(dbPath);
+      const summary=backfillExistingReviews(db);
+      console.log('[Review Gems] Historical rewards completed:',summary);
+    } catch(error) {
+      console.error('[Review Gems] Historical rewards FAILED:',error);
+    } finally {if(db)dbx.close(db);}
+  });
+
+  const ejs=require('ejs');
+  const originalRenderFile=ejs.renderFile;
+  const script=String.raw`<script>
+(()=>{
+ const form=document.querySelector('form[data-review-draft-form]');
+ const field=form?.querySelector('textarea[name="review_text"]');
+ const counter=form?.querySelector('[data-review-gems-counter]');
+ if(!field||!counter)return;
+ function valid(s){
+  s=s.trim();if(!s||Array.from(s).length>6000)return false;
+  const words=s.toLowerCase().match(/[a-z]+(?:'[a-z]+)?/g)||[];
+  if((s.match(/[a-z]/gi)||[]).length<8||words.length<2)return false;
+  const compact=s.toLowerCase().replace(/[^a-z]/g,'');
+  if(/(.)\1{5,}/.test(compact)||/(.{3,16})\1{3,}/.test(compact))return false;
+  const uniq=new Set(words);
+  if(words.length>=5&&uniq.size/words.length<.35)return false;
+  if(words.length>=5&&words.filter(w=>w.length===1).length/words.length>.6)return false;
+  const long=words.filter(w=>w.length>=13);
+  if(long.some(w=>w.length>32||((w.match(/[aeiouy]/g)||[]).length/w.length)<.2||/[^aeiouy]{7,}/.test(w)))return false;
+  if(words.length>=25&&uniq.size<Math.max(7,Math.floor(words.length*.18)))return false;
+  return true;
+ }
+ const update=()=>{
+  const text=field.value.trim(),n=Array.from(text).length;
+  const earned=valid(text)?10+(n>400?5:0)+(n>800?10:0)+(n>1600?15:0)+(n>3000?25:0):0;
+  counter.textContent='('+earned+'💎)';
+ };
+ field.addEventListener('input',update);update();
 })();
 </script>`;
-function addReviewCounter(html){
+ function decorate(html){
   if(typeof html!=='string'||html.includes('data-review-gems-counter'))return html;
-  const mark=/<textarea\b[^>]*\bname="review_text"[^>]*>[\s\S]*?<\/textarea>/i;
-  if(!mark.test(html))return html;
-  let changed=html.replace(mark, t => '<div style="position:relative;">'+t+
-    '<span data-review-gems-counter aria-live="polite" title="Potential total Gems for this review; previous rewards are not paid twice" style="position:absolute;right:9px;bottom:9px;z-index:2;font-size:11px;color:#aab2be;background:rgba(14,17,24,.93);border:1px solid rgba(180,180,180,.2);border-radius:4px;padding:3px 5px;pointer-events:none;">(0💎)</span></div>');
-  return changed.replace(/<\/body>/i,liveCounterScript+'\n</body>');
-}
-function enhancedRenderFile(filename, data, options, callback){
-  // Compatible with renderFile(file, data, cb) and renderFile(file, data, opts, cb).
-  const args=Array.from(arguments), cb=args[args.length-1];
-  if(typeof cb==='function'&&/[\\/]show_detail\.ejs$/i.test(String(filename))){
-    args[args.length-1]=function(err,html){cb(err,err?html:addReviewCounter(html));};
+  const pattern=/<textarea\b[^>]*\bname="review_text"[^>]*>[\s\S]*?<\/textarea>/i;
+  if(!pattern.test(html))return html;
+  return html.replace(pattern, text=>'<div style="position:relative">'+text+'<span data-review-gems-counter title="Potential Gems from this review" style="position:absolute;bottom:9px;right:9px;z-index:5;font-size:11px;color:#d0d7e2;background:#171b24;padding:2px 4px;border-radius:4px;pointer-events:none">(0💎)</span></div>')
+    .replace(/<\/body>/i,script+'\n</body>');
+ }
+ function wrapper(){
+  const args=Array.from(arguments),callback=args[args.length-1];
+  if(typeof callback==='function'&&/[\\/]show_detail\.ejs$/i.test(String(args[0]))){
+   args[args.length-1]=function(error,html){callback(error,error?html:decorate(html));};
   }
   return originalRenderFile.apply(this,args);
+ }
+ ejs.renderFile=wrapper;
+ ejs.__express=wrapper;
+ console.log('[Review Gems] Review-save and counter hooks installed');
 }
-ejs.renderFile = enhancedRenderFile;
-ejs.__express = enhancedRenderFile;
-module.exports={award,init,rewardForLength,characters,quality,backfillExistingReviews};
+module.exports={award,init,rewardForLength,characters,quality,backfillExistingReviews,install};
