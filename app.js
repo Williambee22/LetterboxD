@@ -3424,6 +3424,7 @@ app.get('/corps/:corps_name', async (req, res, next) => {
 
     mountBetting(app, getConn);
     require('./admin_activity').mount(app, getConn, adminRequired);
+    require('./betting_event_delete').mount(app, getConn);
     sheldonResults.mount(app, getConn);
 
     
