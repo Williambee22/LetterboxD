@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Recent Activity - Pressboxd</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <style>
+    .activity-head,.activity-filters,.activity-pager{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .activity-head{justify-content:space-between;margin-bottom:18px}
+    .activity-filters{padding:12px 0;border-top:1px solid rgba(255,255,255,.10);border-bottom:1px solid rgba(255,255,255,.10)}
+    .activity-filters label{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .activity-row{display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;align-items:start;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.09);line-height:1.5}
+    .activity-row a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+    .activity-row a:hover{color:var(--accent,inherit)}
+    .activity-kind{font-size:12px;font-weight:600}
+    .activity-detail{margin-top:4px;overflow-wrap:anywhere}
+    .activity-pager{justify-content:space-between;margin-top:16px}
+    @media(max-width:700px){.activity-row{grid-template-columns:1fr;gap:3px}.activity-filters label{width:100%}}
+  </style>
+</head>
+<body class="app">
+<main class="wrap">
+  <div class="panel">
+    <div class="activity-head">
+      <div><div class="kicker">Admin</div><h1 style="margin:6px 0">Recent Activity</h1><div class="muted small">Latest recorded activity across Pressboxd · Central Time</div></div>
+      <div class="row gap"><a class="btn ghost" href="/admin/users">Users</a><a class="btn ghost" href="/admin/stats">Admin Stats</a><a class="btn ghost" href="/shows">Back to Pressboxd</a></div>
+    </div>
+    <form method="get" action="/admin/activity" class="activity-filters">
+      <label>Activity <select class="input" name="kind"><option value="">All activity</option><% for(const [key,name] of Object.entries(types)){ %><option value="<%= key %>" <%= filters.kind===key?'selected':'' %>><%= name %></option><% } %></select></label>
+      <label>Username <input class="input" name="username" value="<%= filters.username %>" placeholder="Search username" maxlength="100"/></label>
+      <button class="btn green" type="submit">Filter</button><a class="btn ghost" href="/admin/activity">Clear</a><button type="button" class="btn ghost" onclick="location.reload()">Refresh</button>
+    </form>
+    <% const dateFormat=new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',month:'2-digit',day:'2-digit',year:'numeric'}); %>
+    <% const timeFormat=new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',hour:'numeric',minute:'2-digit',hour12:true,timeZoneName:'short'}); %>
+    <% const pageLink=p=>'/admin/activity?'+new URLSearchParams({kind:filters.kind,username:filters.username,page:String(p)}).toString(); %>
+    <% if(!rows.length){ %><p class="muted">No matching activity found.</p><% } %>
+    <% for(const row of rows){ const d=new Date(Number(row.ts)*1000); const valid=Number.isFinite(d.getTime()); %>
+      <article class="activity-row">
+        <div class="activity-kind muted"><%= types[row.kind] || row.kind %></div>
+        <div>
+          <a href="<%= row.profile %>"><strong><%= row.username %></strong></a>
+          <% const verbs={rating:'rated',review:'reviewed',comment:'commented on a review of',reply:'replied to a comment on',vote:row.detail+' a review of',registration:'created an account',topic:'created the forum topic',post:'replied to',reaction:'reacted to a post in',follow:'followed',favorite:'added to favorites:',tierlist:row.detail+' the public tierlist',prediction:'submitted season predictions for',entry:'placed a Gems entry',bet:'placed a Gems bet on'}; %>
+          <%= verbs[row.kind] || 'interacted with' %>
+          <% if(row.target){ %><a href="<%= row.href %>"><%= row.target %></a><% } %>
+          <% if(row.kind==='rating'){ %> <strong><%= row.detail %></strong><% } %>
+          <% if(valid){ %><time class="muted" datetime="<%= d.toISOString() %>"> on <%= dateFormat.format(d) %> at <%= timeFormat.format(d) %></time><% } %>
+          <% if(['comment','reply','post','reaction','entry','bet'].includes(row.kind)&&row.detail){ %><div class="activity-detail muted small"><%= row.detail %></div><% } %>
+        </div>
+      </article>
+    <% } %>
+    <div class="activity-pager">
+      <div><% if(filters.page>1){ %><a class="btn ghost" href="<%= pageLink(filters.page-1) %>">Previous</a><% } %></div>
+      <span class="muted small">Page <%= filters.page %> · <%= rows.length %> records</span>
+      <div><% if(hasNext){ %><a class="btn ghost" href="<%= pageLink(filters.page+1) %>">Next</a><% } %></div>
+    </div>
+    <p class="muted small" style="margin-top:18px">Based on current stored records, not a permanent audit log. Deleted activity and earlier versions of edited ratings or reviews may not appear. Review links open the relevant show; forum replies open the specific post.</p>
+  </div>
+</main>
+</body>
+</html>
