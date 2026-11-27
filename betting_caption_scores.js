@@ -129,4 +129,43 @@ function reconcileExisting(db,model,openingForEvent) {
   if(!errors.length)db.prepare('INSERT OR IGNORE INTO pb_betting_caption_migrations(key,completed_ts) VALUES(?,?)').run(migrationKey,Math.floor(Date.now()/1000));
   return {inserted,updated,voided,errors};
 }
-module.exports={canonicalCaption,judgePart,isJudgeCaption,captionsForBetting,metricValue,reconcileExisting};
+// One-time refresh of safe, unopened events. Never change an event with any
+// legacy wager or entry leg, even if its other markets have no wagers.
+function reconcileConsistentTotals(db,model,openingForEvent){
+  db.exec(`CREATE TABLE IF NOT EXISTS pb_betting_caption_migrations (key TEXT PRIMARY KEY, completed_ts INTEGER NOT NULL)`);
+  const migrationKey='consistent_recap_totals_v1';
+  const result={inserted:0,updated:0,errors:[]};
+  if(db.prepare('SELECT 1 FROM pb_betting_caption_migrations WHERE key=?').get(migrationKey))return result;
+  const now=Math.floor(Date.now()/1000);
+  const events=db.prepare(`SELECT e.*, d.local_date, s.lineup_json FROM pb_betting_events e
+    JOIN pb_dci_event_dates d ON d.event_id=e.id JOIN pb_dci_event_sources s ON s.event_id=e.id
+    WHERE e.status='scheduled' AND e.start_ts>? AND EXISTS(SELECT 1 FROM pb_betting_markets m WHERE m.event_id=e.id AND m.status='active')`).all(now);
+  const used=db.prepare(`SELECT 1 FROM pb_betting_markets m JOIN pb_betting_bets b ON b.market_id=m.id WHERE m.event_id=?
+    UNION ALL SELECT 1 FROM pb_betting_markets m JOIN pb_betting_entry_legs l ON l.market_id=m.id WHERE m.event_id=? LIMIT 1`);
+  const set=db.prepare(`UPDATE pb_betting_markets SET line=? WHERE id=? AND status='active'`);
+  for(const event of events){
+    try{
+      if(openingForEvent(db,event)<=now||used.get(event.id,event.id))continue;
+      const lineup=JSON.parse(event.lineup_json).filter(x=>x?.corps&&x?.cls);
+      if(!lineup.length)continue;
+      const projected=model.makeMarkets({eventId:event.id,startTs:event.start_ts,season:event.season,lineup,db,eventDate:event.local_date});
+      db.transaction(()=>{
+        const current=db.prepare('SELECT * FROM pb_betting_events WHERE id=?').get(event.id);
+        if(!current||current.status!=='scheduled'||openingForEvent(db,current)<=Math.floor(Date.now()/1000)||used.get(event.id,event.id))return;
+        const existing=db.prepare('SELECT * FROM pb_betting_markets WHERE event_id=?').all(event.id);
+        const byKey=new Map(existing.map(m=>[model.canonicalCorps(m.corps)+'|'+m.caption+'|'+m.kind,m]));
+        const fresh=[];
+        for(const m of projected){
+          if(isJudgeCaption(m.caption))continue;
+          const prior=byKey.get(model.canonicalCorps(m.corps)+'|'+m.caption+'|'+m.kind);
+          if(prior){if(prior.status==='active')result.updated+=set.run(m.line,prior.id).changes;}
+          else fresh.push(m);
+        }
+        if(fresh.length)result.inserted+=model.saveMarkets(db,current,fresh).inserted;
+      }).immediate();
+    }catch(e){result.errors.push(`${event.id}: ${e.message}`);}
+  }
+  if(!result.errors.length)db.prepare('INSERT OR IGNORE INTO pb_betting_caption_migrations(key,completed_ts) VALUES(?,?)').run(migrationKey,now);
+  return result;
+}
+module.exports={reconcileConsistentTotals,canonicalCaption,judgePart,isJudgeCaption,captionsForBetting,metricValue,reconcileExisting};

@@ -246,6 +246,25 @@ function applyEarlySeasonComparison(base,reference,showNumber){
   return {...base,value:(1-weight)*base.value+weight*reference.value,
     earlyComparison:{...reference,showNumber,weight}};
 }
+// The displayed betting lines are the inputs to the recap calculation.
+// Category totals round UP to the next .025; Overall is their exact sum.
+function consistentTotals(byMetric,cls){
+  const key=String(cls||'').toLowerCase().replace(/[^a-z]/g,'');
+  if(!['worldclass','openclass','world','open'].includes(key))return byMetric;
+  const get=k=>byMetric.get(k);
+  const sum=(keys)=>keys.every(k=>Number.isFinite(get(k)))?keys.reduce((n,k)=>n+Math.round(get(k)*1000),0):null;
+  for(const [category,components,divisor,max] of [
+    ['General Effect',['GE1','GE2'],1,40],
+    ['Visual',['Visual Proficiency','Visual Analysis','Color Guard'],2,30],
+    ['Music',['Music Brass','Music Analysis','Music Percussion'],2,30]
+  ]){
+    const n=sum(components);
+    if(n!==null)byMetric.set(category,Math.min(max,Math.ceil(n/(25*divisor))*25/1000));
+  }
+  const overall=sum(['General Effect','Visual','Music']);
+  if(overall!==null)byMetric.set('Overall',overall/1000);
+  return byMetric;
+}
 function makeMarkets({eventId,startTs,season,lineup,asOfDate,db,eventDate,includeJudgeBreakdown=false}){
   if(!/^[a-zA-Z0-9_-]{1,120}$/.test(String(eventId)))throw Error('Invalid event ID');
   if(!Number.isSafeInteger(Number(startTs)))throw Error('Invalid start timestamp');
@@ -273,6 +292,7 @@ function makeMarkets({eventId,startTs,season,lineup,asOfDate,db,eventDate,includ
       for(const k of Object.keys(captionScores.captionsForBetting(row))){metrics.add(k);captionMetrics.add(k);}
       if(includeJudgeBreakdown)for(const k of Object.keys(row.captions||{}))if(captionScores.isJudgeCaption(k)&&Number.isFinite(metricValue(row,k))){metrics.add(k);captionMetrics.add(k);}
     }
+    const projected=new Map();
     for(const metric of metrics){
       const metricPrevious=seasonRows.find(r=>Number.isFinite(metricValue(r,metric)))||null;
       const base=metricPrevious?trend(data,Number(season),cls,corps,metric,day,metricPrevious):firstShowEstimate(data,Number(season),cls,corps,metric,day);
@@ -287,6 +307,10 @@ function makeMarkets({eventId,startTs,season,lineup,asOfDate,db,eventDate,includ
       // Captions end .025 or .075; aggregate lines round up to .025.
       const individual=metric!=='Overall' && captionMetrics.has(metric);
       const line=individual ? individualCaptionLine(raw,max) : ceilCategoryTotal(raw,max);
+      projected.set(metric,line);
+    }
+    consistentTotals(projected,cls);
+    for(const [metric,line] of projected){
       out.push({id:idFor([eventId,cls,corps,metric,'absolute']),corps,caption:metric,kind:'absolute',line,odds:1.90});
       // Change bets must reference the actual immediately preceding show, not an older recap.
       if(previous&&Number.isFinite(metricValue(previous,metric))){
@@ -310,4 +334,9 @@ function saveMarkets(db,event,markets){
 }
 module.exports={makeMarkets,saveMarkets,history,canonicalCorps,metricValue,getPreviousScore,
   isJudgeCaption:captionScores.isJudgeCaption,judgePart:captionScores.judgePart,
-  reconcileCombinedMarkets:(db,openingForEvent)=>captionScores.reconcileExisting(db,module.exports,openingForEvent)};
+  consistentTotals,
+  reconcileCombinedMarkets:(db,openingForEvent)=>{
+    const original=captionScores.reconcileExisting(db,module.exports,openingForEvent);
+    const totals=captionScores.reconcileConsistentTotals(db,module.exports,openingForEvent);
+    return {inserted:original.inserted+totals.inserted,updated:original.updated+totals.updated,voided:original.voided,errors:[...original.errors,...totals.errors]};
+  }};
