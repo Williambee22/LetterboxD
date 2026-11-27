@@ -763,7 +763,7 @@
           lineupList.append(li);
         }
         lineupList.hidden=!corps.length;
-        lineupNote.textContent=!corps.length ? 'No official lineup has been imported yet.' : event.start_ts==null ? 'Published lineup; performance times are TBA. Betting remains unavailable until an official start time is imported.' : 'Published lineup is subject to change.';
+        lineupNote.textContent=!corps.length ? 'No official lineup yet.' : event.start_ts==null ? 'Published lineup; performance times are TBA. Betting remains unavailable until an official start time.' : 'Published lineup is subject to change.';
       }
       eventTabs.addEventListener('click',event=>{
         const button=event.target.closest('button[data-id]');
