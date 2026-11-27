@@ -3423,6 +3423,7 @@ app.get('/corps/:corps_name', async (req, res, next) => {
   }));
 
     mountBetting(app, getConn);
+    require('./admin_activity').mount(app, getConn, adminRequired);
     sheldonResults.mount(app, getConn);
 
     
