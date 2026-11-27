@@ -3422,6 +3422,7 @@ app.get('/corps/:corps_name', async (req, res, next) => {
     res.redirect(`/show/${showId}`);
   }));
 
+    require('./betting_back_to_back').mount(app, getConn);
     mountBetting(app, getConn);
     require('./admin_activity').mount(app, getConn, adminRequired);
     require('./betting_event_delete').mount(app, getConn);
