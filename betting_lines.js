@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const staff = require('./betting_staff');
+const captionScores = require('./betting_caption_scores');
 const HISTORY_PATH = path.join(__dirname, 'pressboxd_history_2022.json');
 let cache;
 function history(db) {
@@ -46,9 +47,8 @@ function judgeHalfTenthRate(rows,{season,cls,metric,targetDate}) {
   if(target==null)return 0;
   let nearby=0,half=0,global=0,globalHalf=0;
   for(const r of rows){
-    if(r.year>=season||r.cls!==cls||!r.captions||
-       !Object.prototype.hasOwnProperty.call(r.captions,metric))continue;
-    const value=r.captions[metric],day=calendarDay(r.date);
+    if(r.year>=season||r.cls!==cls)continue;
+    const value=metricValue(r,metric),day=calendarDay(r.date);
     if(!Number.isFinite(value)||day==null)continue;
     const isHalf=Math.abs(value*20-Math.round(value*20))<1e-5 &&
       Math.abs(value*10-Math.round(value*10))>1e-5;
@@ -91,7 +91,7 @@ function individualCaptionLine(value,max=20) {
   const midpoint=Math.ceil((thousandths-25)/50)*50+25;
   return Math.max(0.025,Math.min(max-0.025,midpoint/1000));
 }
-function metricValue(r,metric){return metric==='Overall'?r.total:(r.groups&&r.groups[metric]!=null?r.groups[metric]:r.captions&&r.captions[metric]);}
+function metricValue(r,metric){return captionScores.metricValue(r,metric);}
 function calendarDay(date){
   const m=String(date||'').match(/^\d{4}-(\d{2})-(\d{2})$/);
   if(!m)return null;
@@ -130,10 +130,11 @@ function trend(rows,season,cls,corps,metric,targetDate,previous){
   const own=deltas.filter(x=>canonicalCorps(x.corps)===canonicalCorps(corps)&&Math.abs(x.days-days)<=5).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,12);
   const peers=deltas.filter(x=>Math.abs(x.days-days)<=4).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,100);
   const fallback=deltas.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,150);
-  const ownMean=median(own.map(x=>x.diff));const peerMean=median((peers.length>=5?peers:fallback).map(x=>x.diff))??0;
+  const comparisonRows=peers.length>=5?peers:fallback;
+  const ownMean=median(own.map(x=>x.diff));const peerMean=median(comparisonRows.map(x=>x.diff))??0;
   const weight=own.length/(own.length+8);
   const growth=clamp(weight*(ownMean??peerMean)+(1-weight)*peerMean,metric==='Overall'?-8:-4,metric==='Overall'?8:4);
-  return {value:metricValue(previous,metric)+growth,sample:own.length+(peers.length||fallback.length)};
+  return {value:metricValue(previous,metric)+growth,sample:new Set([...own,...comparisonRows]).size};
 }
 function historicDailyGrowth(rows,cls,corps,metric){
   const groups=new Map(),ownKey=canonicalCorps(corps),isOwn=[] ,peers=[];
@@ -245,7 +246,7 @@ function applyEarlySeasonComparison(base,reference,showNumber){
   return {...base,value:(1-weight)*base.value+weight*reference.value,
     earlyComparison:{...reference,showNumber,weight}};
 }
-function makeMarkets({eventId,startTs,season,lineup,asOfDate,db,eventDate}){
+function makeMarkets({eventId,startTs,season,lineup,asOfDate,db,eventDate,includeJudgeBreakdown=false}){
   if(!/^[a-zA-Z0-9_-]{1,120}$/.test(String(eventId)))throw Error('Invalid event ID');
   if(!Number.isSafeInteger(Number(startTs)))throw Error('Invalid start timestamp');
   if(!Number.isInteger(Number(season))||Number(season)<2022)throw Error('Invalid season');
@@ -263,12 +264,18 @@ function makeMarkets({eventId,startTs,season,lineup,asOfDate,db,eventDate}){
     const seasonRows=data.filter(r=>r.year===Number(season)&&r.cls===cls&&canonicalCorps(r.corps)===canonicalCorps(corps)).sort((a,b)=>b.date.localeCompare(a.date));
     const previous=seasonRows[0]||null;
     const showNumber=scheduledShowNumber(db,{eventId,startTs,season:Number(season),corps,eventDate:day,rows:data});
+    // Discover supported metrics across recent records, not one incomplete recap.
     const metrics=new Set(['Overall']);
-    const basis=previous||data.filter(r=>r.year<Number(season)&&r.cls===cls&&canonicalCorps(r.corps)===canonicalCorps(corps)).sort((a,b)=>b.year-a.year||a.date.localeCompare(b.date))[0];
-    if(basis){for(const k of Object.keys(basis.groups||{}))metrics.add(k);for(const k of Object.keys(basis.captions||{}))metrics.add(k);}
+    const captionMetrics=new Set();
+    const ownHistory=data.filter(r=>r.year<=Number(season)&&r.year>=Number(season)-5&&r.cls===cls&&canonicalCorps(r.corps)===canonicalCorps(corps));
+    for(const row of ownHistory){
+      for(const k of Object.keys(row.groups||{}))if(Number.isFinite(metricValue(row,k)))metrics.add(k);
+      for(const k of Object.keys(captionScores.captionsForBetting(row))){metrics.add(k);captionMetrics.add(k);}
+      if(includeJudgeBreakdown)for(const k of Object.keys(row.captions||{}))if(captionScores.isJudgeCaption(k)&&Number.isFinite(metricValue(row,k))){metrics.add(k);captionMetrics.add(k);}
+    }
     for(const metric of metrics){
-      if(previous&&!Number.isFinite(metricValue(previous,metric)))continue;
-      const base=previous?trend(data,Number(season),cls,corps,metric,day,previous):firstShowEstimate(data,Number(season),cls,corps,metric,day);
+      const metricPrevious=seasonRows.find(r=>Number.isFinite(metricValue(r,metric)))||null;
+      const base=metricPrevious?trend(data,Number(season),cls,corps,metric,day,metricPrevious):firstShowEstimate(data,Number(season),cls,corps,metric,day);
       if(!base||!Number.isFinite(base.value)||base.sample<3)continue;
       const reference=showNumber<=3?priorSeasonEarlyComparison(data,{
         season:Number(season),cls,corps,metric,targetDate:day,showNumber}):null;
@@ -278,10 +285,11 @@ function makeMarkets({eventId,startTs,season,lineup,asOfDate,db,eventDate}){
         startTs:Number(startTs),eventDate:day,metric,max});
       const raw=clamp(p.value+preseasonEffect,0,max);
       // Captions end .025 or .075; aggregate lines round up to .025.
-      const individual=metric!=='Overall' && Object.prototype.hasOwnProperty.call(basis?.captions||{},metric);
+      const individual=metric!=='Overall' && captionMetrics.has(metric);
       const line=individual ? individualCaptionLine(raw,max) : ceilCategoryTotal(raw,max);
       out.push({id:idFor([eventId,cls,corps,metric,'absolute']),corps,caption:metric,kind:'absolute',line,odds:1.90});
-      if(previous){
+      // Change bets must reference the actual immediately preceding show, not an older recap.
+      if(previous&&Number.isFinite(metricValue(previous,metric))){
         const prior=metricValue(previous,metric);
         out.push({id:idFor([eventId,cls,corps,metric,'change']),corps,caption:metric,kind:'change',line:Math.round((line-prior)*1000)/1000,odds:1.90});
       }
@@ -294,9 +302,12 @@ function saveMarkets(db,event,markets){
   const insert=db.prepare(`INSERT INTO pb_betting_markets(id,event_id,corps,caption,kind,line,odds)
     VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING`);
   for(const m of markets){
+    if(captionScores.isJudgeCaption(m.caption)){skipped++;continue;}
     const row=insert.run(m.id,event.id,m.corps,m.caption,m.kind,m.line,m.odds);
     if(row.changes)inserted++;else skipped++;
   }
   return {generated:markets.length,inserted,existing:skipped};
 }
-module.exports={makeMarkets,saveMarkets,history,canonicalCorps,metricValue,getPreviousScore};
+module.exports={makeMarkets,saveMarkets,history,canonicalCorps,metricValue,getPreviousScore,
+  isJudgeCaption:captionScores.isJudgeCaption,judgePart:captionScores.judgePart,
+  reconcileCombinedMarkets:(db,openingForEvent)=>captionScores.reconcileExisting(db,module.exports,openingForEvent)};
