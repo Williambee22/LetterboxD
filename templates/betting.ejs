@@ -120,6 +120,19 @@
       .bt-cal-filters {gap:7px;padding:8px}
     }
 
+    /* Published competition lineups are independent of market availability. */
+    .bt-events button.locked {opacity:.85}
+    .bt-events button.on {opacity:1}
+    .bt-event-lineup {margin-top:14px;padding:12px 14px;background:var(--panel);border:1px solid var(--stroke);border-radius:5px}
+    .bt-event-lineup-head {display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+    .bt-event-lineup-head h2 {font-size:15px;margin:0;color:var(--text);font-weight:800}
+    .bt-event-lineup-status {font-size:11px;color:var(--muted)}
+    .bt-event-lineup-list {list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:5px 14px}
+    .bt-event-lineup-list li {padding:5px 0;border-bottom:1px solid var(--stroke);font-size:12px;overflow-wrap:anywhere}
+    .bt-event-lineup-list small {display:block;color:var(--muted);font-size:10px;margin-top:2px}
+    .bt-event-lineup-note {color:var(--muted);font-size:11px;margin:8px 0 0}
+    .bt-cal-event .bt-cal-lineup-count {color:var(--muted);margin-top:3px}
+
     /* Prize-pick-like multiple virtual entries (no real-money wagering). */
     .pb-entry-help,.pb-play-explanation{color:#aaa4b7;font-size:11px;line-height:1.5;margin:14px 0}
     .pb-entry-picks{display:grid;gap:8px;margin:14px 0}
@@ -259,6 +272,8 @@
             <button data-id="<%= e.id %>"
               class="<%= e.not_scored ? 'locked bt-not-scored' : (e.start_ts != null && now >= e.open_ts && now < e.start_ts ? '' : 'locked') %>">
               <b><%= e.name %></b>
+              <% const lineupCount = new Set((Array.isArray(e.lineup) ? e.lineup : []).map(x => String(typeof x === 'string' ? x : (x?.corps || '')).trim().toLowerCase()).filter(Boolean)).size; %>
+              <small><%= lineupCount ? lineupCount + (lineupCount === 1 ? ' corps attending' : ' corps attending') : 'Lineup TBA' %></small>
               <small>
                 <% if (e.local_date) { %>
                   <%= new Date(e.local_date + 'T12:00:00Z').toLocaleDateString('en-US', {
@@ -293,6 +308,14 @@
 
         </div>
 
+        <section id="selectedEventLineup" class="bt-event-lineup" aria-labelledby="selectedEventLineupTitle" hidden>
+          <div class="bt-event-lineup-head">
+            <h2 id="selectedEventLineupTitle">Participating Corps</h2>
+            <span id="selectedEventLineupStatus" class="bt-event-lineup-status"></span>
+          </div>
+          <ul id="selectedEventLineupList" class="bt-event-lineup-list"></ul>
+          <p id="selectedEventLineupNote" class="bt-event-lineup-note"></p>
+        </section>
       </section>
 
 
@@ -712,6 +735,41 @@
         if(now>=e.open_ts) return 'Betting open';
         return 'Betting not yet open';
       }
+      // Render official participants even when the selected competition has no markets or start time.
+      const eventTabs=$('eventTabs');
+      const lineupPanel=$('selectedEventLineup');
+      const lineupTitle=$('selectedEventLineupTitle');
+      const lineupStatus=$('selectedEventLineupStatus');
+      const lineupList=$('selectedEventLineupList');
+      const lineupNote=$('selectedEventLineupNote');
+      const eventsById=new Map(CALENDAR_EVENTS.map(e=>[String(e.id),e]));
+      function uniqueLineup(event){
+        return [...new Map((event.lineup||[]).filter(p=>corpsKey(p.corps)).map(p=>[corpsKey(p.corps),p])).values()];
+      }
+      function renderSelectedLineup(id){
+        const event=eventsById.get(String(id));
+        lineupPanel.hidden=!event;
+        if(!event){lineupList.replaceChildren();return;}
+        const corps=uniqueLineup(event);
+        lineupTitle.textContent='Participating Corps — '+event.name;
+        lineupStatus.textContent=(corps.length ? `${corps.length} corps · ` : '')+eventStatus(event);
+        lineupList.replaceChildren();
+        for(const participant of corps){
+          const li=document.createElement('li');
+          const name=document.createElement('strong');
+          name.textContent=participant.corps;
+          li.append(name);
+          if(participant.cls){const cls=document.createElement('small');cls.textContent=participant.cls;li.append(cls);}
+          lineupList.append(li);
+        }
+        lineupList.hidden=!corps.length;
+        lineupNote.textContent=!corps.length ? 'No official lineup has been imported yet.' : event.start_ts==null ? 'Published lineup; performance times are TBA. Betting remains unavailable until an official start time is imported.' : 'Published lineup is subject to change.';
+      }
+      eventTabs.addEventListener('click',event=>{
+        const button=event.target.closest('button[data-id]');
+        if(button && eventTabs.contains(button))renderSelectedLineup(button.dataset.id);
+      });
+      renderSelectedLineup(eventTabs.querySelector('button.on[data-id]')?.dataset.id||'all');
       function renderMonth(){
         title.textContent=new Date(month+'-01T12:00:00Z').toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
         previous.disabled=month<=firstMonth;
@@ -739,7 +797,7 @@
             <span class="bt-cal-number">${day}</span>
             ${matches.map(e=>{
               const status=eventStatus(e),klass=e.not_scored?'is-not-scored':e.start_ts==null?'is-tba':status==='Betting open'?'is-open':'';
-              return `<button type="button" class="bt-cal-event ${klass}" data-event-id="${esc(e.id)}" title="${esc(e.name+' · '+status)}"><b>${esc(e.name)}</b><small>${esc(status)}</small></button>`;
+              return `<button type="button" class="bt-cal-event ${klass}" data-event-id="${esc(e.id)}" title="${esc(e.name+' · '+status)}"><b>${esc(e.name)}</b><small>${esc(status)}</small><small class="bt-cal-lineup-count">${uniqueLineup(e).length ? uniqueLineup(e).length+' corps' : 'Lineup TBA'}</small></button>`;
             }).join('')}</div>`);
         }
         grid.innerHTML=out.join('');
